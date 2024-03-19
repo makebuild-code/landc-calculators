@@ -36,7 +36,7 @@ export const calculators = () => {
         const result = await request(component.dataset.calc.toString(), input);
         console.timeEnd('API Request');
 
-        output(component, result);
+        output({ component, buttonText, button, loader }, result);
       } catch (error) {
         console.error('Error retrieving calculation', error);
         if (buttonText) {
