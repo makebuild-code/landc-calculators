@@ -8,13 +8,11 @@ export const dialogs = () => {
   const attr = 'data-dialog';
   const components = queryElements<HTMLDivElement>(`[${attr}="component"]`);
 
-  console.log(components);
-
   components.forEach((component) => {
     // get the required elemenets
     const open = queryElement<HTMLButtonElement>(`[${attr}="open"]`, component);
     const dialog = queryElement<HTMLDialogElement>('dialog', component);
-    const close = queryElement<HTMLButtonElement>(`[${attr}="close"]`);
+    const close = queryElement<HTMLButtonElement>(`[${attr}="close"]`, component);
 
     if (!open || !dialog || !close) return;
 
