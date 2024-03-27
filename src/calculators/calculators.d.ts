@@ -34,7 +34,7 @@ export interface MortgageCostRequest {
     RepaymentValue: number; // min: 0, max: 10000000, step: 1000, value: 125000
     TermYears: number; // min: 1, max: 40, step: 1, value: 25
     Rate: number; // min: 0.1, max: 20, step: 0.1, value: 3
-    PaymentType: string; // unknown
+    PaymentType: 'r' | 'i';
   };
   output: {
     MonthlyPayment: number;
@@ -163,7 +163,7 @@ export interface LifeInsuranceRequest {
   url: 'https://www.landc.co.uk/calculators/life-insurance-calculator/';
   calculator: 'lifeinsurance';
   input: {
-    Income: number; // min: 0, max: 10000000, step: 500, value: 1000
+    Income: number; // min: 0, max: 10000000, step: 500, value: 30000
     Spouse: boolean;
     ChildAge: number[]; // min: 0, max: 21, step: 1, value: null
     University: boolean;
@@ -232,30 +232,30 @@ export interface OffsetMortgageRequest {
   };
 }
 
-export interface BuyToLetTaxChangeRequest {
-  url: 'https://www.landc.co.uk/calculators/buy-to-let-mortgage-calculator/';
-  calculator: 'buytolettaxchange';
-  input: {
-    RepaymentValue: number; // not on site
-    Rent: number; // min: 1, max: 100000, step: 1000, value: 1000
-    Rate: number; // not on site
-  };
-  output: {
-    BTLAnnualRentalIncome: number;
-    BTLWearAndTear: number;
-    BTLInterest: number;
-    BTLTaxChange2016: number;
-    BTLNetIncome2016: number;
-    BTLTaxChange2017: number;
-    BTLNetIncome2017: number;
-    BTLTaxChange2018: number;
-    BTLNetIncome2018: number;
-    BTLTaxChange2019: number;
-    BTLNetIncome2019: number;
-    BTLTaxChange2020: number;
-    BTLNetIncome2020: number;
-  };
-}
+// export interface BuyToLetTaxChangeRequest {
+//   url: 'https://www.landc.co.uk/calculators/buy-to-let-mortgage-calculator/';
+//   calculator: 'buytolettaxchange';
+//   input: {
+//     RepaymentValue: number; // not on site
+//     Rent: number; // min: 1, max: 100000, step: 1000, value: 1000
+//     Rate: number; // not on site
+//   };
+//   output: {
+//     BTLAnnualRentalIncome: number;
+//     BTLWearAndTear: number;
+//     BTLInterest: number;
+//     BTLTaxChange2016: number;
+//     BTLNetIncome2016: number;
+//     BTLTaxChange2017: number;
+//     BTLNetIncome2017: number;
+//     BTLTaxChange2018: number;
+//     BTLNetIncome2018: number;
+//     BTLTaxChange2019: number;
+//     BTLNetIncome2019: number;
+//     BTLTaxChange2020: number;
+//     BTLNetIncome2020: number;
+//   };
+// }
 
 export interface BmiRequest {
   url: 'https://www.landc.co.uk/calculators/bmi-calculator/';

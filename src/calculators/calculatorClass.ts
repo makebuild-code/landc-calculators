@@ -1,3 +1,6 @@
+import Chart from 'chart.js/auto';
+
+import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
@@ -19,6 +22,11 @@ interface APIResponse {
 
 const attr = 'data-calc';
 const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/calculatorhttptrigger';
+// const API_ENDPOINT = 'http://localhost:7071/api/CalculatorHttpTrigger';
+
+/**
+ * @docs data-calc-output-mod - number to multiply the output by
+ */
 
 export class Calculator {
   name: string;
@@ -27,6 +35,9 @@ export class Calculator {
   outputs: Output[];
   outputRepeatTemplates: HTMLDivElement[];
   outputRepeats: { [key: string]: HTMLElement[] };
+  graph: HTMLCanvasElement | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  chart?: any;
   results: HTMLDivElement;
   button: HTMLButtonElement;
   buttonText: HTMLDivElement;
@@ -41,6 +52,7 @@ export class Calculator {
     this.outputs = queryElements(`[${attr}-output]`, this.component);
     this.outputRepeatTemplates = queryElements(`[${attr}-output-repeat]`, this.component);
     this.outputRepeats = {};
+    this.graph = queryElement(`[${attr}-el="graph"]`, this.component);
     this.results = queryElement(`[${attr}-el="results"]`, this.component) as HTMLDivElement;
     this.button = queryElement(`[${attr}-el="button"]`, this.component) as HTMLButtonElement;
     this.buttonText = queryElement(`[${attr}-el="button-text"]`, this.button) as HTMLDivElement;
@@ -187,11 +199,19 @@ export class Calculator {
           error = input.validationMessage;
         case 'number':
           const { min, max, value } = input;
-          isValid = Number(value) >= Number(min) && Number(value) <= Number(max);
+
+          let minValid = true;
+          if (!!min) minValid = Number(value) >= Number(min);
+
+          let maxValid = true;
+          if (!!max) maxValid = Number(value) <= Number(max);
+
+          isValid = minValid && maxValid;
           if (isValid) break;
-          if (Number(value) < Number(min)) {
+
+          if (!minValid) {
             error = `Input needs to be greater than ${min}`;
-          } else if (Number(value) > Number(max)) {
+          } else if (!maxValid) {
             error = `Input needs to be smaller than ${max}`;
           }
       }
@@ -215,10 +235,19 @@ export class Calculator {
     });
   }
 
-  getInputValue(input: Input): string | undefined {
+  getInputValue(input: Input): string | boolean | undefined {
+    let value;
     if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
-      return input.value;
+      value = input.value;
     }
+
+    if (value === 'true') {
+      value = true;
+    } else if (value === 'false') {
+      value = false;
+    }
+
+    return value;
   }
 
   getInputValues(): { [key: string]: string } {
@@ -250,6 +279,7 @@ export class Calculator {
 
       // cancel if inputs are invalid or not all present
       if (!isValid || !allPresent) {
+        console.log('inputs not valid or not all present');
         this.toggleLoading(false);
         return;
       }
@@ -259,20 +289,22 @@ export class Calculator {
   }
 
   async handleAzureRequest(): Promise<void> {
+    console.groupCollapsed('API Call');
+    console.time('API Request');
+
     try {
-      console.groupCollapsed('API Call');
-      console.time('API Request');
       const result = await this.makeAzureRequest();
       this.result = result.result;
-      console.timeEnd('API Request');
       console.log(result);
-      console.groupEnd();
       this.toggleLoading(true);
       this.displayResults();
     } catch (error) {
       console.error('Error retrieving calculation', error);
       this.toggleLoading(false);
     }
+
+    console.timeEnd('API Request');
+    console.groupEnd();
   }
 
   async makeAzureRequest(): Promise<APIResponse> {
@@ -294,66 +326,187 @@ export class Calculator {
     return response.json();
   }
 
+  // displayResults(): void {
+  //   if (!this.result || this.result === undefined) return;
+
+  //   this.outputRepeatTemplates.forEach((outputRepeatTemplate) => {
+  //     // hide the template
+  //     outputRepeatTemplate.style.display = 'none';
+
+  //     // get the repeat name
+  //     const outputRepeatName = outputRepeatTemplate.dataset.calcOutputRepeat;
+  //     if (!outputRepeatName) return;
+
+  //     // find and delete any old clones
+  //     const clonesToDelete = this.outputRepeats[outputRepeatName];
+  //     if (clonesToDelete) {
+  //       clonesToDelete.forEach((cloneToDelete) => {
+  //         cloneToDelete.remove();
+  //       });
+  //     }
+
+  //     // get the data from the result
+  //     const outputRepeatData = this.result[outputRepeatName];
+
+  //     // make a list of clones
+  //     const clones: HTMLElement[] = [];
+  //     const { parentElement } = outputRepeatTemplate;
+  //     if (!parentElement) console.error(`No parent element for ${outputRepeatName} elements`);
+
+  //     // for each item in the array of data
+  //     outputRepeatData.forEach((item) => {
+  //       // clone the template
+  //       const clone = outputRepeatTemplate.cloneNode(true) as HTMLElement;
+
+  //       // get the outputs within the template and loop through them
+  //       const outputs = queryElements(`[${attr}-output]`, clone);
+  //       outputs.forEach((output) => {
+  //         // get the output name
+  //         const { calcOutput } = output.dataset;
+  //         if (!calcOutput) return;
+
+  //         // assign the relevant data as the output text
+  //         output.textContent = item[calcOutput];
+  //       });
+
+  //       // show the clone and add it to the array of clones
+  //       clone.style.removeProperty('display');
+  //       parentElement.appendChild(clone);
+  //       clones.push(clone);
+  //     });
+
+  //     this.outputRepeats[outputRepeatName] = clones;
+  //   });
+
+  //   this.outputs.forEach((output) => {
+  //     const { calcOutput } = output.dataset;
+  //     if (!calcOutput) return;
+
+  //     const resultValue = this.result[calcOutput];
+  //     if (resultValue === 0 || !!resultValue) output.textContent = resultValue.toString();
+  //   });
+
+  //   this.results.style.display = 'block';
+  // }
+
   displayResults(): void {
-    if (!this.result || this.result === undefined) return;
-
-    this.outputRepeatTemplates.forEach((outputRepeatTemplate) => {
-      // hide the template
-      outputRepeatTemplate.style.display = 'none';
-
-      // get the repeat name
-      const outputRepeatName = outputRepeatTemplate.dataset.calcOutputRepeat;
-      if (!outputRepeatName) return;
-
-      // find and delete any old clones
-      const clonesToDelete = this.outputRepeats[outputRepeatName];
-      if (clonesToDelete) {
-        clonesToDelete.forEach((cloneToDelete) => {
-          cloneToDelete.remove();
-        });
-      }
-
-      // get the data from the result
-      const outputRepeatData = this.result[outputRepeatName];
-
-      // make a list of clones
-      const clones: HTMLElement[] = [];
-      const { parentElement } = outputRepeatTemplate;
-      if (!parentElement) console.error(`No parent element for ${outputRepeatName} elements`);
-
-      // for each item in the array of data
-      outputRepeatData.forEach((item) => {
-        // clone the template
-        const clone = outputRepeatTemplate.cloneNode(true) as HTMLElement;
-
-        // get the outputs within the template and loop through them
-        const outputs = queryElements(`[${attr}-output]`, clone);
-        outputs.forEach((output) => {
-          // get the output name
-          const { calcOutput } = output.dataset;
-          if (!calcOutput) return;
-
-          // assign the relevant data as the output text
-          output.textContent = item[calcOutput];
-        });
-
-        // show the clone and add it to the array of clones
-        clone.style.removeProperty('display');
-        parentElement.appendChild(clone);
-        clones.push(clone);
+    if (this.outputRepeatTemplates.length > 0) {
+      this.outputRepeatTemplates.forEach((template) => {
+        template.style.display = 'none';
+        const fragment = document.createDocumentFragment();
+        this.handleTemplateRepeats(template, fragment);
+        template.parentElement.appendChild(fragment);
       });
+    }
 
-      this.outputRepeats[outputRepeatName] = clones;
+    this.populateOutputs();
+    this.populateChart();
+
+    // Append the fragment once after all updates
+    this.results.style.display = 'block';
+  }
+
+  handleTemplateRepeats(template: HTMLDivElement, fragment: DocumentFragment): void {
+    const outputRepeatName = template.dataset.calcOutputRepeat;
+    if (!outputRepeatName || !this.result || !this.result[outputRepeatName]) return;
+
+    // find and delete any old clones
+    const clonesToDelete = this.outputRepeats[outputRepeatName];
+    if (clonesToDelete) {
+      clonesToDelete.forEach((cloneToDelete) => {
+        cloneToDelete.remove();
+      });
+    }
+
+    const dataItems = this.result[outputRepeatName];
+    if (!Array.isArray(dataItems)) return;
+
+    const clones: HTMLElement[] = [];
+    dataItems.forEach((item) => {
+      const clone = this.prepareClone(template, item);
+      if (clone) {
+        fragment.appendChild(clone);
+        clones.push(clone);
+      }
     });
+
+    this.outputRepeats[outputRepeatName] = clones;
+  }
+
+  prepareClone(template: HTMLDivElement, item: BasicObject): HTMLElement | null {
+    const clone = template.cloneNode(true) as HTMLElement;
+    clone.style.removeProperty('display');
+
+    const outputs = queryElements(`[${attr}-output]`, clone) as HTMLElement[];
+    this.populateOutputs(outputs, item);
+
+    return clone;
+  }
+
+  populateOutput(output: HTMLElement, value: string | number) {
+    if (typeof value === 'number') {
+      const { calcOutputMod } = output.dataset;
+      if (calcOutputMod) value = Number(calcOutputMod) * value;
+      output.textContent = numberToCurrency(value);
+    } else {
+      output.textContent = value;
+    }
+  }
+
+  populateOutputs(): void {
+    if (!this.result) return;
 
     this.outputs.forEach((output) => {
-      const { calcOutput } = output.dataset;
-      if (!calcOutput) return;
+      const outputKey = output.dataset.calcOutput;
+      if (!outputKey) return;
 
-      const resultValue = this.result[calcOutput];
-      if (resultValue === 0 || !!resultValue) output.textContent = resultValue.toString();
+      const outputValue = this.result[outputKey];
+      if (outputValue === 0 || this.result[outputKey]) {
+        this.populateOutput(output, outputValue);
+      }
     });
+  }
 
-    this.results.style.display = 'block';
+  populateChart(): void {
+    if (!this.result || !this.graph) return;
+
+    const chartLabels = this.result.ChartLabels as string;
+    const labels = chartLabels.split(',');
+
+    const chartData = this.result.ChartData as string;
+    const data = chartData.split(',').map(Number);
+
+    if (this.chart) {
+      this.chart.data.labels = labels;
+      this.chart.data.datasets[0].data = data;
+      this.chart.update();
+    } else {
+      this.chart = new Chart(this.graph, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Your data', // pull from attr
+              data,
+              borderColor: '#fff',
+              backgroundColor: '#fff',
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: { labels: { font: { family: 'Gotham, sans-serif;' } } },
+          },
+          scales: {
+            x: { ticks: { color: '#fff' } },
+            y: { ticks: { color: '#fff' } },
+          },
+        },
+      });
+
+      Chart.defaults.color = '#fff';
+    }
   }
 }

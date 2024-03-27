@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-// import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import { Calculator } from './calculatorClass';
