@@ -25,7 +25,7 @@ const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/calculatorhttp
 // const API_ENDPOINT = 'http://localhost:7071/api/CalculatorHttpTrigger';
 
 /**
- * @docs data-calc-output-mod - number to multiply the output by
+ * @docs data-calc-output-mod - number to multiply the output by (update to data-calc-output-multiplier)
  */
 
 export class Calculator {
@@ -35,9 +35,9 @@ export class Calculator {
   outputs: Output[];
   outputRepeatTemplates: HTMLDivElement[];
   outputRepeats: { [key: string]: HTMLElement[] };
-  graph: HTMLCanvasElement | undefined;
+  chart: HTMLCanvasElement | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chart?: any;
+  chartJS?: any;
   results: HTMLDivElement;
   button: HTMLButtonElement;
   buttonText: HTMLDivElement;
@@ -52,7 +52,7 @@ export class Calculator {
     this.outputs = queryElements(`[${attr}-output]`, this.component);
     this.outputRepeatTemplates = queryElements(`[${attr}-output-repeat]`, this.component);
     this.outputRepeats = {};
-    this.graph = queryElement(`[${attr}-el="graph"]`, this.component);
+    this.chart = queryElement(`[${attr}-el="chart"]`, this.component);
     this.results = queryElement(`[${attr}-el="results"]`, this.component) as HTMLDivElement;
     this.button = queryElement(`[${attr}-el="button"]`, this.component) as HTMLButtonElement;
     this.buttonText = queryElement(`[${attr}-el="button-text"]`, this.button) as HTMLDivElement;
@@ -454,7 +454,7 @@ export class Calculator {
   }
 
   populateOutputs(): void {
-    if (!this.result) return;
+    if (!this.result || this.result === undefined) return;
 
     this.outputs.forEach((output) => {
       const outputKey = output.dataset.calcOutput;
@@ -468,7 +468,7 @@ export class Calculator {
   }
 
   populateChart(): void {
-    if (!this.result || !this.graph) return;
+    if (!this.result || !this.chart) return;
 
     const chartLabels = this.result.ChartLabels as string;
     const labels = chartLabels.split(',');
@@ -476,18 +476,18 @@ export class Calculator {
     const chartData = this.result.ChartData as string;
     const data = chartData.split(',').map(Number);
 
-    if (this.chart) {
-      this.chart.data.labels = labels;
-      this.chart.data.datasets[0].data = data;
-      this.chart.update();
+    if (this.chartJS) {
+      this.chartJS.data.labels = labels;
+      this.chartJS.data.datasets[0].data = data;
+      this.chartJS.update();
     } else {
-      this.chart = new Chart(this.graph, {
+      this.chartJS = new Chart(this.chart, {
         type: 'line',
         data: {
           labels,
           datasets: [
             {
-              label: 'Your data', // pull from attr
+              label: this.chart.dataset.calcChartTitle,
               data,
               borderColor: '#fff',
               backgroundColor: '#fff',
