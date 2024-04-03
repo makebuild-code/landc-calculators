@@ -2,9 +2,6 @@ import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 export const dialogs = () => {
-  // eslint-disable-next-line no-console
-  console.log('dialogs');
-
   const attr = 'data-dialog';
   const components = queryElements<HTMLDivElement>(`[${attr}="component"]`);
 

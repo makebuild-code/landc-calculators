@@ -232,31 +232,6 @@ export interface OffsetMortgageRequest {
   };
 }
 
-// export interface BuyToLetTaxChangeRequest {
-//   url: 'https://www.landc.co.uk/calculators/buy-to-let-mortgage-calculator/';
-//   calculator: 'buytolettaxchange';
-//   input: {
-//     RepaymentValue: number; // not on site
-//     Rent: number; // min: 1, max: 100000, step: 1000, value: 1000
-//     Rate: number; // not on site
-//   };
-//   output: {
-//     BTLAnnualRentalIncome: number;
-//     BTLWearAndTear: number;
-//     BTLInterest: number;
-//     BTLTaxChange2016: number;
-//     BTLNetIncome2016: number;
-//     BTLTaxChange2017: number;
-//     BTLNetIncome2017: number;
-//     BTLTaxChange2018: number;
-//     BTLNetIncome2018: number;
-//     BTLTaxChange2019: number;
-//     BTLNetIncome2019: number;
-//     BTLTaxChange2020: number;
-//     BTLNetIncome2020: number;
-//   };
-// }
-
 export interface BmiRequest {
   url: 'https://www.landc.co.uk/calculators/bmi-calculator/';
   calculator: 'bmi';
@@ -270,6 +245,57 @@ export interface BmiRequest {
 }
 
 export interface CompareRatesRequest {
+  url: 'https://www.landc.co.uk/calculators/compare-two-rates/';
+  calculator: 'comparerates';
+  input: {
+    PropertyValue: number; // min: 1, max: 10000000, step: 500, value: 250000
+    LoanAmount: number; // min: 5000, max: 10000000, step: 1000, value: 125000
+    Term: number; // min: 1, max: 40, step: 1, value: 25
+    Type: 'R' | 'I';
+    ComparisonRates: {
+      Rate: number; // min: 0.1, max: 15, step: 0.05, value: null | 4.99
+      Fees: number; // min: -10000000, max: 10000000, step: 100, value: null | 850
+      Type: 'F' | 'V';
+      SchemeLength: number; // min: 1, max: 480 | 300, step: 12, value: null | 36
+      ERCAmount: number; // min: 0, max: 100000, step: 100, value: null
+      ERCTerm: number; // min: 0, max: 300, step: 1, value:
+      ERCAdd: boolean;
+      FollowOn: number; // min: 0.1, max: 15, step: 0.05, value: 5.6 | 7
+    }[];
+    ComparisonTerm: number; // min: 2, max: 60, step: 12, value: 24
+    InterestRateEnvironment: 1 | 2 | 3 | 4 | 5 | 6;
+  };
+  output: {
+    CostOfRate1: number;
+    CostOfRate2: number;
+    ChartLabels: string;
+    ChartData: string;
+    ChartData2: string;
+  };
+}
+
+export interface RentPriceRequest {
+  url: 'https://www.landc.co.uk/calculators/house-price-calculator/';
+  calculator: 'houseprice';
+  input: {
+    Number: string;
+    SubBuildingName: string;
+    BuildingName: string;
+    DependentStreet: string;
+    Street: string;
+    Postcode: string;
+  };
+  output: {
+    PropertyValue: number;
+    ValuationUpper: number;
+    ValuationLower: number;
+    MonthlyRental: number;
+    MonthlyRentalUpper: number;
+    MonthlyRentalLower: number;
+  };
+}
+
+export interface CostOfDoingNothingRequest {
   url: 'https://www.landc.co.uk/calculators/compare-two-rates/';
   calculator: 'comparerates';
   input: {

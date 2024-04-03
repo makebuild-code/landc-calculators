@@ -1,189 +1,244 @@
-export interface CalculatorConfig {
-  [key: string]: {
-    inputNames: string[];
-    inputRepeats?: string[];
-    outputNames: string[];
-    outputRepeats?: string[];
-    ifError?: string; // "There seems to be a problem with the calculator, please verify your input values."
-  };
+export interface CalculatorInputs {
+  names: string[];
+  repeats?: string[];
 }
 
-export const calculatorConfig: CalculatorConfig = {
+export interface CalculatorOutputs {
+  names: string[];
+  repeats?: string[];
+}
+
+export interface CalculatorConfig {
+  inputs: CalculatorInputs;
+  outputs: CalculatorOutputs;
+  ifError?: string; // "There seems to be a problem with the calculator, please verify your input values."
+}
+
+export interface CalculatorConfigs {
+  [key: string]: CalculatorConfig;
+}
+
+export const calculatorConfig: CalculatorConfigs = {
   residentialborrowinglimit: {
-    inputNames: ['Applicant1Income', 'Applicant2Income'],
-    outputNames: ['BorrowingAmountLower', 'BorrowingAmountHigher'],
+    inputs: { names: ['Applicant1Income', 'Applicant2Income'] },
+    outputs: { names: ['BorrowingAmountLower', 'BorrowingAmountHigher'] },
   },
   buytoletborrowinglimit: {
-    inputNames: ['RentalIncome'],
-    outputNames: ['BorrowingAmountLower', 'BorrowingAmountHigher'],
+    inputs: { names: ['RentalIncome'] },
+    outputs: { names: ['BorrowingAmountLower', 'BorrowingAmountHigher'] },
   },
   mortgagecost: {
-    inputNames: ['RepaymentValue', 'TermYears', 'Rate', 'PaymentType'],
-    outputNames: [
-      'MonthlyPayment',
-      'TotalOverTerm',
-      'CapitalRepayment',
-      'InterestRepayment',
-      'ChartLabels',
-      'ChartDate',
-    ],
+    inputs: { names: ['RepaymentValue', 'TermYears', 'Rate', 'PaymentType'] },
+    outputs: {
+      names: [
+        'MonthlyPayment',
+        'TotalOverTerm',
+        'CapitalRepayment',
+        'InterestRepayment',
+        'ChartLabels',
+        'ChartDate',
+      ],
+    },
   },
   houseprice: {
-    inputNames: [
-      'Number',
-      'SubBuildingName',
-      'BuildingName',
-      'DependentStreet',
-      'Street',
-      'Postcode',
-      'addressId',
-    ],
-    outputNames: [
-      'PropertyValue',
-      'ValuationUpper',
-      'ValuationLower',
-      'MonthlyRental',
-      'MonthlyRentalUpper',
-      'MonthlyRentalLower',
-    ],
+    inputs: {
+      names: [
+        'Number',
+        'SubBuildingName',
+        'BuildingName',
+        'DependentStreet',
+        'Street',
+        'Postcode',
+        'addressId',
+      ],
+    },
+    outputs: {
+      names: [
+        'PropertyValue',
+        'ValuationUpper',
+        'ValuationLower',
+        'MonthlyRental',
+        'MonthlyRentalUpper',
+        'MonthlyRentalLower',
+      ],
+    },
   },
   loantovalue: {
-    inputNames: ['PropertyValue', 'Type', 'DepositAmount', 'LoanAmount', 'LoanToValue'],
-    outputNames: ['LoanAmount', 'DepositAmount', 'LoanToValue'],
+    inputs: { names: ['PropertyValue', 'Type', 'DepositAmount', 'LoanAmount', 'LoanToValue'] },
+    outputs: { names: ['LoanAmount', 'DepositAmount', 'LoanToValue'] },
   },
   stampduty: {
-    inputNames: ['PurchasePrice', 'Location', 'FirstTimeBuyer', 'SecondProperty'],
-    outputNames: ['BandRate', 'BandValue', 'BandCost', 'TotalCost'],
-    outputRepeats: ['StampDutyData'],
+    inputs: { names: ['PurchasePrice', 'Location', 'FirstTimeBuyer', 'SecondProperty'] },
+    outputs: {
+      names: ['BandRate', 'BandValue', 'BandCost', 'TotalCost'],
+      repeats: ['StampDutyData'],
+    },
   },
   overpayment: {
-    inputNames: [
-      'LoanAmount',
-      'Rate',
-      'Term',
-      'LoanType',
-      'Value',
-      'EventDate',
-      'RegularPayment',
-      'Frequency',
-    ],
-    inputRepeats: ['OverpaymentEvents'],
-    outputNames: [
-      'ChartLabels',
-      'ChartData',
-      'ChartData2',
-      'OverpayingSaving',
-      'OverpayingInterest',
-      'OverpayingTerm',
-    ],
+    inputs: {
+      names: [
+        'LoanAmount',
+        'Rate',
+        'Term',
+        'LoanType',
+        'Value',
+        'EventDate',
+        'RegularPayment',
+        'Frequency',
+      ],
+      repeats: ['OverpaymentEvents'],
+    },
+    outputs: {
+      names: [
+        'ChartLabels',
+        'ChartData',
+        'ChartData2',
+        'OverpayingSaving',
+        'OverpayingInterest',
+        'OverpayingTerm',
+      ],
+    },
   },
   ratechange: {
-    inputNames: ['LoanAmount', 'CurrentRate', 'Term', 'ChangeRate', 'PaymentType'],
-    outputNames: ['CurrentPayment', 'NewPayment'],
+    inputs: { names: ['LoanAmount', 'CurrentRate', 'Term', 'ChangeRate', 'PaymentType'] },
+    outputs: { names: ['CurrentPayment', 'NewPayment'] },
   },
   interest: {
-    inputNames: ['AmountInvested', 'InterestRate', 'TaxStatus'],
-    outputNames: ['TaxRate', 'MonthlyInterest'],
+    inputs: { names: ['AmountInvested', 'InterestRate', 'TaxStatus'] },
+    outputs: { names: ['TaxRate', 'MonthlyInterest'] },
   },
   lifeinsurance: {
-    inputNames: [
-      'Income',
-      'Spouse',
-      'ChildAge',
-      'University',
-      'LoanAmount',
-      'Rent',
-      'TotalLoans',
-      'TotalCreditCards',
-      'TotalSavings',
-      'TotalLifeInsurance',
-      'OtherAssets',
-    ],
-    outputNames: [
-      'IncomeReplacement',
-      'ChildrenCover',
-      'UniversityCover',
-      'HousingCover',
-      'Debts',
-      'Assets',
-      'TotalCoverRequired',
-    ],
+    inputs: {
+      names: [
+        'Income',
+        'Spouse',
+        'ChildAge',
+        'University',
+        'LoanAmount',
+        'Rent',
+        'TotalLoans',
+        'TotalCreditCards',
+        'TotalSavings',
+        'TotalLifeInsurance',
+        'OtherAssets',
+      ],
+    },
+    outputs: {
+      names: [
+        'IncomeReplacement',
+        'ChildrenCover',
+        'UniversityCover',
+        'HousingCover',
+        'Debts',
+        'Assets',
+        'TotalCoverRequired',
+      ],
+    },
   },
   savings: {
-    inputNames: [
-      'RequiredAmount',
-      'GrowthRate',
-      'DepositAmount',
-      'MonthlyInvestmentAmount',
-      'Term',
-    ],
-    outputNames: ['SavingsTermTotal', 'SavingsTotalPerMonth', 'ChartLabels', 'ChartData'],
+    inputs: {
+      names: ['RequiredAmount', 'GrowthRate', 'DepositAmount', 'MonthlyInvestmentAmount', 'Term'],
+    },
+    outputs: { names: ['SavingsTermTotal', 'SavingsTotalPerMonth', 'ChartLabels', 'ChartData'] },
   },
   offsetmortgage: {
-    inputNames: [
-      'LoanAmount',
-      'Rate',
-      'Term',
-      'Fee',
-      'SavingsAmount',
-      'SavingsRate',
-      'MonthlySavings',
-      'OffsetRate',
-      'OffsetFees',
-      'CompareTerm',
-      'TaxStatus',
-    ],
-    outputNames: [
-      'OffsetStandardMonthly',
-      'OffsetMonthly',
-      'OffsetStandardInterestCost',
-      'OffsetInterestCost',
-      'OffsetInterestEarned',
-      'ChartLabels',
-      'ChartData',
-      'ChartData2',
-    ],
+    inputs: {
+      names: [
+        'LoanAmount',
+        'Rate',
+        'Term',
+        'Fee',
+        'SavingsAmount',
+        'SavingsRate',
+        'MonthlySavings',
+        'OffsetRate',
+        'OffsetFees',
+        'CompareTerm',
+        'TaxStatus',
+      ],
+    },
+    outputs: {
+      names: [
+        'OffsetStandardMonthly',
+        'OffsetMonthly',
+        'OffsetStandardInterestCost',
+        'OffsetInterestCost',
+        'OffsetInterestEarned',
+        'ChartLabels',
+        'ChartData',
+        'ChartData2',
+      ],
+    },
   },
-  // buytolettaxchange: {
-  //   inputNames: ['RepaymentValue', 'Rent', 'Rate'],
-  //   outputNames: [
-  //     'BTLAnnualRentalIncome',
-  //     'BTLWearAndTear',
-  //     'BTLInterest',
-  //     'BTLTaxChange2016',
-  //     'BTLNetIncome2016',
-  //     'BTLTaxChange2017',
-  //     'BTLNetIncome2017',
-  //     'BTLTaxChange2018',
-  //     'BTLNetIncome2018',
-  //     'BTLTaxChange2019',
-  //     'BTLNetIncome2019',
-  //     'BTLTaxChange2020',
-  //     'BTLNetIncome2020',
-  //   ],
-  // },
   bmi: {
-    inputNames: ['Height', 'Weight'],
-    outputNames: ['Bmi'],
+    inputs: { names: ['Height', 'Weight'] },
+    outputs: { names: ['Bmi'] },
   },
   comparerates: {
-    inputNames: [
-      'PropertyValue',
-      'LoanAmount',
-      'Term',
-      'Type',
-      'Rate',
-      'Fees',
-      'Type',
-      'SchemeLength',
-      'ERCAmount',
-      'ERCTerm',
-      'ERCAdd',
-      'FollowOn',
-      'ComparisonTerm',
-      'InterestRateEnvironment',
-    ],
-    inputRepeats: ['ComparisonRates'],
-    outputNames: ['CostOfRate1', 'CostOfRate2', 'ChartLabels', 'ChartData', 'ChartData2'],
+    inputs: {
+      names: [
+        'PropertyValue',
+        'LoanAmount',
+        'Term',
+        'Type',
+        'Rate',
+        'Fees',
+        'Type',
+        'SchemeLength',
+        'ERCAmount',
+        'ERCTerm',
+        'ERCAdd',
+        'FollowOn',
+        'ComparisonTerm',
+        'InterestRateEnvironment',
+      ],
+      repeats: ['ComparisonRates'],
+    },
+    outputs: { names: ['CostOfRate1', 'CostOfRate2', 'ChartLabels', 'ChartData', 'ChartData2'] },
+  },
+  rentprice: {
+    inputs: {
+      names: [
+        'Number',
+        'SubBuildingName',
+        'BuildingName',
+        'DependentStreet',
+        'Street',
+        'Postcode',
+        'addressId',
+      ],
+    },
+    outputs: {
+      names: [
+        'PropertyValue',
+        'ValuationUpper',
+        'ValuationLower',
+        'MonthlyRental',
+        'MonthlyRentalUpper',
+        'MonthlyRentalLower',
+      ],
+    },
+  },
+  costofdoingnothing: {
+    inputs: {
+      names: [
+        'PropertyValue',
+        'LoanAmount',
+        'Term',
+        'Type',
+        'Rate',
+        'Fees',
+        'Type',
+        'SchemeLength',
+        'ERCAmount',
+        'ERCTerm',
+        'ERCAdd',
+        'FollowOn',
+        'ComparisonTerm',
+        'InterestRateEnvironment',
+      ],
+      repeats: ['ComparisonRates'],
+    },
+    outputs: { names: ['CostOfRate1', 'CostOfRate2', 'ChartLabels', 'ChartData', 'ChartData2'] },
   },
 };
