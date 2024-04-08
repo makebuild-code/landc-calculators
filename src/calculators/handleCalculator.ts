@@ -1,7 +1,9 @@
-import type { APIResponse } from 'src/types';
+import type { APIResponse, Input } from 'src/types';
 
+import { getInputValue } from '$utils/getInputValue';
 import { isStaging } from '$utils/isStaging';
 import { queryElement } from '$utils/queryElement';
+import { queryElements } from '$utils/queryelements';
 
 import { type CalculatorConfig, calculatorConfig } from './calculatorConfig';
 import { HandleInputs } from './handleInputs';
@@ -22,8 +24,9 @@ export class HandleCalculator {
   private name: string;
   component: HTMLDivElement;
   config: CalculatorConfig;
-  private inputs: HandleInputs;
+  inputs: HandleInputs;
   private outputs: HandleOutputs;
+  private conditionals: HTMLElement[];
   private button: HTMLButtonElement;
   private buttonText: HTMLDivElement;
   private buttonLoader: HTMLDivElement;
@@ -36,6 +39,7 @@ export class HandleCalculator {
     this.config = calculatorConfig[this.name];
     this.inputs = new HandleInputs(this);
     this.outputs = new HandleOutputs(this);
+    this.conditionals = queryElements(`[data-condition]`, this.component);
     this.button = queryElement(`[${attr}-el="button"]`, this.component) as HTMLButtonElement;
     this.buttonText = queryElement(`[${attr}-el="button-text"]`, this.button) as HTMLDivElement;
     this.buttonLoader = queryElement(`[${attr}-el="button-loader"]`, this.button) as HTMLDivElement;
@@ -53,6 +57,39 @@ export class HandleCalculator {
     }
     this.onSubmit();
   }
+
+  // private handleConditionals(): void {
+  //   console.log(this.conditionals);
+  //   // {"dependsOn": "LoanType", "value": "R", "operator": "equal"}
+  //   this.conditionals.forEach((item) => {
+  //     const { condition } = item.dataset;
+  //     if (!condition) return;
+
+  //     const parsedCondition = JSON.parse(condition);
+
+  //     const input = this.inputs.inputs.find(
+  //       (input) => input.dataset.input === parsedCondition.dependsOn
+  //     );
+  //     if (!input) return;
+
+  //     let conditionsMet = false;
+
+  //     switch (parsedCondition.operator) {
+  //       case 'equal':
+  //         conditionsMet = getInputValue(input) === parsedCondition.value;
+  //         break;
+  //       case 'notequal':
+  //         conditionsMet = getInputValue(input) !== parsedCondition.value;
+  //         break;
+  //     }
+
+  //     const itemInput = queryElement('[data-input]', item) as Input;
+  //     if (itemInput) {
+  //       itemInput.dataset.conditionsmet = conditionsMet.toString();
+  //       item.style.display = conditionsMet ? 'block' : 'none';
+  //     }
+  //   });
+  // }
 
   private onSubmit(): void {
     this.button.addEventListener('click', () => {

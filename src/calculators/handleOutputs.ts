@@ -1,5 +1,6 @@
 import Chart from 'chart.js/auto';
 
+import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
 import { isStaging } from '$utils/isStaging';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
@@ -17,18 +18,21 @@ const attr = 'data-calc';
  */
 
 export class HandleOutputs {
+  private calculator: HandleCalculator;
   private config: CalculatorOutputs;
   private all: Output[];
   private repeatTemplates: HTMLDivElement[];
   private repeatOutputs: Output[];
   private outputs: Output[];
   private repeatClones: { [key: string]: HTMLElement[] };
+  private conditionals: HTMLDivElement[];
   private chart: HTMLCanvasElement | undefined;
   private chartJS?: Chart;
   private results: HTMLDivElement;
   private result?: Result;
 
   constructor(calculator: HandleCalculator) {
+    this.calculator = calculator;
     this.config = calculator.config.outputs;
     this.all = queryElements(`[${attr}-output]`, calculator.component);
     this.repeatTemplates = queryElements(`[${attr}-output-repeat]`, calculator.component);
@@ -38,6 +42,10 @@ export class HandleOutputs {
     );
     this.outputs = this.all.filter((output) => !this.repeatOutputs.includes(output));
     this.repeatClones = {};
+    this.conditionals = queryElements(
+      '.calculator_results-wrapper [data-condition]',
+      calculator.component
+    );
     this.chart = queryElement(`[${attr}-el="chart"]`, calculator.component);
     this.results = queryElement(`[${attr}-el="results"]`, calculator.component) as HTMLDivElement;
   }
@@ -66,6 +74,12 @@ export class HandleOutputs {
     return allPresent;
   }
 
+  handleConditionals(): void {
+    this.conditionals.forEach((item) => {
+      handleConditionalVisibility(item, this.calculator.inputs.inputs);
+    });
+  }
+
   displayResults(result: Result): void {
     this.result = result;
 
@@ -80,6 +94,7 @@ export class HandleOutputs {
 
     this.populateOutputs();
     this.populateChart();
+    this.handleConditionals();
 
     this.results.style.display = 'block';
   }

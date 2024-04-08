@@ -1,5 +1,6 @@
 import { checkInputValidity } from '$utils/checkInputValidity';
 import { getInputValue } from '$utils/getInputValue';
+import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
 import { isStaging } from '$utils/isStaging';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -24,7 +25,8 @@ export class HandleInputs {
   config: CalculatorInputs;
   private repeats?: HandleInputRepeat[];
   private all: Input[];
-  private inputs: Input[];
+  inputs: Input[];
+  private conditionals: HTMLDivElement[];
 
   constructor(calculator: HandleCalculator) {
     this.calculator = calculator;
@@ -39,6 +41,7 @@ export class HandleInputs {
     this.all = queryElements(`[data-input]`, calculator.component);
     // this.inputs = this.all.filter((input) => !this.repeats.inputs.includes(input));
     this.inputs = queryElements(`[data-input]`, calculator.component);
+    this.conditionals = queryElements('.calculator_inputs [data-condition]', calculator.component);
   }
 
   init(): void {
@@ -49,6 +52,8 @@ export class HandleInputs {
         repeat.init();
       });
     }
+
+    this.handleConditionals();
     this.bindEvents();
   }
 
@@ -78,15 +83,15 @@ export class HandleInputs {
 
   private getWrapper(input: Input): HTMLElement | undefined {
     let child = input as HTMLElement,
-      inputWrapper: HTMLElement | undefined;
+      wrapper: HTMLElement | undefined;
 
     while (child) {
       if (
         child.parentElement &&
         child.parentElement.classList &&
-        child.parentElement.classList.contains('calculator-field_component')
+        child.parentElement.classList.contains('custom-field_component')
       ) {
-        inputWrapper = child.parentElement;
+        wrapper = child.parentElement;
         break;
       } else if (child.parentElement) {
         child = child.parentElement;
@@ -95,35 +100,39 @@ export class HandleInputs {
       }
     }
 
-    return inputWrapper;
+    return wrapper;
   }
 
-  private setMessage(input: Input, message?: string): void {
-    const inputWrapper = this.getWrapper(input);
-    if (!inputWrapper) return;
+  private setError(input: Input, text?: string): void {
+    const wrapper = this.getWrapper(input);
+    if (!wrapper) return;
 
-    const inputMessage = queryElement('.calculator-field_message', inputWrapper);
-    if (!inputMessage) return;
+    const message = queryElement('[data-calc-el="message"]', wrapper);
+    const error = queryElement('[data-calc-el="error"]', wrapper);
 
-    const { originalMessage } = inputMessage.dataset;
-    if (!originalMessage && inputMessage.textContent) {
-      inputMessage.dataset.originalMessage = inputMessage.textContent;
-    }
+    if (!error) return;
 
-    if (message) {
-      inputMessage.textContent = message;
-    } else if (inputMessage.dataset.originalMessage) {
-      inputMessage.textContent = inputMessage.dataset.originalMessage;
+    if (text) {
+      error.textContent = text;
+      error.style.display = 'block';
+      if (message) message.style.display = 'none';
+    } else {
+      error.style.display = 'none';
+      if (message) message.style.removeProperty('display');
     }
   }
 
   validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
 
+    console.log(validity);
+
     if (!validity.error) {
-      this.setMessage(input);
+      console.log('clearing error');
+      this.setError(input);
     } else {
-      this.setMessage(input, validity.error);
+      console.log('setting error');
+      this.setError(input, validity.error);
     }
 
     return validity.isValid;
@@ -136,23 +145,34 @@ export class HandleInputs {
   }
 
   getValues(): { [key: string]: string | boolean } {
-    const inputValues: { [key: string]: string | boolean } = {};
+    const values: { [key: string]: string | boolean } = {};
     this.inputs.forEach((input: Input) => {
       const calcInput = input.dataset.input;
       const value = getInputValue(input);
       if (!calcInput || !value) return;
 
-      inputValues[calcInput] = value;
+      const { conditionsmet } = input.dataset;
+      if (conditionsmet === 'false') return;
+
+      values[calcInput] = value;
     });
 
-    return inputValues;
+    return values;
+  }
+
+  handleConditionals(): void {
+    this.conditionals.forEach((item) => {
+      handleConditionalVisibility(item, this.inputs);
+    });
   }
 
   private bindEvents(): void {
     // validate inputs on value change
     this.inputs.forEach((input) => {
       input.addEventListener('change', () => {
+        console.log('changed');
         this.validateInput(input);
+        this.handleConditionals();
       });
     });
   }
