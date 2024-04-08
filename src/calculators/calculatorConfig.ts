@@ -46,10 +46,9 @@ export const calculatorConfig: CalculatorConfigs = {
         'Number',
         'SubBuildingName',
         'BuildingName',
-        'DependentStreet',
+        // 'DependentStreet',
         'Street',
         'Postcode',
-        'addressId',
       ],
     },
     outputs: {

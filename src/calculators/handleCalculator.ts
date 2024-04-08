@@ -33,9 +33,9 @@ export class HandleCalculator {
   private isLoading: boolean;
   private result?: Result;
 
-  constructor(name: string) {
-    this.name = name;
-    this.component = queryElement(`[${attr}="${this.name}"]`) as HTMLDivElement;
+  constructor(component: HTMLDivElement) {
+    this.name = component.dataset.calc as string;
+    this.component = component;
     this.config = calculatorConfig[this.name];
     this.inputs = new HandleInputs(this);
     this.outputs = new HandleOutputs(this);
@@ -97,6 +97,9 @@ export class HandleCalculator {
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
 
+      console.log(isValid);
+      console.log(allPresent);
+
       // cancel if inputs are invalid or not all present
       if (!isValid || !allPresent) {
         if (isStaging) console.log('inputs not valid or not all present');
@@ -134,8 +137,12 @@ export class HandleCalculator {
       const result = await this.makeAzureRequest();
       this.result = result.result;
       if (isStaging) console.log(result);
-      this.toggleLoading(true);
-      this.outputs.displayResults(this.result);
+      if (this.result === null) {
+        this.toggleLoading(false);
+      } else {
+        this.toggleLoading(true);
+        this.outputs.displayResults(this.result);
+      }
     } catch (error) {
       console.error('Error retrieving calculation', error);
       this.toggleLoading(false);

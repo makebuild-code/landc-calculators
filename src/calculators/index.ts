@@ -7,11 +7,9 @@ export const calculators = () => {
   const components = queryElements<HTMLDivElement>(`[${attr}]`);
 
   components.forEach((component) => {
-    console.log(component);
-    const { calc } = component.dataset;
-    if (!calc) return;
-
-    const calculator = new HandleCalculator(calc);
+    const calculator = new HandleCalculator(component);
     calculator.init();
+
+    console.log(calculator);
   });
 };
