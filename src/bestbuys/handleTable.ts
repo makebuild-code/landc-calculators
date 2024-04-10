@@ -18,7 +18,6 @@ export class HandleTable {
   component: HTMLDivElement;
   private template: HTMLDivElement;
   private clone: HTMLDivElement;
-  private list: HTMLDivElement;
   private inputs: Input[];
   private conditionals: HTMLDivElement[];
   // private outputs: Outputs;
@@ -34,8 +33,6 @@ export class HandleTable {
     this.template = queryElement(`[${attr}-el="template"]`, component) as HTMLDivElement;
     this.clone = this.template.cloneNode(true) as HTMLDivElement;
     this.clone.removeAttribute('data-bb-el');
-    this.list = this.template.parentElement as HTMLDivElement;
-    // this.template.remove();
     this.inputs = queryElements(`[data-input], input, select`, component);
     this.conditionals = queryElements(`[data-conditions]`, component);
     this.buttons = queryElements(`[${attr}-el="button"]`, component);
@@ -49,7 +46,7 @@ export class HandleTable {
     this.bindEvents();
   }
 
-  bindEvents(): void {
+  private bindEvents(): void {
     this.inputs.forEach((input) => {
       input.addEventListener('change', () => {
         formatInput(input);
@@ -71,7 +68,7 @@ export class HandleTable {
     });
   }
 
-  validateInput(input: Input): boolean {
+  private validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
 
     if (!validity.error) {
@@ -83,13 +80,13 @@ export class HandleTable {
     return validity.isValid;
   }
 
-  validateInputs(): boolean {
+  private validateInputs(): boolean {
     return this.inputs.every((input) => {
       return this.validateInput(input);
     });
   }
 
-  conditionalVisibility(): void {
+  private conditionalVisibility(): void {
     this.conditionals.forEach((item) => {
       const { conditions } = item.dataset;
       if (!conditions) return;
@@ -147,7 +144,7 @@ export class HandleTable {
     }
   }
 
-  getValues(): Inputs {
+  private getValues(): Inputs {
     const preFormattedValues: { [key: string]: string | boolean } = {};
     this.inputs.forEach((input) => {
       if (input.dataset.conditionsmet && input.dataset.conditionsmet === 'false') return;
@@ -240,11 +237,11 @@ export class HandleTable {
     return response.json();
   }
 
-  clearResults(): void {
-    this.list.innerHTML = '';
+  private clearResults(): void {
+    this.resultsList.innerHTML = '';
   }
 
-  displayResults(): void {
+  private displayResults(): void {
     this.clearResults();
     if (!this.result) return;
 
@@ -286,7 +283,7 @@ export class HandleTable {
         });
       }
 
-      this.list.appendChild(clone);
+      this.resultsList.appendChild(clone);
     });
   }
 }
