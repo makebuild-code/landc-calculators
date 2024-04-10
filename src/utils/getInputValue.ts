@@ -12,6 +12,10 @@ export function getInputValue(input: Input): string | boolean | undefined {
     value = checkedRadio.value;
   }
 
+  if (input instanceof HTMLInputElement && input.type === 'checkbox') {
+    value = input.checked;
+  }
+
   if (value === 'true' || value === 'on') {
     value = true;
   } else if (value === 'false' || value === 'off') {

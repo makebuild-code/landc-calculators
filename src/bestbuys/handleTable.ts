@@ -68,8 +68,13 @@ interface Outputs {
   RepresentativeExample: string;
 }
 
-export interface Result {
+interface Result {
   [key: string]: string | number | BasicObject[];
+}
+
+export interface BestBuyResult {
+  success: boolean;
+  data: Result[];
 }
 
 const attr = 'data-bb';
@@ -84,33 +89,39 @@ export class HandleTable {
   private conditionals: HTMLDivElement[];
   // private outputs: Outputs;
   private buttons: HTMLButtonElement[];
+  private resultsList: HTMLDivElement;
+  private loading: HTMLDivElement;
+  private noResults: HTMLDivElement;
   private isLoading: boolean;
-  private result?: Result;
+  private result?: BestBuyResult;
 
   constructor(component: HTMLDivElement) {
     this.component = component;
     this.template = queryElement(`[${attr}-el="template"]`, component) as HTMLDivElement;
     this.clone = this.template.cloneNode(true) as HTMLDivElement;
+    this.clone.removeAttribute('data-bb-el');
     this.list = this.template.parentElement as HTMLDivElement;
     // this.template.remove();
     this.inputs = queryElements(`[data-input], input, select`, component);
     this.conditionals = queryElements(`[data-conditions]`, component);
     this.buttons = queryElements(`[${attr}-el="button"]`, component);
+    this.resultsList = queryElement(`[${attr}-el="results-list"]`) as HTMLDivElement;
+    this.loading = queryElement(`[${attr}-el="loading"]`, component) as HTMLDivElement;
+    this.noResults = queryElement(`[${attr}-el="no-results"]`, component) as HTMLDivElement;
     this.isLoading = false;
   }
 
   init(): void {
-    console.log(this.inputs);
-    console.log(this.conditionals);
-
-    this.bindEvents();
+    this.onSubmit();
   }
 
-  bindEvents(): void {
+  onSubmit(): void {
+    this.isLoading = true;
     this.conditionalVisibility();
     this.handleAzureRequest();
     this.buttons.forEach((button) => {
       button.addEventListener('click', () => {
+        this.toggleLoading();
         this.handleAzureRequest();
       });
     });
@@ -157,15 +168,28 @@ export class HandleTable {
     });
   }
 
+  private toggleLoading(success?: boolean): void {
+    this.isLoading = !this.isLoading;
+    if (this.isLoading) {
+      this.loading.style.display = 'block';
+      this.noResults.style.display = 'none';
+      this.resultsList.style.display = 'none';
+    } else if (success) {
+      this.loading.style.display = 'none';
+      this.noResults.style.display = 'none';
+      this.resultsList.style.display = 'flex';
+    } else if (!success) {
+      this.loading.style.display = 'none';
+      this.noResults.style.display = 'flex';
+      this.resultsList.style.display = 'none';
+    }
+  }
+
   getValues(): Inputs {
     console.log('get values');
     const preFormattedValues: { [key: string]: string | boolean } = {};
     this.inputs.forEach((input) => {
-      if (input.dataset.conditionsmet && input.dataset.conditionsmet === 'false') {
-        console.log('conditions not met');
-        console.log(input);
-        return;
-      }
+      if (input.dataset.conditionsmet && input.dataset.conditionsmet === 'false') return;
       const key = input.dataset.input;
       const value = getInputValue(input);
 
@@ -178,10 +202,10 @@ export class HandleTable {
       PropertyValue: preFormattedValues.PropertyValue as string,
       RepaymentValue: preFormattedValues.RepaymentValue as string,
       PropertyType: preFormattedValues.PropertyType as PropertyType,
-      MortgageType: preFormattedValues.MortgageType as MortgageType,
+      MortgageType: preFormattedValues.MortgageType === 'Residential' ? '1' : '2',
       InterestOnlyValue: preFormattedValues.InterestOnlyValue as string,
       TermYears: preFormattedValues.TermYears as string,
-      SchemePurpose: preFormattedValues.SchemePurpose as SchemePurpose,
+      SchemePurpose: preFormattedValues.SchemePurpose === 'Purchase' ? '1' : '2',
       SchemePeriods: [],
       SchemeTypes: [],
       NumberOfResults: '50',
@@ -214,11 +238,15 @@ export class HandleTable {
       const result = await this.makeAzureRequest();
       this.result = result.result;
       if (isStaging) console.log(result);
-      // this.toggleLoading(true);
-      this.displayResults(result.result);
+      if (this.result === null || !this.result.success || this.result.data.length === 0) {
+        this.toggleLoading(false);
+      } else {
+        this.toggleLoading(true);
+        this.displayResults();
+      }
     } catch (error) {
       console.error('Error retrieving calculation', error);
-      // this.toggleLoading(false);
+      this.toggleLoading(false);
     }
 
     if (isStaging) {
@@ -250,12 +278,11 @@ export class HandleTable {
     this.list.innerHTML = '';
   }
 
-  displayResults(result: Result): void {
-    this.result = result;
-
+  displayResults(): void {
     this.clearResults();
+    if (!this.result) return;
 
-    result.data.forEach((item) => {
+    this.result.data.forEach((item) => {
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
 
@@ -265,19 +292,33 @@ export class HandleTable {
         if (!key) return;
 
         const value = item[key];
-        console.log(output);
         if (value === 0 || item[key]) {
           if (typeof value === 'number') {
             output.textContent = numberToCurrency(value);
           } else if (output.nodeName === 'IMG') {
-            console.log(output);
             output.src = value;
           } else {
-            console.log('else');
             output.textContent = value;
           }
         }
       });
+
+      const moreToggle = queryElement(`[${attr}-el="more-toggle"]`, clone);
+      const moreText = queryElement(`[${attr}-el="more-text"]`, clone);
+      const moreIcon = queryElement(`[${attr}-el="more-icon"]`, clone);
+      const moreContent = queryElement(`[${attr}-el="more-content"]`, clone);
+
+      if (moreToggle && moreText && moreIcon && moreContent) {
+        let isOpen = false;
+
+        moreToggle.addEventListener('click', () => {
+          moreText.textContent = isOpen ? 'More info' : 'Less info';
+          moreIcon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(45deg)';
+          moreContent.style.display = isOpen ? 'none' : 'block';
+
+          isOpen = !isOpen;
+        });
+      }
 
       this.list.appendChild(clone);
     });
