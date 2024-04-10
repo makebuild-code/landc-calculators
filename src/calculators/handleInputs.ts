@@ -46,8 +46,6 @@ export class HandleInputs {
 
   init(): void {
     if (this.repeats) {
-      console.log('repeats:');
-      console.log(this.repeats);
       this.repeats.forEach((repeat) => {
         repeat.init();
       });
@@ -73,8 +71,11 @@ export class HandleInputs {
     });
 
     if (isStaging) {
+      // eslint-disable-next-line no-console
       console.groupCollapsed(`${allPresent ? 'all inputs present' : 'inputs missing'}`);
+      // eslint-disable-next-line no-console
       console.table(tableData);
+      // eslint-disable-next-line no-console
       console.groupEnd();
     }
 
@@ -122,16 +123,21 @@ export class HandleInputs {
     }
   }
 
+  formatInput(input: Input): void {
+    if (input instanceof HTMLInputElement) {
+      const { type, value } = input;
+      if (type !== 'number') return;
+
+      input.value = Math.round(Number(value)).toString();
+    }
+  }
+
   validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
 
-    console.log(validity);
-
     if (!validity.error) {
-      console.log('clearing error');
       this.setError(input);
     } else {
-      console.log('setting error');
       this.setError(input, validity.error);
     }
 
@@ -170,7 +176,7 @@ export class HandleInputs {
     // validate inputs on value change
     this.inputs.forEach((input) => {
       input.addEventListener('change', () => {
-        console.log('changed');
+        this.formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
       });
