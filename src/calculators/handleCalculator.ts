@@ -1,6 +1,5 @@
-import type { APIResponse, Input } from 'src/types';
+import type { APIResponse, Result } from 'src/types';
 
-import { getInputValue } from '$utils/getInputValue';
 import { isStaging } from '$utils/isStaging';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -8,14 +7,6 @@ import { queryElements } from '$utils/queryelements';
 import { type CalculatorConfig, calculatorConfig } from './calculatorConfig';
 import { HandleInputs } from './handleInputs';
 import { HandleOutputs } from './handleOutputs';
-
-export type BasicObject = {
-  [key: string]: string | number;
-};
-
-export interface Result {
-  [key: string]: string | number | BasicObject[];
-}
 
 const attr = 'data-calc';
 const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/calculatorhttptrigger';
@@ -58,47 +49,11 @@ export class HandleCalculator {
     this.onSubmit();
   }
 
-  // private handleConditionals(): void {
-  //   console.log(this.conditionals);
-  //   // {"dependsOn": "LoanType", "value": "R", "operator": "equal"}
-  //   this.conditionals.forEach((item) => {
-  //     const { condition } = item.dataset;
-  //     if (!condition) return;
-
-  //     const parsedCondition = JSON.parse(condition);
-
-  //     const input = this.inputs.inputs.find(
-  //       (input) => input.dataset.input === parsedCondition.dependsOn
-  //     );
-  //     if (!input) return;
-
-  //     let conditionsMet = false;
-
-  //     switch (parsedCondition.operator) {
-  //       case 'equal':
-  //         conditionsMet = getInputValue(input) === parsedCondition.value;
-  //         break;
-  //       case 'notequal':
-  //         conditionsMet = getInputValue(input) !== parsedCondition.value;
-  //         break;
-  //     }
-
-  //     const itemInput = queryElement('[data-input]', item) as Input;
-  //     if (itemInput) {
-  //       itemInput.dataset.conditionsmet = conditionsMet.toString();
-  //       item.style.display = conditionsMet ? 'block' : 'none';
-  //     }
-  //   });
-  // }
-
   private onSubmit(): void {
     this.button.addEventListener('click', () => {
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
-
-      console.log(isValid);
-      console.log(allPresent);
 
       // cancel if inputs are invalid or not all present
       if (!isValid || !allPresent) {

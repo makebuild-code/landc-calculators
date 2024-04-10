@@ -1,4 +1,3 @@
-import type { BasicObject } from 'src/calculators/handleCalculator';
 import type { APIResponse, Input } from 'src/types';
 
 import { checkInputValidity } from '$utils/checkInputValidity';
@@ -10,74 +9,7 @@ import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 import { setError } from '$utils/setError';
 
-type PropertyType = '1' | '2';
-type MortgageType = '1' | '2';
-type SchemePurpose = '1' | '2';
-type SchemePeriods = '1' | '2' | '3' | '4';
-type SchemeTypes = '1' | '2';
-type SortColumn = '1' | '2' | '3' | '4' | '5' | '6';
-
-interface Inputs {
-  PropertyValue: string; // Market value of property
-  PropertyType: PropertyType; // 1 for house; 2 for flat
-  MortgageType: MortgageType; // 1 for Residential; 2 for Buy to Let
-  RepaymentValue: string; // Repayment amount
-  InterestOnlyValue: string; // Interest only value
-  TermYears: string; // Mortgage term in whole years
-  SchemePurpose: SchemePurpose; // Mortgage purpose - 1 for Purchase; 2 for Remortgage
-  SchemePeriods: SchemePeriods[]; // Array of mortgage scheme durations to include one or more options
-  SchemeTypes: SchemeTypes[]; // Array of scheme types to include. Fixed (1); Variable (2)
-  NumberOfResults: string; // Total number of products to return. Defaults to 10.
-  Features: {
-    Erc: boolean;
-    Offset: boolean;
-  }; // Any additional product features to include or use
-  SortColumn: SortColumn; // Numeric representations for sort columns
-  UseStaticApr: boolean; // Indicating whether to use a static APR (driven from the database).
-}
-
-interface Outputs {
-  ProductId: number;
-  LenderName: string;
-  LenderURL: URL;
-  ProductSchemeFriendlyName: string;
-  Rate: number;
-  FollowOnRate: string;
-  PMT: number;
-  FutureValue: number;
-  FutureMonthlyPayment: number;
-  TotalFees: number;
-  AnnualCost: number;
-  ApplicationFee: number;
-  CompletionFee: number;
-  ValuationFee: number;
-  OtherFees: number;
-  Cashback: number;
-  BrokerFee: number;
-  OverpaymentLimit: string;
-  ERC: string;
-  ERCText: string;
-  ExitFee: number;
-  Legals: string;
-  MinimumMortgageAmount: number;
-  MaximumMortgageAmount: number;
-  LTV: number;
-  APR: number;
-  FollowOnRateValue: number;
-  SchemeLength: number;
-  SchemeTypeRefId: number;
-  IsRemortgage: boolean;
-  RepresentativeExample: string;
-}
-
-interface Result {
-  [key: string]: string | number | BasicObject[];
-}
-
-export interface BestBuyResult {
-  success: boolean;
-  data: Result[];
-}
+import type { BestBuyResult, Inputs, PropertyType, SortColumn } from './types';
 
 const attr = 'data-bb';
 const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/productshttptrigger';
@@ -265,7 +197,7 @@ export class HandleTable {
 
     try {
       const result = await this.makeAzureRequest();
-      this.result = result.result;
+      this.result = result.result as unknown as BestBuyResult;
       if (isStaging) console.log(result);
       if (
         !this.result ||
@@ -275,8 +207,8 @@ export class HandleTable {
       ) {
         this.toggleLoading(false);
       } else {
-        this.toggleLoading(true);
         this.displayResults();
+        this.toggleLoading(true);
       }
     } catch (error) {
       console.error('Error retrieving calculation', error);
@@ -329,10 +261,10 @@ export class HandleTable {
         if (value === 0 || item[key]) {
           if (typeof value === 'number') {
             output.textContent = numberToCurrency(value);
-          } else if (output.nodeName === 'IMG') {
-            output.src = value;
+          } else if (output.nodeName === 'IMG' && output instanceof HTMLImageElement) {
+            output.src = value as string;
           } else {
-            output.textContent = value;
+            output.textContent = value as string;
           }
         }
       });

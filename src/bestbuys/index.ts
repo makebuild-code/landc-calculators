@@ -1,5 +1,6 @@
 import { queryElements } from '$utils/queryelements';
 
+import { HandleMini } from './handleMini';
 import { HandleTable } from './handleTable';
 
 export const bestbuys = () => {
@@ -10,7 +11,16 @@ export const bestbuys = () => {
     const { bb } = component.dataset;
     if (!bb) return;
 
-    const bestbuy = new HandleTable(component);
+    const bestbuy =
+      bb === 'table'
+        ? new HandleTable(component)
+        : bb === 'mini'
+          ? new HandleMini(component)
+          : null;
+
+    if (bestbuy === null) return;
+    console.log(component);
+    console.log(bestbuy);
     bestbuy.init();
   });
 };
