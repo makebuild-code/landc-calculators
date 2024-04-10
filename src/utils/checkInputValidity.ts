@@ -23,9 +23,9 @@ export function checkInputValidity(input: Input): { isValid: boolean; error: str
         if (isValid) break;
 
         if (!minValid) {
-          error = `Input needs to be greater than ${min}`;
+          error = `Input needs to be ${min} or higher`;
         } else if (!maxValid) {
-          error = `Input needs to be smaller than ${max}`;
+          error = `Input needs to be ${max} or less`;
         }
     }
   } else if (input instanceof HTMLSelectElement) {

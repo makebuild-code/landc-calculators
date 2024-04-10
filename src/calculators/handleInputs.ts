@@ -1,9 +1,10 @@
 import { checkInputValidity } from '$utils/checkInputValidity';
+import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
 import { isStaging } from '$utils/isStaging';
-import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
+import { setError } from '$utils/setError';
 
 import type { Input } from '../types';
 import type { CalculatorInputs } from './calculatorConfig';
@@ -82,63 +83,13 @@ export class HandleInputs {
     return allPresent;
   }
 
-  private getWrapper(input: Input): HTMLElement | undefined {
-    let child = input as HTMLElement,
-      wrapper: HTMLElement | undefined;
-
-    while (child) {
-      if (
-        child.parentElement &&
-        child.parentElement.classList &&
-        child.parentElement.classList.contains('custom-field_component')
-      ) {
-        wrapper = child.parentElement;
-        break;
-      } else if (child.parentElement) {
-        child = child.parentElement;
-      } else {
-        break;
-      }
-    }
-
-    return wrapper;
-  }
-
-  private setError(input: Input, text?: string): void {
-    const wrapper = this.getWrapper(input);
-    if (!wrapper) return;
-
-    const message = queryElement('[data-calc-el="message"]', wrapper);
-    const error = queryElement('[data-calc-el="error"]', wrapper);
-
-    if (!error) return;
-
-    if (text) {
-      error.textContent = text;
-      error.style.display = 'block';
-      if (message) message.style.display = 'none';
-    } else {
-      error.style.display = 'none';
-      if (message) message.style.removeProperty('display');
-    }
-  }
-
-  formatInput(input: Input): void {
-    if (input instanceof HTMLInputElement) {
-      const { type, value } = input;
-      if (type !== 'number') return;
-
-      input.value = Math.round(Number(value)).toString();
-    }
-  }
-
   validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
 
     if (!validity.error) {
-      this.setError(input);
+      setError(input);
     } else {
-      this.setError(input, validity.error);
+      setError(input, validity.error);
     }
 
     return validity.isValid;
@@ -176,7 +127,7 @@ export class HandleInputs {
     // validate inputs on value change
     this.inputs.forEach((input) => {
       input.addEventListener('change', () => {
-        this.formatInput(input);
+        formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
       });

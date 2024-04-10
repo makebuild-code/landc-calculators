@@ -1,12 +1,14 @@
-import { cloneNode } from '@finsweet/ts-utils';
 import type { BasicObject } from 'src/calculators/handleCalculator';
 import type { APIResponse, Input } from 'src/types';
 
+import { checkInputValidity } from '$utils/checkInputValidity';
+import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
 import { isStaging } from '$utils/isStaging';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
+import { setError } from '$utils/setError';
 
 type PropertyType = '1' | '2';
 type MortgageType = '1' | '2';
@@ -112,18 +114,46 @@ export class HandleTable {
   }
 
   init(): void {
-    this.onSubmit();
+    this.bindEvents();
   }
 
-  onSubmit(): void {
+  bindEvents(): void {
+    this.inputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        formatInput(input);
+        this.validateInput(input);
+      });
+    });
+
     this.isLoading = true;
     this.conditionalVisibility();
     this.handleAzureRequest();
+
     this.buttons.forEach((button) => {
       button.addEventListener('click', () => {
+        const valid = this.validateInputs();
+        if (!valid) return;
         this.toggleLoading();
         this.handleAzureRequest();
       });
+    });
+  }
+
+  validateInput(input: Input): boolean {
+    const validity = checkInputValidity(input);
+
+    if (!validity.error) {
+      setError(input);
+    } else {
+      setError(input, validity.error);
+    }
+
+    return validity.isValid;
+  }
+
+  validateInputs(): boolean {
+    return this.inputs.every((input) => {
+      return this.validateInput(input);
     });
   }
 
@@ -186,7 +216,6 @@ export class HandleTable {
   }
 
   getValues(): Inputs {
-    console.log('get values');
     const preFormattedValues: { [key: string]: string | boolean } = {};
     this.inputs.forEach((input) => {
       if (input.dataset.conditionsmet && input.dataset.conditionsmet === 'false') return;
@@ -238,7 +267,12 @@ export class HandleTable {
       const result = await this.makeAzureRequest();
       this.result = result.result;
       if (isStaging) console.log(result);
-      if (this.result === null || !this.result.success || this.result.data.length === 0) {
+      if (
+        !this.result ||
+        this.result === null ||
+        !this.result.success ||
+        this.result.data.length === 0
+      ) {
         this.toggleLoading(false);
       } else {
         this.toggleLoading(true);
