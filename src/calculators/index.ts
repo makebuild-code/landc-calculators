@@ -7,6 +7,7 @@ export const calculators = () => {
   const components = queryElements<HTMLDivElement>(`[${attr}]`);
 
   components.forEach((component) => {
+    console.log(component);
     const calculator = new HandleCalculator(component);
     calculator.init();
 

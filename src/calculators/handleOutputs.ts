@@ -169,31 +169,60 @@ export class HandleOutputs {
     const chartLabels = this.result.ChartLabels as string;
     const labels = chartLabels.split(',');
 
-    const chartData = this.result.ChartData as string;
-    const data = chartData.split(',').map(Number);
+    const chartData1 = this.result.ChartData as string;
+    const data1 = chartData1.split(',').map(Number);
+
+    let data2 = null;
+    if (this.result.ChartData2) {
+      const chartData2 = this.result.ChartData2 as string;
+      data2 = chartData2.split(',').map(Number);
+    }
+
+    const datasets = [
+      {
+        data: data1,
+        borderColor: '#fff',
+        backgroundColor: '#fff',
+        borderWidth: 1,
+      },
+    ];
+
+    if (data2) {
+      datasets.push({
+        data: data2,
+        borderColor: '#fff',
+        backgroundColor: '#fff',
+        borderWidth: 1,
+      });
+    }
 
     if (this.chartJS) {
       this.chartJS.data.labels = labels;
-      this.chartJS.data.datasets[0].data = data;
+      this.chartJS.data.datasets[0].data = data1;
+      if (data2) this.chartJS.data.datasets[1].data = data2;
       this.chartJS.update();
     } else {
       this.chartJS = new Chart(this.chart, {
         type: 'line',
         data: {
           labels,
-          datasets: [
-            {
-              label: this.chart.dataset.calcChartTitle,
-              data,
-              borderColor: '#fff',
-              backgroundColor: '#fff',
-              borderWidth: 1,
-            },
-          ],
+          datasets,
         },
         options: {
+          responsive: true,
           plugins: {
-            legend: { labels: { font: { family: 'Gotham, sans-serif;' } } },
+            // legend: { labels: { font: { family: 'Gotham, sans-serif;' } } },
+            legend: {
+              labels: {
+                filter: (item, chart) => false,
+              },
+              title: {
+                display: true,
+                text: this.chart.dataset.calcChartTitle,
+                font: { family: 'Gotham, sans-serif;' },
+                padding: 10,
+              },
+            },
           },
           scales: {
             x: { ticks: { color: '#fff' } },

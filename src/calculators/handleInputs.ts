@@ -3,10 +3,11 @@ import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
 import { isStaging } from '$utils/isStaging';
+import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 import { setError } from '$utils/setError';
 
-import type { Input } from '../types';
+import type { Input, InputType } from '../types';
 import type { CalculatorInputs } from './calculatorConfig';
 import type { HandleCalculator } from './handleCalculator';
 import { HandleInputRepeat } from './handleInputRepeat';
@@ -24,24 +25,34 @@ import { HandleInputRepeat } from './handleInputRepeat';
 export class HandleInputs {
   calculator: HandleCalculator;
   config: CalculatorInputs;
+  all: Input[];
   private repeats?: HandleInputRepeat[];
-  private all: Input[];
   inputs: Input[];
   private conditionals: HTMLDivElement[];
 
   constructor(calculator: HandleCalculator) {
     this.calculator = calculator;
     this.config = calculator.config.inputs;
+    console.log(calculator);
+    this.all = queryElements(`[data-input]`, calculator.component);
 
     if (this.config.repeats) {
       this.repeats = this.config.repeats.map((repeat) => {
         return new HandleInputRepeat(this.calculator, repeat);
       });
+
+      this.inputs = [];
+      this.all.forEach((input: Input) => {
+        const isRepeat = this.repeats?.some((repeat) => {
+          return repeat.inputs.includes(input);
+        });
+
+        if (!isRepeat) this.inputs.push(input);
+      });
+    } else {
+      this.inputs = queryElements(`[data-input]`, calculator.component);
     }
 
-    this.all = queryElements(`[data-input]`, calculator.component);
-    // this.inputs = this.all.filter((input) => !this.repeats.inputs.includes(input));
-    this.inputs = queryElements(`[data-input]`, calculator.component);
     this.conditionals = queryElements('.calculator_inputs [data-condition]', calculator.component);
   }
 
@@ -52,8 +63,36 @@ export class HandleInputs {
       });
     }
 
+    this.minMaxValues();
+
     this.handleConditionals();
     this.bindEvents();
+  }
+
+  minMaxValues(): void {
+    this.all.forEach((input) => {
+      if (input.type === 'date') {
+        const today = new Date();
+        const futureMonth = new Date(today.getTime());
+        futureMonth.setMonth(today.getMonth() + 1);
+
+        const futureYear = new Date(today.getTime());
+        futureYear.setFullYear(today.getFullYear() + 5);
+
+        function formatDate(date: Date): string {
+          const yyyy: string = date.getFullYear().toString();
+          const mm: string = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero based, adding 1 for human readability
+          const dd: string = date.getDate().toString().padStart(2, '0');
+          return yyyy + '-' + mm + '-' + dd;
+        }
+
+        const nextMonthDate: string = formatDate(futureMonth);
+        const fiveYearsLaterDate: string = formatDate(futureYear);
+
+        input.setAttribute('min', nextMonthDate);
+        input.setAttribute('max', fiveYearsLaterDate);
+      }
+    });
   }
 
   check(): boolean {
@@ -101,18 +140,92 @@ export class HandleInputs {
     });
   }
 
-  getValues(): { [key: string]: string | boolean } {
-    const values: { [key: string]: string | boolean } = {};
-    this.inputs.forEach((input: Input) => {
-      const calcInput = input.dataset.input;
-      const value = getInputValue(input);
-      if (!calcInput || !value) return;
+  getValues(): InputType {
+    const values: InputType = {};
+    if (this.calculator.name === 'comparerates') {
+      (values.PropertyValue = getInputValue(
+        queryElement('[data-input="PropertyValue"]', this.calculator.component) as Input
+      ) as string),
+        (values.LoanAmount = getInputValue(
+          queryElement('[data-input="LoanAmount"]', this.calculator.component) as Input
+        ) as string),
+        (values.Term = getInputValue(
+          queryElement('[data-input="Term"]', this.calculator.component) as Input
+        ) as string),
+        (values.Type = getInputValue(
+          queryElement('[data-input="Type"]', this.calculator.component) as Input
+        ) as string),
+        (values.ComparisonRates = [
+          {
+            Rate: getInputValue(
+              queryElement('[data-input="CurrentRate"]', this.calculator.component) as Input
+            ),
+            Fees: getInputValue(
+              queryElement('[data-input="CurrentFees"]', this.calculator.component) as Input
+            ),
+            Type: getInputValue(
+              queryElement('[data-input="CurrentType"]', this.calculator.component) as Input
+            ),
+            SchemeLength: getInputValue(
+              queryElement('[data-input="CurrentSchemeLength"]', this.calculator.component) as Input
+            ),
+            ERCAmount: getInputValue(
+              queryElement('[data-input="ERCAmount"]', this.calculator.component) as Input
+            ),
+            ERCTerm: getInputValue(
+              queryElement('[data-input="ERCTerm"]', this.calculator.component) as Input
+            ),
+            ERCAdd: getInputValue(
+              queryElement('[data-input="ERCAdd"]', this.calculator.component) as Input
+            ),
+            FollowOn: getInputValue(
+              queryElement('[data-input="CurrentFollowOn"]', this.calculator.component) as Input
+            ),
+          },
+          {
+            Rate: getInputValue(
+              queryElement('[data-input="CompareRate"]', this.calculator.component) as Input
+            ),
+            Fees: getInputValue(
+              queryElement('[data-input="CompareFees"]', this.calculator.component) as Input
+            ),
+            Type: getInputValue(
+              queryElement('[data-input="CompareType"]', this.calculator.component) as Input
+            ),
+            SchemeLength: getInputValue(
+              queryElement('[data-input="CompareSchemeLength"]', this.calculator.component) as Input
+            ),
+            FollowOn: getInputValue(
+              queryElement('[data-input="CompareFollowOn"]', this.calculator.component) as Input
+            ),
+          },
+        ]),
+        (values.ComparisonTerm = getInputValue(
+          queryElement('[data-input="ComparisonTerm"]', this.calculator.component) as Input
+        ) as string),
+        (values.InterestRateEnvironment = getInputValue(
+          queryElement('[data-input="InterestRateEnvironment"]', this.calculator.component) as Input
+        ) as string);
+    } else {
+      this.inputs.forEach((input: Input) => {
+        const calcInput = input.dataset.input;
+        const value = getInputValue(input);
+        if (!calcInput || !value) return;
 
-      const { conditionsmet } = input.dataset;
-      if (conditionsmet === 'false') return;
+        const { conditionsmet } = input.dataset;
+        if (conditionsmet === 'false') return;
 
-      values[calcInput] = value;
-    });
+        values[calcInput] = value;
+      });
+
+      if (this.repeats) {
+        this.repeats.forEach((repeat) => {
+          values[repeat.name] = repeat.getValues();
+        });
+      }
+    }
+
+    console.log(values);
 
     return values;
   }
@@ -125,7 +238,7 @@ export class HandleInputs {
 
   private bindEvents(): void {
     // validate inputs on value change
-    this.inputs.forEach((input) => {
+    this.all.forEach((input) => {
       input.addEventListener('change', () => {
         formatInput(input);
         this.validateInput(input);

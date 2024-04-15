@@ -4,6 +4,16 @@ export type BasicObject = {
   [key: string]: string | number;
 };
 
+export type InputArray = string[];
+
+export type InputObject = {
+  [key: string]: string | boolean | InputArray;
+};
+
+export type InputType = {
+  [key: string]: string | boolean | InputArray | InputObject;
+};
+
 export interface Result {
   [key: string]: string | number | BasicObject[];
 }

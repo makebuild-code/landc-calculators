@@ -16,9 +16,9 @@ export function getInputValue(input: Input): string | boolean | undefined {
     value = input.checked;
   }
 
-  if (value === 'true' || value === 'on') {
+  if (value === 'true' || value === 'on' || value === 'Y') {
     value = true;
-  } else if (value === 'false' || value === 'off') {
+  } else if (value === 'false' || value === 'off' || value === 'N') {
     value = false;
   }
 

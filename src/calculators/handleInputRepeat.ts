@@ -1,3 +1,6 @@
+import type { InputArray, InputObject } from 'src/types';
+
+import { getInputValue } from '$utils/getInputValue';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
@@ -22,26 +25,34 @@ const attr = 'data-calc';
  * @todo update inputs when added/removed
  */
 
+type Type = 'stringArray' | 'objectArray';
+
 export class HandleInputRepeat {
   private calculator: HandleCalculator;
-  private name: string;
+  name: string;
   private template: HTMLDivElement;
   private templateWrapper: HTMLDivElement;
-  private inputs: Input[];
+  inputs: Input[];
   private clone: HTMLDivElement;
   private groups: HTMLDivElement[];
   private max: number;
+  private type: Type;
   private button: HTMLButtonElement;
 
   constructor(calculator: HandleCalculator, name: string) {
     this.calculator = calculator;
     this.name = name;
-    this.template = queryElement(`[${attr}-input-repeat]`, calculator.component) as HTMLDivElement;
+    this.template = queryElement(
+      `[${attr}-input-repeat=${name}]`,
+      calculator.component
+    ) as HTMLDivElement;
+
     this.templateWrapper = this.template.parentElement as HTMLDivElement;
     this.inputs = queryElements(`[data-input]`, this.template);
     this.clone = this.template.cloneNode(true) as HTMLDivElement;
     this.groups = [this.template];
     this.max = Number(this.template.dataset.calcInputRepeatMax);
+    this.type = this.inputs.length === 1 ? 'stringArray' : 'objectArray';
     this.button = queryElement(
       `[${attr}-input-repeat-duplicate="${name}"]`,
       calculator.component
@@ -49,6 +60,7 @@ export class HandleInputRepeat {
   }
 
   init(): void {
+    console.log(this);
     this.button.addEventListener('click', () => {
       this.addTemplate();
     });
@@ -61,6 +73,15 @@ export class HandleInputRepeat {
 
     // clone the clone and add it as a child
     const newItem = this.clone.cloneNode(true) as HTMLDivElement;
+    const label = queryElement('label', newItem);
+    const input = queryElement('input, select', newItem);
+
+    if (label && input) {
+      const name = `${this.name}-${this.groups.length + 1}`;
+      label.setAttribute('for', name);
+      input.setAttribute('id', name);
+    }
+
     this.templateWrapper.appendChild(newItem);
     this.groups.push(newItem);
 
@@ -77,158 +98,46 @@ export class HandleInputRepeat {
     return false;
   }
 
-  bindInputEvents(inputs: Input[]): void {
-    inputs.forEach((input) => {
-      input.addEventListener('change', () => {});
+  getValues(): InputObject | InputArray {
+    /**
+     * Plan
+     * 1. loop through the groups
+     * 2. if the groups are made of 1 input, add it directly to the array
+     * 3. if there are more than 1 input per group add as an object
+     */
+
+    const values: (string | InputObject)[] = [];
+
+    console.log(this.type);
+
+    this.groups.forEach((group) => {
+      console.log(group);
+      const inputs = queryElements('[data-input]', group) as Input[];
+      console.log(inputs);
+      if (this.type === 'stringArray') {
+        inputs.forEach((input) => {
+          const value = getInputValue(input);
+          if (value) values.push(value.toString());
+        });
+      } else if (this.type === 'objectArray') {
+        const object = {};
+        inputs.forEach((input) => {
+          const calcInput = input.dataset.input;
+          const value = getInputValue(input);
+          if (!calcInput || !value) return;
+
+          console.log(calcInput);
+          console.log(value);
+
+          object[calcInput] = value;
+        });
+
+        values.push(object);
+      }
     });
+
+    console.log(values);
+
+    return values;
   }
-
-  // check(): boolean {
-  //   const tableData: { input: string; present: boolean }[] = [];
-  //   let allPresent = true;
-
-  //   // check which inputs are/aren't present
-  //   this.config.names.forEach((name) => {
-  //     const input = this.inputs.find((input) => input.dataset.input === name);
-  //     tableData.push({
-  //       input: name,
-  //       present: !!input,
-  //     });
-
-  //     if (!input) allPresent = false;
-  //   });
-
-  //   if (isStaging) {
-  //     console.groupCollapsed(`${allPresent ? 'all inputs present' : 'inputs missing'}`);
-  //     console.table(tableData);
-  //     console.groupEnd();
-  //   }
-
-  //   return allPresent;
-  // }
-
-  // private clearInput(input: Input): void {
-  //   if (input instanceof HTMLInputElement) {
-  //     input.value = '';
-  //   } else if (input instanceof HTMLSelectElement) {
-  //     input.selectedIndex = 0;
-  //   }
-  // }
-
-  // private getWrapper(input: Input): HTMLElement | undefined {
-  //   let child = input as HTMLElement,
-  //     inputWrapper: HTMLElement | undefined;
-
-  //   while (child) {
-  //     if (
-  //       child.parentElement &&
-  //       child.parentElement.classList &&
-  //       child.parentElement.classList.contains('calculator-field_component')
-  //     ) {
-  //       inputWrapper = child.parentElement;
-  //       break;
-  //     } else if (child.parentElement) {
-  //       child = child.parentElement;
-  //     } else {
-  //       break;
-  //     }
-  //   }
-
-  //   return inputWrapper;
-  // }
-
-  // private setMessage(input: Input, message?: string): void {
-  //   const inputWrapper = this.getWrapper(input);
-  //   if (!inputWrapper) return;
-
-  //   const inputMessage = queryElement('.calculator-field_message', inputWrapper);
-  //   if (!inputMessage) return;
-
-  //   const { originalMessage } = inputMessage.dataset;
-  //   if (!originalMessage && inputMessage.textContent) {
-  //     inputMessage.dataset.originalMessage = inputMessage.textContent;
-  //   }
-
-  //   if (message) {
-  //     inputMessage.textContent = message;
-  //   } else if (inputMessage.dataset.originalMessage) {
-  //     inputMessage.textContent = inputMessage.dataset.originalMessage;
-  //   }
-  // }
-
-  // private validateInput(input: Input): boolean {
-  //   let isValid = true,
-  //     error: string | undefined;
-
-  //   if (input instanceof HTMLInputElement) {
-  //     const { type } = input;
-  //     switch (type) {
-  //       case 'text':
-  //         isValid = input.checkValidity();
-  //         error = input.validationMessage;
-  //       case 'number':
-  //         const { min, max, value } = input;
-
-  //         let minValid = true;
-  //         if (!!min) minValid = Number(value) >= Number(min);
-
-  //         let maxValid = true;
-  //         if (!!max) maxValid = Number(value) <= Number(max);
-
-  //         isValid = minValid && maxValid;
-  //         if (isValid) break;
-
-  //         if (!minValid) {
-  //           error = `Input needs to be greater than ${min}`;
-  //         } else if (!maxValid) {
-  //           error = `Input needs to be smaller than ${max}`;
-  //         }
-  //     }
-  //   } else if (input instanceof HTMLSelectElement) {
-  //     isValid = input.checkValidity();
-  //     error = input.validationMessage;
-  //   }
-
-  //   if (!error) {
-  //     this.setMessage(input);
-  //   } else {
-  //     this.setMessage(input, error);
-  //   }
-
-  //   return isValid;
-  // }
-
-  // validateInputs(): boolean {
-  //   return this.inputs.every((input) => {
-  //     return this.validateInput(input);
-  //   });
-  // }
-
-  // private getValue(input: Input): string | boolean | undefined {
-  //   let value;
-  //   if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
-  //     value = input.value;
-  //   }
-
-  //   if (value === 'true') {
-  //     value = true;
-  //   } else if (value === 'false') {
-  //     value = false;
-  //   }
-
-  //   return value;
-  // }
-
-  // getValues(): { [key: string]: string | boolean } {
-  //   const inputValues: { [key: string]: string | boolean } = {};
-  //   this.inputs.forEach((input: Input) => {
-  //     const calcInput = input.dataset.input;
-  //     const value = this.getValue(input);
-  //     if (!calcInput || !value) return;
-
-  //     inputValues[calcInput] = value;
-  //   });
-
-  //   return inputValues;
-  // }
 }

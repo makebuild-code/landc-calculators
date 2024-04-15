@@ -7,12 +7,8 @@ export function checkInputValidity(input: Input): { isValid: boolean; error: str
   if (input instanceof HTMLInputElement) {
     const { type } = input;
     switch (type) {
-      case 'text':
-        isValid = input.checkValidity();
-        error = input.validationMessage;
       case 'number':
         const { min, max, value } = input;
-
         let minValid = true;
         if (!!min) minValid = Number(value) >= Number(min);
 
@@ -27,6 +23,11 @@ export function checkInputValidity(input: Input): { isValid: boolean; error: str
         } else if (!maxValid) {
           error = `Input needs to be ${max} or less`;
         }
+        break;
+      default:
+        isValid = input.checkValidity();
+        error = input.validationMessage;
+        break;
     }
   } else if (input instanceof HTMLSelectElement) {
     isValid = input.checkValidity();

@@ -13,7 +13,7 @@ const attr = 'data-calc';
 const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/calculatorhttptrigger';
 
 export class HandleCalculator {
-  private name: string;
+  name: string;
   component: HTMLDivElement;
   config: CalculatorConfig;
   inputs: HandleInputs;
@@ -52,7 +52,7 @@ export class HandleCalculator {
   }
 
   private bindEvents(): void {
-    this.inputs.inputs.forEach((input) => {
+    this.inputs.all.forEach((input) => {
       handleEnterInInputs(input, () => {
         this.submit();
       });
@@ -74,6 +74,8 @@ export class HandleCalculator {
       this.toggleLoading(false);
       return;
     }
+
+    console.log('making request');
 
     this.handleAzureRequest();
   }
