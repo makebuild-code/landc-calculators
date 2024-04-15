@@ -169,6 +169,13 @@ export class HandleMini {
           }
         }
       });
+
+      const button = queryElement('a', row) as HTMLLinkElement;
+      const url = new URL(button.href);
+      const params = new URLSearchParams(url.search);
+      params.append('productId', item.ProductId);
+      url.search = params.toString();
+      button.href = url.toString();
     });
   }
 }

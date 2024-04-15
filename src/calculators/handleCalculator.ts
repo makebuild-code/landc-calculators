@@ -1,5 +1,6 @@
 import type { APIResponse, Result } from 'src/types';
 
+import { handleEnterInInputs } from '$utils/handleEnterInInputs';
 import { isStaging } from '$utils/isStaging';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -46,24 +47,35 @@ export class HandleCalculator {
       this.outputs.check();
       console.groupEnd();
     }
-    this.onSubmit();
+
+    this.bindEvents();
   }
 
-  private onSubmit(): void {
-    this.button.addEventListener('click', () => {
-      this.toggleLoading();
-      const isValid = this.inputs.validateInputs();
-      const allPresent = this.inputs.check();
-
-      // cancel if inputs are invalid or not all present
-      if (!isValid || !allPresent) {
-        if (isStaging) console.log('inputs not valid or not all present');
-        this.toggleLoading(false);
-        return;
-      }
-
-      this.handleAzureRequest();
+  private bindEvents(): void {
+    this.inputs.inputs.forEach((input) => {
+      handleEnterInInputs(input, () => {
+        this.submit();
+      });
     });
+
+    this.button.addEventListener('click', () => {
+      this.submit();
+    });
+  }
+
+  submit(): void {
+    this.toggleLoading();
+    const isValid = this.inputs.validateInputs();
+    const allPresent = this.inputs.check();
+
+    // cancel if inputs are invalid or not all present
+    if (!isValid || !allPresent) {
+      if (isStaging) console.log('inputs not valid or not all present');
+      this.toggleLoading(false);
+      return;
+    }
+
+    this.handleAzureRequest();
   }
 
   private toggleLoading(success?: boolean): void {

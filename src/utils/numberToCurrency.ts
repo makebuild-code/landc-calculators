@@ -2,21 +2,19 @@ export const numberToCurrency = (number: number): string => {
   interface Options {
     style: string;
     currency: string;
-    maximumSignificantDigits?: number;
+    minimumFractionDigits: number;
+    maximumFractionDigits: number;
   }
 
   const options: Options = {
     style: 'currency',
     currency: 'GBP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   };
 
-  let showPennies = false;
-  if (!Number.isInteger(number)) {
-    showPennies = true;
-  }
+  const roundedNumber = Math.round(number);
 
-  if (!showPennies) options.maximumSignificantDigits = 21;
-
-  const regexPattern = /£/g;
-  return new Intl.NumberFormat('gb-GB', options).format(number).replace(regexPattern, '');
+  const regexPattern = /£/;
+  return new Intl.NumberFormat('en-GB', options).format(roundedNumber).replace(regexPattern, '');
 };

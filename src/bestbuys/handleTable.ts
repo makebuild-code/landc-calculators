@@ -1,3 +1,4 @@
+import { simulateEvent } from '@finsweet/ts-utils';
 import type { APIResponse, Input } from 'src/types';
 
 import { checkInputValidity } from '$utils/checkInputValidity';
@@ -21,11 +22,13 @@ export class HandleTable {
   private inputs: Input[];
   private conditionals: HTMLDivElement[];
   // private outputs: Outputs;
+  private sort: HTMLSelectElement;
   private buttons: HTMLButtonElement[];
   private resultsList: HTMLDivElement;
   private loading: HTMLDivElement;
   private noResults: HTMLDivElement;
   private isLoading: boolean;
+  private productId: string | null;
   private result?: BestBuyResult;
 
   constructor(component: HTMLDivElement) {
@@ -36,13 +39,24 @@ export class HandleTable {
     this.inputs = queryElements(`[data-input], input, select`, component);
     this.conditionals = queryElements(`[data-conditions]`, component);
     this.buttons = queryElements(`[${attr}-el="button"]`, component);
+    this.sort = queryElement(`[data-input="SortColumn"]`, component) as HTMLSelectElement;
     this.resultsList = queryElement(`[${attr}-el="results-list"]`) as HTMLDivElement;
     this.loading = queryElement(`[${attr}-el="loading"]`, component) as HTMLDivElement;
     this.noResults = queryElement(`[${attr}-el="no-results"]`, component) as HTMLDivElement;
     this.isLoading = false;
+
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    this.productId = params.get('productId') ?? null;
   }
 
-  init(): void {
+  async init(): Promise<void> {
+    this.isLoading = true;
+    this.conditionalVisibility();
+    if (this.productId) this.scrollIntoView();
+    await this.handleAzureRequest();
+    if (this.productId) this.scrollIntoView(this.productId);
+
     this.bindEvents();
   }
 
@@ -54,10 +68,6 @@ export class HandleTable {
       });
     });
 
-    this.isLoading = true;
-    this.conditionalVisibility();
-    this.handleAzureRequest();
-
     this.buttons.forEach((button) => {
       button.addEventListener('click', () => {
         const valid = this.validateInputs();
@@ -65,6 +75,13 @@ export class HandleTable {
         this.toggleLoading();
         this.handleAzureRequest();
       });
+    });
+
+    this.sort.addEventListener('change', () => {
+      const valid = this.validateInputs();
+      if (!valid) return;
+      this.toggleLoading();
+      this.handleAzureRequest();
     });
   }
 
@@ -248,6 +265,7 @@ export class HandleTable {
     this.result.data.forEach((item) => {
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
+      clone.setAttribute('data-productId', item.ProductId);
 
       const outputs = queryElements(`[${attr}-output]`, clone) as HTMLDivElement[];
       outputs.forEach((output) => {
@@ -285,5 +303,26 @@ export class HandleTable {
 
       this.resultsList.appendChild(clone);
     });
+  }
+
+  private scrollIntoView(productId?: string): void {
+    let component;
+
+    if (!productId) {
+      component = queryElement('.best-buy_main');
+    } else {
+      component = queryElement(
+        `.bb-result_component[data-productId="${productId}"]`,
+        this.resultsList
+      );
+      const moreToggle = queryElement(`[${attr}-el="more-toggle"]`, component);
+      if (!moreToggle) return;
+      simulateEvent(moreToggle, 'click');
+    }
+
+    if (!component) return;
+
+    component.scrollIntoView({ behavior: 'instant' });
+    window.scrollBy(0, -32);
   }
 }
