@@ -1,4 +1,5 @@
 import { simulateEvent } from '@finsweet/ts-utils';
+import { dialogs } from 'src/components/dialogs';
 import type { APIResponse, Input } from 'src/types';
 
 import { checkInputValidity } from '$utils/checkInputValidity';
@@ -303,6 +304,8 @@ export class HandleTable {
 
       this.resultsList.appendChild(clone);
     });
+
+    dialogs();
   }
 
   private scrollIntoView(productId?: string): void {
