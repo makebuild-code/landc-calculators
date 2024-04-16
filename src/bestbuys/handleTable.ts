@@ -264,7 +264,6 @@ export class HandleTable {
     if (!this.result) return;
 
     this.result.data.forEach((item) => {
-      console.log(item);
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
       clone.setAttribute('data-productId', item.ProductId);
@@ -275,13 +274,9 @@ export class HandleTable {
         if (!key) return;
 
         const value = item[key];
-        if (value === 0 || item[key]) {
+        if (value === 0 || value === '' || item[key]) {
           if (typeof value === 'number') {
-            if (value >= 100) {
-              output.textContent = numberToCurrency(value);
-            } else {
-              output.textContent = value.toString();
-            }
+            output.textContent = numberToCurrency(value);
           } else if (output.nodeName === 'IMG' && output instanceof HTMLImageElement) {
             output.src = value as string;
           } else {

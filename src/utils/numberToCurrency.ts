@@ -10,11 +10,11 @@ export const numberToCurrency = (number: number): string => {
     style: 'currency',
     currency: 'GBP',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: number < 100 ? 2 : 0,
   };
 
-  const roundedNumber = Math.round(number);
+  const numberToFormat = number < 100 ? number : Math.round(number);
 
   const regexPattern = /£/;
-  return new Intl.NumberFormat('en-GB', options).format(roundedNumber).replace(regexPattern, '');
+  return new Intl.NumberFormat('en-GB', options).format(numberToFormat).replace(regexPattern, '');
 };
