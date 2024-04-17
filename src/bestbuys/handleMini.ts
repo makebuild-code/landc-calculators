@@ -1,5 +1,6 @@
 import type { APIResponse } from 'src/types';
 
+import { appendSearchParameter } from '$utils/appendSearchParameter';
 import { isStaging } from '$utils/isStaging';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
@@ -171,11 +172,7 @@ export class HandleMini {
       });
 
       const button = queryElement('a', row) as HTMLLinkElement;
-      const url = new URL(button.href);
-      const params = new URLSearchParams(url.search);
-      params.append('productId', item.ProductId);
-      url.search = params.toString();
-      button.href = url.toString();
+      appendSearchParameter(button, [{ key: 'productId', value: item.ProductId as string }]);
     });
   }
 }

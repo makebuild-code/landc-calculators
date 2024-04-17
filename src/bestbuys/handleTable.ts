@@ -2,6 +2,7 @@ import { simulateEvent } from '@finsweet/ts-utils';
 import { dialogs } from 'src/components/dialogs';
 import type { APIResponse, Input } from 'src/types';
 
+import { appendSearchParameter } from '$utils/appendSearchParameter';
 import { checkInputValidity } from '$utils/checkInputValidity';
 import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
@@ -22,7 +23,6 @@ export class HandleTable {
   private clone: HTMLDivElement;
   private inputs: Input[];
   private conditionals: HTMLDivElement[];
-  // private outputs: Outputs;
   private sort: HTMLSelectElement;
   private buttons: HTMLButtonElement[];
   private resultsList: HTMLDivElement;
@@ -33,6 +33,7 @@ export class HandleTable {
   private loadMore: HTMLButtonElement;
   private numberOfResultsShown: number;
   private productId: string | null;
+  private formattedValues: Inputs;
   private result?: BestBuyResult;
 
   constructor(component: HTMLDivElement) {
@@ -55,6 +56,7 @@ export class HandleTable {
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
     this.productId = params.get('productId') ?? null;
+    this.formattedValues = this.getValues();
   }
 
   async init(): Promise<void> {
@@ -161,14 +163,17 @@ export class HandleTable {
       this.loading.style.display = 'block';
       this.noResults.style.display = 'none';
       this.resultsList.style.display = 'none';
+      this.loadMoreWrapper.style.display = 'none';
     } else if (success) {
       this.loading.style.display = 'none';
       this.noResults.style.display = 'none';
       this.resultsList.style.display = 'flex';
+      this.loadMoreWrapper.style.display = 'flex';
     } else if (!success) {
       this.loading.style.display = 'none';
       this.noResults.style.display = 'flex';
       this.resultsList.style.display = 'none';
+      this.loadMoreWrapper.style.display = 'none';
     }
   }
 
@@ -210,6 +215,8 @@ export class HandleTable {
 
     if (preFormattedValues.ShowAsFix) formattedValues.SchemeTypes.push('1');
     if (preFormattedValues.ShowAsVar) formattedValues.SchemeTypes.push('2');
+
+    this.formattedValues = formattedValues;
 
     return formattedValues;
   }
@@ -312,6 +319,20 @@ export class HandleTable {
 
           isOpen = !isOpen;
         });
+      }
+
+      const button = queryElement('.button', clone) as HTMLLinkElement;
+      if (button) {
+        appendSearchParameter(button, [
+          {
+            key: 'purchaseOrRemortgage',
+            value: this.formattedValues.SchemePurpose === '1' ? 'p' : 'r',
+          },
+          {
+            key: 'residentialOrBuyToLet',
+            value: this.formattedValues.MortgageType === '1' ? 'r' : 'b',
+          },
+        ]);
       }
 
       this.resultsList.appendChild(clone);

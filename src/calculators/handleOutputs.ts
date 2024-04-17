@@ -1,4 +1,5 @@
 import Chart from 'chart.js/auto';
+import type { Result } from 'src/types';
 
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
 import { isStaging } from '$utils/isStaging';
@@ -7,7 +8,7 @@ import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import type { CalculatorOutputs } from './calculatorConfig';
-import type { BasicObject, HandleCalculator, Result } from './handleCalculator';
+import type { HandleCalculator } from './handleCalculator';
 
 type Output = HTMLDivElement | HTMLSpanElement;
 

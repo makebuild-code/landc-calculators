@@ -33,7 +33,6 @@ export class HandleInputs {
   constructor(calculator: HandleCalculator) {
     this.calculator = calculator;
     this.config = calculator.config.inputs;
-    console.log(calculator);
     this.all = queryElements(`[data-input]`, calculator.component);
 
     if (this.config.repeats) {
@@ -135,9 +134,21 @@ export class HandleInputs {
   }
 
   validateInputs(): boolean {
-    return this.inputs.every((input) => {
-      return this.validateInput(input);
+    let inputFocused = false,
+      isValid = true;
+
+    this.inputs.forEach((input) => {
+      const inputValid = this.validateInput(input);
+      if (!inputValid) {
+        isValid = false;
+        if (!inputFocused) {
+          input.focus();
+          inputFocused = true;
+        }
+      }
     });
+
+    return isValid;
   }
 
   getValues(): InputType {
