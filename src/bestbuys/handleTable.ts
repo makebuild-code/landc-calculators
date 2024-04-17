@@ -29,6 +29,9 @@ export class HandleTable {
   private loading: HTMLDivElement;
   private noResults: HTMLDivElement;
   private isLoading: boolean;
+  private loadMoreWrapper: HTMLDivElement;
+  private loadMore: HTMLButtonElement;
+  private numberOfResultsShown: number;
   private productId: string | null;
   private result?: BestBuyResult;
 
@@ -45,6 +48,9 @@ export class HandleTable {
     this.loading = queryElement(`[${attr}-el="loading"]`, component) as HTMLDivElement;
     this.noResults = queryElement(`[${attr}-el="no-results"]`, component) as HTMLDivElement;
     this.isLoading = false;
+    this.loadMoreWrapper = queryElement(`[${attr}-el="load-more"]`, component) as HTMLDivElement;
+    this.loadMore = queryElement('button', this.loadMoreWrapper) as HTMLButtonElement;
+    this.numberOfResultsShown = 0;
 
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
@@ -83,6 +89,10 @@ export class HandleTable {
       if (!valid) return;
       this.toggleLoading();
       this.handleAzureRequest();
+    });
+
+    this.loadMore.addEventListener('click', () => {
+      this.displayResults(this.numberOfResultsShown, 10);
     });
   }
 
@@ -222,7 +232,8 @@ export class HandleTable {
       ) {
         this.toggleLoading(false);
       } else {
-        this.displayResults();
+        this.clearResults();
+        this.displayResults(0, 10);
         this.toggleLoading(true);
       }
     } catch (error) {
@@ -259,11 +270,12 @@ export class HandleTable {
     this.resultsList.innerHTML = '';
   }
 
-  private displayResults(): void {
-    this.clearResults();
+  private displayResults(startIndex: number, show: number): void {
     if (!this.result) return;
 
-    this.result.data.forEach((item) => {
+    this.result.data.forEach((item, index) => {
+      if (index < startIndex || index > startIndex + show - 1) return;
+
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
       clone.setAttribute('data-productId', item.ProductId);
@@ -304,6 +316,14 @@ export class HandleTable {
 
       this.resultsList.appendChild(clone);
     });
+
+    this.numberOfResultsShown += show;
+
+    if (this.numberOfResultsShown < this.result.data.length) {
+      this.loadMoreWrapper.style.display = 'flex';
+    } else {
+      this.loadMoreWrapper.style.removeProperty('display');
+    }
 
     dialogs();
   }
