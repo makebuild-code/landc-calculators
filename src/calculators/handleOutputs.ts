@@ -191,8 +191,8 @@ export class HandleOutputs {
     if (data2) {
       datasets.push({
         data: data2,
-        borderColor: '#fff',
-        backgroundColor: '#fff',
+        borderColor: '#d70206',
+        backgroundColor: '#d70206',
         borderWidth: 1,
       });
     }
@@ -204,7 +204,7 @@ export class HandleOutputs {
       this.chartJS.update();
     } else {
       this.chartJS = new Chart(this.chart, {
-        type: 'line',
+        type: this.chart.dataset.calcChartType,
         data: {
           labels,
           datasets,
