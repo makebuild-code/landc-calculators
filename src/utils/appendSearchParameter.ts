@@ -8,7 +8,7 @@ export const appendSearchParameter = (element: HTMLLinkElement, paramsToAdd: Sea
   const params = new URLSearchParams(url.search);
 
   paramsToAdd.forEach((param) => {
-    params.append(param.key, param.value);
+    params.set(param.key, param.value);
   });
 
   url.search = params.toString();
