@@ -2,7 +2,6 @@ import { simulateEvent } from '@finsweet/ts-utils';
 import { dialogs } from 'src/components/dialogs';
 import type { APIResponse, Input } from 'src/types';
 
-import { appendSearchParameter } from '$utils/appendSearchParameter';
 import { checkInputValidity } from '$utils/checkInputValidity';
 import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
@@ -11,6 +10,7 @@ import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 import { setError } from '$utils/setError';
+import { setSearchParameter } from '$utils/setSearchParameter';
 
 import type { BestBuyResult, Inputs, PropertyType, SortColumn } from './types';
 
@@ -280,6 +280,8 @@ export class HandleTable {
   private displayResults(startIndex: number, show: number): void {
     if (!this.result) return;
 
+    console.log(this.result);
+
     this.result.data.forEach((item, index) => {
       if (index < startIndex || index > startIndex + show - 1) return;
 
@@ -323,7 +325,7 @@ export class HandleTable {
 
       const button = queryElement('.button', clone) as HTMLLinkElement;
       if (button) {
-        appendSearchParameter(button, [
+        setSearchParameter(button, [
           {
             key: 'purchaseOrRemortgage',
             value: this.formattedValues.SchemePurpose === '1' ? 'p' : 'r',

@@ -1,10 +1,10 @@
 import type { APIResponse } from 'src/types';
 
-import { appendSearchParameter } from '$utils/appendSearchParameter';
 import { isStaging } from '$utils/isStaging';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
+import { setSearchParameter } from '$utils/setSearchParameter';
 
 import type {
   BestBuyResult,
@@ -172,7 +172,7 @@ export class HandleMini {
       });
 
       const button = queryElement('a', row) as HTMLLinkElement;
-      appendSearchParameter(button, [{ key: 'productId', value: item.ProductId as string }]);
+      setSearchParameter(button, [{ key: 'productId', value: item.ProductId as string }]);
     });
   }
 }

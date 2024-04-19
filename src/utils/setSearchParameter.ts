@@ -1,9 +1,6 @@
 export type SearchParameter = { key: string; value: string };
 
-export const appendSearchParameter = (element: HTMLLinkElement, paramsToAdd: SearchParameter[]) => {
-  // eslint-disable-next-line no-console
-  console.log('appendSearchParameter');
-
+export const setSearchParameter = (element: HTMLLinkElement, paramsToAdd: SearchParameter[]) => {
   const url = new URL(element.href);
   const params = new URLSearchParams(url.search);
 
