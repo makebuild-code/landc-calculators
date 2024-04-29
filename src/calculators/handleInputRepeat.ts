@@ -60,7 +60,6 @@ export class HandleInputRepeat {
   }
 
   init(): void {
-    console.log(this);
     this.button.addEventListener('click', () => {
       this.addTemplate();
     });
@@ -108,12 +107,8 @@ export class HandleInputRepeat {
 
     const values: (string | InputObject)[] = [];
 
-    console.log(this.type);
-
     this.groups.forEach((group) => {
-      console.log(group);
       const inputs = queryElements('[data-input]', group) as Input[];
-      console.log(inputs);
       if (this.type === 'stringArray') {
         inputs.forEach((input) => {
           const value = getInputValue(input);
@@ -126,17 +121,12 @@ export class HandleInputRepeat {
           const value = getInputValue(input);
           if (!calcInput || !value) return;
 
-          console.log(calcInput);
-          console.log(value);
-
           object[calcInput] = value;
         });
 
         values.push(object);
       }
     });
-
-    console.log(values);
 
     return values;
   }

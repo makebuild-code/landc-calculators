@@ -19,8 +19,6 @@ export const bestbuys = () => {
           : null;
 
     if (bestbuy === null) return;
-    console.log(component);
-    console.log(bestbuy);
     bestbuy.init();
   });
 };

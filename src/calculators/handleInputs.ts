@@ -110,11 +110,8 @@ export class HandleInputs {
     });
 
     if (isStaging) {
-      // eslint-disable-next-line no-console
       console.groupCollapsed(`${allPresent ? 'all inputs present' : 'inputs missing'}`);
-      // eslint-disable-next-line no-console
       console.table(tableData);
-      // eslint-disable-next-line no-console
       console.groupEnd();
     }
 
@@ -235,8 +232,6 @@ export class HandleInputs {
         });
       }
     }
-
-    console.log(values);
 
     return values;
   }

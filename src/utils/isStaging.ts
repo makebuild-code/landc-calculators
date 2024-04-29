@@ -1,1 +1,1 @@
-export const isStaging = window.location.host.includes('.webflow.io');
+export const isStaging = window.location.host.includes('webflow-uat.landc.co.uk/');

@@ -75,8 +75,6 @@ export class HandleCalculator {
       return;
     }
 
-    console.log('making request');
-
     this.handleAzureRequest();
   }
 

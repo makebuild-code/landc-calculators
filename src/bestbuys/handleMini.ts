@@ -89,6 +89,7 @@ export class HandleMini {
       Features: {
         Erc: Erc === 'true' ? true : false,
         Offset: Offset === 'true' ? true : false,
+        NewBuild: false,
       },
       SortColumn: SortColumn ?? '1',
       UseStaticApr: UseStaticApr === 'true' ? true : false,
