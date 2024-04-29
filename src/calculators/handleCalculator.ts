@@ -10,7 +10,7 @@ import { HandleInputs } from './handleInputs';
 import { HandleOutputs } from './handleOutputs';
 
 const attr = 'data-calc';
-const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/calculatorhttptrigger';
+const API_ENDPOINT = 'https://test.landc.co.uk/api/calculatorhttptrigger';
 
 export class HandleCalculator {
   name: string;

@@ -18,7 +18,7 @@ import type {
 } from './types';
 
 const attr = 'data-mini';
-const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/productshttptrigger';
+const API_ENDPOINT = 'https://test.landc.co.uk/api/productshttptrigger';
 
 export class HandleMini {
   component: HTMLDivElement;

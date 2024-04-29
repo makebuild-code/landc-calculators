@@ -21,6 +21,7 @@ export interface Inputs {
   Features: {
     Erc: boolean;
     Offset: boolean;
+    NewBuild: boolean;
   }; // Any additional product features to include or use
   SortColumn: SortColumn; // Numeric representations for sort columns
   UseStaticApr: boolean; // Indicating whether to use a static APR (driven from the database).

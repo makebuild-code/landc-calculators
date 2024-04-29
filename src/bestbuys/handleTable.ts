@@ -15,7 +15,7 @@ import { setSearchParameter } from '$utils/setSearchParameter';
 import type { BestBuyResult, Inputs, PropertyType, SortColumn } from './types';
 
 const attr = 'data-bb';
-const API_ENDPOINT = 'https://landc-website.azurewebsites.net/api/productshttptrigger';
+const API_ENDPOINT = 'https://test.landc.co.uk/api/productshttptrigger';
 
 export class HandleTable {
   component: HTMLDivElement;
@@ -203,6 +203,7 @@ export class HandleTable {
       Features: {
         Erc: preFormattedValues.Erc as boolean,
         Offset: preFormattedValues.Offset as boolean,
+        NewBuild: preFormattedValues.NewBuild as boolean,
       },
       SortColumn: preFormattedValues.SortColumn as SortColumn,
       UseStaticApr: false,
@@ -279,8 +280,6 @@ export class HandleTable {
 
   private displayResults(startIndex: number, show: number): void {
     if (!this.result) return;
-
-    console.log(this.result);
 
     this.result.data.forEach((item, index) => {
       if (index < startIndex || index > startIndex + show - 1) return;
