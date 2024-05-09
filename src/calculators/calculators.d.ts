@@ -1,7 +1,3 @@
-/**
- * @todo MortgageCostRequest needs the "paymentType" input to be defined
- */
-
 export interface ResidentialBorrowingLimitRequest {
   url: 'https://www.landc.co.uk/calculators/how-much-can-i-borrow-mortgage-calculator/';
   calculator: 'residentialborrowinglimit';

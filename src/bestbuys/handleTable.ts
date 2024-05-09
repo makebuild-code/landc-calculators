@@ -82,6 +82,7 @@ export class HandleTable {
         const valid = this.validateInputs();
         if (!valid) return;
         this.toggleLoading();
+        this.numberOfResultsShown = 0;
         this.handleAzureRequest();
       });
     });
@@ -90,6 +91,7 @@ export class HandleTable {
       const valid = this.validateInputs();
       if (!valid) return;
       this.toggleLoading();
+      this.numberOfResultsShown = 0;
       this.handleAzureRequest();
     });
 
@@ -199,7 +201,7 @@ export class HandleTable {
       SchemePurpose: preFormattedValues.SchemePurpose === 'Purchase' ? '1' : '2',
       SchemePeriods: [],
       SchemeTypes: [],
-      NumberOfResults: '50',
+      NumberOfResults: '100',
       Features: {
         Erc: preFormattedValues.Erc as boolean,
         Offset: preFormattedValues.Offset as boolean,
@@ -226,6 +228,7 @@ export class HandleTable {
     if (isStaging) {
       console.groupCollapsed('API Call');
       console.time('API Request');
+      console.log(this);
     }
 
     try {
@@ -252,6 +255,7 @@ export class HandleTable {
     if (isStaging) {
       console.timeEnd('API Request');
       console.groupEnd();
+      console.log(this);
     }
   }
 
