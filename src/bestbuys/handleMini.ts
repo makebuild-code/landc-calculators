@@ -16,9 +16,10 @@ import type {
   SchemeTypes,
   SortColumn,
 } from './types';
+import { API_ENDPOINTS } from 'src/constants';
 
 const attr = 'data-mini';
-const API_ENDPOINT = 'https://test.landc.co.uk/api/productshttptrigger';
+const API_ENDPOINT = API_ENDPOINTS.productsTrigger;
 
 export class HandleMini {
   component: HTMLDivElement;

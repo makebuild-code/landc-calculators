@@ -13,9 +13,10 @@ import { setError } from '$utils/setError';
 import { setSearchParameter } from '$utils/setSearchParameter';
 
 import type { BestBuyResult, Inputs, PropertyType, SortColumn } from './types';
+import { API_ENDPOINTS } from 'src/constants';
 
 const attr = 'data-bb';
-const API_ENDPOINT = 'https://test.landc.co.uk/api/productshttptrigger';
+const API_ENDPOINT = API_ENDPOINTS.productsTrigger;
 
 export class HandleTable {
   component: HTMLDivElement;

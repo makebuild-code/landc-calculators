@@ -8,9 +8,10 @@ import { queryElements } from '$utils/queryelements';
 import { type CalculatorConfig, calculatorConfig } from './calculatorConfig';
 import { HandleInputs } from './handleInputs';
 import { HandleOutputs } from './handleOutputs';
+import { API_ENDPOINTS } from 'src/constants';
 
 const attr = 'data-calc';
-const API_ENDPOINT = 'https://test.landc.co.uk/api/calculatorhttptrigger';
+const API_ENDPOINT = API_ENDPOINTS.calculatorTrigger;
 
 export class HandleCalculator {
   name: string;
