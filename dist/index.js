@@ -15780,13 +15780,11 @@
     constructor(component) {
       this.component = component;
       this.outputs = queryElements(`[${attr6}-output]`, component);
-      this.chart = queryElement(`[${attr6}-el="chart"]`, component);
     }
     displayResults(result) {
       this.result = result;
       console.log("Results to process are: ", this.result);
       this.populateOutputs();
-      this.populateChart();
       const resultsElement = queryElement(`[${attr6}-el="results"]`, this.component);
       resultsElement.style.display = "block";
     }
@@ -15805,79 +15803,29 @@
         outputs = this.outputs;
         data = this.result?.result;
       }
-      outputs.forEach((output) => {
-        const key = output.dataset.calcOutput;
-        if (!key)
-          return;
-        const value = data[key];
-        if (value === 0 || data[key]) {
-          this.populateOutput(output, value);
-        }
-      });
-    }
-    populateChart() {
-      if (!this.result || !this.chart)
-        return;
-      const chartLabels = this.result.result.ChartLabels;
-      const labels = chartLabels.split(",");
-      const chartData1 = this.result.result.ChartData;
-      const data1 = chartData1.split(",").map(Number);
-      let data2 = null;
-      if (this.result.result.ChartData2) {
-        const chartData2 = this.result.result.ChartData2;
-        data2 = chartData2.split(",").map(Number);
+      const savingElement = queryElement(`[${attr6}-output="SavingBlock"]`, this.component);
+      const noSavingElement = queryElement(`[${attr6}-output="NoSavingBlock"]`, this.component);
+      if (data["CostOfRate1"] < data["CostOfRate2"]) {
+        savingElement.style.display = "none";
+        noSavingElement.style.display = "block";
       }
-      const datasets = [
-        {
-          data: data1,
-          borderColor: "#fff",
-          backgroundColor: "#fff",
-          borderWidth: 1
-        }
-      ];
-      if (data2) {
-        datasets.push({
-          data: data2,
-          borderColor: "#d70206",
-          backgroundColor: "#d70206",
-          borderWidth: 1
-        });
-      }
-      if (this.chartJS) {
-        this.chartJS.data.labels = labels;
-        this.chartJS.data.datasets[0].data = data1;
-        if (data2)
-          this.chartJS.data.datasets[1].data = data2;
-        this.chartJS.update();
-      } else {
-        this.chartJS = new auto_default(this.chart, {
-          type: this.chart.dataset.calcChartType,
-          data: {
-            labels,
-            datasets
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                labels: {
-                  filter: (item, chart) => false
-                },
-                title: {
-                  display: true,
-                  text: this.chart.dataset.calcChartTitle,
-                  font: { family: "Gotham, sans-serif;" },
-                  padding: 10
-                }
-              }
-            },
-            scales: {
-              x: { ticks: { color: "#fff" } },
-              y: { ticks: { color: "#fff" } }
-            }
+      if (data["CostOfRate1"] >= data["CostOfRate2"]) {
+        noSavingElement.style.display = "none";
+        savingElement.style.display = "block";
+        console.log("Outputs array is: ", outputs);
+        data["AnnualCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 2;
+        data["MonthlyCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 24;
+        data["FollowOnPayments"] = data["CostOfRate1"] / 24;
+        data["PaymentsAfterSwitch"] = data["CostOfRate2"] / 24;
+        outputs.forEach((output) => {
+          const key = output.dataset.calcOutput;
+          if (!key)
+            return;
+          const value = data[key];
+          if (value === 0 || data[key]) {
+            this.populateOutput(output, value);
           }
         });
-        auto_default.defaults.color = "#fff";
       }
     }
   };
