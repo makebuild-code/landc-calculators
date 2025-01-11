@@ -20,7 +20,7 @@ export class HandleCODNOutputs {
 
   displayResults(result: APIResponse): void {
     this.result = result;
-    console.log("Results to process are: ", this.result);
+    console.log('Results to process are: ', this.result);
     this.populateOutputs();
 
     const resultsElement = queryElement(`[${attr}-el="results"]`, this.component) as HTMLDivElement;
@@ -43,8 +43,14 @@ export class HandleCODNOutputs {
       data = this.result?.result;
     }
 
-    const savingElement = queryElement(`[${attr}-output="SavingBlock"]`, this.component) as HTMLDivElement;
-    const noSavingElement = queryElement(`[${attr}-output="NoSavingBlock"]`, this.component) as HTMLDivElement;
+    const savingElement = queryElement(
+      `[${attr}-output="SavingBlock"]`,
+      this.component
+    ) as HTMLDivElement;
+    const noSavingElement = queryElement(
+      `[${attr}-output="NoSavingBlock"]`,
+      this.component
+    ) as HTMLDivElement;
 
     // Check if the current rate is less than the new rate and show text if so
     if (data['CostOfRate1'] < data['CostOfRate2']) {
@@ -56,25 +62,21 @@ export class HandleCODNOutputs {
     if (data['CostOfRate1'] >= data['CostOfRate2']) {
       noSavingElement.style.display = 'none';
       savingElement.style.display = 'block';
-      console.log("Outputs array is: ", outputs);
+      console.log('Outputs array is: ', outputs);
       //Add values to the data object
-      data['AnnualCost'] = (data['CostOfRate1'] - data['CostOfRate2'])/2;
-      data['MonthlyCost'] = (data['CostOfRate1'] - data['CostOfRate2'])/24;
-      data['FollowOnPayments'] = data['CostOfRate1']/24;
-      data['PaymentsAfterSwitch'] = data['CostOfRate2']/24;
+      data['AnnualCost'] = (data['CostOfRate1'] - data['CostOfRate2']) / 2;
+      data['MonthlyCost'] = (data['CostOfRate1'] - data['CostOfRate2']) / 12;
+      data['FollowOnPayments'] = data['CostOfRate1'] / 12;
+      data['PaymentsAfterSwitch'] = data['CostOfRate2'] / 12;
       outputs.forEach((output) => {
-      const key = output.dataset.calcOutput;
-      if (!key) return;
+        const key = output.dataset.calcOutput;
+        if (!key) return;
 
-      const value = data[key];
-      if (value === 0 || data[key]) {
-        this.populateOutput(output, value);
-      }
-      
+        const value = data[key];
+        if (value === 0 || data[key]) {
+          this.populateOutput(output, value);
+        }
       });
     }
-
-    
   }
-
 }
