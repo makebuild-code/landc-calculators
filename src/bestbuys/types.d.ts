@@ -19,7 +19,7 @@ export interface Inputs {
   SchemeTypes: SchemeTypes[]; // Array of scheme types to include. Fixed (1); Variable (2)
   NumberOfResults: string; // Total number of products to return. Defaults to 10.
   Features: {
-    Erc: boolean;
+    EarlyRepaymentCharge: boolean;
     Offset: boolean;
     NewBuild: boolean;
   }; // Any additional product features to include or use

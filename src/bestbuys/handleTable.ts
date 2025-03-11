@@ -1,5 +1,6 @@
 import { simulateEvent } from '@finsweet/ts-utils';
 import { dialogs } from 'src/components/dialogs';
+import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse, Input } from 'src/types';
 
 import { checkInputValidity } from '$utils/checkInputValidity';
@@ -13,7 +14,6 @@ import { setError } from '$utils/setError';
 import { setSearchParameter } from '$utils/setSearchParameter';
 
 import type { BestBuyResult, Inputs, PropertyType, SortColumn } from './types';
-import { API_ENDPOINTS } from 'src/constants';
 
 const attr = 'data-bb';
 const API_ENDPOINT = API_ENDPOINTS.productsTrigger;
@@ -204,7 +204,7 @@ export class HandleTable {
       SchemeTypes: [],
       NumberOfResults: '100',
       Features: {
-        Erc: preFormattedValues.Erc as boolean,
+        EarlyRepaymentCharge: preFormattedValues.Erc as boolean,
         Offset: preFormattedValues.Offset as boolean,
         NewBuild: preFormattedValues.NewBuild as boolean,
       },

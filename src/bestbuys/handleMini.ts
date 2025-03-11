@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse } from 'src/types';
 
 import { isStaging } from '$utils/isStaging';
@@ -16,7 +17,6 @@ import type {
   SchemeTypes,
   SortColumn,
 } from './types';
-import { API_ENDPOINTS } from 'src/constants';
 
 const attr = 'data-mini';
 const API_ENDPOINT = API_ENDPOINTS.productsTrigger;
@@ -88,7 +88,7 @@ export class HandleMini {
       SchemeTypes: convertStringToArray<SchemeTypes>(SchemeTypes) ?? ['1', '2'],
       NumberOfResults: '3',
       Features: {
-        Erc: Erc === 'true' ? true : false,
+        EarlyRepaymentCharge: Erc === 'true' ? false : true,
         Offset: Offset === 'true' ? true : false,
         NewBuild: false,
       },

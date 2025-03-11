@@ -1,17 +1,16 @@
-const production = true;
+const production = false;
 
 export const API_ENDPOINTS = {
   productsTrigger: production
-    ? 'https://test.landc.co.uk/api/productshttptrigger'
-    : 'https://landc-function-app-faa4.azurewebsites.net/api/ProductsHttpTrigger',
+    ? 'https://landc.co.uk/api/ProductsHttpTrigger'
+    : 'https://test.landc.co.uk/api/productshttptrigger',
   calculatorTrigger: production
-    ? 'https://test.landc.co.uk/api/calculatorhttptrigger'
-    : 'https://landc-function-app-faa4.azurewebsites.net/api/CalculatorHttpTrigger?',
+    ? 'https://landc.co.uk/api/CalculatorHttpTrigger?'
+    : 'https://test.landc.co.uk/api/calculatorhttptrigger',
   svrForLenders: production
-    ? 'https://test.landc.co.uk/api/SVRForLendersTrigger'
-    : 'https://landc-function-app-faa4.azurewebsites.net/api/SVRForLendersTrigger',
+    ? 'https://landc.co.uk/api/SVRForLendersTrigger'
+    : 'https://test.landc.co.uk/api/SVRForLendersTrigger',
   costOfDoingNothing: production
-    ? 'https://test.landc.co.uk/api/CODNTrigger'
-    : 'https://landc-function-app-faa4.azurewebsites.net/api/CODNTrigger',
+    ? 'https://landc.co.uk/api/CODNTrigger'
+    : 'https://test.landc.co.uk/api/CODNTrigger',
 };
-§
