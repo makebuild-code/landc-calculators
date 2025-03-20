@@ -4,6 +4,15 @@ A starter template for both Client & Power projects.
 
 Before starting to work with this template, please take some time to read through the documentation.
 
+## UPDATE - Build to staging or production to /dist
+```bash
+BUILD_ENV=staging node bin/build.js  
+```
+
+```bash
+BUILD_ENV=production node bin/build.js  
+```
+
 ## Reference
 
 - [Included tools](#included-tools)

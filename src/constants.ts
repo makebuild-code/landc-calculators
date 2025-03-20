@@ -1,16 +1,3 @@
-const production = false;
+const API_ENDPOINTS = JSON.parse(process.env.API_ENDPOINTS || '{}');
 
-export const API_ENDPOINTS = {
-  productsTrigger: production
-    ? 'https://landc.co.uk/api/ProductsHttpTrigger'
-    : 'https://test.landc.co.uk/api/productshttptrigger',
-  calculatorTrigger: production
-    ? 'https://landc.co.uk/api/CalculatorHttpTrigger?'
-    : 'https://test.landc.co.uk/api/calculatorhttptrigger',
-  svrForLenders: production
-    ? 'https://landc.co.uk/api/SVRForLendersTrigger'
-    : 'https://test.landc.co.uk/api/SVRForLendersTrigger',
-  costOfDoingNothing: production
-    ? 'https://landc.co.uk/api/CODNTrigger'
-    : 'https://test.landc.co.uk/api/CODNTrigger',
-};
+export { API_ENDPOINTS };

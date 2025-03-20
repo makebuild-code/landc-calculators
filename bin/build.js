@@ -1,4 +1,39 @@
 import * as esbuild from 'esbuild';
+import dotenv from 'dotenv';
+
+
+
+// Load environment variables based on NODE_ENV
+const envFile = `.env.${process.env.BUILD_ENV || 'staging'}`;
+dotenv.config({ path: envFile });
+
+// Define env variables for esbuild
+const defineEnv = {
+  'process.env.API_ENDPOINTS': JSON.stringify(process.env.API_ENDPOINTS),
+};
+if (!process.env.API_ENDPOINTS) {
+  console.error('❌ API_ENDPOINTS is not defined. Check your .env files.');
+  process.exit(1);
+}
+
+const BUILD_DIRECTORY = `dist/${process.env.BUILD_ENV || 'local'}`;
+const PRODUCTION = process.env.BUILD_ENV === 'production';
+
+await esbuild.build({
+  entryPoints: ['src/index.ts'],
+  outdir: BUILD_DIRECTORY,
+  bundle: true,
+  minify: PRODUCTION,
+  sourcemap: !PRODUCTION,
+  target: PRODUCTION ? 'es2020' : 'esnext',
+  define: defineEnv, // Inject environment variables
+});
+
+console.log(`✅ Build complete for ${BUILD_DIRECTORY}`);
+
+
+
+/*import * as esbuild from 'esbuild';
 import { readdirSync } from 'fs';
 import { join, sep } from 'path';
 
@@ -48,13 +83,14 @@ else {
 /**
  * Logs information about the files that are being served during local development.
  */
+/*
 function logServedFiles() {
   /**
    * Recursively gets all files in a directory.
    * @param {string} dirPath
    * @returns {string[]} An array of file paths.
    */
-  const getFiles = (dirPath) => {
+  /*const getFiles = (dirPath) => {
     const files = readdirSync(dirPath, { withFileTypes: true }).map((dirent) => {
       const path = join(dirPath, dirent.name);
       return dirent.isDirectory() ? getFiles(path) : path;
@@ -89,4 +125,4 @@ function logServedFiles() {
 
   // eslint-disable-next-line no-console
   console.table(filesInfo);
-}
+}*/
