@@ -1,7 +1,8 @@
 import * as esbuild from 'esbuild';
 import dotenv from 'dotenv';
 
-
+import { readdirSync } from 'fs';
+import { join, sep } from 'path';
 
 // Load environment variables based on NODE_ENV
 const envFile = `.env.${process.env.BUILD_ENV || 'staging'}`;
@@ -19,58 +20,31 @@ if (!process.env.API_ENDPOINTS) {
 const BUILD_DIRECTORY = `dist/${process.env.BUILD_ENV || 'local'}`;
 const PRODUCTION = process.env.BUILD_ENV === 'production';
 
-await esbuild.build({
-  entryPoints: ['src/index.ts'],
-  outdir: BUILD_DIRECTORY,
-  bundle: true,
-  minify: PRODUCTION,
-  sourcemap: !PRODUCTION,
-  target: PRODUCTION ? 'es2020' : 'esnext',
-  define: defineEnv, // Inject environment variables
-});
-
-console.log(`✅ Build complete for ${BUILD_DIRECTORY}`);
-
-
-
-/*import * as esbuild from 'esbuild';
-import { readdirSync } from 'fs';
-import { join, sep } from 'path';
-
-// Config output
-const BUILD_DIRECTORY = 'dist';
-const PRODUCTION = process.env.NODE_ENV === 'production';
-
-// Config entrypoint files
-const ENTRY_POINTS = ['src/index.ts'];
-
 // Config dev serving
 const LIVE_RELOAD = !PRODUCTION;
 const SERVE_PORT = 3000;
 const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
-// Create context
 const context = await esbuild.context({
-  bundle: true,
-  entryPoints: ENTRY_POINTS,
+  entryPoints: ['src/index.ts'],
   outdir: BUILD_DIRECTORY,
-  minify: PRODUCTION,
+  bundle: true,
+  //minify: PRODUCTION,
   sourcemap: !PRODUCTION,
   target: PRODUCTION ? 'es2020' : 'esnext',
   inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
   define: {
+    ...defineEnv, // Include environment variables
     SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
   },
 });
 
-// Build files in prod
+console.log(`✅ Build complete for ${BUILD_DIRECTORY}`);
+
 if (PRODUCTION) {
   await context.rebuild();
   context.dispose();
-}
-
-// Watch and serve files in dev
-else {
+} else {
   await context.watch();
   await context
     .serve({
@@ -83,20 +57,15 @@ else {
 /**
  * Logs information about the files that are being served during local development.
  */
-/*
 function logServedFiles() {
-  /**
-   * Recursively gets all files in a directory.
-   * @param {string} dirPath
-   * @returns {string[]} An array of file paths.
-   */
-  /*const getFiles = (dirPath) => {
-    const files = readdirSync(dirPath, { withFileTypes: true }).map((dirent) => {
-      const path = join(dirPath, dirent.name);
-      return dirent.isDirectory() ? getFiles(path) : path;
-    });
 
-    return files.flat();
+
+  const getFiles = (dirPath) => {
+    return readdirSync(dirPath, { withFileTypes: true })
+      .flatMap((dirent) => {
+        const path = join(dirPath, dirent.name);
+        return dirent.isDirectory() ? getFiles(path) : path;
+      });
   };
 
   const files = getFiles(BUILD_DIRECTORY);
@@ -105,24 +74,17 @@ function logServedFiles() {
     .map((file) => {
       if (file.endsWith('.map')) return;
 
-      // Normalize path and create file location
       const paths = file.split(sep);
       paths[0] = SERVE_ORIGIN;
 
       const location = paths.join('/');
-
-      // Create import suggestion
       const tag = location.endsWith('.css')
         ? `<link href="${location}" rel="stylesheet" type="text/css"/>`
         : `<script defer src="${location}"></script>`;
 
-      return {
-        'File Location': location,
-        'Import Suggestion': tag,
-      };
+      return { 'File Location': location, 'Import Suggestion': tag };
     })
     .filter(Boolean);
 
-  // eslint-disable-next-line no-console
   console.table(filesInfo);
-}*/
+}
