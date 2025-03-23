@@ -4,6 +4,7 @@ import { components } from './components';
 import { costOfDoingNothing } from './costofdoingnothing';
 
 window.Webflow ||= [];
+
 window.Webflow.push(() => {
   components();
   bestbuys();

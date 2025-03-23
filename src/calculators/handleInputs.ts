@@ -33,6 +33,7 @@ export class HandleInputs {
   constructor(calculator: HandleCalculator) {
     this.calculator = calculator;
     this.config = calculator.config.inputs;
+
     this.all = queryElements(`[data-input]`, calculator.component);
 
     if (this.config.repeats) {
@@ -61,6 +62,8 @@ export class HandleInputs {
         repeat.init();
       });
     }
+
+    
 
     this.minMaxValues();
 
@@ -97,7 +100,6 @@ export class HandleInputs {
   check(): boolean {
     const tableData: { input: string; present: boolean }[] = [];
     let allPresent = true;
-
     // check which inputs are/aren't present
     this.config.names.forEach((name) => {
       const input = this.all.find((input) => input.dataset.input === name);
@@ -218,6 +220,7 @@ export class HandleInputs {
       this.inputs.forEach((input: Input) => {
         const calcInput = input.dataset.input;
         const value = getInputValue(input);
+
         if (!calcInput || !value) return;
 
         const { conditionsmet } = input.dataset;
@@ -232,7 +235,6 @@ export class HandleInputs {
         });
       }
     }
-
     return values;
   }
 
@@ -249,6 +251,15 @@ export class HandleInputs {
         formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
+
+        
+        // New Mortgage calc out update on change
+       
+        if (this.calculator.name === 'mortgagecost') {
+          this.calculator.submit();
+        }
+
+        
       });
     });
   }

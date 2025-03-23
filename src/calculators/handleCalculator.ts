@@ -42,8 +42,6 @@ export class HandleCalculator {
   init(): void {
     this.inputs.init();
     if (isStaging) {
-      console.groupCollapsed(this.name);
-      console.log(this);
       this.inputs.check();
       this.outputs.check();
       console.groupEnd();
@@ -53,6 +51,7 @@ export class HandleCalculator {
   }
 
   private bindEvents(): void {
+    
     this.inputs.all.forEach((input) => {
       handleEnterInInputs(input, () => {
         this.submit();
@@ -65,6 +64,7 @@ export class HandleCalculator {
   }
 
   submit(): void {
+
     this.toggleLoading();
     const isValid = this.inputs.validateInputs();
     const allPresent = this.inputs.check();
@@ -75,7 +75,6 @@ export class HandleCalculator {
       this.toggleLoading(false);
       return;
     }
-
     this.handleAzureRequest();
   }
 
@@ -100,7 +99,6 @@ export class HandleCalculator {
       console.groupCollapsed('API Call');
       console.time('API Request');
     }
-
     try {
       const result = await this.makeAzureRequest();
       this.result = result.result;
@@ -110,6 +108,19 @@ export class HandleCalculator {
       } else {
         this.toggleLoading(true);
         this.outputs.displayResults(this.result);
+      }
+
+      // Check if `data-results` is set in `calculator.component` - New Mortgage Calc
+      const resultsId = this.component.getAttribute("data-results");
+      const calcName = this.component.getAttribute("data-calc");
+
+      if (resultsId && calcName==='residentialborrowinglimit') {
+        // Find the calculator with `data-calc="mortgagecost"` and trigger calculation
+        const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]') as HTMLDivElement;
+        if (mortgageCalcComponent) {
+          const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
+          mortgageCalc.submit();
+        }
       }
     } catch (error) {
       console.error('Error retrieving calculation', error);
@@ -125,19 +136,49 @@ export class HandleCalculator {
   private async makeAzureRequest(): Promise<APIResponse> {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
+  
 
-    const body = JSON.stringify({ calculator: this.name, input: this.inputs.getValues() });
-
+    // New Mortgage Calcu
+    const values = this.inputs.getValues(); // Get input values
+    const depositValue = values['DepositAmount'];
+    const depositAmount = parseFloat(typeof depositValue === 'string' ? depositValue : '0');
+    const borrowValue = values['RepaymentValue'];
+    const borrowAmount = parseFloat(typeof borrowValue === 'string' ? borrowValue : '0');
+    const depositSliderValue = values['DepositAmountSlider'];
+    const depositSliderAmount = parseFloat(typeof depositSliderValue === 'string' ? depositSliderValue : '0');
+  
+    const body = JSON.stringify({ calculator: this.name, input: values });
+  
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers,
       body,
     });
-
+  
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`);
     }
+  
+    const result = await response.json();
+  
+    // Adjust Result to add Calulations not brought back from API for New Mortgage Calc
+    if (depositAmount > 0 && result) {
+      if (result.result.BorrowingAmountLower) {
+        result.result.DepositAmount = depositAmount;
+        result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+      }
+    }
 
-    return response.json();
+    if (result.result.TotalOverTerm) {
+      result.result.TotalOverTerm =  Math.round(result.result.TotalOverTerm);
+      result.result.DepositAmount = depositSliderAmount;
+      result.result.PropertyValue = borrowAmount + depositSliderAmount;
+      result.result.BorrowingAmountHigher = borrowAmount;
+    }
+   
+
+  
+    return result;
   }
+  
 }

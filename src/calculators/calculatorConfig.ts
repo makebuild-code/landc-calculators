@@ -20,8 +20,8 @@ export interface CalculatorConfigs {
 
 export const calculatorConfig: CalculatorConfigs = {
   residentialborrowinglimit: {
-    inputs: { names: ['Applicant1Income', 'Applicant2Income'] },
-    outputs: { names: ['BorrowingAmountLower', 'BorrowingAmountHigher'] },
+    inputs: { names: ['Applicant1Income', 'Applicant2Income', 'DepositAmount'] },
+    outputs: { names: ['BorrowingAmountLower', 'BorrowingAmountHigher',] },
   },
   buytoletborrowinglimit: {
     inputs: { names: ['RentalIncome'] },

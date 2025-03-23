@@ -4,10 +4,16 @@ export interface ResidentialBorrowingLimitRequest {
   input: {
     Applicant1Income: number; // min: 1000, max: 1000000, step: 1000, value: 30000
     Applicant2Income: number; // min: 0, max: 1000000, step: 1000, value: 0
+    DepositAmount?: number;
   };
   output: {
     BorrowingAmountLower: number;
     BorrowingAmountHigher: number;
+    DepositAmount?: number;
+    PropertyValue?: number;
+    // Specifically to call in populateOutputs to override values
+    BorrowAdjustSlider?: number;
+    DepositAmountSlider?: number;
   };
 }
 
