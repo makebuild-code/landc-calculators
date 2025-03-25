@@ -251,7 +251,13 @@ export class HandleInputs {
         formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
-      
+        // New Mortgage calc out update on change
+       
+        if (this.calculator.name === 'mortgagecost') {
+          this.calculator.submit();
+        }
+
+        
       });
     });
   }

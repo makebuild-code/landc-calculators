@@ -1171,6 +1171,9 @@
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
+          if (this.calculator.name === "mortgagecost") {
+            this.calculator.submit();
+          }
         });
       });
     }
