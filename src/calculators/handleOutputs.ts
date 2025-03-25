@@ -110,9 +110,6 @@ export class HandleOutputs {
     this.populateChart();
     this.handleConditionals();
 
-    console.log(this.results)
-    console.log(this.resultsId);
-    console.log(this.calcElement)
     if(!this.resultsId){
       this.results.style.display = 'block';
     }
@@ -159,7 +156,6 @@ export class HandleOutputs {
 
   private populateOutput(output: HTMLElement, value: string | number) {
     if (typeof value === 'number') {
-      console.log('OUTPUTNUMBER',output);
       const { calcOutputMod } = output.dataset;
       if (calcOutputMod) value = Number(calcOutputMod) * value;
       output.textContent = numberToCurrency(value);
@@ -179,7 +175,6 @@ export class HandleOutputs {
     outputs.forEach((output) => {
       const key = output.dataset.calcOutput;
       if (!key) return;
-      console.log('OUTPUTS',output)
       const value = data[key];
       if (value === 0 || data[key]) {
         if (output instanceof HTMLInputElement) {

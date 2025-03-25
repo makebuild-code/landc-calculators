@@ -15524,9 +15524,6 @@
       this.populateOutputs();
       this.populateChart();
       this.handleConditionals();
-      console.log(this.results);
-      console.log(this.resultsId);
-      console.log(this.calcElement);
       if (!this.resultsId) {
         this.results.style.display = "block";
       }
@@ -15563,7 +15560,6 @@
     }
     populateOutput(output, value) {
       if (typeof value === "number") {
-        console.log("OUTPUTNUMBER", output);
         const { calcOutputMod } = output.dataset;
         if (calcOutputMod)
           value = Number(calcOutputMod) * value;
@@ -15581,7 +15577,6 @@
         const key = output.dataset.calcOutput;
         if (!key)
           return;
-        console.log("OUTPUTS", output);
         const value = data[key];
         if (value === 0 || data[key]) {
           if (output instanceof HTMLInputElement) {
