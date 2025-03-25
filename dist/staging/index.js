@@ -15582,6 +15582,8 @@
           if (output instanceof HTMLInputElement) {
             output.value = String(value);
             output.placeholder = String(value);
+          } else if (output.tagName === "IMG" && output.dataset.calcOutputType === "url") {
+            output.src = String(value);
           } else {
             this.populateOutput(output, value);
           }
@@ -15730,16 +15732,11 @@
       try {
         const result = await this.makeAzureRequest();
         this.result = result.result;
-        if (isStaging)
-          console.log(result);
-        if (this.result === null) {
-          this.toggleLoading(false);
-        } else {
-          this.toggleLoading(true);
-          this.outputs.displayResults(this.result);
-        }
         const resultsId = this.component.getAttribute("data-results");
         const calcName = this.component.getAttribute("data-calc");
+        if (resultsId) {
+          this.scrollToDiv(resultsId);
+        }
         if (resultsId && calcName === "residentialborrowinglimit") {
           const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
           if (mortgageCalcComponent) {
@@ -15759,7 +15756,25 @@
               PropertyType: 1,
               MortgageType: 1
             });
+            if (prodresult) {
+              console.log("here", prodresult);
+              this.populateProductCard(prodresult.result);
+              if (prodresult.result.success) {
+                const mortPickTitle = document.querySelector("#mortPickTitle");
+                const mortPickCard = document.querySelector("#mortPickCard");
+                if (mortPickTitle && mortPickCard) {
+                  mortPickTitle.style.display = "flex";
+                  mortPickCard.style.display = "flex";
+                }
+              }
+            }
           }
+        }
+        if (this.result === null) {
+          this.toggleLoading(false);
+        } else {
+          this.toggleLoading(true);
+          this.outputs.displayResults(this.result);
         }
       } catch (error) {
         console.error("Error retrieving calculation", error);
@@ -15769,6 +15784,34 @@
         console.timeEnd("API Request");
         console.groupEnd();
       }
+    }
+    scrollToDiv(id) {
+      const targetElement = document.querySelector("#" + id);
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: "smooth",
+          // Smooth scroll
+          block: "start"
+          // Align to the top of the viewport
+        });
+      }
+    }
+    populateProductCard(data) {
+      if (!data)
+        return;
+      document.querySelectorAll("[data-calc-output]").forEach((output) => {
+        const key = output.getAttribute("data-calc-output");
+        if (!key || !(key in data))
+          return;
+        const value = data[key];
+        const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+        if (output instanceof HTMLImageElement) {
+          output.src = stringValue;
+          output.alt = key;
+        } else {
+          output.textContent = stringValue;
+        }
+      });
     }
     async makeAzureRequest() {
       const headers = new Headers();
@@ -15859,7 +15902,9 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
-      console.log("PROD RESULTS", result);
+      if (result.result.FutureValue) {
+        result.result.FutureValue = Math.round(result.result.FutureValue);
+      }
       return result;
     }
   };

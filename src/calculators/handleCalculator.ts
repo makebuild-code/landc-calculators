@@ -1,4 +1,4 @@
-import type { APIResponse, Result } from 'src/types';
+import type { APIResponse, BasicObject, Result } from 'src/types';
 
 import { handleEnterInInputs } from '$utils/handleEnterInInputs';
 import { isStaging } from '$utils/isStaging';
@@ -107,17 +107,14 @@ export class HandleCalculator {
     try {
       const result = await this.makeAzureRequest();
       this.result = result.result;
-      if (isStaging) console.log(result);
-      if (this.result === null) {
-        this.toggleLoading(false);
-      } else {
-        this.toggleLoading(true);
-        this.outputs.displayResults(this.result);
-      }
 
-      // Check if `data-results` is set in `calculator.component` - New Mortgage Calc
+      // --- MORT v2 -- Check if `data-results` is set in `calculator.component` - New Mortgage Calc
       const resultsId = this.component.getAttribute("data-results");
       const calcName = this.component.getAttribute("data-calc");
+
+      if(resultsId){
+        this.scrollToDiv(resultsId)
+      }
 
       if (resultsId && calcName==='residentialborrowinglimit') {
         // Find the calculator with `data-calc="mortgagecost"` and trigger calculation
@@ -134,9 +131,9 @@ export class HandleCalculator {
           const RepaymentValue = parseFloat(mortInputs['RepaymentValue'] as string || '0');
           const PropertyValue = RepaymentValue + DepositAmount;
           console.log('MORT INPUTS', mortInputs);
-          console.log('CALC INPUTS',calcInputs)
+          console.log('CALC INPUTS',calcInputs);
+          
           // Get Product Update
-
 
            const prodresult = await this.makeAzureRequestProduct({
              PropertyValue,
@@ -145,11 +142,33 @@ export class HandleCalculator {
              PropertyType: 1,
              MortgageType: 1
            });
-          
+
+           if (prodresult) {
+             console.log('here', prodresult)
+             this.populateProductCard(prodresult.result);
+
+             if(prodresult.result.success){
+              const mortPickTitle = document.querySelector('#mortPickTitle');
+              const mortPickCard = document.querySelector('#mortPickCard');
+              if (mortPickTitle && mortPickCard) {
+                  (mortPickTitle as HTMLElement).style.display = 'flex';
+                  (mortPickCard as HTMLElement).style.display = 'flex';
+              }
+            }
+           }
+
         }
-        
-        
       }
+
+      
+      if (this.result === null) {
+        this.toggleLoading(false);
+      } else {
+        this.toggleLoading(true);
+        this.outputs.displayResults(this.result);
+      }
+
+      
     } catch (error) {
       console.error('Error retrieving calculation', error);
       this.toggleLoading(false);
@@ -160,6 +179,45 @@ export class HandleCalculator {
       console.groupEnd();
     }
   }
+
+  private scrollToDiv(id: string): void {
+    
+      const targetElement = document.querySelector('#'+id);
+    
+      if (targetElement) {
+       
+        targetElement.scrollIntoView({
+          behavior: 'smooth', // Smooth scroll
+          block: 'start', // Align to the top of the viewport
+        });
+      } 
+
+  }
+
+  private populateProductCard(data?: Result): void {
+
+    if (!data) return;
+
+    document.querySelectorAll('[data-calc-output]').forEach((output) => {
+
+        const key = output.getAttribute('data-calc-output');
+
+
+        if (!key || !(key in data)) return;
+
+        const value = data[key];
+        const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+
+        if (output instanceof HTMLImageElement) {
+            output.src = stringValue;
+            output.alt = key;
+        } else {
+            output.textContent = stringValue;
+        }
+    });
+  }
+
+  
 
   private async makeAzureRequest(): Promise<APIResponse> {
     const headers = new Headers();
@@ -203,9 +261,9 @@ export class HandleCalculator {
       result.result.PropertyValue = borrowAmount + depositSliderAmount;
       result.result.BorrowingAmountHigher = borrowAmount;
     }
-   
 
-  
+    
+
     return result;
   }
 
@@ -263,7 +321,9 @@ export class HandleCalculator {
   
     const result = await response.json();
   
-   console.log('PROD RESULTS', result)
+    if (result.result.FutureValue) {
+      result.result.FutureValue = Math.round(result.result.FutureValue);
+    }
   
     return result;
   }

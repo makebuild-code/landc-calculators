@@ -39,7 +39,6 @@ const context = await esbuild.context({
   },
 });
 
-console.log(`✅ Build complete for ${BUILD_DIRECTORY}`);
 
 if (PRODUCTION) {
   await context.rebuild();

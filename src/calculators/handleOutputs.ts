@@ -170,21 +170,27 @@ export class HandleOutputs {
       data = this.result;
     }
 
-    
-
     outputs.forEach((output) => {
       const key = output.dataset.calcOutput;
       if (!key) return;
       const value = data[key];
+
       if (value === 0 || data[key]) {
-        if (output instanceof HTMLInputElement) {
-          output.value = String(value); // Update the input value
-          output.placeholder = String(value); // Update the placeholder
-        } else {
-          this.populateOutput(output, value);
-        }
+          // If the element is an input, update value and placeholder
+          if (output instanceof HTMLInputElement) {
+              output.value = String(value);
+              output.placeholder = String(value);
+          }
+          // If the element is an image and type = url, update src
+          else if (output.tagName === 'IMG' && output.dataset.calcOutputType === 'url') {
+              (output as HTMLImageElement).src = String(value);
+          }
+          // Otherwise, update the text content
+          else {
+              this.populateOutput(output, value);
+          }
       }
-    });
+  });
   }
 
   private populateChart(): void {
