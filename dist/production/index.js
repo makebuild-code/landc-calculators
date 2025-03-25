@@ -54,12 +54,6 @@
   var API_ENDPOINT = API_ENDPOINTS.productsTrigger;
   var HandleMini = class {
     constructor(component) {
-      __publicField(this, "component");
-      __publicField(this, "values");
-      __publicField(this, "rows");
-      __publicField(this, "loader");
-      __publicField(this, "isLoading");
-      __publicField(this, "result");
       this.component = component;
       this.values = this.getValues();
       this.rows = queryElements(`[${attr}-el="row"]`, component);
@@ -173,7 +167,7 @@
     }
   };
 
-  // node_modules/@finsweet/ts-utils/dist/helpers/simulateEvent.js
+  // node_modules/.pnpm/@finsweet+ts-utils@0.40.0/node_modules/@finsweet/ts-utils/dist/helpers/simulateEvent.js
   var simulateEvent = (target, events) => {
     if (!Array.isArray(events))
       events = [events];
@@ -326,23 +320,6 @@
   var API_ENDPOINT2 = API_ENDPOINTS.productsTrigger;
   var HandleTable = class {
     constructor(component) {
-      __publicField(this, "component");
-      __publicField(this, "template");
-      __publicField(this, "clone");
-      __publicField(this, "inputs");
-      __publicField(this, "conditionals");
-      __publicField(this, "sort");
-      __publicField(this, "buttons");
-      __publicField(this, "resultsList");
-      __publicField(this, "loading");
-      __publicField(this, "noResults");
-      __publicField(this, "isLoading");
-      __publicField(this, "loadMoreWrapper");
-      __publicField(this, "loadMore");
-      __publicField(this, "numberOfResultsShown");
-      __publicField(this, "productId");
-      __publicField(this, "formattedValues");
-      __publicField(this, "result");
       this.component = component;
       this.template = queryElement(`[${attr2}-el="template"]`, component);
       this.clone = this.template.cloneNode(true);
@@ -680,7 +657,7 @@
   // src/calculators/calculatorConfig.ts
   var calculatorConfig = {
     residentialborrowinglimit: {
-      inputs: { names: ["Applicant1Income", "Applicant2Income"] },
+      inputs: { names: ["Applicant1Income", "Applicant2Income", "DepositAmount"] },
       outputs: { names: ["BorrowingAmountLower", "BorrowingAmountHigher"] }
     },
     buytoletborrowinglimit: {
@@ -940,16 +917,6 @@
   var attr3 = "data-calc";
   var HandleInputRepeat = class {
     constructor(calculator, name) {
-      __publicField(this, "calculator");
-      __publicField(this, "name");
-      __publicField(this, "template");
-      __publicField(this, "templateWrapper");
-      __publicField(this, "inputs");
-      __publicField(this, "clone");
-      __publicField(this, "groups");
-      __publicField(this, "max");
-      __publicField(this, "type");
-      __publicField(this, "button");
       this.calculator = calculator;
       this.name = name;
       this.template = queryElement(
@@ -1024,12 +991,6 @@
   // src/calculators/handleInputs.ts
   var HandleInputs = class {
     constructor(calculator) {
-      __publicField(this, "calculator");
-      __publicField(this, "config");
-      __publicField(this, "all");
-      __publicField(this, "repeats");
-      __publicField(this, "inputs");
-      __publicField(this, "conditionals");
       this.calculator = calculator;
       this.config = calculator.config.inputs;
       this.all = queryElements(`[data-input]`, calculator.component);
@@ -1219,7 +1180,7 @@
     }
   };
 
-  // node_modules/@kurkle/color/dist/color.esm.js
+  // node_modules/.pnpm/@kurkle+color@0.3.2/node_modules/@kurkle/color/dist/color.esm.js
   function round(v) {
     return v + 0.5 | 0;
   }
@@ -1776,7 +1737,7 @@
     }
   };
 
-  // node_modules/chart.js/dist/chunks/helpers.segment.js
+  // node_modules/.pnpm/chart.js@4.4.2/node_modules/chart.js/dist/chunks/helpers.segment.js
   function noop() {
   }
   var uid = /* @__PURE__ */ (() => {
@@ -1784,7 +1745,7 @@
     return () => id++;
   })();
   function isNullOrUndef(value) {
-    return value === null || value === void 0;
+    return value === null || typeof value === "undefined";
   }
   function isArray(value) {
     if (Array.isArray && Array.isArray(value)) {
@@ -2019,11 +1980,8 @@
     result.sort((a, b) => a - b).pop();
     return result;
   }
-  function isNonPrimitive(n) {
-    return typeof n === "symbol" || typeof n === "object" && n !== null && !(Symbol.toPrimitive in n || "toString" in n || "valueOf" in n);
-  }
   function isNumber(n) {
-    return !isNonPrimitive(n) && !isNaN(parseFloat(n)) && isFinite(n);
+    return !isNaN(parseFloat(n)) && isFinite(n);
   }
   function almostWhole(x, epsilon) {
     const rounded = Math.round(x);
@@ -2241,35 +2199,24 @@
     let start = 0;
     let count = pointCount;
     if (meta._sorted) {
-      const { iScale, vScale, _parsed } = meta;
-      const spanGaps = meta.dataset ? meta.dataset.options ? meta.dataset.options.spanGaps : null : null;
+      const { iScale, _parsed } = meta;
       const axis = iScale.axis;
       const { min, max, minDefined, maxDefined } = iScale.getUserBounds();
       if (minDefined) {
-        start = Math.min(
+        start = _limitValue(Math.min(
           // @ts-expect-error Need to type _parsed
           _lookupByKey(_parsed, axis, min).lo,
           // @ts-expect-error Need to fix types on _lookupByKey
           animationsDisabled ? pointCount : _lookupByKey(points, axis, iScale.getPixelForValue(min)).lo
-        );
-        if (spanGaps) {
-          const distanceToDefinedLo = _parsed.slice(0, start + 1).reverse().findIndex((point) => !isNullOrUndef(point[vScale.axis]));
-          start -= Math.max(0, distanceToDefinedLo);
-        }
-        start = _limitValue(start, 0, pointCount - 1);
+        ), 0, pointCount - 1);
       }
       if (maxDefined) {
-        let end = Math.max(
+        count = _limitValue(Math.max(
           // @ts-expect-error Need to type _parsed
           _lookupByKey(_parsed, iScale.axis, max, true).hi + 1,
           // @ts-expect-error Need to fix types on _lookupByKey
           animationsDisabled ? 0 : _lookupByKey(points, axis, iScale.getPixelForValue(max), true).hi + 1
-        );
-        if (spanGaps) {
-          const distanceToDefinedHi = _parsed.slice(end - 1).findIndex((point) => !isNullOrUndef(point[vScale.axis]));
-          end += Math.max(0, distanceToDefinedHi);
-        }
-        count = _limitValue(end, start, pointCount) - start;
+        ), start, pointCount) - start;
       } else {
         count = pointCount - start;
       }
@@ -2783,9 +2730,6 @@
     return Math.round((pixel - halfWidth) * devicePixelRatio) / devicePixelRatio + halfWidth;
   }
   function clearCanvas(canvas, ctx) {
-    if (!ctx && !canvas) {
-      return;
-    }
     ctx = ctx || canvas.getContext("2d");
     ctx.save();
     ctx.resetTransform();
@@ -3289,7 +3233,7 @@
   var readKey = (prefix, name) => prefix ? prefix + _capitalize(name) : name;
   var needsSubResolver = (prop, value) => isObject(value) && prop !== "adapters" && (Object.getPrototypeOf(value) === null || value.constructor === Object);
   function _cached(target, prop, resolve2) {
-    if (Object.prototype.hasOwnProperty.call(target, prop) || prop === "constructor") {
+    if (Object.prototype.hasOwnProperty.call(target, prop)) {
       return target[prop];
     }
     const value = resolve2();
@@ -3684,7 +3628,7 @@
   function getContainerSize(canvas, width, height) {
     let maxWidth, maxHeight;
     if (width === void 0 || height === void 0) {
-      const container = canvas && _getParentNode(canvas);
+      const container = _getParentNode(canvas);
       if (!container) {
         width = canvas.clientWidth;
         height = canvas.clientHeight;
@@ -4158,7 +4102,7 @@
     return JSON.stringify(style, replacer) !== JSON.stringify(prevStyle, replacer);
   }
 
-  // node_modules/chart.js/dist/chart.js
+  // node_modules/.pnpm/chart.js@4.4.2/node_modules/chart.js/dist/chart.js
   var Animator = class {
     constructor() {
       this._request = null;
@@ -4586,11 +4530,9 @@
     if (value === null) {
       return;
     }
-    let found = false;
     for (i = 0, ilen = keys.length; i < ilen; ++i) {
       datasetIndex = +keys[i];
       if (datasetIndex === dsIndex) {
-        found = true;
         if (options.all) {
           continue;
         }
@@ -4601,23 +4543,17 @@
         value += otherValue;
       }
     }
-    if (!found && !options.all) {
-      return 0;
-    }
     return value;
   }
-  function convertObjectDataToArray(data, meta) {
-    const { iScale, vScale } = meta;
-    const iAxisKey = iScale.axis === "x" ? "x" : "y";
-    const vAxisKey = vScale.axis === "x" ? "x" : "y";
+  function convertObjectDataToArray(data) {
     const keys = Object.keys(data);
     const adata = new Array(keys.length);
     let i, ilen, key;
     for (i = 0, ilen = keys.length; i < ilen; ++i) {
       key = keys[i];
       adata[i] = {
-        [iAxisKey]: key,
-        [vAxisKey]: data[key]
+        x: key,
+        y: data[key]
       };
     }
     return adata;
@@ -4806,8 +4742,7 @@
       const data = dataset.data || (dataset.data = []);
       const _data = this._data;
       if (isObject(data)) {
-        const meta = this._cachedMeta;
-        this._data = convertObjectDataToArray(data, meta);
+        this._data = convertObjectDataToArray(data);
       } else if (_data !== data) {
         if (_data) {
           unlistenArrayEvents(_data, this);
@@ -4844,7 +4779,6 @@
       this._resyncElements(resetNewElements);
       if (stackChanged || oldStacked !== meta._stacked) {
         updateStacks(this, meta._parsed);
-        meta._stacked = isStacked(meta.vScale, meta);
       }
     }
     configure() {
@@ -5608,10 +5542,8 @@
       const metasets = iScale.getMatchingVisibleMetas(this._type).filter((meta) => meta.controller.options.grouped);
       const stacked = iScale.options.stacked;
       const stacks = [];
-      const currentParsed = this._cachedMeta.controller.getParsed(dataIndex);
-      const iScaleValue = currentParsed && currentParsed[iScale.axis];
       const skipNull = (meta) => {
-        const parsed = meta._parsed.find((item) => item[iScale.axis] === iScaleValue);
+        const parsed = meta.controller.getParsed(dataIndex);
         const val = parsed && parsed[meta.vScale.axis];
         if (isNullOrUndef(val) || isNaN(val)) {
           return true;
@@ -5750,7 +5682,7 @@
       const ilen = rects.length;
       let i = 0;
       for (; i < ilen; ++i) {
-        if (this.getParsed(i)[vScale.axis] !== null && !rects[i].hidden) {
+        if (this.getParsed(i)[vScale.axis] !== null) {
           rects[i].draw(this._ctx);
         }
       }
@@ -6765,20 +6697,10 @@
   function binarySearch(metaset, axis, value, intersect) {
     const { controller, data, _sorted } = metaset;
     const iScale = controller._cachedMeta.iScale;
-    const spanGaps = metaset.dataset ? metaset.dataset.options ? metaset.dataset.options.spanGaps : null : null;
     if (iScale && axis === iScale.axis && axis !== "r" && _sorted && data.length) {
       const lookupMethod = iScale._reversePixels ? _rlookupByKey : _lookupByKey;
       if (!intersect) {
-        const result = lookupMethod(data, axis, value);
-        if (spanGaps) {
-          const { vScale } = controller._cachedMeta;
-          const { _parsed } = metaset;
-          const distanceToDefinedLo = _parsed.slice(0, result.lo + 1).reverse().findIndex((point) => !isNullOrUndef(point[vScale.axis]));
-          result.lo -= Math.max(0, distanceToDefinedLo);
-          const distanceToDefinedHi = _parsed.slice(result.hi).findIndex((point) => !isNullOrUndef(point[vScale.axis]));
-          result.hi += Math.max(0, distanceToDefinedHi);
-        }
-        return result;
+        return lookupMethod(data, axis, value);
       } else if (controller._sharedOptions) {
         const el = data[0];
         const range = typeof el.getRange === "function" && el.getRange(axis);
@@ -6908,7 +6830,7 @@
     const rangeMethod = axis === "x" ? "inXRange" : "inYRange";
     let intersectsItem = false;
     evaluateInteractionItems(chart, axis, position, (element, datasetIndex, index2) => {
-      if (element[rangeMethod] && element[rangeMethod](position[axis], useFinalPosition)) {
+      if (element[rangeMethod](position[axis], useFinalPosition)) {
         items.push({
           element,
           datasetIndex,
@@ -7606,7 +7528,7 @@
       return getMaximumSize(canvas, width, height, aspectRatio);
     }
     isAttached(canvas) {
-      const container = canvas && _getParentNode(canvas);
+      const container = _getParentNode(canvas);
       return !!(container && container.isConnected);
     }
   };
@@ -9660,7 +9582,7 @@
     }
     return false;
   }
-  var version = "4.4.8";
+  var version = "4.4.2";
   var KNOWN_POSITIONS = [
     "top",
     "bottom",
@@ -10185,8 +10107,8 @@
       let i;
       if (this._resizeBeforeDraw) {
         const { width, height } = this._resizeBeforeDraw;
-        this._resizeBeforeDraw = null;
         this._resize(width, height);
+        this._resizeBeforeDraw = null;
       }
       this.clear();
       if (this.width <= 0 || this.height <= 0) {
@@ -10772,8 +10694,7 @@
       ], useFinalPosition);
       const rAdjust = (this.options.spacing + this.options.borderWidth) / 2;
       const _circumference = valueOrDefault(circumference, endAngle - startAngle);
-      const nonZeroBetween = _angleBetween(angle, startAngle, endAngle) && startAngle !== endAngle;
-      const betweenAngles = _circumference >= TAU || nonZeroBetween;
+      const betweenAngles = _circumference >= TAU || _angleBetween(angle, startAngle, endAngle);
       const withinRadius = _isBetween(distance, innerRadius + rAdjust, outerRadius + rAdjust);
       return betweenAngles && withinRadius;
     }
@@ -11456,9 +11377,6 @@
   function containsColorsDefinition(descriptor) {
     return descriptor && (descriptor.borderColor || descriptor.backgroundColor);
   }
-  function containsDefaultColorsDefenitions() {
-    return defaults.borderColor !== "rgba(0,0,0,0.1)" || defaults.backgroundColor !== "rgba(0,0,0,0.1)";
-  }
   var plugin_colors = {
     id: "colors",
     defaults: {
@@ -11471,8 +11389,7 @@
       }
       const { data: { datasets }, options: chartOptions } = chart.config;
       const { elements: elements2 } = chartOptions;
-      const containsColorDefenition = containsColorsDefinitions(datasets) || containsColorsDefinition(chartOptions) || elements2 && containsColorsDefinitions(elements2) || containsDefaultColorsDefenitions();
-      if (!options.forceOverride && containsColorDefenition) {
+      if (!options.forceOverride && (containsColorsDefinitions(datasets) || containsColorsDefinition(chartOptions) || elements2 && containsColorsDefinitions(elements2))) {
         return;
       }
       const colorizer = getColorizer(chart);
@@ -13001,9 +12918,6 @@
           y += pos.y;
           ++count;
         }
-      }
-      if (count === 0 || xSet.size === 0) {
-        return false;
       }
       const xAverage = [
         ...xSet
@@ -14751,7 +14665,7 @@
     ctx.save();
     ctx.strokeStyle = color2;
     ctx.lineWidth = lineWidth;
-    ctx.setLineDash(borderOpts.dash || []);
+    ctx.setLineDash(borderOpts.dash);
     ctx.lineDashOffset = borderOpts.dashOffset;
     ctx.beginPath();
     pathRadiusLine(scale, radius, circular, labelCount);
@@ -14912,7 +14826,7 @@
           ctx.strokeStyle = color2;
           ctx.setLineDash(optsAtIndex.borderDash);
           ctx.lineDashOffset = optsAtIndex.borderDashOffset;
-          offset = this.getDistanceFromCenterForValue(opts.reverse ? this.min : this.max);
+          offset = this.getDistanceFromCenterForValue(opts.ticks.reverse ? this.min : this.max);
           position = this.getPointPosition(i, offset);
           ctx.beginPath();
           ctx.moveTo(this.xCenter, this.yCenter);
@@ -15552,7 +15466,7 @@
     scales
   ];
 
-  // node_modules/chart.js/auto/auto.js
+  // node_modules/.pnpm/chart.js@4.4.2/node_modules/chart.js/auto/auto.js
   Chart.register(...registerables);
   var auto_default = Chart;
 
@@ -15560,21 +15474,10 @@
   var attr4 = "data-calc";
   var HandleOutputs = class {
     constructor(calculator) {
-      __publicField(this, "calculator");
-      __publicField(this, "config");
-      __publicField(this, "all");
-      __publicField(this, "repeatTemplates");
-      __publicField(this, "repeatOutputs");
-      __publicField(this, "outputs");
-      __publicField(this, "repeatClones");
-      __publicField(this, "conditionals");
-      __publicField(this, "chart");
-      __publicField(this, "chartJS");
-      __publicField(this, "results");
-      __publicField(this, "result");
       this.calculator = calculator;
+      this.resultsId = calculator.component.getAttribute("data-results");
       this.config = calculator.config.outputs;
-      this.all = queryElements(`[${attr4}-output]`, calculator.component);
+      this.all = this.resultsId ? queryElements(`#${this.resultsId} [${attr4}-output]`, document) : queryElements(`[${attr4}-output]`, calculator.component);
       this.repeatTemplates = queryElements(`[${attr4}-output-repeat]`, calculator.component);
       this.repeatOutputs = queryElements(
         `[${attr4}-output-repeat] [${attr4}-output]`,
@@ -15582,12 +15485,9 @@
       );
       this.outputs = this.all.filter((output) => !this.repeatOutputs.includes(output));
       this.repeatClones = {};
-      this.conditionals = queryElements(
-        ".calculator_results-wrapper [data-condition]",
-        calculator.component
-      );
       this.chart = queryElement(`[${attr4}-el="chart"]`, calculator.component);
-      this.results = queryElement(`[${attr4}-el="results"]`, calculator.component);
+      this.results = this.resultsId ? queryElement(`#${this.resultsId}`, document) : queryElement(`[${attr4}-el="results"]`, calculator.component);
+      this.conditionals = this.resultsId ? queryElements(`#${this.resultsId}`, document) : queryElements(".calculator_results-wrapper [data-condition]", calculator.component);
     }
     check() {
       const tableData = [];
@@ -15627,7 +15527,12 @@
       this.populateOutputs();
       this.populateChart();
       this.handleConditionals();
-      this.results.style.display = "block";
+      console.log(this.results);
+      console.log(this.resultsId);
+      console.log(this.calcElement);
+      if (!this.resultsId) {
+        this.results.style.display = "block";
+      }
     }
     handleTemplateRepeats(template, fragment) {
       const repeatName = template.dataset.calcOutputRepeat;
@@ -15661,6 +15566,7 @@
     }
     populateOutput(output, value) {
       if (typeof value === "number") {
+        console.log("OUTPUTNUMBER", output);
         const { calcOutputMod } = output.dataset;
         if (calcOutputMod)
           value = Number(calcOutputMod) * value;
@@ -15678,9 +15584,15 @@
         const key = output.dataset.calcOutput;
         if (!key)
           return;
+        console.log("OUTPUTS", output);
         const value = data[key];
         if (value === 0 || data[key]) {
-          this.populateOutput(output, value);
+          if (output instanceof HTMLInputElement) {
+            output.value = String(value);
+            output.placeholder = String(value);
+          } else {
+            this.populateOutput(output, value);
+          }
         }
       });
     }
@@ -15755,19 +15667,9 @@
   // src/calculators/handleCalculator.ts
   var attr5 = "data-calc";
   var API_ENDPOINT3 = API_ENDPOINTS.calculatorTrigger;
-  var HandleCalculator = class {
+  var API_ENDPOINT_PRODUCT = API_ENDPOINTS.productsTrigger;
+  var HandleCalculator = class _HandleCalculator {
     constructor(component) {
-      __publicField(this, "name");
-      __publicField(this, "component");
-      __publicField(this, "config");
-      __publicField(this, "inputs");
-      __publicField(this, "outputs");
-      __publicField(this, "conditionals");
-      __publicField(this, "button");
-      __publicField(this, "buttonText");
-      __publicField(this, "buttonLoader");
-      __publicField(this, "isLoading");
-      __publicField(this, "result");
       this.name = component.dataset.calc;
       this.component = component;
       this.config = calculatorConfig[this.name];
@@ -15782,8 +15684,6 @@
     init() {
       this.inputs.init();
       if (isStaging) {
-        console.groupCollapsed(this.name);
-        console.log(this);
         this.inputs.check();
         this.outputs.check();
         console.groupEnd();
@@ -15804,6 +15704,9 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
+      console.log("VALID", isValid);
+      console.log("INPUTS", this.inputs);
+      console.log("PRESENT", allPresent);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");
@@ -15843,6 +15746,29 @@
           this.toggleLoading(true);
           this.outputs.displayResults(this.result);
         }
+        const resultsId = this.component.getAttribute("data-results");
+        const calcName = this.component.getAttribute("data-calc");
+        if (resultsId && calcName === "residentialborrowinglimit") {
+          const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
+          if (mortgageCalcComponent) {
+            const mortgageCalc = new _HandleCalculator(mortgageCalcComponent);
+            mortgageCalc.submit();
+            const mortInputs = mortgageCalc.inputs.getValues();
+            const calcInputs = this.inputs.getValues();
+            const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
+            const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
+            const PropertyValue = RepaymentValue + DepositAmount;
+            console.log("MORT INPUTS", mortInputs);
+            console.log("CALC INPUTS", calcInputs);
+            const prodresult = await this.makeAzureRequestProduct({
+              PropertyValue,
+              RepaymentValue,
+              TermYears: parseFloat(mortInputs["TermYears"] || "0"),
+              PropertyType: 1,
+              MortgageType: 1
+            });
+          }
+        }
       } catch (error) {
         console.error("Error retrieving calculation", error);
         this.toggleLoading(false);
@@ -15855,7 +15781,14 @@
     async makeAzureRequest() {
       const headers = new Headers();
       headers.append("Content-Type", "application/json");
-      const body = JSON.stringify({ calculator: this.name, input: this.inputs.getValues() });
+      const values = this.inputs.getValues();
+      const depositValue = values["DepositAmount"];
+      const depositAmount = parseFloat(typeof depositValue === "string" ? depositValue : "0");
+      const borrowValue = values["RepaymentValue"];
+      const borrowAmount = parseFloat(typeof borrowValue === "string" ? borrowValue : "0");
+      const depositSliderValue = values["DepositAmountSlider"];
+      const depositSliderAmount = parseFloat(typeof depositSliderValue === "string" ? depositSliderValue : "0");
+      const body = JSON.stringify({ calculator: this.name, input: values });
       const response = await fetch(API_ENDPOINT3, {
         method: "POST",
         headers,
@@ -15864,12 +15797,91 @@
       if (!response.ok) {
         throw new Error(`API responded with status ${response.status}`);
       }
-      return response.json();
+      const result = await response.json();
+      if (depositAmount > 0 && result) {
+        if (result.result.BorrowingAmountLower) {
+          result.result.DepositAmount = depositAmount;
+          result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+        }
+      }
+      if (result.result.TotalOverTerm) {
+        result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
+        result.result.DepositAmount = depositSliderAmount;
+        result.result.PropertyValue = borrowAmount + depositSliderAmount;
+        result.result.BorrowingAmountHigher = borrowAmount;
+      }
+      return result;
+    }
+    async makeAzureRequestProduct({
+      PropertyValue,
+      PropertyType = 1,
+      MortgageType = 1,
+      RepaymentValue,
+      TermYears,
+      NumberOfResults = 1
+    }) {
+      const headers = new Headers();
+      headers.append("Content-Type", "application/json");
+      const body = JSON.stringify({
+        input: {
+          PropertyValue,
+          // Market value of property
+          PropertyType,
+          // 1 for house; 2 for flat
+          MortgageType,
+          // 1 for Residential; 2 for Buy to Let
+          RepaymentValue,
+          // Repayment amount
+          InterestOnlyValue: "0",
+          // Interest-only value
+          TermYears,
+          // Mortgage term in whole years
+          SchemePurpose: "1",
+          // 1 for Purchase; 2 for Remortgage
+          SchemePeriods: ["1"],
+          // Array of mortgage scheme durations (1, 2, 3, 4)
+          SchemeTypes: ["1"],
+          // Array of scheme types (Fixed = 1, Variable = 2)
+          NumberOfResults,
+          // Total number of products to return
+          Features: {
+            Erc: false,
+            // ERC feature flag
+            Offset: false,
+            // Offset feature flag
+            NewBuild: false
+            // New Build feature flag
+          },
+          SortColumn: "1",
+          // Sorting column for results (1-6)
+          UseStaticApr: false
+          // Whether to use a static APR
+        }
+      });
+      const response = await fetch(API_ENDPOINT_PRODUCT, {
+        method: "POST",
+        headers,
+        body
+      });
+      if (!response.ok) {
+        throw new Error(`API responded with status ${response.status}`);
+      }
+      const result = await response.json();
+      console.log("PROD RESULTS", result);
+      return result;
     }
   };
 
   // src/calculators/index.ts
   var calculators = () => {
+    const repaymentValueSlider = document.getElementById("RepaymentValue");
+    const depositAmountSlider = document.getElementById("DepositAmountSlider");
+    if (repaymentValueSlider) {
+      repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
+    }
+    if (depositAmountSlider) {
+      depositAmountSlider.setAttribute("data-calc-output", "DepositAmount");
+    }
     const attr7 = "data-calc";
     const components2 = queryElements(`[${attr7}]`);
     components2.forEach((component) => {
@@ -15887,9 +15899,6 @@
   var attr6 = "data-calc";
   var HandleCODNOutputs = class {
     constructor(component) {
-      __publicField(this, "component");
-      __publicField(this, "outputs");
-      __publicField(this, "result");
       this.component = component;
       this.outputs = queryElements(`[${attr6}-output]`, component);
     }
@@ -15951,18 +15960,6 @@
   // src/costofdoingnothing/handleCostOfDoingNothing.ts
   var CostOfDoingNothingCalculator = class {
     constructor(component) {
-      __publicField(this, "component");
-      __publicField(this, "inputs");
-      __publicField(this, "buttons");
-      __publicField(this, "buttonsText");
-      __publicField(this, "buttonsLoader");
-      __publicField(this, "currentLenderDropdown");
-      __publicField(this, "mortgageTypeDropdown");
-      __publicField(this, "followOnField");
-      __publicField(this, "isLoading");
-      __publicField(this, "formattedValues");
-      __publicField(this, "formattedCostOfDoingNothingValues");
-      __publicField(this, "outputHandler");
       this.component = component;
       this.inputs = queryElements(`[data-input], input, select`, component);
       this.buttons = queryElements(`[data-calc-el="button"]`, component);
@@ -16271,25 +16268,25 @@
 
 @kurkle/color/dist/color.esm.js:
   (*!
-   * @kurkle/color v0.3.4
+   * @kurkle/color v0.3.2
    * https://github.com/kurkle/color#readme
-   * (c) 2024 Jukka Kurkela
+   * (c) 2023 Jukka Kurkela
    * Released under the MIT License
    *)
 
 chart.js/dist/chunks/helpers.segment.js:
   (*!
-   * Chart.js v4.4.8
+   * Chart.js v4.4.2
    * https://www.chartjs.org
-   * (c) 2025 Chart.js Contributors
+   * (c) 2024 Chart.js Contributors
    * Released under the MIT License
    *)
 
 chart.js/dist/chart.js:
   (*!
-   * Chart.js v4.4.8
+   * Chart.js v4.4.2
    * https://www.chartjs.org
-   * (c) 2025 Chart.js Contributors
+   * (c) 2024 Chart.js Contributors
    * Released under the MIT License
    *)
 */
