@@ -12,6 +12,7 @@ import { API_ENDPOINTS } from 'src/constants';
 
 const attr = 'data-calc';
 const API_ENDPOINT = API_ENDPOINTS.calculatorTrigger;
+const API_ENDPOINT_PRODUCT = API_ENDPOINTS.productsTrigger;
 
 export class HandleCalculator {
   name: string;
@@ -69,6 +70,10 @@ export class HandleCalculator {
     const isValid = this.inputs.validateInputs();
     const allPresent = this.inputs.check();
 
+    console.log('VALID', isValid)
+    console.log('INPUTS', this.inputs);
+    console.log('PRESENT', allPresent)
+
     // cancel if inputs are invalid or not all present
     if (!isValid || !allPresent) {
       if (isStaging) console.log('inputs not valid or not all present');
@@ -120,7 +125,30 @@ export class HandleCalculator {
         if (mortgageCalcComponent) {
           const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
           mortgageCalc.submit();
+
+          // To return single product
+          const mortInputs = mortgageCalc.inputs.getValues();
+          const calcInputs = this.inputs.getValues();
+
+          const DepositAmount = parseFloat(calcInputs['DepositAmount'] as string || '0');
+          const RepaymentValue = parseFloat(mortInputs['RepaymentValue'] as string || '0');
+          const PropertyValue = RepaymentValue + DepositAmount;
+          console.log('MORT INPUTS', mortInputs);
+          console.log('CALC INPUTS',calcInputs)
+          // Get Product Update
+
+
+           const prodresult = await this.makeAzureRequestProduct({
+             PropertyValue,
+             RepaymentValue,
+             TermYears: parseFloat(mortInputs['TermYears'] as string || '0'),
+             PropertyType: 1,
+             MortgageType: 1
+           });
+          
         }
+        
+        
       }
     } catch (error) {
       console.error('Error retrieving calculation', error);
@@ -180,5 +208,65 @@ export class HandleCalculator {
   
     return result;
   }
+
+  private async makeAzureRequestProduct({
+    PropertyValue,
+    PropertyType = 1,
+    MortgageType = 1,
+    RepaymentValue,
+    TermYears,
+    NumberOfResults = 1,
+  }: {
+    PropertyValue: number;
+    PropertyType?: number;
+    MortgageType?: number;
+    RepaymentValue: number;
+    TermYears: number;
+    NumberOfResults?: number;
+  }): Promise<APIResponse> {
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+  
+    
+    // Construct request body using function parameters
+    const body = JSON.stringify({
+      input: {
+        PropertyValue, // Market value of property
+        PropertyType, // 1 for house; 2 for flat
+        MortgageType, // 1 for Residential; 2 for Buy to Let
+        RepaymentValue, // Repayment amount
+        InterestOnlyValue: '0', // Interest-only value
+        TermYears, // Mortgage term in whole years
+        SchemePurpose: '1', // 1 for Purchase; 2 for Remortgage
+        SchemePeriods: ['1'], // Array of mortgage scheme durations (1, 2, 3, 4)
+        SchemeTypes: ['1'], // Array of scheme types (Fixed = 1, Variable = 2)
+        NumberOfResults, // Total number of products to return
+        Features: {
+          Erc: false, // ERC feature flag
+          Offset: false, // Offset feature flag
+          NewBuild: false, // New Build feature flag
+        },
+        SortColumn: '1', // Sorting column for results (1-6)
+        UseStaticApr: false, // Whether to use a static APR
+      },
+    });
+  
+    const response = await fetch(API_ENDPOINT_PRODUCT, {
+      method: 'POST',
+      headers,
+      body,
+    });
+  
+    if (!response.ok) {
+      throw new Error(`API responded with status ${response.status}`);
+    }
+  
+    const result = await response.json();
+  
+   console.log('PROD RESULTS', result)
+  
+    return result;
+  }
+  
   
 }
