@@ -1167,7 +1167,9 @@
     }
     bindEvents() {
       this.all.forEach((input) => {
-        input.addEventListener("change", () => {
+        const eventType = input.type === "range" ? "mouseup" : "change";
+        console.log(eventType);
+        input.addEventListener(eventType, () => {
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
@@ -15674,6 +15676,7 @@
       this.buttonText = queryElement(`[${attr5}-el="button-text"]`, this.button);
       this.buttonLoader = queryElement(`[${attr5}-el="button-loader"]`, this.button);
       this.isLoading = false;
+      this.isSyncing = false;
     }
     init() {
       this.inputs.init();
@@ -15747,8 +15750,6 @@
             const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
             const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
             const PropertyValue = RepaymentValue + DepositAmount;
-            console.log("MORT INPUTS", mortInputs);
-            console.log("CALC INPUTS", calcInputs);
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
@@ -15757,14 +15758,18 @@
               MortgageType: 1
             });
             if (prodresult) {
-              console.log("here", prodresult);
               this.populateProductCard(prodresult.result);
+              const mortPickTitle = document.querySelector("#mortPickTitle");
+              const mortPickArea = document.querySelector("#mortPickArea");
               if (prodresult.result.success) {
-                const mortPickTitle = document.querySelector("#mortPickTitle");
-                const mortPickCard = document.querySelector("#mortPickCard");
-                if (mortPickTitle && mortPickCard) {
+                if (mortPickTitle && mortPickArea) {
                   mortPickTitle.style.display = "flex";
-                  mortPickCard.style.display = "flex";
+                  mortPickArea.style.display = "flex";
+                }
+              } else {
+                if (mortPickTitle && mortPickArea) {
+                  mortPickTitle.style.display = "none";
+                  mortPickArea.style.display = "none";
                 }
               }
             }
@@ -15796,14 +15801,73 @@
         });
       }
     }
-    populateProductCard(data) {
-      if (!data)
+    /*private async handleCalculatorSync(calcName: string): Promise<void> {
+    
+        if (this.isSyncing) return; 
+        // Determine active calculator
+        const isMortgageCost = calcName === 'mortgagecost';
+        const targetCalcName = isMortgageCost ? 'residentialborrowinglimit' : 'mortgagecost';
+    
+        // Find the corresponding calculator component
+        const targetCalcComponent = document.querySelector(`[data-calc="${targetCalcName}"]`) as HTMLDivElement;
+        if (!targetCalcComponent) {
+          this.isSyncing = false;
+          return;
+      }
+    
+        // Create instance of the other calculator
+        const targetCalc = new HandleCalculator(targetCalcComponent);
+        targetCalc.submit();
+    
+        // Get values from both calculators
+        const targetInputs = targetCalc.inputs.getValues();
+        const currentInputs = this.inputs.getValues();
+    
+        const DepositAmount = parseFloat(currentInputs['DepositAmount'] as string || '0');
+        const RepaymentValue = parseFloat(targetInputs['RepaymentValue'] as string || '0');
+        const PropertyValue = RepaymentValue + DepositAmount;
+    
+        console.log('TARGET CALC INPUTS', targetInputs);
+        console.log('CURRENT CALC INPUTS', currentInputs);
+    
+        // Fetch product update from Azure
+        const prodResult = await this.makeAzureRequestProduct({
+            PropertyValue,
+            RepaymentValue,
+            TermYears: parseFloat(targetInputs['TermYears'] as string || '0'),
+            PropertyType: 1,
+            MortgageType: 1
+        });
+    
+        // Update UI if product result is successful
+        if (prodResult) {
+            this.populateProductCard(prodResult.result);
+    
+            if (prodResult.result.success) {
+                console.log('YOYOYO');
+                const mortPickTitle = document.querySelector('#mortPickTitle');
+                const mortPickArea = document.querySelector('#mortPickArea');
+    
+                if (mortPickTitle && mortPickArea) {
+                    (mortPickTitle as HTMLElement).style.display = 'flex';
+                    (mortPickArea as HTMLElement).style.display = 'flex';
+                }
+            }
+        }
+        etTimeout(() => {
+          this.isSyncing = false; // ⏳ Unlock after a short delay
+      }, 500);
+    }*/
+    populateProductCard(results) {
+      if (!results.data || !Array.isArray(results.data))
         return;
+      console.log("DATA0", results.data[0]);
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
-        if (!key || !(key in data))
+        if (!key || !(key in results.data[0]))
           return;
-        const value = data[key];
+        console.log(output);
+        const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
           output.src = stringValue;
@@ -15902,9 +15966,10 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
-      if (result.result.FutureValue) {
-        result.result.FutureValue = Math.round(result.result.FutureValue);
+      if (result.result.data[0].FutureValue) {
+        result.result.data[0].FutureValue = Math.round(result.result.data[0].FutureValue);
       }
+      console.log("RESULT FOR PRODUCT", result);
       return result;
     }
   };

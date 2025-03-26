@@ -247,7 +247,9 @@ export class HandleInputs {
   private bindEvents(): void {
     // validate inputs on value change
     this.all.forEach((input) => {
-      input.addEventListener('change', () => {
+      const eventType = input.type === 'range' ? 'mouseup' : 'change';
+      console.log(eventType)
+      input.addEventListener(eventType, () => {
         formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
