@@ -200,65 +200,6 @@ export class HandleCalculator {
 
   }
 
-  /*private async handleCalculatorSync(calcName: string): Promise<void> {
-
-    if (this.isSyncing) return; 
-    // Determine active calculator
-    const isMortgageCost = calcName === 'mortgagecost';
-    const targetCalcName = isMortgageCost ? 'residentialborrowinglimit' : 'mortgagecost';
-
-    // Find the corresponding calculator component
-    const targetCalcComponent = document.querySelector(`[data-calc="${targetCalcName}"]`) as HTMLDivElement;
-    if (!targetCalcComponent) {
-      this.isSyncing = false;
-      return;
-  }
-
-    // Create instance of the other calculator
-    const targetCalc = new HandleCalculator(targetCalcComponent);
-    targetCalc.submit();
-
-    // Get values from both calculators
-    const targetInputs = targetCalc.inputs.getValues();
-    const currentInputs = this.inputs.getValues();
-
-    const DepositAmount = parseFloat(currentInputs['DepositAmount'] as string || '0');
-    const RepaymentValue = parseFloat(targetInputs['RepaymentValue'] as string || '0');
-    const PropertyValue = RepaymentValue + DepositAmount;
-
-    console.log('TARGET CALC INPUTS', targetInputs);
-    console.log('CURRENT CALC INPUTS', currentInputs);
-
-    // Fetch product update from Azure
-    const prodResult = await this.makeAzureRequestProduct({
-        PropertyValue,
-        RepaymentValue,
-        TermYears: parseFloat(targetInputs['TermYears'] as string || '0'),
-        PropertyType: 1,
-        MortgageType: 1
-    });
-
-    // Update UI if product result is successful
-    if (prodResult) {
-        this.populateProductCard(prodResult.result);
-
-        if (prodResult.result.success) {
-            console.log('YOYOYO');
-            const mortPickTitle = document.querySelector('#mortPickTitle');
-            const mortPickArea = document.querySelector('#mortPickArea');
-
-            if (mortPickTitle && mortPickArea) {
-                (mortPickTitle as HTMLElement).style.display = 'flex';
-                (mortPickArea as HTMLElement).style.display = 'flex';
-            }
-        }
-    }
-    etTimeout(() => {
-      this.isSyncing = false; // ⏳ Unlock after a short delay
-  }, 500);
-}*/
-
-
   private populateProductCard(results: Result): void {
     if (!results.data || !Array.isArray(results.data)) return;
 
@@ -297,8 +238,15 @@ export class HandleCalculator {
     const borrowAmount = parseFloat(typeof borrowValue === 'string' ? borrowValue : '0');
     const depositSliderValue = values['DepositAmountSlider'];
     const depositSliderAmount = parseFloat(typeof depositSliderValue === 'string' ? depositSliderValue : '0');
+
+    if ('RateSlider' in values) {
+      values['Rate'] = values['RateSlider']; // Copy value to 'Rate'
+      //delete values['RateSlider']; // Remove old key
+    }
   
     const body = JSON.stringify({ calculator: this.name, input: values });
+
+
   
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
@@ -386,11 +334,16 @@ export class HandleCalculator {
   
     const result = await response.json();
   
-    if (result.result.data[0].FutureValue) {
-      result.result.data[0].FutureValue = Math.round(result.result.data[0].FutureValue);
+    if (result.result.data[0].FutureMonthlyPayment) {
+      result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+      result.result.data[0].InitialRate = result.result.data[0].Rate
     }
 
-    console.log('RESULT FOR PRODUCT', result)
+    const rateSlider = document.querySelector('[data-input="RateSlider"]') as HTMLInputElement | null;
+    if(rateSlider){
+      rateSlider.setAttribute('value', result.result.data[0].Rate)
+    }
+
   
     return result;
   }

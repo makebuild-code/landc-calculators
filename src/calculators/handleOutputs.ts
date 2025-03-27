@@ -96,6 +96,7 @@ export class HandleOutputs {
 
   displayResults(result: Result): void {
     this.result = result;
+    const calcHidden = document.querySelector('#residentialborrowinglimit')
 
     if (this.repeatTemplates.length > 0) {
       this.repeatTemplates.forEach((template) => {
@@ -112,6 +113,9 @@ export class HandleOutputs {
 
     if(!this.resultsId){
       this.results.style.display = 'block';
+    }
+    if(calcHidden){
+      //this.results.style.display = 'flex';
     }
 
    
@@ -156,6 +160,7 @@ export class HandleOutputs {
 
   private populateOutput(output: HTMLElement, value: string | number) {
     if (typeof value === 'number') {
+
       const { calcOutputMod } = output.dataset;
       if (calcOutputMod) value = Number(calcOutputMod) * value;
       output.textContent = numberToCurrency(value);
@@ -169,8 +174,10 @@ export class HandleOutputs {
       outputs = this.outputs;
       data = this.result;
     }
+    
 
     outputs.forEach((output) => {
+      
       const key = output.dataset.calcOutput;
       if (!key) return;
       const value = data[key];
@@ -190,7 +197,7 @@ export class HandleOutputs {
               this.populateOutput(output, value);
           }
       }
-  });
+    });
   }
 
   private populateChart(): void {

@@ -248,7 +248,7 @@ export class HandleInputs {
     // validate inputs on value change
     this.all.forEach((input) => {
       const eventType = input.type === 'range' ? 'mouseup' : 'change';
-      console.log(eventType)
+
       input.addEventListener(eventType, () => {
         formatInput(input);
         this.validateInput(input);
@@ -259,7 +259,7 @@ export class HandleInputs {
           this.calculator.submit();
         }
 
-        
+  
       });
     });
   }

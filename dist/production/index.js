@@ -1171,7 +1171,8 @@
     }
     bindEvents() {
       this.all.forEach((input) => {
-        input.addEventListener("change", () => {
+        const eventType = input.type === "range" ? "mouseup" : "change";
+        input.addEventListener(eventType, () => {
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
@@ -15518,6 +15519,7 @@
     }
     displayResults(result) {
       this.result = result;
+      const calcHidden = document.querySelector("#residentialborrowinglimit");
       if (this.repeatTemplates.length > 0) {
         this.repeatTemplates.forEach((template) => {
           template.style.display = "none";
@@ -15532,6 +15534,8 @@
       this.handleConditionals();
       if (!this.resultsId) {
         this.results.style.display = "block";
+      }
+      if (calcHidden) {
       }
     }
     handleTemplateRepeats(template, fragment) {
@@ -15680,6 +15684,7 @@
       this.buttonText = queryElement(`[${attr5}-el="button-text"]`, this.button);
       this.buttonLoader = queryElement(`[${attr5}-el="button-loader"]`, this.button);
       this.isLoading = false;
+      this.isSyncing = false;
     }
     init() {
       this.inputs.init();
@@ -15753,8 +15758,6 @@
             const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
             const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
             const PropertyValue = RepaymentValue + DepositAmount;
-            console.log("MORT INPUTS", mortInputs);
-            console.log("CALC INPUTS", calcInputs);
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
@@ -15763,14 +15766,18 @@
               MortgageType: 1
             });
             if (prodresult) {
-              console.log("here", prodresult);
               this.populateProductCard(prodresult.result);
+              const mortPickTitle = document.querySelector("#mortPickTitle");
+              const mortPickArea = document.querySelector("#mortPickArea");
               if (prodresult.result.success) {
-                const mortPickTitle = document.querySelector("#mortPickTitle");
-                const mortPickCard = document.querySelector("#mortPickCard");
-                if (mortPickTitle && mortPickCard) {
+                if (mortPickTitle && mortPickArea) {
                   mortPickTitle.style.display = "flex";
-                  mortPickCard.style.display = "flex";
+                  mortPickArea.style.display = "flex";
+                }
+              } else {
+                if (mortPickTitle && mortPickArea) {
+                  mortPickTitle.style.display = "none";
+                  mortPickArea.style.display = "none";
                 }
               }
             }
@@ -15802,14 +15809,16 @@
         });
       }
     }
-    populateProductCard(data) {
-      if (!data)
+    populateProductCard(results) {
+      if (!results.data || !Array.isArray(results.data))
         return;
+      console.log("DATA0", results.data[0]);
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
-        if (!key || !(key in data))
+        if (!key || !(key in results.data[0]))
           return;
-        const value = data[key];
+        console.log(output);
+        const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
           output.src = stringValue;
@@ -15829,6 +15838,9 @@
       const borrowAmount = parseFloat(typeof borrowValue === "string" ? borrowValue : "0");
       const depositSliderValue = values["DepositAmountSlider"];
       const depositSliderAmount = parseFloat(typeof depositSliderValue === "string" ? depositSliderValue : "0");
+      if ("RateSlider" in values) {
+        values["Rate"] = values["RateSlider"];
+      }
       const body = JSON.stringify({ calculator: this.name, input: values });
       const response = await fetch(API_ENDPOINT3, {
         method: "POST",
@@ -15908,8 +15920,13 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
-      if (result.result.FutureValue) {
-        result.result.FutureValue = Math.round(result.result.FutureValue);
+      if (result.result.data[0].FutureMonthlyPayment) {
+        result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+        result.result.data[0].InitialRate = result.result.data[0].Rate;
+      }
+      const rateSlider = document.querySelector('[data-input="RateSlider"]');
+      if (rateSlider) {
+        rateSlider.setAttribute("value", result.result.data[0].Rate);
       }
       return result;
     }
@@ -15919,11 +15936,15 @@
   var calculators = () => {
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
+    const rateSlider = document.querySelector('[data-input="RateSlider"]');
     if (repaymentValueSlider) {
       repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
     }
     if (depositAmountSlider) {
       depositAmountSlider.setAttribute("data-calc-output", "DepositAmount");
+    }
+    if (rateSlider) {
+      rateSlider.setAttribute("data-calc-output", "InitialRate");
     }
     const attr7 = "data-calc";
     const components2 = queryElements(`[${attr7}]`);
@@ -16289,8 +16310,6 @@
 
   // src/costofdoingnothing/index.ts
   var costOfDoingNothing = () => {
-    console.log("Cost of Doing Nothing");
-    console.log("DOM Loaded");
     const component = document.querySelector('[data-calc="costofdoingnothing"]');
     if (component) {
       new CostOfDoingNothingCalculator(component);
