@@ -115,9 +115,7 @@ export class HandleOutputs {
     }else{
       this.results.style.display = 'grid';
     }
-   
 
-   
   }
 
   private handleTemplateRepeats(template: HTMLDivElement, fragment: DocumentFragment): void {
