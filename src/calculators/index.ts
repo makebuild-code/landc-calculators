@@ -8,7 +8,7 @@ export const calculators = () => {
   // Forces Outputs to Sliders - Mortgage Calc page New
   const repaymentValueSlider = document.getElementById('RepaymentValue') as HTMLInputElement | null;
   const depositAmountSlider = document.getElementById('DepositAmountSlider') as HTMLInputElement | null;
-  const rateSlider = document.querySelector('[data-input="RateSlider"]') as HTMLInputElement | null;
+  const rateSlider = document.querySelector('[data-input="Rate"]') as HTMLInputElement | null;
 
   
   if (repaymentValueSlider) {

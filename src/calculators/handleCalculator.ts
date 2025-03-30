@@ -72,10 +72,6 @@ export class HandleCalculator {
     const isValid = this.inputs.validateInputs();
     const allPresent = this.inputs.check();
 
-    console.log('VALID', isValid)
-    console.log('INPUTS', this.inputs);
-    console.log('PRESENT', allPresent)
-
     // cancel if inputs are invalid or not all present
     if (!isValid || !allPresent) {
       if (isStaging) console.log('inputs not valid or not all present');
@@ -114,10 +110,7 @@ export class HandleCalculator {
       const resultsId = this.component.getAttribute("data-results");
       const calcName = this.component.getAttribute("data-calc");
 
-      if(resultsId){
-        this.scrollToDiv(resultsId);
-       // this.handleCalculatorSync(calcName)
-      }
+      
 
       if (resultsId && calcName==='residentialborrowinglimit') {
         // Find the calculator with `data-calc="mortgagecost"` and trigger calculation
@@ -133,7 +126,7 @@ export class HandleCalculator {
           const DepositAmount = parseFloat(calcInputs['DepositAmount'] as string || '0');
           const RepaymentValue = parseFloat(mortInputs['RepaymentValue'] as string || '0');
           const PropertyValue = RepaymentValue + DepositAmount;
-
+          console.log('MORTINPUTS');
           
           // Get Product Update
 
@@ -173,6 +166,10 @@ export class HandleCalculator {
         this.toggleLoading(true);
         this.outputs.displayResults(this.result);
       }
+      if(resultsId){
+        this.scrollToDiv(resultsId);
+       // this.handleCalculatorSync(calcName)
+      }
 
       
     } catch (error) {
@@ -202,8 +199,6 @@ export class HandleCalculator {
 
   private populateProductCard(results: Result): void {
     if (!results.data || !Array.isArray(results.data)) return;
-
-    console.log('DATA0', results.data[0])
     
     document.querySelectorAll('[data-calc-output]').forEach((output) => {
         const key = output.getAttribute('data-calc-output');
@@ -239,15 +234,9 @@ export class HandleCalculator {
     const depositSliderValue = values['DepositAmountSlider'];
     const depositSliderAmount = parseFloat(typeof depositSliderValue === 'string' ? depositSliderValue : '0');
 
-    if ('RateSlider' in values) {
-      values['Rate'] = values['RateSlider']; // Copy value to 'Rate'
-      //delete values['RateSlider']; // Remove old key
-    }
   
     const body = JSON.stringify({ calculator: this.name, input: values });
 
-
-  
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers,
@@ -274,7 +263,7 @@ export class HandleCalculator {
       result.result.PropertyValue = borrowAmount + depositSliderAmount;
       result.result.BorrowingAmountHigher = borrowAmount;
     }
-
+    console.log('RESULTS', result)
     
 
     return result;
@@ -339,12 +328,13 @@ export class HandleCalculator {
       result.result.data[0].InitialRate = result.result.data[0].Rate
     }
 
-    const rateSlider = document.querySelector('[data-input="RateSlider"]') as HTMLInputElement | null;
+    const rateSlider = document.querySelector('[data-input="Rate"]') as HTMLInputElement | null;
     if(rateSlider){
       rateSlider.setAttribute('value', result.result.data[0].Rate)
+      rateSlider.setAttribute('placeholder', result.result.data[0].Rate)
     }
 
-  
+
     return result;
   }
   
