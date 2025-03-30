@@ -15513,7 +15513,6 @@
     }
     displayResults(result) {
       this.result = result;
-      const calcHidden = document.querySelector("#residentialborrowinglimit");
       if (this.repeatTemplates.length > 0) {
         this.repeatTemplates.forEach((template) => {
           template.style.display = "none";
@@ -15528,8 +15527,8 @@
       this.handleConditionals();
       if (!this.resultsId) {
         this.results.style.display = "block";
-      }
-      if (calcHidden) {
+      } else {
+        this.results.style.display = "grid";
       }
     }
     handleTemplateRepeats(template, fragment) {
@@ -15703,9 +15702,6 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
-      console.log("VALID", isValid);
-      console.log("INPUTS", this.inputs);
-      console.log("PRESENT", allPresent);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");
@@ -15739,9 +15735,6 @@
         this.result = result.result;
         const resultsId = this.component.getAttribute("data-results");
         const calcName = this.component.getAttribute("data-calc");
-        if (resultsId) {
-          this.scrollToDiv(resultsId);
-        }
         if (resultsId && calcName === "residentialborrowinglimit") {
           const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
           if (mortgageCalcComponent) {
@@ -15752,6 +15745,7 @@
             const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
             const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
             const PropertyValue = RepaymentValue + DepositAmount;
+            console.log("MORTINPUTS");
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
@@ -15783,6 +15777,9 @@
           this.toggleLoading(true);
           this.outputs.displayResults(this.result);
         }
+        if (resultsId) {
+          this.scrollToDiv(resultsId);
+        }
       } catch (error) {
         console.error("Error retrieving calculation", error);
         this.toggleLoading(false);
@@ -15806,7 +15803,6 @@
     populateProductCard(results) {
       if (!results.data || !Array.isArray(results.data))
         return;
-      console.log("DATA0", results.data[0]);
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
         if (!key || !(key in results.data[0]))
@@ -15832,9 +15828,6 @@
       const borrowAmount = parseFloat(typeof borrowValue === "string" ? borrowValue : "0");
       const depositSliderValue = values["DepositAmountSlider"];
       const depositSliderAmount = parseFloat(typeof depositSliderValue === "string" ? depositSliderValue : "0");
-      if ("RateSlider" in values) {
-        values["Rate"] = values["RateSlider"];
-      }
       const body = JSON.stringify({ calculator: this.name, input: values });
       const response = await fetch(API_ENDPOINT3, {
         method: "POST",
@@ -15857,6 +15850,7 @@
         result.result.PropertyValue = borrowAmount + depositSliderAmount;
         result.result.BorrowingAmountHigher = borrowAmount;
       }
+      console.log("RESULTS", result);
       return result;
     }
     async makeAzureRequestProduct({
@@ -15918,9 +15912,10 @@
         result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
         result.result.data[0].InitialRate = result.result.data[0].Rate;
       }
-      const rateSlider = document.querySelector('[data-input="RateSlider"]');
+      const rateSlider = document.querySelector('[data-input="Rate"]');
       if (rateSlider) {
         rateSlider.setAttribute("value", result.result.data[0].Rate);
+        rateSlider.setAttribute("placeholder", result.result.data[0].Rate);
       }
       return result;
     }
@@ -15930,7 +15925,7 @@
   var calculators = () => {
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
-    const rateSlider = document.querySelector('[data-input="RateSlider"]');
+    const rateSlider = document.querySelector('[data-input="Rate"]');
     if (repaymentValueSlider) {
       repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
     }
