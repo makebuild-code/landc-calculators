@@ -5,8 +5,9 @@ import { queryElement } from './queryElement';
 
 export function setError(input: Input, text?: string): void {
   const wrapper = getWrapper(input);
-  if (!wrapper) return;
 
+  if (!wrapper) return;
+ 
   const message = queryElement('[data-calc-el="message"]', wrapper);
   const error = queryElement('[data-calc-el="error"]', wrapper);
 

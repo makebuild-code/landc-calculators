@@ -62,11 +62,7 @@ export class HandleInputs {
         repeat.init();
       });
     }
-
-    
-
     this.minMaxValues();
-
     this.handleConditionals();
     this.bindEvents();
   }
@@ -122,7 +118,7 @@ export class HandleInputs {
 
   validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
-
+   
     if (!validity.error) {
       setError(input);
     } else {
@@ -135,8 +131,8 @@ export class HandleInputs {
   validateInputs(): boolean {
     let inputFocused = false,
       isValid = true;
-
     this.inputs.forEach((input) => {
+    
       const inputValid = this.validateInput(input);
       if (!inputValid) {
         isValid = false;
@@ -247,16 +243,17 @@ export class HandleInputs {
   private bindEvents(): void {
     // validate inputs on value change
     this.all.forEach((input) => {
-      const eventType = input.type === 'range' ? 'mouseup' : 'change';
-
-      input.addEventListener(eventType, () => {
+      //const eventType = input.class === 'inputslider_input' ? 'mouseup' : 'change';
+      
+      input.addEventListener('input', () => {
         formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
         // New Mortgage calc out update on change
        
         if (this.calculator.name === 'mortgagecost') {
-          this.calculator.submit();
+          //alert(input.name)
+          //this.calculator.submit();
         }
 
   

@@ -20,7 +20,6 @@ export class HandleCODNOutputs {
 
   displayResults(result: APIResponse): void {
     this.result = result;
-    console.log('Results to process are: ', this.result);
     this.populateOutputs();
 
     const resultsElement = queryElement(`[${attr}-el="results"]`, this.component) as HTMLDivElement;
@@ -62,7 +61,6 @@ export class HandleCODNOutputs {
     if (data['CostOfRate1'] >= data['CostOfRate2']) {
       noSavingElement.style.display = 'none';
       savingElement.style.display = 'block';
-      console.log('Outputs array is: ', outputs);
       //Add values to the data object
       data['AnnualCost'] = (data['CostOfRate1'] - data['CostOfRate2']) / 2;
       data['MonthlyCost'] = (data['CostOfRate1'] - data['CostOfRate2']) / 12;
