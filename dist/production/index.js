@@ -199,10 +199,15 @@
   function checkInputValidity(input) {
     let isValid = true, error;
     if (input instanceof HTMLInputElement) {
-      const { type } = input;
+      const { type, required, value } = input;
+      if (required && !value.trim()) {
+        isValid = false;
+        error = "This field is required.";
+        return { isValid, error };
+      }
       switch (type) {
         case "number":
-          const { min, max, value } = input;
+          const { min, max } = input;
           let minValid = true;
           if (!!min)
             minValid = Number(value) >= Number(min);
@@ -212,20 +217,16 @@
           isValid = minValid && maxValid;
           if (isValid)
             break;
-          if (!minValid) {
-            error = `Input needs to be ${min} or higher`;
-          } else if (!maxValid) {
-            error = `Input needs to be ${max} or less`;
-          }
+          error = !minValid ? `Input needs to be ${min} or higher` : `Input needs to be ${max} or less`;
           break;
         default:
           isValid = input.checkValidity();
-          error = input.validationMessage;
+          error = isValid ? void 0 : input.validationMessage;
           break;
       }
     } else if (input instanceof HTMLSelectElement) {
       isValid = input.checkValidity();
-      error = input.validationMessage;
+      error = isValid ? void 0 : input.validationMessage;
     }
     return {
       isValid,
@@ -641,10 +642,14 @@
     };
     input.addEventListener("focus", handleFocus, true);
     input.addEventListener("blur", handleBlur, true);
+    input.addEventListener("input", handleInput, true);
     function handleFocus() {
       input.addEventListener("keydown", runOnEnterWrapper);
     }
     function handleBlur() {
+      input.removeEventListener("keydown", runOnEnterWrapper);
+    }
+    function handleInput() {
       input.removeEventListener("keydown", runOnEnterWrapper);
     }
     function runOnEnter(event) {
@@ -1171,13 +1176,11 @@
     }
     bindEvents() {
       this.all.forEach((input) => {
-        const eventType = input.type === "range" ? "mouseup" : "change";
-        input.addEventListener(eventType, () => {
+        input.addEventListener("input", () => {
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
           if (this.calculator.name === "mortgagecost") {
-            this.calculator.submit();
           }
         });
       });
@@ -15519,7 +15522,6 @@
     }
     displayResults(result) {
       this.result = result;
-      const calcHidden = document.querySelector("#residentialborrowinglimit");
       if (this.repeatTemplates.length > 0) {
         this.repeatTemplates.forEach((template) => {
           template.style.display = "none";
@@ -15534,8 +15536,8 @@
       this.handleConditionals();
       if (!this.resultsId) {
         this.results.style.display = "block";
-      }
-      if (calcHidden) {
+      } else {
+        this.results.style.display = "grid";
       }
     }
     handleTemplateRepeats(template, fragment) {
@@ -15668,6 +15670,33 @@
     }
   };
 
+  // src/utils/syncSlider.ts
+  function syncSlider(inputId, initialValue) {
+    const input = document.getElementById(inputId);
+    if (!input)
+      return;
+    const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
+    const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
+    const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
+    if (!wrapper || !handle)
+      return;
+    const updateSliderUI = () => {
+      const value = parseFloat(input.value);
+      if (isNaN(value))
+        return;
+      const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
+      const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
+      const clamped = Math.min(Math.max(value, min), max);
+      const percent = (clamped - min) / (max - min) * 100;
+      const trackWidth = wrapper.clientWidth;
+      const pixelOffset = percent / 100 * trackWidth;
+      handle.style.left = `${pixelOffset}px`;
+      fill2.style.width = `${pixelOffset}px`;
+    };
+    updateSliderUI();
+    input.addEventListener("input", updateSliderUI);
+  }
+
   // src/calculators/handleCalculator.ts
   var attr5 = "data-calc";
   var API_ENDPOINT3 = API_ENDPOINTS.calculatorTrigger;
@@ -15709,9 +15738,6 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
-      console.log("VALID", isValid);
-      console.log("INPUTS", this.inputs);
-      console.log("PRESENT", allPresent);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");
@@ -15745,9 +15771,6 @@
         this.result = result.result;
         const resultsId = this.component.getAttribute("data-results");
         const calcName = this.component.getAttribute("data-calc");
-        if (resultsId) {
-          this.scrollToDiv(resultsId);
-        }
         if (resultsId && calcName === "residentialborrowinglimit") {
           const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
           if (mortgageCalcComponent) {
@@ -15758,6 +15781,8 @@
             const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
             const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
             const PropertyValue = RepaymentValue + DepositAmount;
+            syncSlider("DepositAmountSlider", DepositAmount);
+            syncSlider("RepaymentValue", RepaymentValue);
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
@@ -15789,6 +15814,11 @@
           this.toggleLoading(true);
           this.outputs.displayResults(this.result);
         }
+        if (resultsId && calcName === "residentialborrowinglimit") {
+          if (this.result) {
+            this.scrollToDiv(resultsId);
+          }
+        }
       } catch (error) {
         console.error("Error retrieving calculation", error);
         this.toggleLoading(false);
@@ -15812,7 +15842,6 @@
     populateProductCard(results) {
       if (!results.data || !Array.isArray(results.data))
         return;
-      console.log("DATA0", results.data[0]);
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
         if (!key || !(key in results.data[0]))
@@ -15828,6 +15857,14 @@
         }
       });
     }
+    calculateMonthlyPayment(borrowAmount, termYears, annualRate) {
+      const n = termYears * 12;
+      const r = annualRate / 100 / 12;
+      if (r === 0) {
+        return borrowAmount / n;
+      }
+      return borrowAmount * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    }
     async makeAzureRequest() {
       const headers = new Headers();
       headers.append("Content-Type", "application/json");
@@ -15838,9 +15875,6 @@
       const borrowAmount = parseFloat(typeof borrowValue === "string" ? borrowValue : "0");
       const depositSliderValue = values["DepositAmountSlider"];
       const depositSliderAmount = parseFloat(typeof depositSliderValue === "string" ? depositSliderValue : "0");
-      if ("RateSlider" in values) {
-        values["Rate"] = values["RateSlider"];
-      }
       const body = JSON.stringify({ calculator: this.name, input: values });
       const response = await fetch(API_ENDPOINT3, {
         method: "POST",
@@ -15851,17 +15885,23 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
+      let monthlyRepayment;
       if (depositAmount > 0 && result) {
         if (result.result.BorrowingAmountLower) {
           result.result.DepositAmount = depositAmount;
           result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+          result.result.RepaymentValue = parseFloat(result.result.BorrowingAmountHigher);
+          result.result.TermYears = 25;
         }
       }
       if (result.result.TotalOverTerm) {
+        monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values["TermYears"], values["Rate"]);
         result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
         result.result.DepositAmount = depositSliderAmount;
         result.result.PropertyValue = borrowAmount + depositSliderAmount;
-        result.result.BorrowingAmountHigher = borrowAmount;
+        result.result.RepaymentValue = borrowAmount;
+        result.result.TermYears = values["TermYears"];
+        result.result.FutureMonthlyPayment = monthlyRepayment ? Math.round(monthlyRepayment) : Math.round(result.result.FutureMonthlyPayment);
       }
       return result;
     }
@@ -15923,10 +15963,12 @@
       if (result.result.data[0].FutureMonthlyPayment) {
         result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
         result.result.data[0].InitialRate = result.result.data[0].Rate;
+        result.result.data[0].TermYears = result.result.data[0].TermYears;
       }
-      const rateSlider = document.querySelector('[data-input="RateSlider"]');
+      const rateSlider = document.querySelector('[data-input="Rate"]');
       if (rateSlider) {
         rateSlider.setAttribute("value", result.result.data[0].Rate);
+        rateSlider.setAttribute("placeholder", result.result.data[0].Rate);
       }
       return result;
     }
@@ -15936,7 +15978,7 @@
   var calculators = () => {
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
-    const rateSlider = document.querySelector('[data-input="RateSlider"]');
+    const rateSlider = document.querySelector('[data-input="Rate"]');
     if (repaymentValueSlider) {
       repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
     }
@@ -15968,7 +16010,6 @@
     }
     displayResults(result) {
       this.result = result;
-      console.log("Results to process are: ", this.result);
       this.populateOutputs();
       const resultsElement = queryElement(`[${attr6}-el="results"]`, this.component);
       resultsElement.style.display = "block";
@@ -16003,7 +16044,6 @@
       if (data["CostOfRate1"] >= data["CostOfRate2"]) {
         noSavingElement.style.display = "none";
         savingElement.style.display = "block";
-        console.log("Outputs array is: ", outputs);
         data["AnnualCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 2;
         data["MonthlyCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 12;
         data["FollowOnPayments"] = data["CostOfRate1"] / 12;
