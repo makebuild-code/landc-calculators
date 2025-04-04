@@ -9,6 +9,7 @@ import { type CalculatorConfig, calculatorConfig } from './calculatorConfig';
 import { HandleInputs } from './handleInputs';
 import { HandleOutputs } from './handleOutputs';
 import { API_ENDPOINTS } from 'src/constants';
+import { syncSlider } from '$utils/syncSlider';
 
 const attr = 'data-calc';
 const API_ENDPOINT = API_ENDPOINTS.calculatorTrigger;
@@ -56,7 +57,9 @@ export class HandleCalculator {
   private bindEvents(): void {
     
     this.inputs.all.forEach((input) => {
+
       handleEnterInInputs(input, () => {
+        
         this.submit();
       });
     });
@@ -67,7 +70,6 @@ export class HandleCalculator {
   }
 
   submit(): void {
-
     this.toggleLoading();
     const isValid = this.inputs.validateInputs();
     const allPresent = this.inputs.check();
@@ -122,12 +124,14 @@ export class HandleCalculator {
           // To return single product
           const mortInputs = mortgageCalc.inputs.getValues();
           const calcInputs = this.inputs.getValues();
+          
 
           const DepositAmount = parseFloat(calcInputs['DepositAmount'] as string || '0');
           const RepaymentValue = parseFloat(mortInputs['RepaymentValue'] as string || '0');
           const PropertyValue = RepaymentValue + DepositAmount;
-          console.log('MORTINPUTS');
-          
+
+          syncSlider('DepositAmountSlider',  DepositAmount);
+          syncSlider('RepaymentValue', RepaymentValue );
           // Get Product Update
 
            const prodresult = await this.makeAzureRequestProduct({
@@ -166,9 +170,10 @@ export class HandleCalculator {
         this.toggleLoading(true);
         this.outputs.displayResults(this.result);
       }
-      if(resultsId){
-        this.scrollToDiv(resultsId);
-       // this.handleCalculatorSync(calcName)
+      if(resultsId && calcName==='residentialborrowinglimit'){
+        if(this.result){
+          this.scrollToDiv(resultsId);
+        }
       }
 
       
@@ -218,7 +223,17 @@ export class HandleCalculator {
     });
   }
 
-  
+  private calculateMonthlyPayment(borrowAmount: number, termYears: any, annualRate:any) {
+    const n = termYears * 12; // Total number of monthly payments
+    const r = annualRate / 100 / 12; // Convert annual rate to monthly rate
+
+    if (r === 0) {
+        // If interest rate is 0, simple division
+        return borrowAmount / n;
+    }
+
+    return (borrowAmount * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  }
 
   private async makeAzureRequest(): Promise<APIResponse> {
     const headers = new Headers();
@@ -248,23 +263,31 @@ export class HandleCalculator {
     }
   
     const result = await response.json();
+    let monthlyRepayment;
   
     // Adjust Result to add Calulations not brought back from API for New Mortgage Calc
     if (depositAmount > 0 && result) {
       if (result.result.BorrowingAmountLower) {
+        //monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, 25, 4.65)
         result.result.DepositAmount = depositAmount;
         result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+        result.result.RepaymentValue = parseFloat(result.result.BorrowingAmountHigher);
+        result.result.TermYears = 25;
+        //result.result.FutureMonthlyPayment = monthlyRepayment
       }
     }
 
     if (result.result.TotalOverTerm) {
+      monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values['TermYears'], values['Rate'])
+
       result.result.TotalOverTerm =  Math.round(result.result.TotalOverTerm);
       result.result.DepositAmount = depositSliderAmount;
       result.result.PropertyValue = borrowAmount + depositSliderAmount;
-      result.result.BorrowingAmountHigher = borrowAmount;
+      result.result.RepaymentValue = borrowAmount;
+      result.result.TermYears = values['TermYears'];
+      result.result.FutureMonthlyPayment = monthlyRepayment ?  Math.round(monthlyRepayment) :  Math.round(result.result.FutureMonthlyPayment) ;
+
     }
-    console.log('RESULTS', result)
-    
 
     return result;
   }
@@ -325,7 +348,8 @@ export class HandleCalculator {
   
     if (result.result.data[0].FutureMonthlyPayment) {
       result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
-      result.result.data[0].InitialRate = result.result.data[0].Rate
+      result.result.data[0].InitialRate = result.result.data[0].Rate;
+      result.result.data[0].TermYears = result.result.data[0].TermYears;
     }
 
     const rateSlider = document.querySelector('[data-input="Rate"]') as HTMLInputElement | null;
@@ -340,3 +364,5 @@ export class HandleCalculator {
   
   
 }
+
+

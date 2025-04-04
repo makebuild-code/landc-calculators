@@ -1,5 +1,6 @@
-export type Input = HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement;
-
+export type Input = HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement | HTMLC;export type Input = (HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement) & {
+  class?: string;
+};
 export type BasicObject = {
   [key: string]: string | number;
 };
