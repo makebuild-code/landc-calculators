@@ -14,7 +14,7 @@
   };
 
   // src/constants.ts
-  var API_ENDPOINTS = JSON.parse('{"productsTrigger":"https://landc.co.uk/api/ProductsHttpTrigger","calculatorTrigger":"https://landc.co.uk/api/CalculatorHttpTrigger","svrForLenders":"https://landc.co.uk/api/SVRForLendersTrigger","costOfDoingNothing":"https://landc.co.uk/api/CODNTrigger"}');
+  var API_ENDPOINTS = JSON.parse('{"productsTrigger":"https://www.landc.co.uk/api/productshttptrigger","calculatorTrigger":"https://www.landc.co.uk/api/calculatorhttptrigger","svrForLenders":"https://www.landc.co.uk/api/SVRForLendersTrigger","costOfDoingNothing":"https://www.landc.co.uk/api/CODNTrigger"}');
 
   // src/utils/isStaging.ts
   var isStaging = window.location.host.includes("test.landc.co.uk");
