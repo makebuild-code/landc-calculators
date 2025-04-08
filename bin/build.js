@@ -4,7 +4,7 @@ import { readdirSync } from 'fs';
 import { join, sep } from 'path';
 
 // Load environment variables based on BUILD_ENV
-const envFile = `.env.${process.env.BUILD_ENV || 'staging'}`;
+const envFile = `.env.${process.env.BUILD_ENV || 'local'}`;
 dotenv.config({ path: envFile });
 
 if (!process.env.API_ENDPOINTS) {
@@ -13,8 +13,9 @@ if (!process.env.API_ENDPOINTS) {
 }
 
 const BUILD_DIRECTORY = `dist/${process.env.BUILD_ENV || 'local'}`;
-const PRODUCTION = process.env.BUILD_ENV === 'production';
-const LIVE_RELOAD = !PRODUCTION;
+const IS_PRODUCTION = process.env.BUILD_ENV === 'production';
+const IS_STAGING = process.env.BUILD_ENV === 'staging';
+const LIVE_RELOAD = !(IS_PRODUCTION || IS_STAGING); // only run dev server in local/dev
 const SERVE_PORT = 3000;
 const SERVE_ORIGIN = LIVE_RELOAD ? `http://localhost:${SERVE_PORT}` : '';
 
@@ -29,16 +30,13 @@ const context = await esbuild.context({
   entryPoints: ['src/index.ts'],
   outdir: BUILD_DIRECTORY,
   bundle: true,
-  sourcemap: !PRODUCTION,
-  target: PRODUCTION ? 'es2020' : 'esnext',
+  sourcemap: LIVE_RELOAD,
+  target: LIVE_RELOAD ? 'esnext' : 'es2020',
   inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
   define: defineEnv,
 });
 
-if (PRODUCTION) {
-  await context.rebuild();
-  context.dispose();
-} else {
+if (LIVE_RELOAD) {
   await context.watch();
   await context
     .serve({
@@ -46,6 +44,9 @@ if (PRODUCTION) {
       port: SERVE_PORT,
     })
     .then(logServedFiles);
+} else {
+  await context.rebuild();
+  context.dispose();
 }
 
 /**
