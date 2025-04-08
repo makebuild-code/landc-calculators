@@ -70,10 +70,10 @@ export class HandleCalculator {
   }
 
   submit(): void {
+
     this.toggleLoading();
     const isValid = this.inputs.validateInputs();
     const allPresent = this.inputs.check();
-
     // cancel if inputs are invalid or not all present
     if (!isValid || !allPresent) {
       if (isStaging) console.log('inputs not valid or not all present');
@@ -208,8 +208,6 @@ export class HandleCalculator {
     document.querySelectorAll('[data-calc-output]').forEach((output) => {
         const key = output.getAttribute('data-calc-output');
         if (!key || !(key in results.data[0])) return;
-
-        console.log(output)
 
         const value = results.data[0][key];
         const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);

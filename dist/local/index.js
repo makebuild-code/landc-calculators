@@ -1049,18 +1049,16 @@
       let allPresent = true;
       this.config.names.forEach((name) => {
         const input = this.all.find((input2) => input2.dataset.input === name);
+        const isOptionalAndMissing = name === "DepositAmount" && !input;
         tableData.push({
           input: name,
-          present: !!input
+          present: !!input || isOptionalAndMissing
         });
-        if (!input)
+        if (!input && name !== "DepositAmount") {
           allPresent = false;
+        }
       });
-      if (isStaging) {
-        console.groupCollapsed(`${allPresent ? "all inputs present" : "inputs missing"}`);
-        console.table(tableData);
-        console.groupEnd();
-      }
+      console.table(tableData);
       return allPresent;
     }
     validateInput(input) {
@@ -15732,6 +15730,9 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
+      console.log("isValid", isValid);
+      console.log("allPresent", allPresent);
+      console.log("inputs", this.inputs);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");

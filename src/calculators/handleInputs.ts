@@ -96,23 +96,23 @@ export class HandleInputs {
   check(): boolean {
     const tableData: { input: string; present: boolean }[] = [];
     let allPresent = true;
-    // check which inputs are/aren't present
+  
     this.config.names.forEach((name) => {
       const input = this.all.find((input) => input.dataset.input === name);
+  
+      const isOptionalAndMissing = name === 'DepositAmount' && !input;
+  
       tableData.push({
         input: name,
-        present: !!input,
+        present: !!input || isOptionalAndMissing,
       });
-
-      if (!input) allPresent = false;
+  
+      if (!input && name !== 'DepositAmount') {
+        allPresent = false;
+      }
     });
-
-    if (isStaging) {
-      console.groupCollapsed(`${allPresent ? 'all inputs present' : 'inputs missing'}`);
-      console.table(tableData);
-      console.groupEnd();
-    }
-
+  
+    console.table(tableData);
     return allPresent;
   }
 
