@@ -1049,18 +1049,16 @@
       let allPresent = true;
       this.config.names.forEach((name) => {
         const input = this.all.find((input2) => input2.dataset.input === name);
+        const isOptionalAndMissing = name === "DepositAmount" && !input;
         tableData.push({
           input: name,
-          present: !!input
+          present: !!input || isOptionalAndMissing
         });
-        if (!input)
+        if (!input && name !== "DepositAmount") {
           allPresent = false;
+        }
       });
-      if (isStaging) {
-        console.groupCollapsed(`${allPresent ? "all inputs present" : "inputs missing"}`);
-        console.table(tableData);
-        console.groupEnd();
-      }
+      console.table(tableData);
       return allPresent;
     }
     validateInput(input) {
@@ -15840,7 +15838,6 @@
         const key = output.getAttribute("data-calc-output");
         if (!key || !(key in results.data[0]))
           return;
-        console.log(output);
         const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {

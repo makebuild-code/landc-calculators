@@ -15730,9 +15730,6 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
-      console.log("isValid", isValid);
-      console.log("allPresent", allPresent);
-      console.log("inputs", this.inputs);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");
@@ -15841,7 +15838,6 @@
         const key = output.getAttribute("data-calc-output");
         if (!key || !(key in results.data[0]))
           return;
-        console.log(output);
         const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
