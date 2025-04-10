@@ -343,8 +343,9 @@
       this.conditionalVisibility();
       if (this.productId)
         this.scrollIntoView();
+      this.isLoading = true;
       if (!this.initialResultsDisplayType || !this.onSearchResultsDisplayType) {
-        this.isLoading = true;
+        this.noResults.style.display = "none";
         await this.handleAzureRequest();
       }
       if (this.productId)
@@ -363,7 +364,6 @@
           const valid = this.validateInputs();
           if (!valid)
             return;
-          this.toggleLoading();
           this.numberOfResultsShown = 0;
           this.handleAzureRequest();
         });
@@ -431,7 +431,24 @@
     }
     toggleLoading(success) {
       this.isLoading = !this.isLoading;
-      if (success) {
+      if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
+        if (success) {
+          this.loading.style.display = "none";
+          this.noResults.style.display = "none";
+          this.resultsList.style.display = "block";
+          this.loadMoreWrapper.style.display = "block";
+        } else {
+          this.loading.style.display = "block";
+          this.noResults.style.display = "none";
+          this.resultsList.style.display = "none";
+          this.loadMoreWrapper.style.display = "none";
+        }
+      } else if (this.isLoading) {
+        this.loading.style.display = "block";
+        this.noResults.style.display = "none";
+        this.resultsList.style.display = "none";
+        this.loadMoreWrapper.style.display = "none";
+      } else if (success) {
         this.loading.style.display = "none";
         this.noResults.style.display = "none";
         this.resultsList.style.display = "flex";
@@ -442,12 +459,7 @@
           this.onSearchResultsDisplayType.style.display = "flex";
         }
         this.loading.style.display = "none";
-        this.noResults.style.display = "flex";
-        this.resultsList.style.display = "none";
-        this.loadMoreWrapper.style.display = "none";
-      } else if (this.isLoading) {
-        this.loading.style.display = "block";
-        this.noResults.style.display = "none";
+        this.noResults.style.display = "block";
         this.resultsList.style.display = "none";
         this.loadMoreWrapper.style.display = "none";
       }
@@ -514,12 +526,10 @@
           if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
             this.initialResultsDisplayType.style.display = "none";
             this.onSearchResultsDisplayType.style.display = "flex";
-            setTimeout(() => {
-              this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
-              this.clearResults();
-              this.displayResults(0, 10);
-              this.toggleLoading(true);
-            }, 1e3);
+            this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
+            this.clearResults();
+            this.displayResults(0, 10);
+            this.toggleLoading(true);
           } else {
             this.clearResults();
             this.displayResults(0, 10);

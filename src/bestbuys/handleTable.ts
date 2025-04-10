@@ -68,8 +68,9 @@ export class HandleTable {
    
     this.conditionalVisibility();
     if (this.productId) this.scrollIntoView();
+    this.isLoading = true;
     if(!this.initialResultsDisplayType || !this.onSearchResultsDisplayType){
-      this.isLoading = true;
+      this.noResults.style.display = 'none';
       await this.handleAzureRequest();
     }
     if (this.productId) this.scrollIntoView(this.productId);
@@ -89,7 +90,6 @@ export class HandleTable {
       button.addEventListener('click', () => {
         const valid = this.validateInputs();
         if (!valid) return;
-        this.toggleLoading();
         this.numberOfResultsShown = 0;
         this.handleAzureRequest();
       });
@@ -169,7 +169,25 @@ export class HandleTable {
 
   private toggleLoading(success?: boolean): void {
     this.isLoading = !this.isLoading;
-   if (success) {
+    if((this.initialResultsDisplayType || this.onSearchResultsDisplayType)){
+      if(success){
+        this.loading.style.display = 'none';
+        this.noResults.style.display = 'none';
+        this.resultsList.style.display = 'block';
+        this.loadMoreWrapper.style.display = 'block';
+      }else{
+        this.loading.style.display = 'block';
+        this.noResults.style.display = 'none';
+        this.resultsList.style.display = 'none';
+        this.loadMoreWrapper.style.display = 'none';
+      }
+      
+    } else if (this.isLoading) {
+      this.loading.style.display = 'block';
+      this.noResults.style.display = 'none';
+      this.resultsList.style.display = 'none';
+      this.loadMoreWrapper.style.display = 'none';
+    } else if (success) {
       this.loading.style.display = 'none';
       this.noResults.style.display = 'none';
       this.resultsList.style.display = 'flex';
@@ -178,21 +196,14 @@ export class HandleTable {
     } else if (!success) {
       if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
         this.initialResultsDisplayType.style.display = 'none';
-        this.onSearchResultsDisplayType.style.display = 'flex'
+        this.onSearchResultsDisplayType.style.display = 'flex';
       }
       this.loading.style.display = 'none';
-      this.noResults.style.display = 'flex';
+      this.noResults.style.display = 'block';
       this.resultsList.style.display = 'none';
       this.loadMoreWrapper.style.display = 'none';
       
-    } else if (this.isLoading) {
-    
-      this.loading.style.display = 'block';
-      this.noResults.style.display = 'none';
-      this.resultsList.style.display = 'none';
-      this.loadMoreWrapper.style.display = 'none';
-      
-    } 
+    }
   }
 
   private getValues(): Inputs {
@@ -241,6 +252,7 @@ export class HandleTable {
   }
 
   private async handleAzureRequest(): Promise<void> {
+
     if (isStaging) {
       console.groupCollapsed('API Call');
       console.time('API Request');
@@ -251,6 +263,7 @@ export class HandleTable {
       const result = await this.makeAzureRequest();
       this.result = result.result as unknown as BestBuyResult;
       
+      
       if (isStaging) console.log(result);
       if (
         !this.result ||
@@ -258,17 +271,19 @@ export class HandleTable {
         !this.result.success ||
         this.result.data.length === 0
       ) {
-        this.toggleLoading(false);
+          this.toggleLoading(false);
+         
       } else {
         if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
+          
           this.initialResultsDisplayType.style.display = 'none';
-          this.onSearchResultsDisplayType.style.display = 'flex'
-          setTimeout(() => {
+          this.onSearchResultsDisplayType.style.display = 'flex';
+          
               this.resultsList = queryElement(`[${attr}-el="results-list"]`) as HTMLDivElement;
               this.clearResults();
               this.displayResults(0, 10);
               this.toggleLoading(true);
-           } , 1000);
+         
         }else{
           this.clearResults();
           this.displayResults(0, 10);
@@ -277,7 +292,6 @@ export class HandleTable {
       }
     } catch (error) {
       console.error('Error retrieving calculation', error);
-
       this.toggleLoading(false);
     }
 
