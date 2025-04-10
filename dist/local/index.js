@@ -262,7 +262,6 @@
       value = input.value;
     } else if (input instanceof HTMLFieldSetElement) {
       const checkedRadio = queryElement('input[type="radio"]:checked', input);
-      console.log(checkedRadio);
       value = checkedRadio?.value ? checkedRadio?.value : null;
     }
     if (input instanceof HTMLInputElement && input.type === "checkbox") {
@@ -16000,6 +15999,26 @@
     if (rateSlider) {
       rateSlider.setAttribute("data-calc-output", "InitialRate");
     }
+    const tabTriggers = document.querySelectorAll("[tabs-id]");
+    tabTriggers.forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const tabId = trigger.getAttribute("tabs-id");
+        if (!tabId)
+          return;
+        document.querySelectorAll(".tab-content").forEach((tab) => {
+          tab.style.display = "none";
+          tab.classList.remove("current");
+        });
+        tabTriggers.forEach((tab) => {
+          tab.classList.remove("current");
+        });
+        const targetTab = document.getElementById(tabId);
+        if (targetTab) {
+          targetTab.style.display = "block";
+          trigger.classList.add("current");
+        }
+      });
+    });
     const attr7 = "data-calc";
     const components2 = queryElements(`[${attr7}]`);
     components2.forEach((component) => {

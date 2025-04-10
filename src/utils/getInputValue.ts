@@ -10,7 +10,7 @@ export function getInputValue(input: Input): string | boolean | undefined {
     value = input.value;
   } else if (input instanceof HTMLFieldSetElement) {
     const checkedRadio = queryElement('input[type="radio"]:checked', input) as HTMLInputElement;
-    console.log(checkedRadio)
+
     value = checkedRadio?.value ? checkedRadio?.value : null;
   }
 
