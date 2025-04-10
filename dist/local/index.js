@@ -262,7 +262,8 @@
       value = input.value;
     } else if (input instanceof HTMLFieldSetElement) {
       const checkedRadio = queryElement('input[type="radio"]:checked', input);
-      value = checkedRadio.value;
+      console.log(checkedRadio);
+      value = checkedRadio?.value ? checkedRadio?.value : null;
     }
     if (input instanceof HTMLInputElement && input.type === "checkbox") {
       value = input.checked;
@@ -336,13 +337,17 @@
       const params = new URLSearchParams(url.search);
       this.productId = params.get("productId") ?? null;
       this.formattedValues = this.getValues();
+      this.initialResultsDisplayType = queryElement(`[data-results-display-type="initial"]`, component);
+      this.onSearchResultsDisplayType = queryElement(`[data-results-display-type="onsearch"]`, component);
     }
     async init() {
-      this.isLoading = true;
       this.conditionalVisibility();
       if (this.productId)
         this.scrollIntoView();
-      await this.handleAzureRequest();
+      if (!this.initialResultsDisplayType || !this.onSearchResultsDisplayType) {
+        this.isLoading = true;
+        await this.handleAzureRequest();
+      }
       if (this.productId)
         this.scrollIntoView(this.productId);
       this.bindEvents();
@@ -427,19 +432,23 @@
     }
     toggleLoading(success) {
       this.isLoading = !this.isLoading;
-      if (this.isLoading) {
-        this.loading.style.display = "block";
-        this.noResults.style.display = "none";
-        this.resultsList.style.display = "none";
-        this.loadMoreWrapper.style.display = "none";
-      } else if (success) {
+      if (success) {
         this.loading.style.display = "none";
         this.noResults.style.display = "none";
         this.resultsList.style.display = "flex";
         this.loadMoreWrapper.style.display = "flex";
       } else if (!success) {
+        if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
+          this.initialResultsDisplayType.style.display = "none";
+          this.onSearchResultsDisplayType.style.display = "flex";
+        }
         this.loading.style.display = "none";
         this.noResults.style.display = "flex";
+        this.resultsList.style.display = "none";
+        this.loadMoreWrapper.style.display = "none";
+      } else if (this.isLoading) {
+        this.loading.style.display = "block";
+        this.noResults.style.display = "none";
         this.resultsList.style.display = "none";
         this.loadMoreWrapper.style.display = "none";
       }
@@ -449,7 +458,7 @@
       this.inputs.forEach((input) => {
         if (input.dataset.conditionsmet && input.dataset.conditionsmet === "false")
           return;
-        const key = input.dataset.input;
+        const key = input.dataset.input ? input.dataset.input : input.name;
         const value = getInputValue(input);
         if (!key || !value)
           return;
@@ -503,9 +512,21 @@
         if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
           this.toggleLoading(false);
         } else {
-          this.clearResults();
-          this.displayResults(0, 10);
-          this.toggleLoading(true);
+          if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
+            this.initialResultsDisplayType.style.display = "none";
+            this.onSearchResultsDisplayType.style.display = "flex";
+            this.isLoading = false;
+            setTimeout(() => {
+              this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
+              this.clearResults();
+              this.displayResults(0, 10);
+              this.toggleLoading(true);
+            }, 1e3);
+          } else {
+            this.clearResults();
+            this.displayResults(0, 10);
+            this.toggleLoading(true);
+          }
         }
       } catch (error) {
         console.error("Error retrieving calculation", error);

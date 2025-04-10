@@ -31,6 +31,8 @@ export class HandleTable {
   private noResults: HTMLDivElement;
   private isLoading: boolean;
   private loadMoreWrapper: HTMLDivElement;
+  private initialResultsDisplayType: HTMLDivElement;
+  private onSearchResultsDisplayType: HTMLDivElement;
   private loadMore: HTMLButtonElement;
   private numberOfResultsShown: number;
   private productId: string | null;
@@ -58,13 +60,18 @@ export class HandleTable {
     const params = new URLSearchParams(url.search);
     this.productId = params.get('productId') ?? null;
     this.formattedValues = this.getValues();
+    this.initialResultsDisplayType =  queryElement(`[data-results-display-type="initial"]`, component) as HTMLDivElement;
+    this.onSearchResultsDisplayType =  queryElement(`[data-results-display-type="onsearch"]`, component) as HTMLDivElement;
   }
 
   async init(): Promise<void> {
-    this.isLoading = true;
+   
     this.conditionalVisibility();
     if (this.productId) this.scrollIntoView();
-    await this.handleAzureRequest();
+    if(!this.initialResultsDisplayType || !this.onSearchResultsDisplayType){
+      this.isLoading = true;
+      await this.handleAzureRequest();
+    }
     if (this.productId) this.scrollIntoView(this.productId);
 
     this.bindEvents();
@@ -162,30 +169,38 @@ export class HandleTable {
 
   private toggleLoading(success?: boolean): void {
     this.isLoading = !this.isLoading;
-    if (this.isLoading) {
-      this.loading.style.display = 'block';
-      this.noResults.style.display = 'none';
-      this.resultsList.style.display = 'none';
-      this.loadMoreWrapper.style.display = 'none';
-    } else if (success) {
+   if (success) {
       this.loading.style.display = 'none';
       this.noResults.style.display = 'none';
       this.resultsList.style.display = 'flex';
       this.loadMoreWrapper.style.display = 'flex';
+      
     } else if (!success) {
+      if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
+        this.initialResultsDisplayType.style.display = 'none';
+        this.onSearchResultsDisplayType.style.display = 'flex'
+      }
       this.loading.style.display = 'none';
       this.noResults.style.display = 'flex';
       this.resultsList.style.display = 'none';
       this.loadMoreWrapper.style.display = 'none';
-    }
+      
+    } else if (this.isLoading) {
+    
+      this.loading.style.display = 'block';
+      this.noResults.style.display = 'none';
+      this.resultsList.style.display = 'none';
+      this.loadMoreWrapper.style.display = 'none';
+      
+    } 
   }
 
   private getValues(): Inputs {
     const preFormattedValues: { [key: string]: string | boolean } = {};
     this.inputs.forEach((input) => {
       if (input.dataset.conditionsmet && input.dataset.conditionsmet === 'false') return;
-      const key = input.dataset.input;
-      const value = getInputValue(input);
+      const key = input.dataset.input ? input.dataset.input : input.name;
+      const value = getInputValue(input);  
 
       if (!key || !value) return;
 
@@ -235,6 +250,7 @@ export class HandleTable {
     try {
       const result = await this.makeAzureRequest();
       this.result = result.result as unknown as BestBuyResult;
+      
       if (isStaging) console.log(result);
       if (
         !this.result ||
@@ -244,12 +260,25 @@ export class HandleTable {
       ) {
         this.toggleLoading(false);
       } else {
-        this.clearResults();
-        this.displayResults(0, 10);
-        this.toggleLoading(true);
+        if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
+          this.initialResultsDisplayType.style.display = 'none';
+          this.onSearchResultsDisplayType.style.display = 'flex'
+          this.isLoading = false;
+          setTimeout(() => {
+              this.resultsList = queryElement(`[${attr}-el="results-list"]`) as HTMLDivElement;
+              this.clearResults();
+              this.displayResults(0, 10);
+              this.toggleLoading(true);
+           } , 1000);
+        }else{
+          this.clearResults();
+          this.displayResults(0, 10);
+          this.toggleLoading(true);
+        }
       }
     } catch (error) {
       console.error('Error retrieving calculation', error);
+
       this.toggleLoading(false);
     }
 
@@ -340,8 +369,8 @@ export class HandleTable {
           },
         ]);
       }
-
       this.resultsList.appendChild(clone);
+
     });
 
     this.numberOfResultsShown += show;
