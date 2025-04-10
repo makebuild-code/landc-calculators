@@ -15800,8 +15800,6 @@
             const PropertyValue = RepaymentValue + DepositAmount;
             syncSlider("DepositAmountSlider", DepositAmount);
             syncSlider("RepaymentValue", RepaymentValue);
-            const mobileTabs = queryElement(`[data-mobile-results=${resultsId}]`, document);
-            mobileTabs.style.display = "flex";
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
