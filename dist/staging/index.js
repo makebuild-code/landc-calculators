@@ -518,7 +518,6 @@
           if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
             this.initialResultsDisplayType.style.display = "none";
             this.onSearchResultsDisplayType.style.display = "flex";
-            this.isLoading = false;
             setTimeout(() => {
               this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
               this.clearResults();
