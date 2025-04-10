@@ -514,7 +514,6 @@
           if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
             this.initialResultsDisplayType.style.display = "none";
             this.onSearchResultsDisplayType.style.display = "flex";
-            this.isLoading = false;
             setTimeout(() => {
               this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
               this.clearResults();
@@ -15547,7 +15546,7 @@
       this.populateChart();
       this.handleConditionals();
       if (!this.resultsId) {
-        this.results.style.display = "block";
+        this.results.style.display = "flex";
       } else {
         this.results.style.display = "grid";
       }
@@ -15795,6 +15794,8 @@
             const PropertyValue = RepaymentValue + DepositAmount;
             syncSlider("DepositAmountSlider", DepositAmount);
             syncSlider("RepaymentValue", RepaymentValue);
+            const mobileTabs = queryElement(`[data-mobile-results=${resultsId}]`, document);
+            mobileTabs.style.display = "flex";
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,

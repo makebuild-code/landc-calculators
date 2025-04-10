@@ -15552,7 +15552,7 @@
       this.populateChart();
       this.handleConditionals();
       if (!this.resultsId) {
-        this.results.style.display = "block";
+        this.results.style.display = "flex";
       } else {
         this.results.style.display = "grid";
       }
@@ -15800,6 +15800,8 @@
             const PropertyValue = RepaymentValue + DepositAmount;
             syncSlider("DepositAmountSlider", DepositAmount);
             syncSlider("RepaymentValue", RepaymentValue);
+            const mobileTabs = queryElement(`[data-mobile-results=${resultsId}]`, document);
+            mobileTabs.style.display = "flex";
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,

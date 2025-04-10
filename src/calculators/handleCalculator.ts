@@ -119,7 +119,9 @@ export class HandleCalculator {
         const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]') as HTMLDivElement;
         if (mortgageCalcComponent) {
           const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
+         
           mortgageCalc.submit();
+
 
           // To return single product
           const mortInputs = mortgageCalc.inputs.getValues();
@@ -132,6 +134,10 @@ export class HandleCalculator {
 
           syncSlider('DepositAmountSlider',  DepositAmount);
           syncSlider('RepaymentValue', RepaymentValue );
+
+          const mobileTabs = queryElement(`[data-mobile-results=${resultsId}]`, document) as HTMLDivElement;
+
+          (mobileTabs as HTMLElement).style.display = 'flex';
           // Get Product Update
 
            const prodresult = await this.makeAzureRequestProduct({
@@ -151,6 +157,7 @@ export class HandleCalculator {
               if (mortPickTitle && mortPickArea) {
                 (mortPickTitle as HTMLElement).style.display = 'flex';
                 (mortPickArea as HTMLElement).style.display = 'flex';
+
             }
             }else{
               if (mortPickTitle && mortPickArea) {
@@ -171,6 +178,7 @@ export class HandleCalculator {
         this.outputs.displayResults(this.result);
       }
       if(resultsId && calcName==='residentialborrowinglimit'){
+       
         if(this.result){
           this.scrollToDiv(resultsId);
         }

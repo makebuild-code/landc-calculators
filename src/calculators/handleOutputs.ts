@@ -111,7 +111,7 @@ export class HandleOutputs {
     this.handleConditionals();
 
     if(!this.resultsId){
-      this.results.style.display = 'block';
+      this.results.style.display = 'flex';
     }else{
       this.results.style.display = 'grid';
     }
