@@ -135,10 +135,6 @@ export class HandleCalculator {
           syncSlider('DepositAmountSlider',  DepositAmount);
           syncSlider('RepaymentValue', RepaymentValue );
 
-          // = queryElement(`[data-mobile-results=${resultsId}]`, document) as HTMLDivElement;
-
-          //(mobileTabs as HTMLElement).style.display = 'flex';
-          // Get Product Update
 
            const prodresult = await this.makeAzureRequestProduct({
              PropertyValue,
