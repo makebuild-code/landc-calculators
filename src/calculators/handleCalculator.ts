@@ -349,7 +349,7 @@ export class HandleCalculator {
     const result = await response.json();
   
     if (result.result.data[0].FutureMonthlyPayment) {
-      result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+      result.result.data[0].FutureMonthlyPaymentStatic = Math.round(result.result.data[0].FutureMonthlyPayment);
       result.result.data[0].InitialRate = result.result.data[0].Rate;
       result.result.data[0].TermYears = result.result.data[0].TermYears;
     }

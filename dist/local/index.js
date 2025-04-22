@@ -936,7 +936,6 @@
         conditionsMet = getInputValue(input) !== parsedCondition.value;
         break;
     }
-    alert("three me");
     item.style.display = conditionsMet ? "block" : "none";
     const itemInput = queryElement("[data-input]", item);
     if (itemInput) {
@@ -15545,7 +15544,6 @@
       if (this.repeatTemplates.length > 0) {
         this.repeatTemplates.forEach((template) => {
           template.style.display = "none";
-          alert("two");
           const fragment = document.createDocumentFragment();
           this.handleTemplateRepeats(template, fragment);
           if (template.parentElement)
@@ -15558,7 +15556,7 @@
       if (!this.resultsId) {
         this.results.style.display = "flex";
       } else {
-        this.results.style.display = "grid";
+        this.results.style.display = "block";
       }
     }
     handleTemplateRepeats(template, fragment) {
@@ -15822,7 +15820,6 @@
                 }
               } else {
                 if (mortPickTitle && mortPickArea) {
-                  alert("three");
                   mortPickTitle.style.display = "none";
                   mortPickArea.style.display = "none";
                 }
@@ -15982,7 +15979,7 @@
       }
       const result = await response.json();
       if (result.result.data[0].FutureMonthlyPayment) {
-        result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+        result.result.data[0].FutureMonthlyPaymentStatic = Math.round(result.result.data[0].FutureMonthlyPayment);
         result.result.data[0].InitialRate = result.result.data[0].Rate;
         result.result.data[0].TermYears = result.result.data[0].TermYears;
       }
@@ -15997,7 +15994,6 @@
 
   // src/calculators/index.ts
   var calculators = () => {
-    alert();
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
     const rateSlider = document.querySelector('[data-input="Rate"]');
@@ -16080,7 +16076,6 @@
         this.component
       );
       if (data["CostOfRate1"] < data["CostOfRate2"]) {
-        alert("three yo");
         savingElement.style.display = "none";
         noSavingElement.style.display = "block";
       }
