@@ -22,7 +22,7 @@ export function handleConditionalVisibility(item: HTMLElement, inputs: Input[]):
       conditionsMet = getInputValue(input) !== parsedCondition.value;
       break;
   }
-
+  alert('three me');
   item.style.display = conditionsMet ? 'block' : 'none';
   const itemInput = queryElement('[data-input]', item) as Input;
   if (itemInput) {

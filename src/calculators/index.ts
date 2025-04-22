@@ -3,7 +3,7 @@ import { queryElements } from '$utils/queryelements';
 import { HandleCalculator } from './handleCalculator';
 
 export const calculators = () => {
-
+alert();
 
   // Forces Outputs to Sliders - Mortgage Calc page New
   const repaymentValueSlider = document.getElementById('RepaymentValue') as HTMLInputElement | null;
@@ -24,12 +24,12 @@ export const calculators = () => {
   }
   // ----- End
 
-  const tabTriggers = document.querySelectorAll('[tabs-id]');
+  const tabTriggers = document.querySelectorAll('[tabs-click-id]');
 
   tabTriggers.forEach(trigger => {
     trigger.addEventListener('click', () => {
       
-      const tabId = trigger.getAttribute('tabs-id');
+      const tabId = trigger.getAttribute('tabs-click-id');
       if (!tabId) return;
 
       // Hide all tab content elements first (optional, if you're switching)

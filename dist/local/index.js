@@ -936,6 +936,7 @@
         conditionsMet = getInputValue(input) !== parsedCondition.value;
         break;
     }
+    alert("three me");
     item.style.display = conditionsMet ? "block" : "none";
     const itemInput = queryElement("[data-input]", item);
     if (itemInput) {
@@ -1203,8 +1204,6 @@
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
-          if (this.calculator.name === "mortgagecost") {
-          }
         });
       });
     }
@@ -15546,6 +15545,7 @@
       if (this.repeatTemplates.length > 0) {
         this.repeatTemplates.forEach((template) => {
           template.style.display = "none";
+          alert("two");
           const fragment = document.createDocumentFragment();
           this.handleTemplateRepeats(template, fragment);
           if (template.parentElement)
@@ -15822,6 +15822,7 @@
                 }
               } else {
                 if (mortPickTitle && mortPickArea) {
+                  alert("three");
                   mortPickTitle.style.display = "none";
                   mortPickArea.style.display = "none";
                 }
@@ -15996,6 +15997,7 @@
 
   // src/calculators/index.ts
   var calculators = () => {
+    alert();
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
     const rateSlider = document.querySelector('[data-input="Rate"]');
@@ -16008,10 +16010,10 @@
     if (rateSlider) {
       rateSlider.setAttribute("data-calc-output", "InitialRate");
     }
-    const tabTriggers = document.querySelectorAll("[tabs-id]");
+    const tabTriggers = document.querySelectorAll("[tabs-click-id]");
     tabTriggers.forEach((trigger) => {
       trigger.addEventListener("click", () => {
-        const tabId = trigger.getAttribute("tabs-id");
+        const tabId = trigger.getAttribute("tabs-click-id");
         if (!tabId)
           return;
         document.querySelectorAll(".tab-content").forEach((tab) => {
@@ -16078,6 +16080,7 @@
         this.component
       );
       if (data["CostOfRate1"] < data["CostOfRate2"]) {
+        alert("three yo");
         savingElement.style.display = "none";
         noSavingElement.style.display = "block";
       }

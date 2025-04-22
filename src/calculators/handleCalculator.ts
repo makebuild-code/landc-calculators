@@ -127,7 +127,6 @@ export class HandleCalculator {
           const mortInputs = mortgageCalc.inputs.getValues();
           const calcInputs = this.inputs.getValues();
           
-
           const DepositAmount = parseFloat(calcInputs['DepositAmount'] as string || '0');
           const RepaymentValue = parseFloat(mortInputs['RepaymentValue'] as string || '0');
           const PropertyValue = RepaymentValue + DepositAmount;
@@ -156,7 +155,9 @@ export class HandleCalculator {
 
             }
             }else{
+             
               if (mortPickTitle && mortPickArea) {
+                alert('three');
                 (mortPickTitle as HTMLElement).style.display = 'none';
                 (mortPickArea as HTMLElement).style.display = 'none';
             }

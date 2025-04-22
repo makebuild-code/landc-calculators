@@ -251,10 +251,10 @@ export class HandleInputs {
         this.handleConditionals();
         // New Mortgage calc out update on change
        
-        if (this.calculator.name === 'mortgagecost') {
-          //alert(input.name)
+        /*if (this.calculator.name === 'mortgagecost') {
+          alert(input.name)
           //this.calculator.submit();
-        }
+        }*/
 
   
       });
