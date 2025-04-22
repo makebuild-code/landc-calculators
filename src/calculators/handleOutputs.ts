@@ -100,7 +100,6 @@ export class HandleOutputs {
     if (this.repeatTemplates.length > 0) {
       this.repeatTemplates.forEach((template) => {
         template.style.display = 'none';
-        alert('two');
         const fragment = document.createDocumentFragment();
         this.handleTemplateRepeats(template, fragment);
         if (template.parentElement) template.parentElement.appendChild(fragment);

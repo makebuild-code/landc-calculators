@@ -53,7 +53,6 @@ export class HandleCODNOutputs {
 
     // Check if the current rate is less than the new rate and show text if so
     if (data['CostOfRate1'] < data['CostOfRate2']) {
-      alert('three yo');
       savingElement.style.display = 'none';
       noSavingElement.style.display = 'block';
     }

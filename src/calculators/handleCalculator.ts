@@ -157,7 +157,6 @@ export class HandleCalculator {
             }else{
              
               if (mortPickTitle && mortPickArea) {
-                alert('three');
                 (mortPickTitle as HTMLElement).style.display = 'none';
                 (mortPickArea as HTMLElement).style.display = 'none';
             }
