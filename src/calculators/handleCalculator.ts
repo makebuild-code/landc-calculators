@@ -360,7 +360,6 @@ export class HandleCalculator {
       rateSlider.setAttribute('placeholder', result.result.data[0].Rate)
     }
 
-
     return result;
   }
   
