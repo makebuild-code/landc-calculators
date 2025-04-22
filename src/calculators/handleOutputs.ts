@@ -113,7 +113,7 @@ export class HandleOutputs {
     if(!this.resultsId){
       this.results.style.display = 'flex';
     }else{
-      this.results.style.display = 'grid';
+      this.results.style.display = 'block';
     }
 
   }
