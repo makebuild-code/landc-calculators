@@ -15998,7 +15998,6 @@
       return result;
     }
     initRangeSlider() {
-      alert("yo");
       setTimeout(() => {
         window.Webflow = window.Webflow || [];
         window.Webflow.push(() => {

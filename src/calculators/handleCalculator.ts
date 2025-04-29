@@ -365,7 +365,7 @@ export class HandleCalculator {
   }
 
   private initRangeSlider(): void {
-    alert('yo')
+ 
     // Delay to allow DOM/rendering updates before initializing the slider
     setTimeout(() => {
       window.Webflow = window.Webflow || [];
