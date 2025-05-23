@@ -15770,7 +15770,6 @@
         return;
       }
       this.handleAzureRequest();
-      this.initRangeSlider();
     }
     toggleLoading(success) {
       this.isLoading = !this.isLoading;
@@ -15996,17 +15995,6 @@
         rateSlider.setAttribute("placeholder", result.result.data[0].Rate);
       }
       return result;
-    }
-    initRangeSlider() {
-      setTimeout(() => {
-        window.Webflow = window.Webflow || [];
-        window.Webflow.push(() => {
-          const sliderAttr = window.fsAttributes?.["rangeslider"];
-          if (sliderAttr && typeof sliderAttr.init === "function") {
-            sliderAttr.init(sliderAttr.attributes);
-          }
-        });
-      }, 1e3);
     }
   };
 
