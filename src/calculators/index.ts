@@ -46,6 +46,7 @@ export const calculators = () => {
       if (targetTab) {
         targetTab.style.display = 'block';
         trigger.classList.add('current');
+        //initRangeSlider();
       }
     });
   });
@@ -59,3 +60,51 @@ export const calculators = () => {
     calculator.init();
   });
 };
+
+export const initRangeSlider = (): void => {
+  alert('me');
+  setTimeout(() => {
+    window.Webflow = window.Webflow || [];
+
+    window.Webflow.push(() => {
+      // Find all sliders on the page
+      const sliders = document.querySelectorAll('[fs-rangeslider-element="wrapper"]');
+
+      sliders.forEach(sliderElement => {
+        // Find the input element inside each slider
+        const inputElement = sliderElement.querySelector('input');
+
+        if (inputElement) {
+          const currentValue = inputElement.value; // Save the current value of the input
+          console.log('Current Slider Value:', currentValue);
+
+          const sliderAttr = window.fsAttributes?.['rangeslider'];
+
+          if (sliderAttr && typeof sliderAttr.init === 'function') {
+            // Initialize the slider
+            console.log(sliderAttr.attributes)
+            sliderAttr.init();
+
+            // Restore the value after initialization
+            inputElement.value = currentValue;
+            inputElement.setAttribute('aria-valuenow', currentValue); // Update accessibility attribute
+            
+            // Update related elements (slider handle and display value)
+            const handleElement = sliderElement.querySelector('[fs-rangeslider-element="handle"]');
+            const displayValueElement = sliderElement.querySelector('[fs-rangeslider-element="display-value"]');
+
+            if (handleElement && displayValueElement) {
+              displayValueElement.textContent = currentValue; // Update the displayed value
+              handleElement.style.left = `${(currentValue / inputElement.max) * 100}%`; // Adjust the handle position based on the value
+            }
+
+            console.log('Slider value restored:', currentValue);
+          } else {
+            console.error('RangeSlider initialization failed: Attributes or init function missing');
+          }
+        }
+      });
+    });
+  }, 1000); // Delay to ensure Webflow scripts are loaded
+}
+
