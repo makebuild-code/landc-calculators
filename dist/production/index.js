@@ -454,12 +454,15 @@
         this.resultsList.style.display = "none";
         this.loadMoreWrapper.style.display = "none";
       } else if (success) {
+        console.log("one");
         this.loading.style.display = "none";
         this.noResults.style.display = "none";
         this.resultsList.style.display = "flex";
         this.loadMoreWrapper.style.display = "flex";
       } else if (!success) {
+        console.log("two");
         if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
+          console.log("three");
           this.initialResultsDisplayType.style.display = "none";
           this.onSearchResultsDisplayType.style.display = "flex";
         }
@@ -527,8 +530,10 @@
           console.log(result);
         if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
           this.toggleLoading(false);
+          console.log("senve");
         } else {
           if (this.initialResultsDisplayType || this.onSearchResultsDisplayType) {
+            console.log("five");
             this.initialResultsDisplayType.style.display = "none";
             this.onSearchResultsDisplayType.style.display = "flex";
             this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
@@ -536,6 +541,7 @@
             this.displayResults(0, 10);
             this.toggleLoading(true);
           } else {
+            console.log("six");
             this.clearResults();
             this.displayResults(0, 10);
             this.toggleLoading(true);
