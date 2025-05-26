@@ -174,13 +174,11 @@ export class HandleTable {
     if((this.initialResultsDisplayType || this.onSearchResultsDisplayType || this.fallBackResultsDisplayType)){
       
       if(success){
-        alert('three');
         this.loading.style.display = 'none';
         this.noResults.style.display = 'none';
         this.resultsList.style.display = 'block';
         this.loadMoreWrapper.style.display = 'block';
       }else{
-        alert('four');
         this.loading.style.display = 'block';
         this.noResults.style.display = 'none';
         this.resultsList.style.display = 'none';
@@ -202,11 +200,9 @@ export class HandleTable {
       
     } else if (!success) {
       if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
-        alert('one');
         (this.initialResultsDisplayType as HTMLDivElement).style.display = 'none';
         (this.onSearchResultsDisplayType as HTMLDivElement).style.display = 'flex';
       }
-      alert('two');
       this.loading.style.display = 'none';
       this.noResults.style.display = 'block';
       this.resultsList.style.display = 'none';
@@ -284,7 +280,7 @@ export class HandleTable {
          
       } else {
         if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
-       alert('five');
+
           this.initialResultsDisplayType.style.display = 'none';
           this.onSearchResultsDisplayType.style.display = 'flex';
           
@@ -294,7 +290,6 @@ export class HandleTable {
               this.toggleLoading(true);
          
         }else{
-          alert('six');
           this.clearResults();
           this.displayResults(0, 10);
           this.toggleLoading(true);
