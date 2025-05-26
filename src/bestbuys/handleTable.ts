@@ -32,6 +32,7 @@ export class HandleTable {
   private isLoading: boolean;
   private loadMoreWrapper: HTMLDivElement;
   private initialResultsDisplayType: HTMLDivElement;
+  private fallBackResultsDisplayType: HTMLDivElement;
   private onSearchResultsDisplayType: HTMLDivElement;
   private loadMore: HTMLButtonElement;
   private numberOfResultsShown: number;
@@ -62,6 +63,7 @@ export class HandleTable {
     this.formattedValues = this.getValues();
     this.initialResultsDisplayType =  queryElement(`[data-results-display-type="initial"]`, component) as HTMLDivElement;
     this.onSearchResultsDisplayType =  queryElement(`[data-results-display-type="onsearch"]`, component) as HTMLDivElement;
+    this.fallBackResultsDisplayType = queryElement('.bb-results_content', component) as HTMLDivElement;
   }
 
   async init(): Promise<void> {
@@ -169,7 +171,7 @@ export class HandleTable {
 
   private toggleLoading(success?: boolean): void {
     this.isLoading = !this.isLoading;
-    if((this.initialResultsDisplayType || this.onSearchResultsDisplayType)){
+    if((this.initialResultsDisplayType || this.onSearchResultsDisplayType || this.fallBackResultsDisplayType)){
       if(success){
         this.loading.style.display = 'none';
         this.noResults.style.display = 'none';
@@ -183,11 +185,13 @@ export class HandleTable {
       }
       
     } else if (this.isLoading) {
+   
       this.loading.style.display = 'block';
       this.noResults.style.display = 'none';
       this.resultsList.style.display = 'none';
       this.loadMoreWrapper.style.display = 'none';
     } else if (success) {
+    
       this.loading.style.display = 'none';
       this.noResults.style.display = 'none';
       this.resultsList.style.display = 'flex';
@@ -195,8 +199,8 @@ export class HandleTable {
       
     } else if (!success) {
       if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
-        this.initialResultsDisplayType.style.display = 'none';
-        this.onSearchResultsDisplayType.style.display = 'flex';
+        (this.initialResultsDisplayType as HTMLDivElement).style.display = 'none';
+        (this.onSearchResultsDisplayType as HTMLDivElement).style.display = 'flex';
       }
       this.loading.style.display = 'none';
       this.noResults.style.display = 'block';
@@ -263,7 +267,6 @@ export class HandleTable {
       const result = await this.makeAzureRequest();
       this.result = result.result as unknown as BestBuyResult;
       
-      
       if (isStaging) console.log(result);
       if (
         !this.result ||
@@ -272,10 +275,11 @@ export class HandleTable {
         this.result.data.length === 0
       ) {
           this.toggleLoading(false);
+        
          
       } else {
         if(this.initialResultsDisplayType || this.onSearchResultsDisplayType){
-          
+       
           this.initialResultsDisplayType.style.display = 'none';
           this.onSearchResultsDisplayType.style.display = 'flex';
           
@@ -333,7 +337,7 @@ export class HandleTable {
 
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
-      clone.setAttribute('data-productId', item.ProductId);
+      clone.setAttribute('data-productId', String(item.ProductId));
 
       const outputs = queryElements(`[${attr}-output]`, clone) as HTMLDivElement[];
       outputs.forEach((output) => {
