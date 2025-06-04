@@ -173,7 +173,6 @@
 
   // src/components/dialogs.ts
   var dialogs = () => {
-    console.log("Running locally");
     const attr7 = "data-dialog";
     const components2 = queryElements(`[${attr7}="component"]`);
     components2.forEach((component) => {

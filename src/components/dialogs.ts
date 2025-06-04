@@ -2,7 +2,6 @@ import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 export const dialogs = () => {
-  console.log('Running locally');
   const attr = 'data-dialog';
   const components = queryElements<HTMLDivElement>(`[${attr}="component"]`);
 
