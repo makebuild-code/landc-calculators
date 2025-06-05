@@ -1,14 +1,21 @@
-import type { APIResponse, Input } from 'src/types';
-import type { Inputs as BestBuyInputs, Outputs as BestBuyOutputs, PropertyType, SortColumn } from '../bestbuys/types';
 import type { CostOfDoingNothingRequest } from 'src/calculators/calculators';
 import { API_ENDPOINTS } from 'src/constants';
+import type { APIResponse, Input } from 'src/types';
 import { checkInputValidity } from 'src/utils/checkInputValidity';
 import { formatInput } from 'src/utils/formatInput';
 import { getInputValue } from 'src/utils/getInputValue';
-import { isStaging } from 'src/utils/isStaging';
-import { setError } from 'src/utils/setError';
 import { queryElement } from 'src/utils/queryElement';
 import { queryElements } from 'src/utils/queryelements';
+import { setError } from 'src/utils/setError';
+
+import { isStaging } from '$utils/getEnvironment';
+
+import type {
+  Inputs as BestBuyInputs,
+  Outputs as BestBuyOutputs,
+  PropertyType,
+  SortColumn,
+} from '../bestbuys/types';
 import { HandleCODNOutputs } from './handleCODNOutputs';
 
 export class CostOfDoingNothingCalculator {
@@ -25,13 +32,15 @@ export class CostOfDoingNothingCalculator {
   private formattedCostOfDoingNothingValues: CostOfDoingNothingRequest;
   private outputHandler: HandleCODNOutputs;
 
-
   constructor(component: HTMLDivElement) {
     this.component = component;
     this.inputs = queryElements(`[data-input], input, select`, component);
     this.buttons = queryElements(`[data-calc-el="button"]`, component);
     this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component) as HTMLDivElement;
-    this.buttonsLoader = queryElement(`[data-calc-el="button-loader"]`, component) as HTMLDivElement;
+    this.buttonsLoader = queryElement(
+      `[data-calc-el="button-loader"]`,
+      component
+    ) as HTMLDivElement;
     this.currentLenderDropdown = queryElement(`#CurrentLender`, component) as HTMLSelectElement;
     this.mortgageTypeDropdown = queryElement(`#MortgageType`, component) as HTMLSelectElement;
     this.followOnField = queryElement(`#FollowOn`, component) as HTMLInputElement;
@@ -50,7 +59,7 @@ export class CostOfDoingNothingCalculator {
       });
     });
 
-        this.buttons.forEach((button) => {
+    this.buttons.forEach((button) => {
       button.addEventListener('click', async () => {
         const valid = this.validateInputs();
         if (!valid) return;
@@ -126,8 +135,14 @@ export class CostOfDoingNothingCalculator {
 
   //TODO: Make sure all defaults are correct here
   private getBestBuyInput(): BestBuyInputs {
-    const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component) as HTMLInputElement;
-    const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component) as HTMLInputElement;
+    const propertyValueInput = queryElement(
+      `[data-input="PropertyValue"]`,
+      this.component
+    ) as HTMLInputElement;
+    const loanAmountInput = queryElement(
+      `[data-input="LoanAmount"]`,
+      this.component
+    ) as HTMLInputElement;
     const typeInput = queryElement(`[data-input="Type"]`, this.component) as HTMLSelectElement;
     const termYearsInput = queryElement(`[data-input="Term"]`, this.component) as HTMLInputElement;
 
@@ -141,12 +156,12 @@ export class CostOfDoingNothingCalculator {
       PropertyValue: propertyValue,
       RepaymentValue: type === 'R' ? loanAmount : '0',
       InterestOnlyValue: type === 'I' ? loanAmount : '0',
-      PropertyType: "1" as PropertyType,
+      PropertyType: '1' as PropertyType,
       MortgageType: mortgageType,
       TermYears: termYears,
       SchemePurpose: '2',
-      SchemePeriods: ["1"],
-      SchemeTypes: ["1"],
+      SchemePeriods: ['1'],
+      SchemeTypes: ['1'],
       NumberOfResults: '1',
       Features: {
         Erc: true,
@@ -162,12 +177,23 @@ export class CostOfDoingNothingCalculator {
     return formattedValues;
   }
 
-  private async getCostOfDoingNothingInput(bestBuyResult: BestBuyOutputs): Promise<CostOfDoingNothingRequest> {
-    const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component) as HTMLInputElement;
-    const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component) as HTMLInputElement;
+  private async getCostOfDoingNothingInput(
+    bestBuyResult: BestBuyOutputs
+  ): Promise<CostOfDoingNothingRequest> {
+    const propertyValueInput = queryElement(
+      `[data-input="PropertyValue"]`,
+      this.component
+    ) as HTMLInputElement;
+    const loanAmountInput = queryElement(
+      `[data-input="LoanAmount"]`,
+      this.component
+    ) as HTMLInputElement;
     const typeInput = queryElement(`[data-input="Type"]`, this.component) as HTMLSelectElement;
     const termYearsInput = queryElement(`[data-input="Term"]`, this.component) as HTMLInputElement;
-    const followOnInput = queryElement(`[data-input="FollowOn"]`, this.component) as HTMLInputElement;
+    const followOnInput = queryElement(
+      `[data-input="FollowOn"]`,
+      this.component
+    ) as HTMLInputElement;
 
     const propertyValue = propertyValueInput ? parseInt(propertyValueInput.value) : 0;
     const loanAmount = loanAmountInput ? parseInt(loanAmountInput.value) : 0;
@@ -202,7 +228,7 @@ export class CostOfDoingNothingCalculator {
             ERCTerm: 0, // min: 0, max: 300, step: 1, value: 0
             ERCAdd: true,
             FollowOn: bestBuyResult.FollowOnRateValue, // min: 0.1, max: 15, step: 0.05, value: 5.6 | 7
-          }
+          },
         ],
         ComparisonTerm: 12, // min: 2, max: 60, step: 12, value: 24
         InterestRateEnvironment: 1,
@@ -232,12 +258,10 @@ export class CostOfDoingNothingCalculator {
       }
 
       const result = await response.json();
-      console.log("CODN Result: ", result);
+      console.log('CODN Result: ', result);
       this.outputHandler.displayResults(result);
-    
     } catch (error) {
       console.error('Error retrieving calculation', error);
-
     }
   }
 
@@ -283,7 +307,7 @@ export class CostOfDoingNothingCalculator {
       }
 
       const result = await response.json();
-      console.log("Best buy result is: ", result.result.data[0]);
+      console.log('Best buy result is: ', result.result.data[0]);
       return result.result.data[0] as BestBuyOutputs;
     } catch (error) {
       console.error('Error retrieving Best Buy data', error);
@@ -294,7 +318,7 @@ export class CostOfDoingNothingCalculator {
   private populateCurrentLenderDropdown(lenders: any[]): void {
     this.currentLenderDropdown.innerHTML = ''; // Clear existing options
 
-    lenders.forEach(lender => {
+    lenders.forEach((lender) => {
       const option = document.createElement('option');
       option.value = lender.MasterLenderId; // Assuming 'MasterLenderId' is the identifier for the lender
       option.text = lender.Lender; // Assuming 'Lender' is the name of the lender

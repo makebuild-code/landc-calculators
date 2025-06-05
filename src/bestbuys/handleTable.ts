@@ -6,7 +6,7 @@ import type { APIResponse, Input } from 'src/types';
 import { checkInputValidity } from '$utils/checkInputValidity';
 import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
-import { isStaging } from '$utils/isStaging';
+import { isStaging } from '$utils/getEnvironment';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';

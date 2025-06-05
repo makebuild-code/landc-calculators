@@ -1,6 +1,6 @@
 export const numberToCurrency = (number: number): string => {
   interface Options {
-    style: string;
+    style: 'currency';
     currency: string;
     minimumFractionDigits: number;
     maximumFractionDigits: number;

@@ -1,7 +1,7 @@
 import type { APIResponse, BasicObject, Result } from 'src/types';
 
 import { handleEnterInInputs } from '$utils/handleEnterInInputs';
-import { isStaging } from '$utils/isStaging';
+import { isStaging } from '$utils/getEnvironment';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
@@ -55,11 +55,8 @@ export class HandleCalculator {
   }
 
   private bindEvents(): void {
-    
     this.inputs.all.forEach((input) => {
-
       handleEnterInInputs(input, () => {
-        
         this.submit();
       });
     });
@@ -70,7 +67,6 @@ export class HandleCalculator {
   }
 
   submit(): void {
-
     this.toggleLoading();
     const isValid = this.inputs.validateInputs();
     const allPresent = this.inputs.check();
@@ -109,14 +105,14 @@ export class HandleCalculator {
       this.result = result.result;
 
       // --- MORT v2 -- Check if `data-results` is set in `calculator.component` - New Mortgage Calc
-      const resultsId = this.component.getAttribute("data-results");
-      const calcName = this.component.getAttribute("data-calc");
+      const resultsId = this.component.getAttribute('data-results');
+      const calcName = this.component.getAttribute('data-calc');
 
-      
-
-      if (resultsId && calcName==='residentialborrowinglimit') {
+      if (resultsId && calcName === 'residentialborrowinglimit') {
         // Find the calculator with `data-calc="mortgagecost"` and trigger calculation
-        const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]') as HTMLDivElement;
+        const mortgageCalcComponent = document.querySelector(
+          '[data-calc="mortgagecost"]'
+        ) as HTMLDivElement;
         if (mortgageCalcComponent) {
           const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
           mortgageCalc.submit();
@@ -124,59 +120,54 @@ export class HandleCalculator {
           // To return single product
           const mortInputs = mortgageCalc.inputs.getValues();
           const calcInputs = this.inputs.getValues();
-          
 
-          const DepositAmount = parseFloat(calcInputs['DepositAmount'] as string || '0');
-          const RepaymentValue = parseFloat(mortInputs['RepaymentValue'] as string || '0');
+          const DepositAmount = parseFloat((calcInputs['DepositAmount'] as string) || '0');
+          const RepaymentValue = parseFloat((mortInputs['RepaymentValue'] as string) || '0');
           const PropertyValue = RepaymentValue + DepositAmount;
 
-          syncSlider('DepositAmountSlider',  DepositAmount);
-          syncSlider('RepaymentValue', RepaymentValue );
+          syncSlider('DepositAmountSlider', DepositAmount);
+          syncSlider('RepaymentValue', RepaymentValue);
           // Get Product Update
 
-           const prodresult = await this.makeAzureRequestProduct({
-             PropertyValue,
-             RepaymentValue,
-             TermYears: parseFloat(mortInputs['TermYears'] as string || '0'),
-             PropertyType: 1,
-             MortgageType: 1
-           });
+          const prodresult = await this.makeAzureRequestProduct({
+            PropertyValue,
+            RepaymentValue,
+            TermYears: parseFloat((mortInputs['TermYears'] as string) || '0'),
+            PropertyType: 1,
+            MortgageType: 1,
+          });
 
-           if (prodresult) {
-             this.populateProductCard(prodresult.result);
+          if (prodresult) {
+            this.populateProductCard(prodresult.result);
 
-             const mortPickTitle = document.querySelector('#mortPickTitle');
-             const mortPickArea = document.querySelector('#mortPickArea');
-             if(prodresult.result.success){
+            const mortPickTitle = document.querySelector('#mortPickTitle');
+            const mortPickArea = document.querySelector('#mortPickArea');
+            if (prodresult.result.success) {
               if (mortPickTitle && mortPickArea) {
                 (mortPickTitle as HTMLElement).style.display = 'flex';
                 (mortPickArea as HTMLElement).style.display = 'flex';
-            }
-            }else{
+              }
+            } else {
               if (mortPickTitle && mortPickArea) {
                 (mortPickTitle as HTMLElement).style.display = 'none';
                 (mortPickArea as HTMLElement).style.display = 'none';
+              }
             }
-            }
-           }
-
+          }
         }
       }
 
-      
       if (this.result === null) {
         this.toggleLoading(false);
       } else {
         this.toggleLoading(true);
         this.outputs.displayResults(this.result);
       }
-      if(resultsId && calcName==='residentialborrowinglimit'){
-        if(this.result){
+      if (resultsId && calcName === 'residentialborrowinglimit') {
+        if (this.result) {
           this.scrollToDiv(resultsId);
         }
       }
-
-      
     } catch (error) {
       console.error('Error retrieving calculation', error);
       this.toggleLoading(false);
@@ -189,45 +180,42 @@ export class HandleCalculator {
   }
 
   private scrollToDiv(id: string): void {
-    
-      const targetElement = document.querySelector('#'+id);
-    
-      if (targetElement) {
-       
-        targetElement.scrollIntoView({
-          behavior: 'smooth', // Smooth scroll
-          block: 'start', // Align to the top of the viewport
-        });
-      } 
+    const targetElement = document.querySelector('#' + id);
 
+    if (targetElement) {
+      targetElement.scrollIntoView({
+        behavior: 'smooth', // Smooth scroll
+        block: 'start', // Align to the top of the viewport
+      });
+    }
   }
 
   private populateProductCard(results: Result): void {
     if (!results.data || !Array.isArray(results.data)) return;
-    
+
     document.querySelectorAll('[data-calc-output]').forEach((output) => {
-        const key = output.getAttribute('data-calc-output');
-        if (!key || !(key in results.data[0])) return;
+      const key = output.getAttribute('data-calc-output');
+      if (!key || !(key in results.data[0])) return;
 
-        const value = results.data[0][key];
-        const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+      const value = results.data[0][key];
+      const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
 
-        if (output instanceof HTMLImageElement) {
-            output.src = stringValue;
-            output.alt = key;
-        } else {
-            output.textContent = stringValue;
-        }
+      if (output instanceof HTMLImageElement) {
+        output.src = stringValue;
+        output.alt = key;
+      } else {
+        output.textContent = stringValue;
+      }
     });
   }
 
-  private calculateMonthlyPayment(borrowAmount: number, termYears: any, annualRate:any) {
+  private calculateMonthlyPayment(borrowAmount: number, termYears: any, annualRate: any) {
     const n = termYears * 12; // Total number of monthly payments
     const r = annualRate / 100 / 12; // Convert annual rate to monthly rate
 
     if (r === 0) {
-        // If interest rate is 0, simple division
-        return borrowAmount / n;
+      // If interest rate is 0, simple division
+      return borrowAmount / n;
     }
 
     return (borrowAmount * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
@@ -236,7 +224,6 @@ export class HandleCalculator {
   private async makeAzureRequest(): Promise<APIResponse> {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
-  
 
     // New Mortgage Calcu
     const values = this.inputs.getValues(); // Get input values
@@ -245,9 +232,10 @@ export class HandleCalculator {
     const borrowValue = values['RepaymentValue'];
     const borrowAmount = parseFloat(typeof borrowValue === 'string' ? borrowValue : '0');
     const depositSliderValue = values['DepositAmountSlider'];
-    const depositSliderAmount = parseFloat(typeof depositSliderValue === 'string' ? depositSliderValue : '0');
+    const depositSliderAmount = parseFloat(
+      typeof depositSliderValue === 'string' ? depositSliderValue : '0'
+    );
 
-  
     const body = JSON.stringify({ calculator: this.name, input: values });
 
     const response = await fetch(API_ENDPOINT, {
@@ -255,20 +243,21 @@ export class HandleCalculator {
       headers,
       body,
     });
-  
+
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`);
     }
-  
+
     const result = await response.json();
     let monthlyRepayment;
-  
+
     // Adjust Result to add Calulations not brought back from API for New Mortgage Calc
     if (depositAmount > 0 && result) {
       if (result.result.BorrowingAmountLower) {
         //monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, 25, 4.65)
         result.result.DepositAmount = depositAmount;
-        result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+        result.result.PropertyValue =
+          parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
         result.result.RepaymentValue = parseFloat(result.result.BorrowingAmountHigher);
         result.result.TermYears = 25;
         //result.result.FutureMonthlyPayment = monthlyRepayment
@@ -276,15 +265,20 @@ export class HandleCalculator {
     }
 
     if (result.result.TotalOverTerm) {
-      monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values['TermYears'], values['Rate'])
+      monthlyRepayment = this.calculateMonthlyPayment(
+        borrowAmount,
+        values['TermYears'],
+        values['Rate']
+      );
 
-      result.result.TotalOverTerm =  Math.round(result.result.TotalOverTerm);
+      result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
       result.result.DepositAmount = depositSliderAmount;
       result.result.PropertyValue = borrowAmount + depositSliderAmount;
       result.result.RepaymentValue = borrowAmount;
       result.result.TermYears = values['TermYears'];
-      result.result.FutureMonthlyPayment = monthlyRepayment ?  Math.round(monthlyRepayment) :  Math.round(result.result.FutureMonthlyPayment) ;
-
+      result.result.FutureMonthlyPayment = monthlyRepayment
+        ? Math.round(monthlyRepayment)
+        : Math.round(result.result.FutureMonthlyPayment);
     }
 
     return result;
@@ -307,8 +301,7 @@ export class HandleCalculator {
   }): Promise<APIResponse> {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
-  
-    
+
     // Construct request body using function parameters
     const body = JSON.stringify({
       input: {
@@ -331,36 +324,33 @@ export class HandleCalculator {
         UseStaticApr: false, // Whether to use a static APR
       },
     });
-  
+
     const response = await fetch(API_ENDPOINT_PRODUCT, {
       method: 'POST',
       headers,
       body,
     });
-  
+
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`);
     }
-  
+
     const result = await response.json();
-  
+
     if (result.result.data[0].FutureMonthlyPayment) {
-      result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+      result.result.data[0].FutureMonthlyPayment = Math.round(
+        result.result.data[0].FutureMonthlyPayment
+      );
       result.result.data[0].InitialRate = result.result.data[0].Rate;
       result.result.data[0].TermYears = result.result.data[0].TermYears;
     }
 
     const rateSlider = document.querySelector('[data-input="Rate"]') as HTMLInputElement | null;
-    if(rateSlider){
-      rateSlider.setAttribute('value', result.result.data[0].Rate)
-      rateSlider.setAttribute('placeholder', result.result.data[0].Rate)
+    if (rateSlider) {
+      rateSlider.setAttribute('value', result.result.data[0].Rate);
+      rateSlider.setAttribute('placeholder', result.result.data[0].Rate);
     }
-
 
     return result;
   }
-  
-  
 }
-
-

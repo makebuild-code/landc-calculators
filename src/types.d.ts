@@ -1,4 +1,7 @@
-export type Input = HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement | HTMLC;export type Input = (HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement) & {
+export type Environment = 'local' | 'dev' | 'test' | 'master';
+
+export type Input = HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement | HTMLC;
+export type Input = (HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement) & {
   class?: string;
 };
 export type BasicObject = {

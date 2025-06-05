@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse } from 'src/types';
 
-import { isStaging } from '$utils/isStaging';
+import { isStaging } from '$utils/getEnvironment';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';

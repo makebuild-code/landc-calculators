@@ -2,7 +2,7 @@ import { checkInputValidity } from '$utils/checkInputValidity';
 import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
-import { isStaging } from '$utils/isStaging';
+import { isStaging } from '$utils/getEnvironment';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 import { setError } from '$utils/setError';
@@ -96,29 +96,29 @@ export class HandleInputs {
   check(): boolean {
     const tableData: { input: string; present: boolean }[] = [];
     let allPresent = true;
-  
+
     this.config.names.forEach((name) => {
       const input = this.all.find((input) => input.dataset.input === name);
-  
+
       const isOptionalAndMissing = name === 'DepositAmount' && !input;
-  
+
       tableData.push({
         input: name,
         present: !!input || isOptionalAndMissing,
       });
-  
+
       if (!input && name !== 'DepositAmount') {
         allPresent = false;
       }
     });
-  
+
     console.table(tableData);
     return allPresent;
   }
 
   validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
-   
+
     if (!validity.error) {
       setError(input);
     } else {
@@ -132,7 +132,6 @@ export class HandleInputs {
     let inputFocused = false,
       isValid = true;
     this.inputs.forEach((input) => {
-    
       const inputValid = this.validateInput(input);
       if (!inputValid) {
         isValid = false;
@@ -244,19 +243,17 @@ export class HandleInputs {
     // validate inputs on value change
     this.all.forEach((input) => {
       //const eventType = input.class === 'inputslider_input' ? 'mouseup' : 'change';
-      
+
       input.addEventListener('input', () => {
         formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
         // New Mortgage calc out update on change
-       
+
         if (this.calculator.name === 'mortgagecost') {
           //alert(input.name)
           //this.calculator.submit();
         }
-
-  
       });
     });
   }

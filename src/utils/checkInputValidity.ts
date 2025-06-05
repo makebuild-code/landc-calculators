@@ -26,7 +26,9 @@ export function checkInputValidity(input: Input): { isValid: boolean; error: str
         isValid = minValid && maxValid;
         if (isValid) break;
 
-        error = !minValid ? `Input needs to be ${min} or higher` : `Input needs to be ${max} or less`;
+        error = !minValid
+          ? `Input needs to be ${min} or higher`
+          : `Input needs to be ${max} or less`;
         break;
       default:
         isValid = input.checkValidity();

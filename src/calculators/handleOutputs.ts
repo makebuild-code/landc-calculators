@@ -2,7 +2,7 @@ import Chart from 'chart.js/auto';
 import type { BasicObject, Result } from 'src/types';
 
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
-import { isStaging } from '$utils/isStaging';
+import { isStaging } from '$utils/getEnvironment';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -36,9 +36,9 @@ export class HandleOutputs {
 
   constructor(calculator: HandleCalculator) {
     this.calculator = calculator;
-    this.resultsId = calculator.component.getAttribute("data-results");
+    this.resultsId = calculator.component.getAttribute('data-results');
     this.config = calculator.config.outputs;
-    
+
     this.all = this.resultsId
       ? queryElements(`#${this.resultsId} [${attr}-output]`, document)
       : queryElements(`[${attr}-output]`, calculator.component);
@@ -50,19 +50,18 @@ export class HandleOutputs {
     );
     this.outputs = this.all.filter((output) => !this.repeatOutputs.includes(output));
     this.repeatClones = {};
-   
+
     this.chart = queryElement(`[${attr}-el="chart"]`, calculator.component);
-    
+
     // Find the matching results container or fall back to default
     this.results = this.resultsId
-      ? queryElement(`#${this.resultsId}`, document) as HTMLDivElement
-      : queryElement(`[${attr}-el="results"]`, calculator.component) as HTMLDivElement;
+      ? (queryElement(`#${this.resultsId}`, document) as HTMLDivElement)
+      : (queryElement(`[${attr}-el="results"]`, calculator.component) as HTMLDivElement);
 
     this.conditionals = this.resultsId
       ? queryElements(`#${this.resultsId}`, document)
       : queryElements('.calculator_results-wrapper [data-condition]', calculator.component);
   }
-  
 
   check(): boolean {
     const tableData: { output: string; present: boolean }[] = [];
@@ -110,12 +109,11 @@ export class HandleOutputs {
     this.populateChart();
     this.handleConditionals();
 
-    if(!this.resultsId){
+    if (!this.resultsId) {
       this.results.style.display = 'block';
-    }else{
+    } else {
       this.results.style.display = 'grid';
     }
-
   }
 
   private handleTemplateRepeats(template: HTMLDivElement, fragment: DocumentFragment): void {
@@ -157,14 +155,11 @@ export class HandleOutputs {
 
   private populateOutput(output: HTMLElement, value: string | number) {
     if (typeof value === 'number') {
-      
-
       const { calcOutputMod } = output.dataset;
       if (calcOutputMod) value = Number(calcOutputMod) * value;
       output.textContent = numberToCurrency(value);
     } else {
       output.textContent = value;
-      
     }
   }
 
@@ -175,27 +170,24 @@ export class HandleOutputs {
     }
 
     outputs.forEach((output) => {
-      
       const key = output.dataset.calcOutput;
       if (!key) return;
       const value = data[key];
 
       if (value === 0 || data[key]) {
-        
-          // If the element is an input, update value and placeholder
-          if (output instanceof HTMLInputElement) {
-              
-              output.value = String(value);
-              output.placeholder = String(value);
-          }
-          // If the element is an image and type = url, update src
-          else if (output.tagName === 'IMG' && output.dataset.calcOutputType === 'url') {
-              (output as HTMLImageElement).src = String(value);
-          }
-          // Otherwise, update the text content
-          else {
-              this.populateOutput(output, value);
-          }
+        // If the element is an input, update value and placeholder
+        if (output instanceof HTMLInputElement) {
+          output.value = String(value);
+          output.placeholder = String(value);
+        }
+        // If the element is an image and type = url, update src
+        else if (output.tagName === 'IMG' && output.dataset.calcOutputType === 'url') {
+          (output as HTMLImageElement).src = String(value);
+        }
+        // Otherwise, update the text content
+        else {
+          this.populateOutput(output, value);
+        }
       }
     });
   }
