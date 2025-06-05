@@ -94,8 +94,6 @@ In order to serve the latest release to `www.landc.co.uk`, update the version ca
 | Testing           | `testing`     | `https://cdn.jsdelivr.net/gh/makebuild-code/landc-calculators@testing/dist/index.js`     |
 | Production        | `master`      | `https://cdn.jsdelivr.net/gh/makebuild-code/landc-calculators@vX.Y.Z/dist/index.js`      |
 
----
-
 ## 🔁 Cache Busting & CDN Notes
 
 jsDelivr caches assets aggressively. For `development` or `testing` environments:
@@ -108,8 +106,6 @@ jsDelivr caches assets aggressively. For `development` or `testing` environments
 
 - You can manually purge the CDN (if needed):
   `curl -X GET "https://purge.jsdelivr.net/gh/makebuild-code/landc-calculators@development/dist/index.js"`
-
----
 
 ## 📄 License
 
