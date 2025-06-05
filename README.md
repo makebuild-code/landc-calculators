@@ -1,17 +1,6 @@
-# Finsweet Developer Starter
+# LandC API component code
 
-A starter template for both Client & Power projects.
-
-Before starting to work with this template, please take some time to read through the documentation.
-
-## UPDATE - Build to staging or production to /dist
-```bash
-BUILD_ENV=staging node bin/build.js  
-```
-
-```bash
-BUILD_ENV=production node bin/build.js  
-```
+Build upon the Finsweet Developer Starter Kit, this repo powers the logic used on the site to configure and populate all API driven components.
 
 ## Reference
 
@@ -28,7 +17,6 @@ BUILD_ENV=production node bin/build.js
 - [CI/CD](#cicd)
   - [Continuous Integration](#continuous-integration)
   - [Continuous Deployment](#continuous-deployment)
-  - [How to automatically deploy updates to npm](#how-to-automatically-deploy-updates-to-npm)
 
 ## Included tools
 
@@ -177,11 +165,38 @@ This will prevent the tests from running when you open a Pull Request.
 
 In general, your development workflow should look like this:
 
-1. Create a new branch where to develop a new feature or bug fix.
-2. Once you've finished the implementation, [create a Changeset](#continuous-deployment) (or multiple) explaining the changes that you've made in the codebase.
-3. Open a Pull Request and wait until the [CI workflows](#continuous-integration) finish. If something fails, please try to fix it before merging the PR.
+1. To build a new feature, create a new branch from the `Development` branch.
+```Bash
+git checkout development          # Switch to development branch
+git pull origin development       # Make sure it's up to date
+git checkout -b feature/your-feature-name  # Create new branch
+```
+Or for a bug fix
+```Bash
+git checkout -b bugfix/describe-the-bug
+```
+2. Do your development. Add, commit, and push regularly:
+```Bash
+git add .
+git commit -m "Describe what you did"
+git push origin feature/your-feature-name
+```
+3. Merge your feature/bugfix into `Development`:
+```Bash
+git checkout development
+git pull origin development
+git merge feature/your-feature-name
+git push origin development
+```
+
+
+
+
+
+3. Once you've finished the implementation, [create a Changeset](#continuous-deployment) (or multiple) explaining the changes that you've made in the codebase.
+4. Open a Pull Request and wait until the [CI workflows](#continuous-integration) finish. If something fails, please try to fix it before merging the PR.
    If you don't want to wait for the CI workflows to run on GitHub to know if something fails, it will be always faster to run them in your machine before opening a PR.
-4. Merge the Pull Request. The Changesets bot will automatically open a new PR with updates to the `CHANGELOG.md`, you should also merge that one. If you have [automatic npm deployments](#how-to-automatically-deploy-updates-to-npm) enabled, Changesets will also publish this new version on npm.
+5. Merge the Pull Request. The Changesets bot will automatically open a new PR with updates to the `CHANGELOG.md`, you should also merge that one. If you have [automatic npm deployments](#how-to-automatically-deploy-updates-to-npm) enabled, Changesets will also publish this new version on npm.
 
 If you need to work on several features before publishing a new version on npm, it is a good practise to create a `development` branch where to merge all the PR's before pushing your code to master.
 
@@ -245,16 +260,3 @@ To enable full compatibility with Changesets, go to the repository settings (`Se
 - ✅ Allow GitHub Actions to create and approve pull requests.
 
 Enabling this setting for your organization account (`Account Settings > Actions > General`) could help streamline the process. By doing so, any new repos created under the org will automatically inherit the setting, which can save your teammates time and effort. This can only be applied to organization accounts at the time.
-
-#### How to automatically deploy updates to npm
-
-As mentioned before, Changesets will automatically deploy the new package version to npm if an `NPM_TOKEN` secret is provided.
-
-This npm token should be:
-
-- From Finsweet's npm organization if this repository is meant for internal/product development.
-- From a client's npm organization if this repository is meant for client development. In this case, you should ask the client to [create an npm account](https://www.npmjs.com/signup) and provide you the credentials (or the npm token, if they know how to get it).
-
-Once you're logged into the npm account, you can get an access token by following [this guide](https://docs.npmjs.com/creating-and-viewing-access-tokens).
-
-The access token must be then placed in a [repository secret](https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-encrypted-secrets-for-your-repository-and-organization-for-codespaces#adding-secrets-for-a-repository) named `NPM_TOKEN`.
