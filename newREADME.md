@@ -114,7 +114,3 @@ jsDelivr caches assets aggressively. For `development` or `testing` environments
 ## 📄 License
 
 This project is proprietary and maintained by the LandC development team. Not for public use.
-
-```
-
-```
