@@ -1,15 +1,15 @@
-import type { APIResponse, BasicObject, Result } from 'src/types';
+import { API_ENDPOINTS } from 'src/constants';
+import type { APIResponse, Result } from 'src/types';
 
 import { handleEnterInInputs } from '$utils/handleEnterInInputs';
-import { isStaging } from '$utils/getEnvironment';
+import { isStaging } from '$utils/isStaging';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
+import { syncSlider } from '$utils/syncSlider';
 
 import { type CalculatorConfig, calculatorConfig } from './calculatorConfig';
 import { HandleInputs } from './handleInputs';
 import { HandleOutputs } from './handleOutputs';
-import { API_ENDPOINTS } from 'src/constants';
-import { syncSlider } from '$utils/syncSlider';
 
 const attr = 'data-calc';
 const API_ENDPOINT = API_ENDPOINTS.calculatorTrigger;

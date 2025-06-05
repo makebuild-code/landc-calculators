@@ -2,7 +2,7 @@ import Chart from 'chart.js/auto';
 import type { BasicObject, Result } from 'src/types';
 
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
-import { isStaging } from '$utils/getEnvironment';
+import { isStaging } from '$utils/isStaging';
 import { numberToCurrency } from '$utils/numberToCurrency';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';

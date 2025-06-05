@@ -1,42 +1,41 @@
 import * as esbuild from 'esbuild';
-import dotenv from 'dotenv';
 import { readdirSync } from 'fs';
 import { join, sep } from 'path';
 
-// Load environment variables based on BUILD_ENV
-const envFile = `.env.${process.env.BUILD_ENV || 'local'}`;
-dotenv.config({ path: envFile });
+// Config output
+const BUILD_DIRECTORY = 'dist';
+const PRODUCTION = process.env.NODE_ENV === 'production';
 
-if (!process.env.API_ENDPOINTS) {
-  console.error('❌ API_ENDPOINTS is not defined. Check your .env files.');
-  process.exit(1);
-}
+// Config entrypoint files
+const ENTRY_POINTS = ['src/index.ts'];
 
-const BUILD_DIRECTORY = `dist/${process.env.BUILD_ENV || 'local'}`;
-const IS_PRODUCTION = process.env.BUILD_ENV === 'production';
-const IS_STAGING = process.env.BUILD_ENV === 'staging';
-const LIVE_RELOAD = !(IS_PRODUCTION || IS_STAGING); // only run dev server in local/dev
+// Config dev serving
+const LIVE_RELOAD = !PRODUCTION;
 const SERVE_PORT = 3000;
-const SERVE_ORIGIN = LIVE_RELOAD ? `http://localhost:${SERVE_PORT}` : '';
+const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
-// Define environment variables for esbuild
-const defineEnv = {
-  'process.env.API_ENDPOINTS': JSON.stringify(process.env.API_ENDPOINTS),
-  ...(LIVE_RELOAD && { SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN) }),
-};
-
-// Setup esbuild
+// Create context
 const context = await esbuild.context({
-  entryPoints: ['src/index.ts'],
-  outdir: BUILD_DIRECTORY,
   bundle: true,
-  sourcemap: LIVE_RELOAD,
-  target: LIVE_RELOAD ? 'esnext' : 'es2020',
+  entryPoints: ENTRY_POINTS,
+  outdir: BUILD_DIRECTORY,
+  minify: PRODUCTION,
+  sourcemap: !PRODUCTION,
+  target: PRODUCTION ? 'es2020' : 'esnext',
   inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
-  define: defineEnv,
+  define: {
+    SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
+  },
 });
 
-if (LIVE_RELOAD) {
+// Build files in prod
+if (PRODUCTION) {
+  await context.rebuild();
+  context.dispose();
+}
+
+// Watch and serve files in dev
+else {
   await context.watch();
   await context
     .serve({
@@ -44,21 +43,24 @@ if (LIVE_RELOAD) {
       port: SERVE_PORT,
     })
     .then(logServedFiles);
-} else {
-  await context.rebuild();
-  context.dispose();
 }
 
 /**
  * Logs information about the files that are being served during local development.
  */
 function logServedFiles() {
+  /**
+   * Recursively gets all files in a directory.
+   * @param {string} dirPath
+   * @returns {string[]} An array of file paths.
+   */
   const getFiles = (dirPath) => {
-    return readdirSync(dirPath, { withFileTypes: true })
-      .flatMap((dirent) => {
-        const path = join(dirPath, dirent.name);
-        return dirent.isDirectory() ? getFiles(path) : path;
-      });
+    const files = readdirSync(dirPath, { withFileTypes: true }).map((dirent) => {
+      const path = join(dirPath, dirent.name);
+      return dirent.isDirectory() ? getFiles(path) : path;
+    });
+
+    return files.flat();
   };
 
   const files = getFiles(BUILD_DIRECTORY);
@@ -67,17 +69,24 @@ function logServedFiles() {
     .map((file) => {
       if (file.endsWith('.map')) return;
 
+      // Normalize path and create file location
       const paths = file.split(sep);
       paths[0] = SERVE_ORIGIN;
 
       const location = paths.join('/');
+
+      // Create import suggestion
       const tag = location.endsWith('.css')
         ? `<link href="${location}" rel="stylesheet" type="text/css"/>`
         : `<script defer src="${location}"></script>`;
 
-      return { 'File Location': location, 'Import Suggestion': tag };
+      return {
+        'File Location': location,
+        'Import Suggestion': tag,
+      };
     })
     .filter(Boolean);
 
+  // eslint-disable-next-line no-console
   console.table(filesInfo);
 }

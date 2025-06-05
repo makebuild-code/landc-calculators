@@ -8,8 +8,6 @@ import { queryElement } from 'src/utils/queryElement';
 import { queryElements } from 'src/utils/queryelements';
 import { setError } from 'src/utils/setError';
 
-import { isStaging } from '$utils/getEnvironment';
-
 import type {
   Inputs as BestBuyInputs,
   Outputs as BestBuyOutputs,

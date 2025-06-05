@@ -2,7 +2,6 @@ import { checkInputValidity } from '$utils/checkInputValidity';
 import { formatInput } from '$utils/formatInput';
 import { getInputValue } from '$utils/getInputValue';
 import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
-import { isStaging } from '$utils/getEnvironment';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 import { setError } from '$utils/setError';

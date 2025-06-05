@@ -1,4 +1,12 @@
-export type Environment = 'local' | 'dev' | 'test' | 'master';
+export interface Endpoints {
+  production: string;
+  test: string;
+}
+
+export interface Environment {
+  host?: string;
+  api: string;
+}
 
 export type Input = HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement | HTMLC;
 export type Input = (HTMLInputElement | HTMLSelectElement | HTMLFieldSetElement) & {

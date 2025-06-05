@@ -1,5 +1,11 @@
-export const HOSTS = {
-  master: 'www.landc.co.uk',
-  test: 'test.landc.co.uk',
-  dev: 'dev.landc.co.uk',
+import { getBaseURLForAPI } from '$utils/getBaseURLForAPI';
+
+// Base URL with have the trailing slash
+const baseURLForAPI = getBaseURLForAPI();
+
+export const API_ENDPOINTS = {
+  productsTrigger: `${baseURLForAPI}productshttptrigger`,
+  calculatorTrigger: `${baseURLForAPI}calculatorhttptrigger`,
+  svrForLenders: `${baseURLForAPI}SVRForLendersTrigger`,
+  costOfDoingNothing: `${baseURLForAPI}CODNTrigger`,
 };
