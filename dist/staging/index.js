@@ -1,7 +1,11 @@
 "use strict";
 (() => {
-  // bin/live-reload.js
-  new EventSource(`${"http://localhost:3000"}/esbuild`).addEventListener("change", () => location.reload());
+  var __defProp = Object.defineProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __publicField = (obj, key, value) => {
+    __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+    return value;
+  };
 
   // src/utils/queryelements.ts
   var queryElements = (query, parent = document) => {
@@ -195,10 +199,15 @@
   function checkInputValidity(input) {
     let isValid = true, error;
     if (input instanceof HTMLInputElement) {
-      const { type } = input;
+      const { type, required, value } = input;
+      if (required && !value.trim()) {
+        isValid = false;
+        error = "This field is required.";
+        return { isValid, error };
+      }
       switch (type) {
         case "number":
-          const { min, max, value } = input;
+          const { min, max } = input;
           let minValid = true;
           if (!!min)
             minValid = Number(value) >= Number(min);
@@ -208,20 +217,16 @@
           isValid = minValid && maxValid;
           if (isValid)
             break;
-          if (!minValid) {
-            error = `Input needs to be ${min} or higher`;
-          } else if (!maxValid) {
-            error = `Input needs to be ${max} or less`;
-          }
+          error = !minValid ? `Input needs to be ${min} or higher` : `Input needs to be ${max} or less`;
           break;
         default:
           isValid = input.checkValidity();
-          error = input.validationMessage;
+          error = isValid ? void 0 : input.validationMessage;
           break;
       }
     } else if (input instanceof HTMLSelectElement) {
       isValid = input.checkValidity();
-      error = input.validationMessage;
+      error = isValid ? void 0 : input.validationMessage;
     }
     return {
       isValid,
@@ -637,10 +642,14 @@
     };
     input.addEventListener("focus", handleFocus, true);
     input.addEventListener("blur", handleBlur, true);
+    input.addEventListener("input", handleInput, true);
     function handleFocus() {
       input.addEventListener("keydown", runOnEnterWrapper);
     }
     function handleBlur() {
+      input.removeEventListener("keydown", runOnEnterWrapper);
+    }
+    function handleInput() {
       input.removeEventListener("keydown", runOnEnterWrapper);
     }
     function runOnEnter(event) {
@@ -1044,18 +1053,16 @@
       let allPresent = true;
       this.config.names.forEach((name) => {
         const input = this.all.find((input2) => input2.dataset.input === name);
+        const isOptionalAndMissing = name === "DepositAmount" && !input;
         tableData.push({
           input: name,
-          present: !!input
+          present: !!input || isOptionalAndMissing
         });
-        if (!input)
+        if (!input && name !== "DepositAmount") {
           allPresent = false;
+        }
       });
-      if (isStaging) {
-        console.groupCollapsed(`${allPresent ? "all inputs present" : "inputs missing"}`);
-        console.table(tableData);
-        console.groupEnd();
-      }
+      console.table(tableData);
       return allPresent;
     }
     validateInput(input) {
@@ -1167,14 +1174,11 @@
     }
     bindEvents() {
       this.all.forEach((input) => {
-        const eventType = input.type === "range" ? "mouseup" : "change";
-        console.log(eventType);
-        input.addEventListener(eventType, () => {
+        input.addEventListener("input", () => {
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
           if (this.calculator.name === "mortgagecost") {
-            this.calculator.submit();
           }
         });
       });
@@ -4658,9 +4662,6 @@
     values: null
   };
   var DatasetController = class {
-    static defaults = {};
-    static datasetElementType = null;
-    static dataElementType = null;
     constructor(chart, datasetIndex) {
       this.chart = chart;
       this._ctx = chart.ctx;
@@ -5251,6 +5252,9 @@
       ]);
     }
   };
+  __publicField(DatasetController, "defaults", {});
+  __publicField(DatasetController, "datasetElementType", null);
+  __publicField(DatasetController, "dataElementType", null);
   function getAllScaleValues(scale, type) {
     if (!scale._cache.$bar) {
       const visibleMetas = scale.getMatchingVisibleMetas(type);
@@ -5452,41 +5456,6 @@
     properties.inflateAmount = inflateAmount === "auto" ? ratio === 1 ? 0.33 : 0 : inflateAmount;
   }
   var BarController = class extends DatasetController {
-    static id = "bar";
-    static defaults = {
-      datasetElementType: false,
-      dataElementType: "bar",
-      categoryPercentage: 0.8,
-      barPercentage: 0.9,
-      grouped: true,
-      animations: {
-        numbers: {
-          type: "number",
-          properties: [
-            "x",
-            "y",
-            "base",
-            "width",
-            "height"
-          ]
-        }
-      }
-    };
-    static overrides = {
-      scales: {
-        _index_: {
-          type: "category",
-          offset: true,
-          grid: {
-            offset: true
-          }
-        },
-        _value_: {
-          type: "linear",
-          beginAtZero: true
-        }
-      }
-    };
     parsePrimitiveData(meta, data, start, count) {
       return parseArrayOrPrimitive(meta, data, start, count);
     }
@@ -5724,33 +5693,42 @@
       }
     }
   };
+  __publicField(BarController, "id", "bar");
+  __publicField(BarController, "defaults", {
+    datasetElementType: false,
+    dataElementType: "bar",
+    categoryPercentage: 0.8,
+    barPercentage: 0.9,
+    grouped: true,
+    animations: {
+      numbers: {
+        type: "number",
+        properties: [
+          "x",
+          "y",
+          "base",
+          "width",
+          "height"
+        ]
+      }
+    }
+  });
+  __publicField(BarController, "overrides", {
+    scales: {
+      _index_: {
+        type: "category",
+        offset: true,
+        grid: {
+          offset: true
+        }
+      },
+      _value_: {
+        type: "linear",
+        beginAtZero: true
+      }
+    }
+  });
   var BubbleController = class extends DatasetController {
-    static id = "bubble";
-    static defaults = {
-      datasetElementType: false,
-      dataElementType: "point",
-      animations: {
-        numbers: {
-          type: "number",
-          properties: [
-            "x",
-            "y",
-            "borderWidth",
-            "radius"
-          ]
-        }
-      }
-    };
-    static overrides = {
-      scales: {
-        x: {
-          type: "linear"
-        },
-        y: {
-          type: "linear"
-        }
-      }
-    };
     initialize() {
       this.enableOptionSharing = true;
       super.initialize();
@@ -5841,6 +5819,32 @@
       return values;
     }
   };
+  __publicField(BubbleController, "id", "bubble");
+  __publicField(BubbleController, "defaults", {
+    datasetElementType: false,
+    dataElementType: "point",
+    animations: {
+      numbers: {
+        type: "number",
+        properties: [
+          "x",
+          "y",
+          "borderWidth",
+          "radius"
+        ]
+      }
+    }
+  });
+  __publicField(BubbleController, "overrides", {
+    scales: {
+      x: {
+        type: "linear"
+      },
+      y: {
+        type: "linear"
+      }
+    }
+  });
   function getRatioAndOffset(rotation, circumference, cutout) {
     let ratioX = 1;
     let ratioY = 1;
@@ -5872,76 +5876,6 @@
     };
   }
   var DoughnutController = class extends DatasetController {
-    static id = "doughnut";
-    static defaults = {
-      datasetElementType: false,
-      dataElementType: "arc",
-      animation: {
-        animateRotate: true,
-        animateScale: false
-      },
-      animations: {
-        numbers: {
-          type: "number",
-          properties: [
-            "circumference",
-            "endAngle",
-            "innerRadius",
-            "outerRadius",
-            "startAngle",
-            "x",
-            "y",
-            "offset",
-            "borderWidth",
-            "spacing"
-          ]
-        }
-      },
-      cutout: "50%",
-      rotation: 0,
-      circumference: 360,
-      radius: "100%",
-      spacing: 0,
-      indexAxis: "r"
-    };
-    static descriptors = {
-      _scriptable: (name) => name !== "spacing",
-      _indexable: (name) => name !== "spacing" && !name.startsWith("borderDash") && !name.startsWith("hoverBorderDash")
-    };
-    static overrides = {
-      aspectRatio: 1,
-      plugins: {
-        legend: {
-          labels: {
-            generateLabels(chart) {
-              const data = chart.data;
-              if (data.labels.length && data.datasets.length) {
-                const { labels: { pointStyle, color: color2 } } = chart.legend.options;
-                return data.labels.map((label, i) => {
-                  const meta = chart.getDatasetMeta(0);
-                  const style = meta.controller.getStyle(i);
-                  return {
-                    text: label,
-                    fillStyle: style.backgroundColor,
-                    strokeStyle: style.borderColor,
-                    fontColor: color2,
-                    lineWidth: style.borderWidth,
-                    pointStyle,
-                    hidden: !chart.getDataVisibility(i),
-                    index: i
-                  };
-                });
-              }
-              return [];
-            }
-          },
-          onClick(e, legendItem, legend) {
-            legend.chart.toggleDataVisibility(legendItem.index);
-            legend.chart.update();
-          }
-        }
-      }
-    };
     constructor(chart, datasetIndex) {
       super(chart, datasetIndex);
       this.enableOptionSharing = true;
@@ -6140,24 +6074,77 @@
       return this._getRingWeightOffset(this.chart.data.datasets.length) || 1;
     }
   };
-  var LineController = class extends DatasetController {
-    static id = "line";
-    static defaults = {
-      datasetElementType: "line",
-      dataElementType: "point",
-      showLine: true,
-      spanGaps: false
-    };
-    static overrides = {
-      scales: {
-        _index_: {
-          type: "category"
+  __publicField(DoughnutController, "id", "doughnut");
+  __publicField(DoughnutController, "defaults", {
+    datasetElementType: false,
+    dataElementType: "arc",
+    animation: {
+      animateRotate: true,
+      animateScale: false
+    },
+    animations: {
+      numbers: {
+        type: "number",
+        properties: [
+          "circumference",
+          "endAngle",
+          "innerRadius",
+          "outerRadius",
+          "startAngle",
+          "x",
+          "y",
+          "offset",
+          "borderWidth",
+          "spacing"
+        ]
+      }
+    },
+    cutout: "50%",
+    rotation: 0,
+    circumference: 360,
+    radius: "100%",
+    spacing: 0,
+    indexAxis: "r"
+  });
+  __publicField(DoughnutController, "descriptors", {
+    _scriptable: (name) => name !== "spacing",
+    _indexable: (name) => name !== "spacing" && !name.startsWith("borderDash") && !name.startsWith("hoverBorderDash")
+  });
+  __publicField(DoughnutController, "overrides", {
+    aspectRatio: 1,
+    plugins: {
+      legend: {
+        labels: {
+          generateLabels(chart) {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              const { labels: { pointStyle, color: color2 } } = chart.legend.options;
+              return data.labels.map((label, i) => {
+                const meta = chart.getDatasetMeta(0);
+                const style = meta.controller.getStyle(i);
+                return {
+                  text: label,
+                  fillStyle: style.backgroundColor,
+                  strokeStyle: style.borderColor,
+                  fontColor: color2,
+                  lineWidth: style.borderWidth,
+                  pointStyle,
+                  hidden: !chart.getDataVisibility(i),
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
         },
-        _value_: {
-          type: "linear"
+        onClick(e, legendItem, legend) {
+          legend.chart.toggleDataVisibility(legendItem.index);
+          legend.chart.update();
         }
       }
-    };
+    }
+  });
+  var LineController = class extends DatasetController {
     initialize() {
       this.enableOptionSharing = true;
       this.supportsDecimation = true;
@@ -6245,80 +6232,24 @@
       super.draw();
     }
   };
-  var PolarAreaController = class extends DatasetController {
-    static id = "polarArea";
-    static defaults = {
-      dataElementType: "arc",
-      animation: {
-        animateRotate: true,
-        animateScale: true
+  __publicField(LineController, "id", "line");
+  __publicField(LineController, "defaults", {
+    datasetElementType: "line",
+    dataElementType: "point",
+    showLine: true,
+    spanGaps: false
+  });
+  __publicField(LineController, "overrides", {
+    scales: {
+      _index_: {
+        type: "category"
       },
-      animations: {
-        numbers: {
-          type: "number",
-          properties: [
-            "x",
-            "y",
-            "startAngle",
-            "endAngle",
-            "innerRadius",
-            "outerRadius"
-          ]
-        }
-      },
-      indexAxis: "r",
-      startAngle: 0
-    };
-    static overrides = {
-      aspectRatio: 1,
-      plugins: {
-        legend: {
-          labels: {
-            generateLabels(chart) {
-              const data = chart.data;
-              if (data.labels.length && data.datasets.length) {
-                const { labels: { pointStyle, color: color2 } } = chart.legend.options;
-                return data.labels.map((label, i) => {
-                  const meta = chart.getDatasetMeta(0);
-                  const style = meta.controller.getStyle(i);
-                  return {
-                    text: label,
-                    fillStyle: style.backgroundColor,
-                    strokeStyle: style.borderColor,
-                    fontColor: color2,
-                    lineWidth: style.borderWidth,
-                    pointStyle,
-                    hidden: !chart.getDataVisibility(i),
-                    index: i
-                  };
-                });
-              }
-              return [];
-            }
-          },
-          onClick(e, legendItem, legend) {
-            legend.chart.toggleDataVisibility(legendItem.index);
-            legend.chart.update();
-          }
-        }
-      },
-      scales: {
-        r: {
-          type: "radialLinear",
-          angleLines: {
-            display: false
-          },
-          beginAtZero: true,
-          grid: {
-            circular: true
-          },
-          pointLabels: {
-            display: false
-          },
-          startAngle: 0
-        }
+      _value_: {
+        type: "linear"
       }
-    };
+    }
+  });
+  var PolarAreaController = class extends DatasetController {
     constructor(chart, datasetIndex) {
       super(chart, datasetIndex);
       this.innerRadius = void 0;
@@ -6427,36 +6358,89 @@
       return this.chart.getDataVisibility(index2) ? toRadians(this.resolveDataElementOptions(index2, mode).angle || defaultAngle) : 0;
     }
   };
+  __publicField(PolarAreaController, "id", "polarArea");
+  __publicField(PolarAreaController, "defaults", {
+    dataElementType: "arc",
+    animation: {
+      animateRotate: true,
+      animateScale: true
+    },
+    animations: {
+      numbers: {
+        type: "number",
+        properties: [
+          "x",
+          "y",
+          "startAngle",
+          "endAngle",
+          "innerRadius",
+          "outerRadius"
+        ]
+      }
+    },
+    indexAxis: "r",
+    startAngle: 0
+  });
+  __publicField(PolarAreaController, "overrides", {
+    aspectRatio: 1,
+    plugins: {
+      legend: {
+        labels: {
+          generateLabels(chart) {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              const { labels: { pointStyle, color: color2 } } = chart.legend.options;
+              return data.labels.map((label, i) => {
+                const meta = chart.getDatasetMeta(0);
+                const style = meta.controller.getStyle(i);
+                return {
+                  text: label,
+                  fillStyle: style.backgroundColor,
+                  strokeStyle: style.borderColor,
+                  fontColor: color2,
+                  lineWidth: style.borderWidth,
+                  pointStyle,
+                  hidden: !chart.getDataVisibility(i),
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
+        },
+        onClick(e, legendItem, legend) {
+          legend.chart.toggleDataVisibility(legendItem.index);
+          legend.chart.update();
+        }
+      }
+    },
+    scales: {
+      r: {
+        type: "radialLinear",
+        angleLines: {
+          display: false
+        },
+        beginAtZero: true,
+        grid: {
+          circular: true
+        },
+        pointLabels: {
+          display: false
+        },
+        startAngle: 0
+      }
+    }
+  });
   var PieController = class extends DoughnutController {
-    static id = "pie";
-    static defaults = {
-      cutout: 0,
-      rotation: 0,
-      circumference: 360,
-      radius: "100%"
-    };
   };
+  __publicField(PieController, "id", "pie");
+  __publicField(PieController, "defaults", {
+    cutout: 0,
+    rotation: 0,
+    circumference: 360,
+    radius: "100%"
+  });
   var RadarController = class extends DatasetController {
-    static id = "radar";
-    static defaults = {
-      datasetElementType: "line",
-      dataElementType: "point",
-      indexAxis: "r",
-      showLine: true,
-      elements: {
-        line: {
-          fill: "start"
-        }
-      }
-    };
-    static overrides = {
-      aspectRatio: 1,
-      scales: {
-        r: {
-          type: "radialLinear"
-        }
-      }
-    };
     getLabelAndValue(index2) {
       const vScale = this._cachedMeta.vScale;
       const parsed = this.getParsed(index2);
@@ -6508,27 +6492,27 @@
       }
     }
   };
-  var ScatterController = class extends DatasetController {
-    static id = "scatter";
-    static defaults = {
-      datasetElementType: false,
-      dataElementType: "point",
-      showLine: false,
-      fill: false
-    };
-    static overrides = {
-      interaction: {
-        mode: "point"
-      },
-      scales: {
-        x: {
-          type: "linear"
-        },
-        y: {
-          type: "linear"
-        }
+  __publicField(RadarController, "id", "radar");
+  __publicField(RadarController, "defaults", {
+    datasetElementType: "line",
+    dataElementType: "point",
+    indexAxis: "r",
+    showLine: true,
+    elements: {
+      line: {
+        fill: "start"
       }
-    };
+    }
+  });
+  __publicField(RadarController, "overrides", {
+    aspectRatio: 1,
+    scales: {
+      r: {
+        type: "radialLinear"
+      }
+    }
+  });
+  var ScatterController = class extends DatasetController {
     getLabelAndValue(index2) {
       const meta = this._cachedMeta;
       const labels = this.chart.data.labels || [];
@@ -6635,6 +6619,26 @@
       return Math.max(border, firstPoint, lastPoint) / 2;
     }
   };
+  __publicField(ScatterController, "id", "scatter");
+  __publicField(ScatterController, "defaults", {
+    datasetElementType: false,
+    dataElementType: "point",
+    showLine: false,
+    fill: false
+  });
+  __publicField(ScatterController, "overrides", {
+    interaction: {
+      mode: "point"
+    },
+    scales: {
+      x: {
+        type: "linear"
+      },
+      y: {
+        type: "linear"
+      }
+    }
+  });
   var controllers = /* @__PURE__ */ Object.freeze({
     __proto__: null,
     BarController,
@@ -6650,6 +6654,10 @@
     throw new Error("This method is not implemented: Check that a complete date adapter is provided.");
   }
   var DateAdapterBase = class _DateAdapterBase {
+    constructor(options) {
+      __publicField(this, "options");
+      this.options = options || {};
+    }
     /**
     * Override default date adapter methods.
     * Accepts type parameter to define options type.
@@ -6662,10 +6670,6 @@
     */
     static override(members) {
       Object.assign(_DateAdapterBase.prototype, members);
-    }
-    options;
-    constructor(options) {
-      this.options = options || {};
     }
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     init() {
@@ -7540,13 +7544,13 @@
     return DomPlatform;
   }
   var Element = class {
-    static defaults = {};
-    static defaultRoutes = void 0;
-    x;
-    y;
-    active = false;
-    options;
-    $animations;
+    constructor() {
+      __publicField(this, "x");
+      __publicField(this, "y");
+      __publicField(this, "active", false);
+      __publicField(this, "options");
+      __publicField(this, "$animations");
+    }
     tooltipPosition(useFinalPosition) {
       const { x, y } = this.getProps([
         "x",
@@ -7572,6 +7576,8 @@
       return ret;
     }
   };
+  __publicField(Element, "defaults", {});
+  __publicField(Element, "defaultRoutes");
   function autoSkip(scale, ticks) {
     const tickOpts = scale.options.ticks;
     const determinedMaxTicks = determineMaxTicks(scale);
@@ -9666,12 +9672,6 @@
     return chartArea;
   }
   var Chart = class {
-    static defaults = defaults;
-    static instances = instances;
-    static overrides = overrides;
-    static registry = registry;
-    static version = version;
-    static getChart = getChart;
     static register(...items) {
       registry.add(...items);
       invalidatePlugins();
@@ -10492,6 +10492,12 @@
       return this.getElementsAtEventForMode(e, hoverOptions.mode, hoverOptions, useFinalPosition);
     }
   };
+  __publicField(Chart, "defaults", defaults);
+  __publicField(Chart, "instances", instances);
+  __publicField(Chart, "overrides", overrides);
+  __publicField(Chart, "registry", registry);
+  __publicField(Chart, "version", version);
+  __publicField(Chart, "getChart", getChart);
   function invalidatePlugins() {
     return each(Chart.instances, (chart) => chart._plugins.invalidate());
   }
@@ -10654,36 +10660,15 @@
     }
   }
   var ArcElement = class extends Element {
-    static id = "arc";
-    static defaults = {
-      borderAlign: "center",
-      borderColor: "#fff",
-      borderDash: [],
-      borderDashOffset: 0,
-      borderJoinStyle: void 0,
-      borderRadius: 0,
-      borderWidth: 2,
-      offset: 0,
-      spacing: 0,
-      angle: void 0,
-      circular: true
-    };
-    static defaultRoutes = {
-      backgroundColor: "backgroundColor"
-    };
-    static descriptors = {
-      _scriptable: true,
-      _indexable: (name) => name !== "borderDash"
-    };
-    circumference;
-    endAngle;
-    fullCircles;
-    innerRadius;
-    outerRadius;
-    pixelMargin;
-    startAngle;
     constructor(cfg) {
       super();
+      __publicField(this, "circumference");
+      __publicField(this, "endAngle");
+      __publicField(this, "fullCircles");
+      __publicField(this, "innerRadius");
+      __publicField(this, "outerRadius");
+      __publicField(this, "pixelMargin");
+      __publicField(this, "startAngle");
       this.options = void 0;
       this.circumference = void 0;
       this.startAngle = void 0;
@@ -10760,6 +10745,27 @@
       ctx.restore();
     }
   };
+  __publicField(ArcElement, "id", "arc");
+  __publicField(ArcElement, "defaults", {
+    borderAlign: "center",
+    borderColor: "#fff",
+    borderDash: [],
+    borderDashOffset: 0,
+    borderJoinStyle: void 0,
+    borderRadius: 0,
+    borderWidth: 2,
+    offset: 0,
+    spacing: 0,
+    angle: void 0,
+    circular: true
+  });
+  __publicField(ArcElement, "defaultRoutes", {
+    backgroundColor: "backgroundColor"
+  });
+  __publicField(ArcElement, "descriptors", {
+    _scriptable: true,
+    _indexable: (name) => name !== "borderDash"
+  });
   function setStyle(ctx, options, style = options) {
     ctx.lineCap = valueOrDefault(style.borderCapStyle, options.borderCapStyle);
     ctx.setLineDash(valueOrDefault(style.borderDash, options.borderDash));
@@ -10913,28 +10919,6 @@
     }
   }
   var LineElement = class extends Element {
-    static id = "line";
-    static defaults = {
-      borderCapStyle: "butt",
-      borderDash: [],
-      borderDashOffset: 0,
-      borderJoinStyle: "miter",
-      borderWidth: 3,
-      capBezierPoints: true,
-      cubicInterpolationMode: "default",
-      fill: false,
-      spanGaps: false,
-      stepped: false,
-      tension: 0
-    };
-    static defaultRoutes = {
-      backgroundColor: "backgroundColor",
-      borderColor: "borderColor"
-    };
-    static descriptors = {
-      _scriptable: true,
-      _indexable: (name) => name !== "borderDash" && name !== "fill"
-    };
     constructor(cfg) {
       super();
       this.animated = true;
@@ -11045,6 +11029,28 @@
       }
     }
   };
+  __publicField(LineElement, "id", "line");
+  __publicField(LineElement, "defaults", {
+    borderCapStyle: "butt",
+    borderDash: [],
+    borderDashOffset: 0,
+    borderJoinStyle: "miter",
+    borderWidth: 3,
+    capBezierPoints: true,
+    cubicInterpolationMode: "default",
+    fill: false,
+    spanGaps: false,
+    stepped: false,
+    tension: 0
+  });
+  __publicField(LineElement, "defaultRoutes", {
+    backgroundColor: "backgroundColor",
+    borderColor: "borderColor"
+  });
+  __publicField(LineElement, "descriptors", {
+    _scriptable: true,
+    _indexable: (name) => name !== "borderDash" && name !== "fill"
+  });
   function inRange$1(el, pos, axis, useFinalPosition) {
     const options = el.options;
     const { [axis]: value } = el.getProps([
@@ -11053,31 +11059,11 @@
     return Math.abs(pos - value) < options.radius + options.hitRadius;
   }
   var PointElement = class extends Element {
-    static id = "point";
-    parsed;
-    skip;
-    stop;
-    /**
-    * @type {any}
-    */
-    static defaults = {
-      borderWidth: 1,
-      hitRadius: 1,
-      hoverBorderWidth: 1,
-      hoverRadius: 4,
-      pointStyle: "circle",
-      radius: 3,
-      rotation: 0
-    };
-    /**
-    * @type {any}
-    */
-    static defaultRoutes = {
-      backgroundColor: "backgroundColor",
-      borderColor: "borderColor"
-    };
     constructor(cfg) {
       super();
+      __publicField(this, "parsed");
+      __publicField(this, "skip");
+      __publicField(this, "stop");
       this.options = void 0;
       this.parsed = void 0;
       this.skip = void 0;
@@ -11132,6 +11118,26 @@
       return options.radius + options.hitRadius;
     }
   };
+  __publicField(PointElement, "id", "point");
+  /**
+  * @type {any}
+  */
+  __publicField(PointElement, "defaults", {
+    borderWidth: 1,
+    hitRadius: 1,
+    hoverBorderWidth: 1,
+    hoverRadius: 4,
+    pointStyle: "circle",
+    radius: 3,
+    rotation: 0
+  });
+  /**
+  * @type {any}
+  */
+  __publicField(PointElement, "defaultRoutes", {
+    backgroundColor: "backgroundColor",
+    borderColor: "borderColor"
+  });
   function getBarBounds(bar, useFinalPosition) {
     const { x, y, base, width, height } = bar.getProps([
       "x",
@@ -11246,18 +11252,6 @@
     };
   }
   var BarElement = class extends Element {
-    static id = "bar";
-    static defaults = {
-      borderSkipped: "start",
-      borderWidth: 0,
-      borderRadius: 0,
-      inflateAmount: "auto",
-      pointStyle: void 0
-    };
-    static defaultRoutes = {
-      backgroundColor: "backgroundColor",
-      borderColor: "borderColor"
-    };
     constructor(cfg) {
       super();
       this.options = void 0;
@@ -11314,6 +11308,18 @@
       return axis === "x" ? this.width / 2 : this.height / 2;
     }
   };
+  __publicField(BarElement, "id", "bar");
+  __publicField(BarElement, "defaults", {
+    borderSkipped: "start",
+    borderWidth: 0,
+    borderRadius: 0,
+    inflateAmount: "auto",
+    pointStyle: void 0
+  });
+  __publicField(BarElement, "defaultRoutes", {
+    backgroundColor: "backgroundColor",
+    borderColor: "borderColor"
+  });
   var elements = /* @__PURE__ */ Object.freeze({
     __proto__: null,
     ArcElement,
@@ -13212,7 +13218,6 @@
     return result;
   }
   var Tooltip = class extends Element {
-    static positioners = positioners;
     constructor(config) {
       super();
       this.opacity = 0;
@@ -13752,6 +13757,7 @@
       return position !== false && (caretX !== position.x || caretY !== position.y);
     }
   };
+  __publicField(Tooltip, "positioners", positioners);
   var plugin_tooltip = {
     id: "tooltip",
     _element: Tooltip,
@@ -13917,12 +13923,6 @@
     return value;
   }
   var CategoryScale = class extends Scale {
-    static id = "category";
-    static defaults = {
-      ticks: {
-        callback: _getLabelForValue
-      }
-    };
     constructor(cfg) {
       super(cfg);
       this._startValue = void 0;
@@ -14009,6 +14009,12 @@
       return this.bottom;
     }
   };
+  __publicField(CategoryScale, "id", "category");
+  __publicField(CategoryScale, "defaults", {
+    ticks: {
+      callback: _getLabelForValue
+    }
+  });
   function generateTicks$1(generationOptions, dataRange) {
     const ticks = [];
     const MIN_SPACING = 1e-14;
@@ -14232,12 +14238,6 @@
     }
   };
   var LinearScale = class extends LinearScaleBase {
-    static id = "linear";
-    static defaults = {
-      ticks: {
-        callback: Ticks.formatters.numeric
-      }
-    };
     determineDataLimits() {
       const { min, max } = this.getMinMax(true);
       this.min = isNumberFinite(min) ? min : 0;
@@ -14259,6 +14259,12 @@
       return this._startValue + this.getDecimalForPixel(pixel) * this._valueRange;
     }
   };
+  __publicField(LinearScale, "id", "linear");
+  __publicField(LinearScale, "defaults", {
+    ticks: {
+      callback: Ticks.formatters.numeric
+    }
+  });
   var log10Floor = (v) => Math.floor(log10(v));
   var changeExponent = (v, m) => Math.pow(10, log10Floor(v) + m);
   function isMajor(tickVal) {
@@ -14321,15 +14327,6 @@
     return ticks;
   }
   var LogarithmicScale = class extends Scale {
-    static id = "logarithmic";
-    static defaults = {
-      ticks: {
-        callback: Ticks.formatters.logarithmic,
-        major: {
-          enabled: true
-        }
-      }
-    };
     constructor(cfg) {
       super(cfg);
       this.start = void 0;
@@ -14427,6 +14424,15 @@
       return Math.pow(10, this._startValue + decimal * this._valueRange);
     }
   };
+  __publicField(LogarithmicScale, "id", "logarithmic");
+  __publicField(LogarithmicScale, "defaults", {
+    ticks: {
+      callback: Ticks.formatters.logarithmic,
+      major: {
+        enabled: true
+      }
+    }
+  });
   function getTickBackdropHeight(opts) {
     const tickOpts = opts.ticks;
     if (tickOpts.display && opts.display) {
@@ -14680,49 +14686,6 @@
     });
   }
   var RadialLinearScale = class extends LinearScaleBase {
-    static id = "radialLinear";
-    static defaults = {
-      display: true,
-      animate: true,
-      position: "chartArea",
-      angleLines: {
-        display: true,
-        lineWidth: 1,
-        borderDash: [],
-        borderDashOffset: 0
-      },
-      grid: {
-        circular: false
-      },
-      startAngle: 0,
-      ticks: {
-        showLabelBackdrop: true,
-        callback: Ticks.formatters.numeric
-      },
-      pointLabels: {
-        backdropColor: void 0,
-        backdropPadding: 2,
-        display: true,
-        font: {
-          size: 10
-        },
-        callback(label) {
-          return label;
-        },
-        padding: 5,
-        centerPointLabels: false
-      }
-    };
-    static defaultRoutes = {
-      "angleLines.color": "borderColor",
-      "pointLabels.color": "color",
-      "ticks.color": "color"
-    };
-    static descriptors = {
-      angleLines: {
-        _fallback: "grid"
-      }
-    };
     constructor(cfg) {
       super(cfg);
       this.xCenter = void 0;
@@ -14919,6 +14882,49 @@
     drawTitle() {
     }
   };
+  __publicField(RadialLinearScale, "id", "radialLinear");
+  __publicField(RadialLinearScale, "defaults", {
+    display: true,
+    animate: true,
+    position: "chartArea",
+    angleLines: {
+      display: true,
+      lineWidth: 1,
+      borderDash: [],
+      borderDashOffset: 0
+    },
+    grid: {
+      circular: false
+    },
+    startAngle: 0,
+    ticks: {
+      showLabelBackdrop: true,
+      callback: Ticks.formatters.numeric
+    },
+    pointLabels: {
+      backdropColor: void 0,
+      backdropPadding: 2,
+      display: true,
+      font: {
+        size: 10
+      },
+      callback(label) {
+        return label;
+      },
+      padding: 5,
+      centerPointLabels: false
+    }
+  });
+  __publicField(RadialLinearScale, "defaultRoutes", {
+    "angleLines.color": "borderColor",
+    "pointLabels.color": "color",
+    "ticks.color": "color"
+  });
+  __publicField(RadialLinearScale, "descriptors", {
+    angleLines: {
+      _fallback: "grid"
+    }
+  });
   var INTERVALS = {
     millisecond: {
       common: true,
@@ -15055,26 +15061,6 @@
     return ilen === 0 || !majorUnit ? ticks : setMajorTicks(scale, ticks, map3, majorUnit);
   }
   var TimeScale = class extends Scale {
-    static id = "time";
-    static defaults = {
-      bounds: "data",
-      adapters: {},
-      time: {
-        parser: false,
-        unit: false,
-        round: false,
-        isoWeekday: false,
-        minUnit: "millisecond",
-        displayFormats: {}
-      },
-      ticks: {
-        source: "auto",
-        callback: false,
-        major: {
-          enabled: false
-        }
-      }
-    };
     constructor(props) {
       super(props);
       this._cache = {
@@ -15341,6 +15327,26 @@
       return _arrayUnique(values.sort(sorter));
     }
   };
+  __publicField(TimeScale, "id", "time");
+  __publicField(TimeScale, "defaults", {
+    bounds: "data",
+    adapters: {},
+    time: {
+      parser: false,
+      unit: false,
+      round: false,
+      isoWeekday: false,
+      minUnit: "millisecond",
+      displayFormats: {}
+    },
+    ticks: {
+      source: "auto",
+      callback: false,
+      major: {
+        enabled: false
+      }
+    }
+  });
   function interpolate2(table, val, reverse) {
     let lo = 0;
     let hi = table.length - 1;
@@ -15362,8 +15368,6 @@
     return span ? prevTarget + (nextTarget - prevTarget) * (val - prevSource) / span : prevTarget;
   }
   var TimeSeriesScale = class extends TimeScale {
-    static id = "timeseries";
-    static defaults = TimeScale.defaults;
     constructor(props) {
       super(props);
       this._table = [];
@@ -15449,6 +15453,8 @@
       return interpolate2(this._table, decimal * this._tableRange + this._minPos, true);
     }
   };
+  __publicField(TimeSeriesScale, "id", "timeseries");
+  __publicField(TimeSeriesScale, "defaults", TimeScale.defaults);
   var scales = /* @__PURE__ */ Object.freeze({
     __proto__: null,
     CategoryScale,
@@ -15528,6 +15534,8 @@
       this.handleConditionals();
       if (!this.resultsId) {
         this.results.style.display = "block";
+      } else {
+        this.results.style.display = "grid";
       }
     }
     handleTemplateRepeats(template, fragment) {
@@ -15660,6 +15668,33 @@
     }
   };
 
+  // src/utils/syncSlider.ts
+  function syncSlider(inputId, initialValue) {
+    const input = document.getElementById(inputId);
+    if (!input)
+      return;
+    const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
+    const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
+    const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
+    if (!wrapper || !handle)
+      return;
+    const updateSliderUI = () => {
+      const value = parseFloat(input.value);
+      if (isNaN(value))
+        return;
+      const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
+      const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
+      const clamped = Math.min(Math.max(value, min), max);
+      const percent = (clamped - min) / (max - min) * 100;
+      const trackWidth = wrapper.clientWidth;
+      const pixelOffset = percent / 100 * trackWidth;
+      handle.style.left = `${pixelOffset}px`;
+      fill2.style.width = `${pixelOffset}px`;
+    };
+    updateSliderUI();
+    input.addEventListener("input", updateSliderUI);
+  }
+
   // src/calculators/handleCalculator.ts
   var attr5 = "data-calc";
   var API_ENDPOINT3 = API_ENDPOINTS.calculatorTrigger;
@@ -15701,9 +15736,6 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
-      console.log("VALID", isValid);
-      console.log("INPUTS", this.inputs);
-      console.log("PRESENT", allPresent);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");
@@ -15737,9 +15769,6 @@
         this.result = result.result;
         const resultsId = this.component.getAttribute("data-results");
         const calcName = this.component.getAttribute("data-calc");
-        if (resultsId) {
-          this.scrollToDiv(resultsId);
-        }
         if (resultsId && calcName === "residentialborrowinglimit") {
           const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
           if (mortgageCalcComponent) {
@@ -15750,6 +15779,8 @@
             const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
             const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
             const PropertyValue = RepaymentValue + DepositAmount;
+            syncSlider("DepositAmountSlider", DepositAmount);
+            syncSlider("RepaymentValue", RepaymentValue);
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
@@ -15781,6 +15812,11 @@
           this.toggleLoading(true);
           this.outputs.displayResults(this.result);
         }
+        if (resultsId && calcName === "residentialborrowinglimit") {
+          if (this.result) {
+            this.scrollToDiv(resultsId);
+          }
+        }
       } catch (error) {
         console.error("Error retrieving calculation", error);
         this.toggleLoading(false);
@@ -15801,72 +15837,13 @@
         });
       }
     }
-    /*private async handleCalculatorSync(calcName: string): Promise<void> {
-    
-        if (this.isSyncing) return; 
-        // Determine active calculator
-        const isMortgageCost = calcName === 'mortgagecost';
-        const targetCalcName = isMortgageCost ? 'residentialborrowinglimit' : 'mortgagecost';
-    
-        // Find the corresponding calculator component
-        const targetCalcComponent = document.querySelector(`[data-calc="${targetCalcName}"]`) as HTMLDivElement;
-        if (!targetCalcComponent) {
-          this.isSyncing = false;
-          return;
-      }
-    
-        // Create instance of the other calculator
-        const targetCalc = new HandleCalculator(targetCalcComponent);
-        targetCalc.submit();
-    
-        // Get values from both calculators
-        const targetInputs = targetCalc.inputs.getValues();
-        const currentInputs = this.inputs.getValues();
-    
-        const DepositAmount = parseFloat(currentInputs['DepositAmount'] as string || '0');
-        const RepaymentValue = parseFloat(targetInputs['RepaymentValue'] as string || '0');
-        const PropertyValue = RepaymentValue + DepositAmount;
-    
-        console.log('TARGET CALC INPUTS', targetInputs);
-        console.log('CURRENT CALC INPUTS', currentInputs);
-    
-        // Fetch product update from Azure
-        const prodResult = await this.makeAzureRequestProduct({
-            PropertyValue,
-            RepaymentValue,
-            TermYears: parseFloat(targetInputs['TermYears'] as string || '0'),
-            PropertyType: 1,
-            MortgageType: 1
-        });
-    
-        // Update UI if product result is successful
-        if (prodResult) {
-            this.populateProductCard(prodResult.result);
-    
-            if (prodResult.result.success) {
-                console.log('YOYOYO');
-                const mortPickTitle = document.querySelector('#mortPickTitle');
-                const mortPickArea = document.querySelector('#mortPickArea');
-    
-                if (mortPickTitle && mortPickArea) {
-                    (mortPickTitle as HTMLElement).style.display = 'flex';
-                    (mortPickArea as HTMLElement).style.display = 'flex';
-                }
-            }
-        }
-        etTimeout(() => {
-          this.isSyncing = false; // ⏳ Unlock after a short delay
-      }, 500);
-    }*/
     populateProductCard(results) {
       if (!results.data || !Array.isArray(results.data))
         return;
-      console.log("DATA0", results.data[0]);
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
         if (!key || !(key in results.data[0]))
           return;
-        console.log(output);
         const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
@@ -15876,6 +15853,14 @@
           output.textContent = stringValue;
         }
       });
+    }
+    calculateMonthlyPayment(borrowAmount, termYears, annualRate) {
+      const n = termYears * 12;
+      const r = annualRate / 100 / 12;
+      if (r === 0) {
+        return borrowAmount / n;
+      }
+      return borrowAmount * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
     }
     async makeAzureRequest() {
       const headers = new Headers();
@@ -15897,17 +15882,23 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
+      let monthlyRepayment;
       if (depositAmount > 0 && result) {
         if (result.result.BorrowingAmountLower) {
           result.result.DepositAmount = depositAmount;
           result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+          result.result.RepaymentValue = parseFloat(result.result.BorrowingAmountHigher);
+          result.result.TermYears = 25;
         }
       }
       if (result.result.TotalOverTerm) {
+        monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values["TermYears"], values["Rate"]);
         result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
         result.result.DepositAmount = depositSliderAmount;
         result.result.PropertyValue = borrowAmount + depositSliderAmount;
-        result.result.BorrowingAmountHigher = borrowAmount;
+        result.result.RepaymentValue = borrowAmount;
+        result.result.TermYears = values["TermYears"];
+        result.result.FutureMonthlyPayment = monthlyRepayment ? Math.round(monthlyRepayment) : Math.round(result.result.FutureMonthlyPayment);
       }
       return result;
     }
@@ -15966,10 +15957,16 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
-      if (result.result.data[0].FutureValue) {
-        result.result.data[0].FutureValue = Math.round(result.result.data[0].FutureValue);
+      if (result.result.data[0].FutureMonthlyPayment) {
+        result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+        result.result.data[0].InitialRate = result.result.data[0].Rate;
+        result.result.data[0].TermYears = result.result.data[0].TermYears;
       }
-      console.log("RESULT FOR PRODUCT", result);
+      const rateSlider = document.querySelector('[data-input="Rate"]');
+      if (rateSlider) {
+        rateSlider.setAttribute("value", result.result.data[0].Rate);
+        rateSlider.setAttribute("placeholder", result.result.data[0].Rate);
+      }
       return result;
     }
   };
@@ -15978,11 +15975,15 @@
   var calculators = () => {
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
+    const rateSlider = document.querySelector('[data-input="Rate"]');
     if (repaymentValueSlider) {
       repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
     }
     if (depositAmountSlider) {
       depositAmountSlider.setAttribute("data-calc-output", "DepositAmount");
+    }
+    if (rateSlider) {
+      rateSlider.setAttribute("data-calc-output", "InitialRate");
     }
     const attr7 = "data-calc";
     const components2 = queryElements(`[${attr7}]`);
@@ -16006,7 +16007,6 @@
     }
     displayResults(result) {
       this.result = result;
-      console.log("Results to process are: ", this.result);
       this.populateOutputs();
       const resultsElement = queryElement(`[${attr6}-el="results"]`, this.component);
       resultsElement.style.display = "block";
@@ -16041,7 +16041,6 @@
       if (data["CostOfRate1"] >= data["CostOfRate2"]) {
         noSavingElement.style.display = "none";
         savingElement.style.display = "block";
-        console.log("Outputs array is: ", outputs);
         data["AnnualCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 2;
         data["MonthlyCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 12;
         data["FollowOnPayments"] = data["CostOfRate1"] / 12;
@@ -16348,8 +16347,6 @@
 
   // src/costofdoingnothing/index.ts
   var costOfDoingNothing = () => {
-    console.log("Cost of Doing Nothing");
-    console.log("DOM Loaded");
     const component = document.querySelector('[data-calc="costofdoingnothing"]');
     if (component) {
       new CostOfDoingNothingCalculator(component);
@@ -16358,7 +16355,7 @@
   };
 
   // src/index.ts
-  window.Webflow ||= [];
+  window.Webflow || (window.Webflow = []);
   window.Webflow.push(() => {
     components();
     bestbuys();
@@ -16392,4 +16389,3 @@ chart.js/dist/chart.js:
    * Released under the MIT License
    *)
 */
-//# sourceMappingURL=index.js.map

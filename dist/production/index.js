@@ -14,7 +14,7 @@
   };
 
   // src/constants.ts
-  var API_ENDPOINTS = JSON.parse('{"productsTrigger":"https://landc.co.uk/api/ProductsHttpTrigger","calculatorTrigger":"https://landc.co.uk/api/CalculatorHttpTrigger","svrForLenders":"https://landc.co.uk/api/SVRForLendersTrigger","costOfDoingNothing":"https://landc.co.uk/api/CODNTrigger"}');
+  var API_ENDPOINTS = JSON.parse('{"productsTrigger":"https://www.landc.co.uk/api/productshttptrigger","calculatorTrigger":"https://www.landc.co.uk/api/calculatorhttptrigger","svrForLenders":"https://www.landc.co.uk/api/SVRForLendersTrigger","costOfDoingNothing":"https://www.landc.co.uk/api/CODNTrigger"}');
 
   // src/utils/isStaging.ts
   var isStaging = window.location.host.includes("test.landc.co.uk");
@@ -199,10 +199,15 @@
   function checkInputValidity(input) {
     let isValid = true, error;
     if (input instanceof HTMLInputElement) {
-      const { type } = input;
+      const { type, required, value } = input;
+      if (required && !value.trim()) {
+        isValid = false;
+        error = "This field is required.";
+        return { isValid, error };
+      }
       switch (type) {
         case "number":
-          const { min, max, value } = input;
+          const { min, max } = input;
           let minValid = true;
           if (!!min)
             minValid = Number(value) >= Number(min);
@@ -212,20 +217,16 @@
           isValid = minValid && maxValid;
           if (isValid)
             break;
-          if (!minValid) {
-            error = `Input needs to be ${min} or higher`;
-          } else if (!maxValid) {
-            error = `Input needs to be ${max} or less`;
-          }
+          error = !minValid ? `Input needs to be ${min} or higher` : `Input needs to be ${max} or less`;
           break;
         default:
           isValid = input.checkValidity();
-          error = input.validationMessage;
+          error = isValid ? void 0 : input.validationMessage;
           break;
       }
     } else if (input instanceof HTMLSelectElement) {
       isValid = input.checkValidity();
-      error = input.validationMessage;
+      error = isValid ? void 0 : input.validationMessage;
     }
     return {
       isValid,
@@ -641,10 +642,14 @@
     };
     input.addEventListener("focus", handleFocus, true);
     input.addEventListener("blur", handleBlur, true);
+    input.addEventListener("input", handleInput, true);
     function handleFocus() {
       input.addEventListener("keydown", runOnEnterWrapper);
     }
     function handleBlur() {
+      input.removeEventListener("keydown", runOnEnterWrapper);
+    }
+    function handleInput() {
       input.removeEventListener("keydown", runOnEnterWrapper);
     }
     function runOnEnter(event) {
@@ -1048,18 +1053,16 @@
       let allPresent = true;
       this.config.names.forEach((name) => {
         const input = this.all.find((input2) => input2.dataset.input === name);
+        const isOptionalAndMissing = name === "DepositAmount" && !input;
         tableData.push({
           input: name,
-          present: !!input
+          present: !!input || isOptionalAndMissing
         });
-        if (!input)
+        if (!input && name !== "DepositAmount") {
           allPresent = false;
+        }
       });
-      if (isStaging) {
-        console.groupCollapsed(`${allPresent ? "all inputs present" : "inputs missing"}`);
-        console.table(tableData);
-        console.groupEnd();
-      }
+      console.table(tableData);
       return allPresent;
     }
     validateInput(input) {
@@ -1171,12 +1174,11 @@
     }
     bindEvents() {
       this.all.forEach((input) => {
-        input.addEventListener("change", () => {
+        input.addEventListener("input", () => {
           formatInput(input);
           this.validateInput(input);
           this.handleConditionals();
           if (this.calculator.name === "mortgagecost") {
-            this.calculator.submit();
           }
         });
       });
@@ -15532,6 +15534,8 @@
       this.handleConditionals();
       if (!this.resultsId) {
         this.results.style.display = "block";
+      } else {
+        this.results.style.display = "grid";
       }
     }
     handleTemplateRepeats(template, fragment) {
@@ -15664,6 +15668,33 @@
     }
   };
 
+  // src/utils/syncSlider.ts
+  function syncSlider(inputId, initialValue) {
+    const input = document.getElementById(inputId);
+    if (!input)
+      return;
+    const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
+    const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
+    const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
+    if (!wrapper || !handle)
+      return;
+    const updateSliderUI = () => {
+      const value = parseFloat(input.value);
+      if (isNaN(value))
+        return;
+      const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
+      const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
+      const clamped = Math.min(Math.max(value, min), max);
+      const percent = (clamped - min) / (max - min) * 100;
+      const trackWidth = wrapper.clientWidth;
+      const pixelOffset = percent / 100 * trackWidth;
+      handle.style.left = `${pixelOffset}px`;
+      fill2.style.width = `${pixelOffset}px`;
+    };
+    updateSliderUI();
+    input.addEventListener("input", updateSliderUI);
+  }
+
   // src/calculators/handleCalculator.ts
   var attr5 = "data-calc";
   var API_ENDPOINT3 = API_ENDPOINTS.calculatorTrigger;
@@ -15680,6 +15711,7 @@
       this.buttonText = queryElement(`[${attr5}-el="button-text"]`, this.button);
       this.buttonLoader = queryElement(`[${attr5}-el="button-loader"]`, this.button);
       this.isLoading = false;
+      this.isSyncing = false;
     }
     init() {
       this.inputs.init();
@@ -15704,9 +15736,6 @@
       this.toggleLoading();
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
-      console.log("VALID", isValid);
-      console.log("INPUTS", this.inputs);
-      console.log("PRESENT", allPresent);
       if (!isValid || !allPresent) {
         if (isStaging)
           console.log("inputs not valid or not all present");
@@ -15740,9 +15769,6 @@
         this.result = result.result;
         const resultsId = this.component.getAttribute("data-results");
         const calcName = this.component.getAttribute("data-calc");
-        if (resultsId) {
-          this.scrollToDiv(resultsId);
-        }
         if (resultsId && calcName === "residentialborrowinglimit") {
           const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
           if (mortgageCalcComponent) {
@@ -15753,8 +15779,8 @@
             const DepositAmount = parseFloat(calcInputs["DepositAmount"] || "0");
             const RepaymentValue = parseFloat(mortInputs["RepaymentValue"] || "0");
             const PropertyValue = RepaymentValue + DepositAmount;
-            console.log("MORT INPUTS", mortInputs);
-            console.log("CALC INPUTS", calcInputs);
+            syncSlider("DepositAmountSlider", DepositAmount);
+            syncSlider("RepaymentValue", RepaymentValue);
             const prodresult = await this.makeAzureRequestProduct({
               PropertyValue,
               RepaymentValue,
@@ -15763,14 +15789,18 @@
               MortgageType: 1
             });
             if (prodresult) {
-              console.log("here", prodresult);
               this.populateProductCard(prodresult.result);
+              const mortPickTitle = document.querySelector("#mortPickTitle");
+              const mortPickArea = document.querySelector("#mortPickArea");
               if (prodresult.result.success) {
-                const mortPickTitle = document.querySelector("#mortPickTitle");
-                const mortPickCard = document.querySelector("#mortPickCard");
-                if (mortPickTitle && mortPickCard) {
+                if (mortPickTitle && mortPickArea) {
                   mortPickTitle.style.display = "flex";
-                  mortPickCard.style.display = "flex";
+                  mortPickArea.style.display = "flex";
+                }
+              } else {
+                if (mortPickTitle && mortPickArea) {
+                  mortPickTitle.style.display = "none";
+                  mortPickArea.style.display = "none";
                 }
               }
             }
@@ -15781,6 +15811,11 @@
         } else {
           this.toggleLoading(true);
           this.outputs.displayResults(this.result);
+        }
+        if (resultsId && calcName === "residentialborrowinglimit") {
+          if (this.result) {
+            this.scrollToDiv(resultsId);
+          }
         }
       } catch (error) {
         console.error("Error retrieving calculation", error);
@@ -15802,14 +15837,14 @@
         });
       }
     }
-    populateProductCard(data) {
-      if (!data)
+    populateProductCard(results) {
+      if (!results.data || !Array.isArray(results.data))
         return;
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
-        if (!key || !(key in data))
+        if (!key || !(key in results.data[0]))
           return;
-        const value = data[key];
+        const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
           output.src = stringValue;
@@ -15818,6 +15853,14 @@
           output.textContent = stringValue;
         }
       });
+    }
+    calculateMonthlyPayment(borrowAmount, termYears, annualRate) {
+      const n = termYears * 12;
+      const r = annualRate / 100 / 12;
+      if (r === 0) {
+        return borrowAmount / n;
+      }
+      return borrowAmount * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
     }
     async makeAzureRequest() {
       const headers = new Headers();
@@ -15839,17 +15882,23 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
+      let monthlyRepayment;
       if (depositAmount > 0 && result) {
         if (result.result.BorrowingAmountLower) {
           result.result.DepositAmount = depositAmount;
           result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+          result.result.RepaymentValue = parseFloat(result.result.BorrowingAmountHigher);
+          result.result.TermYears = 25;
         }
       }
       if (result.result.TotalOverTerm) {
+        monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values["TermYears"], values["Rate"]);
         result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
         result.result.DepositAmount = depositSliderAmount;
         result.result.PropertyValue = borrowAmount + depositSliderAmount;
-        result.result.BorrowingAmountHigher = borrowAmount;
+        result.result.RepaymentValue = borrowAmount;
+        result.result.TermYears = values["TermYears"];
+        result.result.FutureMonthlyPayment = monthlyRepayment ? Math.round(monthlyRepayment) : Math.round(result.result.FutureMonthlyPayment);
       }
       return result;
     }
@@ -15908,8 +15957,15 @@
         throw new Error(`API responded with status ${response.status}`);
       }
       const result = await response.json();
-      if (result.result.FutureValue) {
-        result.result.FutureValue = Math.round(result.result.FutureValue);
+      if (result.result.data[0].FutureMonthlyPayment) {
+        result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+        result.result.data[0].InitialRate = result.result.data[0].Rate;
+        result.result.data[0].TermYears = result.result.data[0].TermYears;
+      }
+      const rateSlider = document.querySelector('[data-input="Rate"]');
+      if (rateSlider) {
+        rateSlider.setAttribute("value", result.result.data[0].Rate);
+        rateSlider.setAttribute("placeholder", result.result.data[0].Rate);
       }
       return result;
     }
@@ -15919,11 +15975,15 @@
   var calculators = () => {
     const repaymentValueSlider = document.getElementById("RepaymentValue");
     const depositAmountSlider = document.getElementById("DepositAmountSlider");
+    const rateSlider = document.querySelector('[data-input="Rate"]');
     if (repaymentValueSlider) {
       repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
     }
     if (depositAmountSlider) {
       depositAmountSlider.setAttribute("data-calc-output", "DepositAmount");
+    }
+    if (rateSlider) {
+      rateSlider.setAttribute("data-calc-output", "InitialRate");
     }
     const attr7 = "data-calc";
     const components2 = queryElements(`[${attr7}]`);
@@ -15947,7 +16007,6 @@
     }
     displayResults(result) {
       this.result = result;
-      console.log("Results to process are: ", this.result);
       this.populateOutputs();
       const resultsElement = queryElement(`[${attr6}-el="results"]`, this.component);
       resultsElement.style.display = "block";
@@ -15982,7 +16041,6 @@
       if (data["CostOfRate1"] >= data["CostOfRate2"]) {
         noSavingElement.style.display = "none";
         savingElement.style.display = "block";
-        console.log("Outputs array is: ", outputs);
         data["AnnualCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 2;
         data["MonthlyCost"] = (data["CostOfRate1"] - data["CostOfRate2"]) / 12;
         data["FollowOnPayments"] = data["CostOfRate1"] / 12;
@@ -16289,8 +16347,6 @@
 
   // src/costofdoingnothing/index.ts
   var costOfDoingNothing = () => {
-    console.log("Cost of Doing Nothing");
-    console.log("DOM Loaded");
     const component = document.querySelector('[data-calc="costofdoingnothing"]');
     if (component) {
       new CostOfDoingNothingCalculator(component);

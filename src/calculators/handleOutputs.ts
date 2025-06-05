@@ -112,9 +112,10 @@ export class HandleOutputs {
 
     if(!this.resultsId){
       this.results.style.display = 'block';
+    }else{
+      this.results.style.display = 'grid';
     }
 
-   
   }
 
   private handleTemplateRepeats(template: HTMLDivElement, fragment: DocumentFragment): void {
@@ -156,11 +157,14 @@ export class HandleOutputs {
 
   private populateOutput(output: HTMLElement, value: string | number) {
     if (typeof value === 'number') {
+      
+
       const { calcOutputMod } = output.dataset;
       if (calcOutputMod) value = Number(calcOutputMod) * value;
       output.textContent = numberToCurrency(value);
     } else {
       output.textContent = value;
+      
     }
   }
 
@@ -171,13 +175,16 @@ export class HandleOutputs {
     }
 
     outputs.forEach((output) => {
+      
       const key = output.dataset.calcOutput;
       if (!key) return;
       const value = data[key];
 
       if (value === 0 || data[key]) {
+        
           // If the element is an input, update value and placeholder
           if (output instanceof HTMLInputElement) {
+              
               output.value = String(value);
               output.placeholder = String(value);
           }
@@ -190,7 +197,7 @@ export class HandleOutputs {
               this.populateOutput(output, value);
           }
       }
-  });
+    });
   }
 
   private populateChart(): void {

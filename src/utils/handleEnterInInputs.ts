@@ -12,12 +12,17 @@ export const handleEnterInInputs = (input: Input, callback: () => void) => {
 
   input.addEventListener('focus', handleFocus, true);
   input.addEventListener('blur', handleBlur, true);
+  input.addEventListener('input', handleInput, true);
 
   function handleFocus(): void {
     input.addEventListener('keydown', runOnEnterWrapper);
   }
 
   function handleBlur(): void {
+    input.removeEventListener('keydown', runOnEnterWrapper);
+  }
+
+  function handleInput(): void {
     input.removeEventListener('keydown', runOnEnterWrapper);
   }
 

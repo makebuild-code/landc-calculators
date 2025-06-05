@@ -62,11 +62,7 @@ export class HandleInputs {
         repeat.init();
       });
     }
-
-    
-
     this.minMaxValues();
-
     this.handleConditionals();
     this.bindEvents();
   }
@@ -100,29 +96,29 @@ export class HandleInputs {
   check(): boolean {
     const tableData: { input: string; present: boolean }[] = [];
     let allPresent = true;
-    // check which inputs are/aren't present
+  
     this.config.names.forEach((name) => {
       const input = this.all.find((input) => input.dataset.input === name);
+  
+      const isOptionalAndMissing = name === 'DepositAmount' && !input;
+  
       tableData.push({
         input: name,
-        present: !!input,
+        present: !!input || isOptionalAndMissing,
       });
-
-      if (!input) allPresent = false;
+  
+      if (!input && name !== 'DepositAmount') {
+        allPresent = false;
+      }
     });
-
-    if (isStaging) {
-      console.groupCollapsed(`${allPresent ? 'all inputs present' : 'inputs missing'}`);
-      console.table(tableData);
-      console.groupEnd();
-    }
-
+  
+    console.table(tableData);
     return allPresent;
   }
 
   validateInput(input: Input): boolean {
     const validity = checkInputValidity(input);
-
+   
     if (!validity.error) {
       setError(input);
     } else {
@@ -135,8 +131,8 @@ export class HandleInputs {
   validateInputs(): boolean {
     let inputFocused = false,
       isValid = true;
-
     this.inputs.forEach((input) => {
+    
       const inputValid = this.validateInput(input);
       if (!inputValid) {
         isValid = false;
@@ -247,19 +243,20 @@ export class HandleInputs {
   private bindEvents(): void {
     // validate inputs on value change
     this.all.forEach((input) => {
-      const eventType = input.type === 'range' ? 'mouseup' : 'change';
-      console.log(eventType)
-      input.addEventListener(eventType, () => {
+      //const eventType = input.class === 'inputslider_input' ? 'mouseup' : 'change';
+      
+      input.addEventListener('input', () => {
         formatInput(input);
         this.validateInput(input);
         this.handleConditionals();
         // New Mortgage calc out update on change
        
         if (this.calculator.name === 'mortgagecost') {
-          this.calculator.submit();
+          //alert(input.name)
+          //this.calculator.submit();
         }
 
-        
+  
       });
     });
   }

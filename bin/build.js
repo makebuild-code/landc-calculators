@@ -1,49 +1,42 @@
 import * as esbuild from 'esbuild';
 import dotenv from 'dotenv';
-
 import { readdirSync } from 'fs';
 import { join, sep } from 'path';
 
-// Load environment variables based on NODE_ENV
-const envFile = `.env.${process.env.BUILD_ENV || 'staging'}`;
+// Load environment variables based on BUILD_ENV
+const envFile = `.env.${process.env.BUILD_ENV || 'local'}`;
 dotenv.config({ path: envFile });
 
-// Define env variables for esbuild
-const defineEnv = {
-  'process.env.API_ENDPOINTS': JSON.stringify(process.env.API_ENDPOINTS),
-};
 if (!process.env.API_ENDPOINTS) {
   console.error('❌ API_ENDPOINTS is not defined. Check your .env files.');
   process.exit(1);
 }
 
 const BUILD_DIRECTORY = `dist/${process.env.BUILD_ENV || 'local'}`;
-const PRODUCTION = process.env.BUILD_ENV === 'production';
-
-// Config dev serving
-const LIVE_RELOAD = !PRODUCTION;
+const IS_PRODUCTION = process.env.BUILD_ENV === 'production';
+const IS_STAGING = process.env.BUILD_ENV === 'staging';
+const LIVE_RELOAD = !(IS_PRODUCTION || IS_STAGING); // only run dev server in local/dev
 const SERVE_PORT = 3000;
-const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
+const SERVE_ORIGIN = LIVE_RELOAD ? `http://localhost:${SERVE_PORT}` : '';
 
+// Define environment variables for esbuild
+const defineEnv = {
+  'process.env.API_ENDPOINTS': JSON.stringify(process.env.API_ENDPOINTS),
+  ...(LIVE_RELOAD && { SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN) }),
+};
+
+// Setup esbuild
 const context = await esbuild.context({
   entryPoints: ['src/index.ts'],
   outdir: BUILD_DIRECTORY,
   bundle: true,
-  //minify: PRODUCTION,
-  sourcemap: !PRODUCTION,
-  target: PRODUCTION ? 'es2020' : 'esnext',
+  sourcemap: LIVE_RELOAD,
+  target: LIVE_RELOAD ? 'esnext' : 'es2020',
   inject: LIVE_RELOAD ? ['./bin/live-reload.js'] : undefined,
-  define: {
-    ...defineEnv, // Include environment variables
-    SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
-  },
+  define: defineEnv,
 });
 
-
-if (PRODUCTION) {
-  await context.rebuild();
-  context.dispose();
-} else {
+if (LIVE_RELOAD) {
   await context.watch();
   await context
     .serve({
@@ -51,14 +44,15 @@ if (PRODUCTION) {
       port: SERVE_PORT,
     })
     .then(logServedFiles);
+} else {
+  await context.rebuild();
+  context.dispose();
 }
 
 /**
  * Logs information about the files that are being served during local development.
  */
 function logServedFiles() {
-
-
   const getFiles = (dirPath) => {
     return readdirSync(dirPath, { withFileTypes: true })
       .flatMap((dirent) => {
