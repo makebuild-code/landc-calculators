@@ -166,32 +166,35 @@ This will prevent the tests from running when you open a Pull Request.
 In general, your development workflow should look like this:
 
 1. To build a new feature, create a new branch from the `Development` branch.
+
 ```Bash
 git checkout development          # Switch to development branch
 git pull origin development       # Make sure it's up to date
 git checkout -b feature/your-feature-name  # Create new branch
 ```
+
 Or for a bug fix
+
 ```Bash
 git checkout -b bugfix/describe-the-bug
 ```
+
 2. Do your development. Add, commit, and push regularly:
+
 ```Bash
 git add .
 git commit -m "Describe what you did"
 git push origin feature/your-feature-name
 ```
+
 3. Merge your feature/bugfix into `Development`:
+
 ```Bash
 git checkout development
 git pull origin development
 git merge feature/your-feature-name
 git push origin development
 ```
-
-
-
-
 
 3. Once you've finished the implementation, [create a Changeset](#continuous-deployment) (or multiple) explaining the changes that you've made in the codebase.
 4. Open a Pull Request and wait until the [CI workflows](#continuous-integration) finish. If something fails, please try to fix it before merging the PR.
