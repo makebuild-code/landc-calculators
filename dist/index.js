@@ -12,16 +12,20 @@
   // src/utils/getBaseURLForAPI.ts
   var getBaseURLForAPI = () => {
     const ENDPOINTS = {
-      production: "https://www.landc.co.uk/api/",
+      prod: "https://www.landc.co.uk/api/",
       test: "https://test.landc.co.uk/api/"
     };
     const ENVIRONMENTS = [
-      { host: "www.landc.co.uk", api: ENDPOINTS.production },
+      { host: "www.landc.co.uk", api: ENDPOINTS.prod },
       { host: "test.landc.co.uk", api: ENDPOINTS.test },
       { host: "dev.landc.co.uk", api: ENDPOINTS.test }
     ];
-    const { hostname } = window.location;
-    return ENVIRONMENTS.find((env) => env.host === hostname)?.api || ENDPOINTS.production;
+    const { hostname, search } = window.location;
+    const params = new URLSearchParams(search);
+    const apiParam = params.get("api");
+    if (apiParam)
+      return ENDPOINTS[apiParam] || ENDPOINTS.prod;
+    return ENVIRONMENTS.find((env) => env.host === hostname)?.api || ENDPOINTS.prod;
   };
 
   // src/constants.ts
