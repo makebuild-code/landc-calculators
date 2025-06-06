@@ -1,5 +1,5 @@
 export interface Endpoints {
-  production: string;
+  prod: string;
   test: string;
 }
 
