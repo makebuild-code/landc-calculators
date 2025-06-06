@@ -378,8 +378,6 @@
       this.scaffoldResult.remove();
     }
     async init() {
-      console.log(this);
-      console.log("Init");
       if (this.trigger === "onload") {
         this.isLoading = true;
         this.conditionalVisibility();
@@ -674,7 +672,6 @@
     const attr7 = "data-bb";
     const components2 = queryElements(`[${attr7}]`);
     components2.forEach((component) => {
-      console.log("Bestbuy component:", component);
       const { bb } = component.dataset;
       if (!bb)
         return;
