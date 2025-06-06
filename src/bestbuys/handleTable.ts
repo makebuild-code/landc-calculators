@@ -85,9 +85,9 @@ export class HandleTable {
   }
 
   async init(): Promise<void> {
+    this.conditionalVisibility();
     if (this.trigger === 'onload') {
       this.isLoading = true;
-      this.conditionalVisibility();
       if (this.productId) this.scrollIntoView();
       await this.handleAzureRequest();
       if (this.productId) this.scrollIntoView(this.productId);

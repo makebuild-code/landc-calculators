@@ -378,9 +378,9 @@
       this.scaffoldResult.remove();
     }
     async init() {
+      this.conditionalVisibility();
       if (this.trigger === "onload") {
         this.isLoading = true;
-        this.conditionalVisibility();
         if (this.productId)
           this.scrollIntoView();
         await this.handleAzureRequest();
