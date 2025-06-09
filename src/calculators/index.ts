@@ -10,11 +10,6 @@ export const calculators = () => {
   const repaymentValueSlider = queryElement<HTMLInputElement>(`[data-input="RepaymentValue"]`);
   const depositAmountSlider = queryElement<HTMLInputElement>(`[data-input="DepositAmountSlider"]`);
   const rateSlider = queryElement<HTMLInputElement>(`[data-input="Rate"]`);
-  // const repaymentValueSlider = document.getElementById('RepaymentValue') as HTMLInputElement | null;
-  // const depositAmountSlider = document.getElementById(
-  //   'DepositAmountSlider'
-  // ) as HTMLInputElement | null;
-  // const rateSlider = document.querySelector('[data-input="Rate"]') as HTMLInputElement | null;
 
   if (repaymentValueSlider)
     repaymentValueSlider.setAttribute(`${attr}-output`, 'BorrowingAmountHigher');
