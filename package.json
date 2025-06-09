@@ -32,7 +32,12 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "release": "changeset publish",
-    "update": "pnpm update -i -L -r"
+    "update": "pnpm update -i -L -r",
+    "feature": "node scripts/feature.js",
+    "bug": "node scripts/bug.js",
+    "commit": "node scripts/commit.js",
+    "push:branch": "node scripts/push-branch.js",
+    "merge:into": "node scripts/merge-into.js"
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.0",
