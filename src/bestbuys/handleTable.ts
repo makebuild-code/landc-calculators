@@ -21,6 +21,7 @@ const API_ENDPOINT = API_ENDPOINTS.productsTrigger;
 export class HandleTable {
   component: HTMLDivElement;
   private template: HTMLDivElement;
+  private trigger: 'onload' | 'onclick' = 'onload';
   private clone: HTMLDivElement;
   private inputs: Input[];
   private conditionals: HTMLDivElement[];
@@ -32,6 +33,10 @@ export class HandleTable {
   private isLoading: boolean;
   private loadMoreWrapper: HTMLDivElement;
   private loadMore: HTMLButtonElement;
+  private scaffoldWrapper: HTMLDivElement;
+  private scaffoldCover: HTMLDivElement;
+  private scaffoldResult: HTMLDivElement;
+  private removeScaffold: boolean = true;
   private numberOfResultsShown: number;
   private productId: string | null;
   private formattedValues: Inputs;
@@ -39,6 +44,7 @@ export class HandleTable {
 
   constructor(component: HTMLDivElement) {
     this.component = component;
+    this.trigger = component.dataset.bbTrigger === 'onclick' ? 'onclick' : 'onload';
     this.template = queryElement(`[${attr}-el="template"]`, component) as HTMLDivElement;
     this.clone = this.template.cloneNode(true) as HTMLDivElement;
     this.clone.removeAttribute('data-bb-el');
@@ -52,6 +58,18 @@ export class HandleTable {
     this.isLoading = false;
     this.loadMoreWrapper = queryElement(`[${attr}-el="load-more"]`, component) as HTMLDivElement;
     this.loadMore = queryElement('button', this.loadMoreWrapper) as HTMLButtonElement;
+    this.scaffoldWrapper = queryElement(
+      `[${attr}-el="scaffold-wrapper"]`,
+      component
+    ) as HTMLDivElement;
+    this.scaffoldCover = queryElement(
+      `[${attr}-el="scaffold-cover"]`,
+      this.scaffoldWrapper
+    ) as HTMLDivElement;
+    this.scaffoldResult = queryElement(
+      `[${attr}-el="scaffold-result"]`,
+      this.scaffoldWrapper
+    ) as HTMLDivElement;
     this.numberOfResultsShown = 0;
 
     const url = new URL(window.location.href);
@@ -60,12 +78,25 @@ export class HandleTable {
     this.formattedValues = this.getValues();
   }
 
+  private hideScaffold(): void {
+    this.scaffoldWrapper.classList.remove(...this.scaffoldWrapper.classList);
+    this.scaffoldCover.remove();
+    this.scaffoldResult.remove();
+  }
+
   async init(): Promise<void> {
-    this.isLoading = true;
     this.conditionalVisibility();
-    if (this.productId) this.scrollIntoView();
-    await this.handleAzureRequest();
-    if (this.productId) this.scrollIntoView(this.productId);
+    if (this.trigger === 'onload') {
+      this.isLoading = true;
+      if (this.productId) this.scrollIntoView();
+      await this.handleAzureRequest();
+      if (this.productId) this.scrollIntoView(this.productId);
+    } else if (this.trigger === 'onclick') {
+      this.loading.style.display = 'none';
+      this.noResults.style.display = 'none';
+      this.resultsList.style.display = 'none';
+      this.loadMoreWrapper.style.display = 'none';
+    }
 
     this.bindEvents();
   }
@@ -161,6 +192,10 @@ export class HandleTable {
   }
 
   private toggleLoading(success?: boolean): void {
+    if (this.removeScaffold) {
+      this.hideScaffold();
+      this.removeScaffold = false;
+    }
     this.isLoading = !this.isLoading;
     if (this.isLoading) {
       this.loading.style.display = 'block';
