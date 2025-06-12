@@ -279,7 +279,6 @@ export class CostOfDoingNothingCalculator {
       }
 
       const result = await response.json();
-      console.log(result.result.data);
       this.populateCurrentLenderDropdown(result.result.data);
       this.updateFollowOnField(); // Update FollowOn field after dropdown is populated
     } catch (error) {

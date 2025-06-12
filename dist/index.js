@@ -16032,21 +16032,16 @@
 
   // src/calculators/index.ts
   var calculators = () => {
-    const repaymentValueSlider = document.getElementById("RepaymentValue");
-    const depositAmountSlider = document.getElementById(
-      "DepositAmountSlider"
-    );
-    const rateSlider = document.querySelector('[data-input="Rate"]');
-    if (repaymentValueSlider) {
-      repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
-    }
-    if (depositAmountSlider) {
-      depositAmountSlider.setAttribute("data-calc-output", "DepositAmount");
-    }
-    if (rateSlider) {
-      rateSlider.setAttribute("data-calc-output", "InitialRate");
-    }
     const attr7 = "data-calc";
+    const repaymentValueSlider = queryElement(`[data-input="RepaymentValue"]`);
+    const depositAmountSlider = queryElement(`[data-input="DepositAmountSlider"]`);
+    const rateSlider = queryElement(`[data-input="Rate"]`);
+    if (repaymentValueSlider)
+      repaymentValueSlider.setAttribute(`${attr7}-output`, "BorrowingAmountHigher");
+    if (depositAmountSlider)
+      depositAmountSlider.setAttribute(`${attr7}-output`, "DepositAmount");
+    if (rateSlider)
+      rateSlider.setAttribute(`${attr7}-output`, "InitialRate");
     const components2 = queryElements(`[${attr7}]`);
     components2.forEach((component) => {
       const calculator = new HandleCalculator(component);
@@ -16336,7 +16331,6 @@
           throw new Error(`API responded with status ${response.status}`);
         }
         const result = await response.json();
-        console.log("CODN Result: ", result);
         this.outputHandler.displayResults(result);
       } catch (error) {
         console.error("Error retrieving calculation", error);
@@ -16356,7 +16350,6 @@
           throw new Error(`API responded with status ${response.status}`);
         }
         const result = await response.json();
-        console.log(result.result.data);
         this.populateCurrentLenderDropdown(result.result.data);
         this.updateFollowOnField();
       } catch (error) {
@@ -16377,7 +16370,6 @@
           throw new Error(`API responded with status ${response.status}`);
         }
         const result = await response.json();
-        console.log("Best buy result is: ", result.result.data[0]);
         return result.result.data[0];
       } catch (error) {
         console.error("Error retrieving Best Buy data", error);
