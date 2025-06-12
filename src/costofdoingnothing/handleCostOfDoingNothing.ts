@@ -256,7 +256,6 @@ export class CostOfDoingNothingCalculator {
       }
 
       const result = await response.json();
-      console.log('CODN Result: ', result);
       this.outputHandler.displayResults(result);
     } catch (error) {
       console.error('Error retrieving calculation', error);
@@ -305,7 +304,6 @@ export class CostOfDoingNothingCalculator {
       }
 
       const result = await response.json();
-      console.log('Best buy result is: ', result.result.data[0]);
       return result.result.data[0] as BestBuyOutputs;
     } catch (error) {
       console.error('Error retrieving Best Buy data', error);
