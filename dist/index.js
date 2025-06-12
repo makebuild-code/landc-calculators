@@ -198,12 +198,12 @@
 
   // src/components/dialogs.ts
   var dialogs = () => {
-    const attr7 = "data-dialog";
-    const components2 = queryElements(`[${attr7}="component"]`);
+    const attr8 = "data-dialog";
+    const components2 = queryElements(`[${attr8}="component"]`);
     components2.forEach((component) => {
-      const open = queryElement(`[${attr7}="open"]`, component);
+      const open = queryElement(`[${attr8}="open"]`, component);
       const dialog = queryElement("dialog", component);
-      const close = queryElement(`[${attr7}="close"]`, component);
+      const close = queryElement(`[${attr8}="close"]`, component);
       if (!open || !dialog || !close)
         return;
       open.addEventListener("click", () => {
@@ -673,8 +673,8 @@
 
   // src/bestbuys/index.ts
   var bestbuys = () => {
-    const attr7 = "data-bb";
-    const components2 = queryElements(`[${attr7}]`);
+    const attr8 = "data-bb";
+    const components2 = queryElements(`[${attr8}]`);
     components2.forEach((component) => {
       const { bb } = component.dataset;
       if (!bb)
@@ -16032,22 +16032,17 @@
 
   // src/calculators/index.ts
   var calculators = () => {
-    const repaymentValueSlider = document.getElementById("RepaymentValue");
-    const depositAmountSlider = document.getElementById(
-      "DepositAmountSlider"
-    );
-    const rateSlider = document.querySelector('[data-input="Rate"]');
-    if (repaymentValueSlider) {
-      repaymentValueSlider.setAttribute("data-calc-output", "BorrowingAmountHigher");
-    }
-    if (depositAmountSlider) {
-      depositAmountSlider.setAttribute("data-calc-output", "DepositAmount");
-    }
-    if (rateSlider) {
-      rateSlider.setAttribute("data-calc-output", "InitialRate");
-    }
-    const attr7 = "data-calc";
-    const components2 = queryElements(`[${attr7}]`);
+    const attr8 = "data-calc";
+    const repaymentValueSlider = queryElement(`[data-input="RepaymentValue"]`);
+    const depositAmountSlider = queryElement(`[data-input="DepositAmountSlider"]`);
+    const rateSlider = queryElement(`[data-input="Rate"]`);
+    if (repaymentValueSlider)
+      repaymentValueSlider.setAttribute(`${attr8}-output`, "BorrowingAmountHigher");
+    if (depositAmountSlider)
+      depositAmountSlider.setAttribute(`${attr8}}-output`, "DepositAmount");
+    if (rateSlider)
+      rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
+    const components2 = queryElements(`[${attr8}]`);
     components2.forEach((component) => {
       const calculator = new HandleCalculator(component);
       calculator.init();
@@ -16432,6 +16427,196 @@
     }
   };
 
+  // src/mct/constants.ts
+  var componentAttr = "data-mct";
+  var attr7 = {
+    component: "data-mct",
+    stage: "data-mct-stage",
+    output: "data-mct-output",
+    results: "data-mct-results",
+    calendar: "data-mct-calendar",
+    questions: {
+      components: "data-mct-questions",
+      item: "data-mct-questions-item",
+      dependsOn: "data-mct-questions-depends-on",
+      dependsOnValue: "data-mct-questions-depends-on-value",
+      group: "data-mct-questions-group"
+    }
+  };
+  var classes = {
+    active: "is-active"
+  };
+
+  // src/mct/handleQuestionItem.ts
+  var HandleQuestionItem = class {
+    constructor(component) {
+      this.value = null;
+      this.component = component;
+      this.id = this.component.getAttribute(attr7.questions.item);
+      this.inputs = queryElements("input, select, textarea", this.component);
+      const dependsOn = this.component.getAttribute(attr7.questions.dependsOn);
+      const value = this.component.getAttribute(attr7.questions.dependsOnValue);
+      this.condition = dependsOn && value ? { dependsOn, value } : void 0;
+      this.init();
+    }
+    init() {
+      console.log(this);
+    }
+  };
+
+  // src/mct/handleQuestionGroup.ts
+  var HandleQuestionGroup = class {
+    constructor(component) {
+      this.questions = [];
+      this.component = component;
+      this.id = this.component.getAttribute(attr7.questions.group);
+      this.for = this.component.getAttribute(attr7.questions.groupFor);
+      this.questions = queryElements(`[${attr7.questions.item}]`, this.component).map(
+        (question) => new HandleQuestionItem(question)
+      );
+      this.init();
+    }
+    init() {
+      console.log(this);
+    }
+  };
+
+  // src/mct/handleQuestions.ts
+  var HandleQuestions = class {
+    constructor(component) {
+      this.groups = [];
+      // private currentGroup: HTMLDivElement;
+      this.currentGroupIndex = 0;
+      this.currentItemsIndex = 0;
+      this.totalItems = 0;
+      this.items = [];
+      this.itemsCount = 0;
+      this.customerType = null;
+      this.component = component;
+      this.scroll = queryElement(
+        `[${attr7.questions.components}="scroll"]`,
+        this.component
+      );
+      this.wrapper = queryElement(
+        `[${attr7.questions.components}="wrapper"]`,
+        this.scroll
+      );
+      this.groups = queryElements(`[${attr7.questions.group}]`, this.component).map(
+        (group) => new HandleQuestionGroup(group)
+      );
+      this.items = queryElements(
+        `[${attr7.questions.components}="item"]`,
+        this.wrapper
+      );
+      this.itemsCount = this.items.length;
+      [this.firstItem] = this.items;
+      this.lastItem = this.items[this.itemsCount - 1];
+      this.nextButton = queryElement(
+        `[${attr7.questions.components}="next"]`,
+        this.component
+      );
+      this.prevButton = queryElement(
+        `[${attr7.questions.components}="previous"]`,
+        this.component
+      );
+      this.init();
+    }
+    init() {
+      console.log(this);
+      this.prepareWrapper();
+      this.handleButtons();
+      this.bindEvents();
+      this.handleCurrentItem();
+    }
+    prepareWrapper() {
+      this.wrapper.style.paddingTop = this.scroll.offsetHeight / 2 - this.firstItem.offsetHeight / 2 + "px";
+      this.wrapper.style.paddingBottom = this.scroll.offsetHeight / 2 - this.lastItem.offsetHeight / 2 + "px";
+    }
+    goToItem(index2) {
+      if (index2 < 0 || index2 >= this.itemsCount)
+        return;
+      const item = this.items[index2];
+      this.items[this.currentItemsIndex].classList.remove(classes.active);
+      item.classList.add(classes.active);
+      this.scroll.scrollTo({
+        top: item.offsetTop - this.scroll.offsetHeight / 2 + item.offsetHeight / 2,
+        behavior: "smooth"
+      });
+      this.currentItemsIndex = index2;
+      this.handleButtons();
+      this.handleCurrentItem();
+    }
+    bindEvents() {
+      this.nextButton.addEventListener("click", () => {
+        this.goToItem(this.currentItemsIndex + 1);
+      });
+      this.prevButton.addEventListener("click", () => {
+        this.goToItem(this.currentItemsIndex - 1);
+      });
+    }
+    handleButtons() {
+      this.nextButton.disabled = this.currentItemsIndex >= this.itemsCount - 1;
+      this.prevButton.disabled = this.currentItemsIndex <= 0;
+    }
+    handleCurrentItem() {
+      const item = this.items[this.currentItemsIndex];
+      const inputs = queryElements(
+        "input, select, textarea",
+        item
+      );
+      this.nextButton.disabled = !inputs.some((input) => {
+        if (input instanceof HTMLInputElement && input.type === "checkbox" || input.type === "radio")
+          return input.checked;
+        return input.value.trim() !== "";
+      });
+      inputs.forEach((input) => {
+        input.addEventListener("change", () => {
+          this.nextButton.disabled = false;
+        });
+      });
+    }
+  };
+
+  // src/mct/handleMCT.ts
+  var handleMCT = class {
+    constructor(component) {
+      this.component = component;
+      this.componentQuestions = queryElement(
+        `[${attr7.stage}="questions"]`,
+        this.component
+      );
+      this.componentOutput = queryElement(
+        `[${attr7.stage}="output"]`,
+        this.component
+      );
+      this.componentResults = queryElement(
+        `[${attr7.stage}="results"]`,
+        this.component
+      );
+      this.componentCalendar = queryElement(
+        `[${attr7.stage}="calendar"]`,
+        this.component
+      );
+      this.init();
+    }
+    init() {
+      console.log(this);
+      if (this.componentQuestions)
+        this.initQuestions();
+    }
+    initQuestions() {
+      const questions = new HandleQuestions(this.componentQuestions);
+    }
+  };
+
+  // src/mct/index.ts
+  var mct = () => {
+    const component = queryElement(`[${componentAttr}="component"]`);
+    if (!component)
+      return;
+    new handleMCT(component);
+  };
+
   // src/index.ts
   window.Webflow ||= [];
   window.Webflow.push(() => {
@@ -16439,6 +16624,7 @@
     bestbuys();
     calculators();
     costOfDoingNothing();
+    mct();
   });
 })();
 /*! Bundled license information:
