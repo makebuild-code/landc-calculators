@@ -33,8 +33,8 @@ export const initQuestionsStage = () => {
   prepareWrapper();
 
   [currentGroup] = groups;
-  // currentGroup.show();
-  // handleInputChange(currentGroup.getCurrentQuestion().isValid() ?? false);
+  currentGroup.show();
+  handleInputChange(currentGroup.getCurrentQuestion().isValid() ?? false);
 
   component.addEventListener('mct:navigation:update', (event: Event) => {
     const { nextEnabled, prevEnabled } = (event as CustomEvent).detail;

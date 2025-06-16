@@ -35,10 +35,10 @@ export class QuestionGroup {
         () => this.handleEnter(index)
       );
       if (index !== 0) question.disable();
-      // if (question.dependsOn && question.dependsOnValue) {
-      //   question.hide();
-      //   question.isHidden = true;
-      // }
+      if (question.dependsOn && question.dependsOnValue) {
+        question.hide();
+        question.isHidden = true;
+      }
       return question;
     });
   }
@@ -49,7 +49,7 @@ export class QuestionGroup {
 
     const question = this.questions[index];
     this.answers[question.name] = question.getValue()?.toString() ?? '';
-    // this.evaluateVisibility();
+    this.evaluateVisibility();
     this.onInputChange(question.isValid());
   }
 
@@ -81,10 +81,10 @@ export class QuestionGroup {
         question.hide();
         question.isHidden = true;
 
-        // // Edge case: you're on a question that just became hidden
-        // if (this.currentQuestionIndex === i) {
-        //   this.advance(); // or call recursively to skip forward
-        // }
+        // Edge case: you're on a question that just became hidden
+        if (this.currentQuestionIndex === i) {
+          this.advance(); // or call recursively to skip forward
+        }
       }
     });
   }
@@ -96,9 +96,9 @@ export class QuestionGroup {
 
     const nextIndex = this.currentQuestionIndex + 1;
 
-    // while (nextIndex < this.questions.length && this.questions[nextIndex].isHidden) {
-    //   nextIndex++;
-    // }
+    while (nextIndex < this.questions.length && this.questions[nextIndex].isHidden) {
+      nextIndex++;
+    }
 
     if (nextIndex < this.questions.length) {
       this.currentQuestionIndex = nextIndex;
@@ -125,9 +125,9 @@ export class QuestionGroup {
     this.currentQuestionIndex = prevIndex;
     const prevItem = this.getCurrentQuestion();
 
-    // while (prevIndex < this.questions.length && this.questions[prevIndex].isHidden) {
-    //   prevIndex -= 1;
-    // }
+    while (prevIndex < this.questions.length && this.questions[prevIndex].isHidden) {
+      prevIndex -= 1;
+    }
 
     prevItem.enable();
     prevItem.focus();
