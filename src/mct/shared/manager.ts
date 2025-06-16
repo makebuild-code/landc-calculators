@@ -7,11 +7,13 @@ interface State {
     currentQuestionIndex: number;
     answers: Record<string, string>;
     groups: QuestionGroup[];
+    componentEl: HTMLElement | null;
   };
 }
 
 const state: State = {
   questions: {
+    componentEl: null,
     currentGroupIndex: 0,
     currentQuestionIndex: 0,
     answers: {},
@@ -24,7 +26,20 @@ export const manager = {
     state.questions.groups.push(group);
   },
 
-  saveAnswer(key: string, value: string) {
+  getGroups() {
+    return state.questions.groups;
+  },
+
+  setComponentEl(el: HTMLElement) {
+    state.questions.componentEl = el;
+  },
+
+  getComponent(): HTMLElement {
+    if (!state.questions.componentEl) throw new Error('Component not set');
+    return state.questions.componentEl;
+  },
+
+  setAnswer(key: string, value: string) {
     state.questions.answers[key] = value;
   },
 
@@ -32,8 +47,8 @@ export const manager = {
     return state.questions.answers[key];
   },
 
-  getGroups() {
-    return state.questions.groups;
+  getAnswers() {
+    return { ...state.questions.answers };
   },
 
   getFirstQuestion(): QuestionItem | undefined {
@@ -41,7 +56,7 @@ export const manager = {
   },
 
   getLastQuestion(): QuestionItem | undefined {
-    return state.questions.groups.at(-1)?.questions.at(-1);
+    return state.questions.groups.at(state.questions.currentGroupIndex)?.questions.at(-1);
   },
 
   nextGroup() {
@@ -50,11 +65,12 @@ export const manager = {
     if (next) next.show();
   },
 
-  resetJourney() {
+  reset() {
     state.questions.currentGroupIndex = 0;
     state.questions.currentQuestionIndex = 0;
     state.questions.answers = {};
     state.questions.groups.forEach((group) => group.reset());
+    state.questions.componentEl = null;
   },
 
   getState() {
