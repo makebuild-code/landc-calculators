@@ -1,11 +1,7 @@
-import { queryElement } from '$utils/queryElement';
-
-import { componentAttr } from './constants';
-import { handleMCT } from './handleMCT';
+import { initDOMRefs } from './shared/dom';
+import { initQuestionsStage } from './stages/questions';
 
 export const mct = () => {
-  const component = queryElement<HTMLDivElement>(`[${componentAttr}="component"]`);
-  if (!component) return;
-
-  new handleMCT(component);
+  initDOMRefs();
+  initQuestionsStage();
 };

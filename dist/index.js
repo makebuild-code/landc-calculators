@@ -74,11 +74,11 @@
   var attr = "data-mini";
   var API_ENDPOINT = API_ENDPOINTS.productsTrigger;
   var HandleMini = class {
-    constructor(component) {
-      this.component = component;
+    constructor(component2) {
+      this.component = component2;
       this.values = this.getValues();
-      this.rows = queryElements(`[${attr}-el="row"]`, component);
-      this.loader = queryElement(`[${attr}-el="loader"]`, component);
+      this.rows = queryElements(`[${attr}-el="row"]`, component2);
+      this.loader = queryElement(`[${attr}-el="loader"]`, component2);
       this.isLoading = true;
     }
     init() {
@@ -151,6 +151,8 @@
       const headers = new Headers();
       headers.append("Content-Type", "application/json");
       const body = JSON.stringify({ input: this.values });
+      console.log(headers);
+      console.log(body);
       const response = await fetch(API_ENDPOINT, {
         method: "POST",
         headers,
@@ -200,10 +202,10 @@
   var dialogs = () => {
     const attr8 = "data-dialog";
     const components2 = queryElements(`[${attr8}="component"]`);
-    components2.forEach((component) => {
-      const open = queryElement(`[${attr8}="open"]`, component);
-      const dialog = queryElement("dialog", component);
-      const close = queryElement(`[${attr8}="close"]`, component);
+    components2.forEach((component2) => {
+      const open = queryElement(`[${attr8}="open"]`, component2);
+      const dialog = queryElement("dialog", component2);
+      const close = queryElement(`[${attr8}="close"]`, component2);
       if (!open || !dialog || !close)
         return;
       open.addEventListener("click", () => {
@@ -340,27 +342,27 @@
   var attr2 = "data-bb";
   var API_ENDPOINT2 = API_ENDPOINTS.productsTrigger;
   var HandleTable = class {
-    constructor(component) {
+    constructor(component2) {
       this.trigger = "onload";
       this.removeScaffold = true;
-      this.component = component;
-      this.trigger = component.dataset.bbTrigger === "onclick" ? "onclick" : "onload";
-      this.template = queryElement(`[${attr2}-el="template"]`, component);
+      this.component = component2;
+      this.trigger = component2.dataset.bbTrigger === "onclick" ? "onclick" : "onload";
+      this.template = queryElement(`[${attr2}-el="template"]`, component2);
       this.clone = this.template.cloneNode(true);
       this.clone.removeAttribute("data-bb-el");
-      this.inputs = queryElements(`[data-input], input, select`, component);
-      this.conditionals = queryElements(`[data-conditions]`, component);
-      this.buttons = queryElements(`[${attr2}-el="button"]`, component);
-      this.sort = queryElement(`[data-input="SortColumn"]`, component);
+      this.inputs = queryElements(`[data-input], input, select`, component2);
+      this.conditionals = queryElements(`[data-conditions]`, component2);
+      this.buttons = queryElements(`[${attr2}-el="button"]`, component2);
+      this.sort = queryElement(`[data-input="SortColumn"]`, component2);
       this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
-      this.loading = queryElement(`[${attr2}-el="loading"]`, component);
-      this.noResults = queryElement(`[${attr2}-el="no-results"]`, component);
+      this.loading = queryElement(`[${attr2}-el="loading"]`, component2);
+      this.noResults = queryElement(`[${attr2}-el="no-results"]`, component2);
       this.isLoading = false;
-      this.loadMoreWrapper = queryElement(`[${attr2}-el="load-more"]`, component);
+      this.loadMoreWrapper = queryElement(`[${attr2}-el="load-more"]`, component2);
       this.loadMore = queryElement("button", this.loadMoreWrapper);
       this.scaffoldWrapper = queryElement(
         `[${attr2}-el="scaffold-wrapper"]`,
-        component
+        component2
       );
       this.scaffoldCover = queryElement(
         `[${attr2}-el="scaffold-cover"]`,
@@ -651,22 +653,22 @@
       dialogs();
     }
     scrollIntoView(productId) {
-      let component;
+      let component2;
       if (!productId) {
-        component = queryElement(".best-buy_main");
+        component2 = queryElement(".best-buy_main");
       } else {
-        component = queryElement(
+        component2 = queryElement(
           `.bb-result_component[data-productId="${productId}"]`,
           this.resultsList
         );
-        const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component);
+        const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component2);
         if (!moreToggle)
           return;
         simulateEvent(moreToggle, "click");
       }
-      if (!component)
+      if (!component2)
         return;
-      component.scrollIntoView({ behavior: "instant" });
+      component2.scrollIntoView({ behavior: "instant" });
       window.scrollBy(0, -32);
     }
   };
@@ -675,11 +677,11 @@
   var bestbuys = () => {
     const attr8 = "data-bb";
     const components2 = queryElements(`[${attr8}]`);
-    components2.forEach((component) => {
-      const { bb } = component.dataset;
+    components2.forEach((component2) => {
+      const { bb } = component2.dataset;
       if (!bb)
         return;
-      const bestbuy = bb === "table" ? new HandleTable(component) : bb === "mini" ? new HandleMini(component) : null;
+      const bestbuy = bb === "table" ? new HandleTable(component2) : bb === "mini" ? new HandleMini(component2) : null;
       if (bestbuy === null)
         return;
       bestbuy.init();
@@ -9185,11 +9187,11 @@
         }
       });
     }
-    _exec(method, registry2, component) {
+    _exec(method, registry2, component2) {
       const camelMethod = _capitalize(method);
-      callback(component["before" + camelMethod], [], component);
-      registry2[method](component);
-      callback(component["after" + camelMethod], [], component);
+      callback(component2["before" + camelMethod], [], component2);
+      registry2[method](component2);
+      callback(component2["after" + camelMethod], [], component2);
     }
     _getRegistryForType(type) {
       for (let i = 0; i < this._typedRegistries.length; i++) {
@@ -15749,9 +15751,9 @@
   var API_ENDPOINT3 = API_ENDPOINTS.calculatorTrigger;
   var API_ENDPOINT_PRODUCT = API_ENDPOINTS.productsTrigger;
   var HandleCalculator = class _HandleCalculator {
-    constructor(component) {
-      this.name = component.dataset.calc;
-      this.component = component;
+    constructor(component2) {
+      this.name = component2.dataset.calc;
+      this.component = component2;
       this.config = calculatorConfig[this.name];
       this.inputs = new HandleInputs(this);
       this.outputs = new HandleOutputs(this);
@@ -16043,8 +16045,8 @@
     if (rateSlider)
       rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
     const components2 = queryElements(`[${attr8}]`);
-    components2.forEach((component) => {
-      const calculator = new HandleCalculator(component);
+    components2.forEach((component2) => {
+      const calculator = new HandleCalculator(component2);
       calculator.init();
     });
   };
@@ -16057,9 +16059,9 @@
   // src/costofdoingnothing/handleCODNOutputs.ts
   var attr6 = "data-calc";
   var HandleCODNOutputs = class {
-    constructor(component) {
-      this.component = component;
-      this.outputs = queryElements(`[${attr6}-output]`, component);
+    constructor(component2) {
+      this.component = component2;
+      this.outputs = queryElements(`[${attr6}-output]`, component2);
     }
     displayResults(result) {
       this.result = result;
@@ -16116,20 +16118,20 @@
 
   // src/costofdoingnothing/handleCostOfDoingNothing.ts
   var CostOfDoingNothingCalculator = class {
-    constructor(component) {
-      this.component = component;
-      this.inputs = queryElements(`[data-input], input, select`, component);
-      this.buttons = queryElements(`[data-calc-el="button"]`, component);
-      this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component);
+    constructor(component2) {
+      this.component = component2;
+      this.inputs = queryElements(`[data-input], input, select`, component2);
+      this.buttons = queryElements(`[data-calc-el="button"]`, component2);
+      this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component2);
       this.buttonsLoader = queryElement(
         `[data-calc-el="button-loader"]`,
-        component
+        component2
       );
-      this.currentLenderDropdown = queryElement(`#CurrentLender`, component);
-      this.mortgageTypeDropdown = queryElement(`#MortgageType`, component);
-      this.followOnField = queryElement(`#FollowOn`, component);
+      this.currentLenderDropdown = queryElement(`#CurrentLender`, component2);
+      this.mortgageTypeDropdown = queryElement(`#MortgageType`, component2);
+      this.followOnField = queryElement(`#FollowOn`, component2);
       this.isLoading = false;
-      this.outputHandler = new HandleCODNOutputs(component);
+      this.outputHandler = new HandleCODNOutputs(component2);
       this.bindEvents();
       this.init();
     }
@@ -16421,200 +16423,498 @@
 
   // src/costofdoingnothing/index.ts
   var costOfDoingNothing = () => {
-    const component = document.querySelector('[data-calc="costofdoingnothing"]');
-    if (component) {
-      new CostOfDoingNothingCalculator(component);
+    const component2 = document.querySelector('[data-calc="costofdoingnothing"]');
+    if (component2) {
+      new CostOfDoingNothingCalculator(component2);
     }
   };
 
-  // src/mct/constants.ts
-  var componentAttr = "data-mct";
-  var attr7 = {
+  // src/mct/shared/constants.ts
+  var globalAttr = {
     component: "data-mct",
-    stage: "data-mct-stage",
-    output: "data-mct-output",
-    results: "data-mct-results",
-    calendar: "data-mct-calendar",
-    questions: {
-      components: "data-mct-questions",
-      item: "data-mct-questions-item",
-      dependsOn: "data-mct-questions-depends-on",
-      dependsOnValue: "data-mct-questions-depends-on-value",
-      group: "data-mct-questions-group"
-    }
+    stage: "data-mct-stage"
   };
   var classes = {
     active: "is-active"
   };
 
-  // src/mct/handleQuestionItem.ts
-  var HandleQuestionItem = class {
-    constructor(component) {
-      this.value = null;
-      this.component = component;
-      this.id = this.component.getAttribute(attr7.questions.item);
-      this.inputs = queryElements("input, select, textarea", this.component);
-      const dependsOn = this.component.getAttribute(attr7.questions.dependsOn);
-      const value = this.component.getAttribute(attr7.questions.dependsOnValue);
-      this.condition = dependsOn && value ? { dependsOn, value } : void 0;
-      this.init();
+  // src/mct/shared/dom.ts
+  var component = null;
+  var stages = {};
+  var initDOMRefs = () => {
+    component = queryElement(`[${globalAttr.component}="component"]`);
+    if (!component)
+      throw new Error("MCT component wrapper not found");
+    const stageElements = queryElements(`[${globalAttr.stage}]`, component);
+    stageElements.forEach((stage) => {
+      const name = stage.getAttribute(globalAttr.stage);
+      if (name)
+        stages[name] = stage;
+    });
+  };
+  var getStage = (name) => {
+    const stage = stages[name];
+    if (!stage)
+      throw new Error(`Stage '${name}' not found`);
+    return stage;
+  };
+
+  // src/mct/shared/manager.ts
+  var state = {
+    questions: {
+      currentGroupIndex: 0,
+      currentQuestionIndex: 0,
+      answers: {},
+      groups: []
     }
-    init() {
-      console.log(this);
+  };
+  var manager = {
+    registerGroup(group) {
+      state.questions.groups.push(group);
+    },
+    saveAnswer(key, value) {
+      state.questions.answers[key] = value;
+    },
+    getAnswer(key) {
+      return state.questions.answers[key];
+    },
+    getGroups() {
+      return state.questions.groups;
+    },
+    getFirstQuestion() {
+      return state.questions.groups[0].questions[0];
+    },
+    getLastQuestion() {
+      return state.questions.groups.at(-1)?.questions.at(-1);
+    },
+    nextGroup() {
+      state.questions.currentGroupIndex += 1;
+      const next = state.questions.groups[state.questions.currentGroupIndex];
+      if (next)
+        next.show();
+    },
+    resetJourney() {
+      state.questions.currentGroupIndex = 0;
+      state.questions.currentQuestionIndex = 0;
+      state.questions.answers = {};
+      state.questions.groups.forEach((group) => group.reset());
+    },
+    getState() {
+      return { ...state };
     }
   };
 
-  // src/mct/handleQuestionGroup.ts
-  var HandleQuestionGroup = class {
-    constructor(component) {
-      this.questions = [];
-      this.component = component;
-      this.id = this.component.getAttribute(attr7.questions.group);
-      this.for = this.component.getAttribute(attr7.questions.groupFor);
-      this.questions = queryElements(`[${attr7.questions.item}]`, this.component).map(
-        (question) => new HandleQuestionItem(question)
-      );
-      this.init();
-    }
-    init() {
-      console.log(this);
-    }
+  // src/mct/stages/questions/constants.ts
+  var attr7 = {
+    components: "data-mct-questions",
+    item: "data-mct-questions-item",
+    dependsOn: "data-mct-questions-depends-on",
+    dependsOnValue: "data-mct-questions-depends-on-value",
+    group: "data-mct-questions-group"
   };
 
-  // src/mct/handleQuestions.ts
-  var HandleQuestions = class {
-    constructor(component) {
-      this.groups = [];
-      // private currentGroup: HTMLDivElement;
-      this.currentGroupIndex = 0;
-      this.currentItemsIndex = 0;
-      this.totalItems = 0;
-      this.items = [];
-      this.itemsCount = 0;
-      this.customerType = null;
-      this.component = component;
-      this.scroll = queryElement(
-        `[${attr7.questions.components}="scroll"]`,
-        this.component
-      );
-      this.wrapper = queryElement(
-        `[${attr7.questions.components}="wrapper"]`,
-        this.scroll
-      );
-      this.groups = queryElements(`[${attr7.questions.group}]`, this.component).map(
-        (group) => new HandleQuestionGroup(group)
-      );
-      this.items = queryElements(
-        `[${attr7.questions.components}="item"]`,
-        this.wrapper
-      );
-      this.itemsCount = this.items.length;
-      [this.firstItem] = this.items;
-      this.lastItem = this.items[this.itemsCount - 1];
-      this.nextButton = queryElement(
-        `[${attr7.questions.components}="next"]`,
-        this.component
-      );
-      this.prevButton = queryElement(
-        `[${attr7.questions.components}="previous"]`,
-        this.component
-      );
-      this.init();
+  // src/mct/stages/questions/QuestionItem.ts
+  var QuestionItem = class {
+    constructor(el, onChange, onEnter) {
+      this.inputs = [];
+      this.isHidden = false;
+      this.el = el;
+      this.onChange = onChange;
+      this.onEnter = onEnter;
+      this.inputs = queryElements("input", this.el);
+      this.type = this.detectType();
+      this.name = this.el.getAttribute(attr7.item);
+      this.dependsOn = this.el.getAttribute(attr7.dependsOn) || null;
+      this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
+      this.bindEventListeners();
     }
-    init() {
-      console.log(this);
-      this.prepareWrapper();
-      this.handleButtons();
-      this.bindEvents();
-      this.handleCurrentItem();
-    }
-    prepareWrapper() {
-      this.wrapper.style.paddingTop = this.scroll.offsetHeight / 2 - this.firstItem.offsetHeight / 2 + "px";
-      this.wrapper.style.paddingBottom = this.scroll.offsetHeight / 2 - this.lastItem.offsetHeight / 2 + "px";
-    }
-    goToItem(index2) {
-      if (index2 < 0 || index2 >= this.itemsCount)
-        return;
-      const item = this.items[index2];
-      this.items[this.currentItemsIndex].classList.remove(classes.active);
-      item.classList.add(classes.active);
-      this.scroll.scrollTo({
-        top: item.offsetTop - this.scroll.offsetHeight / 2 + item.offsetHeight / 2,
-        behavior: "smooth"
-      });
-      this.currentItemsIndex = index2;
-      this.handleButtons();
-      this.handleCurrentItem();
-    }
-    bindEvents() {
-      this.nextButton.addEventListener("click", () => {
-        this.goToItem(this.currentItemsIndex + 1);
-      });
-      this.prevButton.addEventListener("click", () => {
-        this.goToItem(this.currentItemsIndex - 1);
-      });
-    }
-    handleButtons() {
-      this.nextButton.disabled = this.currentItemsIndex >= this.itemsCount - 1;
-      this.prevButton.disabled = this.currentItemsIndex <= 0;
-    }
-    handleCurrentItem() {
-      const item = this.items[this.currentItemsIndex];
-      const inputs = queryElements(
-        "input, select, textarea",
-        item
-      );
-      this.nextButton.disabled = !inputs.some((input) => {
-        if (input instanceof HTMLInputElement && input.type === "checkbox" || input.type === "radio")
-          return input.checked;
-        return input.value.trim() !== "";
-      });
-      inputs.forEach((input) => {
+    bindEventListeners() {
+      this.inputs.forEach((input) => {
         input.addEventListener("change", () => {
-          this.nextButton.disabled = false;
+          const valid = this.isValid();
+          this.updateVisualState(valid);
+          this.onChange();
+        });
+        input.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter")
+            return;
+          if (this.isValid()) {
+            this.onEnter();
+          } else {
+            this.updateVisualState(false);
+          }
         });
       });
     }
+    isValid() {
+      const value = this.getValue();
+      if (this.type === "radio")
+        return typeof value === "string" && value !== "";
+      if (this.type === "checkbox")
+        return Array.isArray(value) && value.length > 0;
+      if (this.type === "text")
+        return typeof value === "string" && value.trim() !== "";
+      if (this.type === "number")
+        return typeof value === "number" && !isNaN(value);
+      return false;
+    }
+    updateVisualState(isValid) {
+      this.el.classList.toggle("has-error", !isValid);
+    }
+    enable() {
+      this.inputs.forEach((input) => {
+        input.disabled = false;
+      });
+    }
+    focus() {
+      const input = this.inputs[0];
+      if (!input)
+        throw new Error("No input found to focus on");
+      input.focus();
+    }
+    disable() {
+      this.inputs.forEach((input) => {
+        input.disabled = true;
+      });
+    }
+    hide() {
+      this.el.style.display = "none";
+    }
+    show() {
+      this.el.style.removeProperty("display");
+    }
+    shouldBeVisible(answers) {
+      if (!this.dependsOn || !this.dependsOnValue)
+        return true;
+      return answers[this.dependsOn] === this.dependsOnValue;
+    }
+    detectType() {
+      const input = queryElement("input", this.el);
+      if (!input)
+        throw new Error('No "input" element found in question item');
+      if (input.type === "radio")
+        return "radio";
+      if (input.type === "checkbox")
+        return "checkbox";
+      if (input.type === "text")
+        return "text";
+      if (input.type === "number")
+        return "number";
+      throw new Error(`Unsupported input type: ${input.type}`);
+    }
+    getRadioValue() {
+      const checked = this.inputs.find((i) => i.checked);
+      return !!checked ? checked.value : null;
+    }
+    setRadioValue(value) {
+      const input = this.inputs.find((i) => i.value === value);
+      if (!input)
+        throw new Error(`No radio input found with value: ${value}`);
+      input.checked = true;
+    }
+    resetRadioInput() {
+      this.inputs.forEach((input) => {
+        input.checked = false;
+      });
+    }
+    getCheckboxValues() {
+      const checked = this.inputs.filter((i) => i.checked);
+      return checked.map((input) => input.value);
+    }
+    setCheckboxValues(values) {
+      this.inputs.forEach((input) => {
+        input.checked = values.includes(input.value);
+      });
+    }
+    resetCheckboxeInputs() {
+      this.inputs.forEach((input) => {
+        input.checked = false;
+      });
+    }
+    getTextValue() {
+      const input = this.inputs[0];
+      return input ? input.value : null;
+    }
+    setTextValue(value) {
+      const input = this.inputs[0];
+      if (!input)
+        throw new Error("No text input found for text question");
+      input.value = value;
+    }
+    resetTextInputs() {
+      const input = this.inputs[0];
+      if (!input)
+        throw new Error("No text input found for text question");
+      input.value = "";
+    }
+    getNumberValue() {
+      const input = this.inputs[0];
+      if (!input)
+        return null;
+      const value = parseFloat(input.value);
+      if (isNaN(value))
+        throw new Error("Invalid number input value");
+      return value;
+    }
+    setNumberValue(value) {
+      const input = this.inputs[0];
+      if (!input)
+        throw new Error("No number input found for number question");
+      input.value = value.toString();
+    }
+    resetNumberInput() {
+      const input = this.inputs[0];
+      if (!input)
+        throw new Error("No number input found for number question");
+      input.value = "";
+    }
+    getValue() {
+      switch (this.type) {
+        case "radio":
+          return this.getRadioValue();
+        case "checkbox":
+          return this.getCheckboxValues();
+        case "text":
+          return this.getTextValue();
+        case "number":
+          return this.getNumberValue();
+        default:
+          throw new Error(`Unsupported question type: ${this.type}`);
+      }
+    }
+    setValue(value) {
+      switch (this.type) {
+        case "radio":
+          this.setRadioValue(value);
+          break;
+        case "checkbox":
+          if (!Array.isArray(value)) {
+            throw new Error("Value for checkbox question must be an array");
+          }
+          this.setCheckboxValues(value);
+          break;
+        case "text":
+          this.setTextValue(value);
+          break;
+        case "number":
+          if (typeof value !== "number") {
+            throw new Error("Value for number question must be a number");
+          }
+          this.setNumberValue(value);
+          break;
+        default:
+          throw new Error(`Unsupported question type: ${this.type}`);
+      }
+    }
+    reset() {
+      switch (this.type) {
+        case "radio":
+          this.resetRadioInput();
+          break;
+        case "checkbox":
+          this.resetCheckboxeInputs();
+          break;
+        case "text":
+          this.resetTextInputs();
+          break;
+        case "number":
+          this.resetNumberInput();
+          break;
+        default:
+          throw new Error(`Unsupported question type: ${this.type}`);
+      }
+    }
   };
 
-  // src/mct/handleMCT.ts
-  var handleMCT = class {
-    constructor(component) {
-      this.component = component;
-      this.componentQuestions = queryElement(
-        `[${attr7.stage}="questions"]`,
-        this.component
-      );
-      this.componentOutput = queryElement(
-        `[${attr7.stage}="output"]`,
-        this.component
-      );
-      this.componentResults = queryElement(
-        `[${attr7.stage}="results"]`,
-        this.component
-      );
-      this.componentCalendar = queryElement(
-        `[${attr7.stage}="calendar"]`,
-        this.component
-      );
-      this.init();
-    }
-    init() {
-      console.log(this);
-      if (this.componentQuestions)
-        this.initQuestions();
+  // src/mct/stages/questions/utils/updateNavigation.ts
+  var updateNavigation = (options = {}) => {
+    const stageComponent = getStage("questions");
+    stageComponent.dispatchEvent(
+      new CustomEvent("mct:navigation:update", {
+        detail: options,
+        bubbles: false
+      })
+    );
+  };
+
+  // src/mct/stages/questions/QuestionGroup.ts
+  var QuestionGroup = class {
+    constructor(groupEl, onInputChange) {
+      this.currentQuestionIndex = 0;
+      this.answers = {};
+      this.groupEl = groupEl;
+      this.onInputChange = onInputChange;
+      this.questions = this.initQuestions();
+      this.scroll = queryElement(`[${attr7.components}="scroll"]`);
     }
     initQuestions() {
-      const questions = new HandleQuestions(this.componentQuestions);
+      const questionEls = queryElements(`[${attr7.item}]`, this.groupEl);
+      return questionEls.map((el, index2) => {
+        const question = new QuestionItem(
+          el,
+          () => this.onItemChange(index2),
+          () => this.handleEnter(index2)
+        );
+        if (index2 !== 0)
+          question.disable();
+        return question;
+      });
     }
+    onItemChange(index2) {
+      if (index2 !== this.currentQuestionIndex)
+        throw new Error(`Invalid question index: ${index2}. Expected: ${this.currentQuestionIndex}`);
+      const question = this.questions[index2];
+      this.answers[question.name] = question.getValue()?.toString() ?? "";
+      this.onInputChange(question.isValid());
+    }
+    handleEnter(index2) {
+      if (index2 !== this.currentQuestionIndex)
+        throw new Error(`Invalid question index: ${index2}. Expected: ${this.currentQuestionIndex}`);
+      const current = this.getCurrentQuestion();
+      if (current.isValid()) {
+        this.advance();
+        this.onInputChange(this.getCurrentQuestion().isValid() ?? false);
+      } else {
+        current.updateVisualState(false);
+      }
+    }
+    getCurrentQuestion() {
+      return this.questions[this.currentQuestionIndex];
+    }
+    evaluateVisibility() {
+      this.questions.forEach((question) => {
+        const shouldBeVisible = question.shouldBeVisible(this.answers);
+        if (shouldBeVisible && question.isHidden) {
+          question.show();
+          question.isHidden = false;
+        } else {
+          question.hide();
+          question.isHidden = true;
+        }
+      });
+    }
+    advance() {
+      const currentItem = this.getCurrentQuestion();
+      currentItem.disable();
+      currentItem.el.classList.remove(classes.active);
+      const nextIndex = this.currentQuestionIndex + 1;
+      if (nextIndex < this.questions.length) {
+        this.currentQuestionIndex = nextIndex;
+        const nextItem = this.getCurrentQuestion();
+        nextItem.enable();
+        nextItem.focus();
+        nextItem.el.classList.add(classes.active);
+        this.scrollTo(nextItem);
+        this.onInputChange(nextItem.isValid() ?? false);
+        updateNavigation({ prevEnabled: true });
+      } else {
+      }
+    }
+    goBack() {
+      const prevIndex = this.currentQuestionIndex - 1;
+      if (prevIndex < 0)
+        return;
+      const currentItem = this.getCurrentQuestion();
+      currentItem.disable();
+      currentItem.el.classList.remove(classes.active);
+      this.currentQuestionIndex = prevIndex;
+      const prevItem = this.getCurrentQuestion();
+      prevItem.enable();
+      prevItem.focus();
+      prevItem.el.classList.add(classes.active);
+      this.scrollTo(prevItem);
+      this.onInputChange(prevItem.isValid() ?? false);
+    }
+    scrollTo(item) {
+      this.scroll.scrollTo({
+        top: item.el.offsetTop - this.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
+        behavior: "smooth"
+      });
+    }
+    // public getAnswers(): Record<string, any> {
+    //   /* ... */
+    // }
+    // public validate(): boolean {
+    //   /* ... */
+    // }
+    show() {
+      this.groupEl.classList.remove("is-hidden");
+    }
+    hide() {
+      this.groupEl.classList.add("is-hidden");
+    }
+    reset() {
+      this.questions.forEach((question) => question.reset());
+    }
+  };
+
+  // src/mct/stages/questions/utils/prepareWrapper.ts
+  var prepareWrapper = () => {
+    const stage = getStage("questions");
+    const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
+    const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
+    if (!wrapper || !scroll)
+      return;
+    const groups = manager.getGroups();
+    if (groups.length === 0)
+      return;
+    const firstItem = manager.getFirstQuestion()?.el;
+    const lastItem = manager.getLastQuestion()?.el;
+    if (!firstItem || !lastItem)
+      return;
+    const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
+    const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
+    wrapper.style.paddingTop = `${topPad}px`;
+    wrapper.style.paddingBottom = `${bottomPad}px`;
+  };
+
+  // src/mct/stages/questions/index.ts
+  var currentGroup;
+  var initQuestionsStage = () => {
+    const component2 = getStage("questions");
+    const nextButton = queryElement(`[${attr7.components}="next"]`, component2);
+    const handleInputChange = (isValid) => {
+      updateNavigation({ nextEnabled: isValid });
+    };
+    const groupEls = queryElements(`[${attr7.group}]`, component2);
+    const groups = groupEls.map((groupEl) => {
+      const group = new QuestionGroup(groupEl, handleInputChange);
+      manager.registerGroup(group);
+      return group;
+    });
+    prepareWrapper();
+    [currentGroup] = groups;
+    component2.addEventListener("mct:navigation:update", (event) => {
+      const { nextEnabled, prevEnabled } = event.detail;
+      if (typeof nextEnabled === "boolean")
+        nextButton.disabled = !nextEnabled;
+      if (typeof prevEnabled === "boolean")
+        prevButton.disabled = !prevEnabled;
+    });
+    nextButton.addEventListener("click", () => {
+      const currentItem = currentGroup.getCurrentQuestion();
+      if (!currentItem.isValid())
+        return;
+      currentGroup.advance();
+    });
+    const prevButton = queryElement(
+      `[${attr7.components}="previous"]`,
+      component2
+    );
+    prevButton.addEventListener("click", () => {
+      const { currentQuestionIndex } = currentGroup;
+      if (currentQuestionIndex === 0)
+        return;
+      currentGroup.goBack();
+      if (currentQuestionIndex === 1)
+        updateNavigation({ prevEnabled: false });
+    });
   };
 
   // src/mct/index.ts
   var mct = () => {
-    const component = queryElement(`[${componentAttr}="component"]`);
-    if (!component)
-      return;
-    new handleMCT(component);
+    initDOMRefs();
+    initQuestionsStage();
   };
 
   // src/index.ts

@@ -1,0 +1,241 @@
+/**
+ * class for individual questions
+ */
+
+import { queryElement } from '$utils/queryElement';
+import { queryElements } from '$utils/queryelements';
+
+import { attr } from './constants';
+
+type InputType = 'radio' | 'checkbox' | 'text' | 'number';
+
+export class QuestionItem {
+  public el: HTMLElement;
+  private onChange: () => void;
+  private onEnter: () => void;
+  private inputs: HTMLInputElement[] = [];
+  private type: InputType;
+  public name: string;
+  public dependsOn: string | null;
+  public dependsOnValue: string | null;
+  public isHidden: boolean = false;
+
+  constructor(el: HTMLElement, onChange: () => void, onEnter: () => void) {
+    this.el = el;
+    this.onChange = onChange;
+    this.onEnter = onEnter;
+    this.inputs = queryElements('input', this.el) as HTMLInputElement[];
+    this.type = this.detectType();
+    this.name = this.el.getAttribute(attr.item) as string;
+    this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
+    this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
+
+    this.bindEventListeners();
+  }
+
+  private bindEventListeners(): void {
+    this.inputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const valid = this.isValid();
+        this.updateVisualState(valid);
+        this.onChange();
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        if (this.isValid()) {
+          this.onEnter();
+        } else {
+          this.updateVisualState(false);
+        }
+      });
+    });
+  }
+
+  public isValid(): boolean {
+    const value = this.getValue();
+
+    if (this.type === 'radio') return typeof value === 'string' && value !== '';
+    if (this.type === 'checkbox') return Array.isArray(value) && value.length > 0;
+    if (this.type === 'text') return typeof value === 'string' && value.trim() !== '';
+    if (this.type === 'number') return typeof value === 'number' && !isNaN(value);
+
+    return false;
+  }
+
+  public updateVisualState(isValid: boolean): void {
+    this.el.classList.toggle('has-error', !isValid);
+  }
+
+  public enable(): void {
+    this.inputs.forEach((input) => {
+      input.disabled = false;
+    });
+  }
+
+  public focus(): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No input found to focus on');
+    input.focus();
+  }
+
+  public disable(): void {
+    this.inputs.forEach((input) => {
+      input.disabled = true;
+    });
+  }
+
+  public hide(): void {
+    this.el.style.display = 'none';
+  }
+
+  public show(): void {
+    this.el.style.removeProperty('display');
+  }
+
+  public shouldBeVisible(answers: Record<string, string>): boolean {
+    if (!this.dependsOn || !this.dependsOnValue) return true;
+    return answers[this.dependsOn] === this.dependsOnValue;
+  }
+
+  private detectType(): InputType {
+    const input = queryElement('input', this.el) as HTMLInputElement;
+    if (!input) throw new Error('No "input" element found in question item');
+
+    if (input.type === 'radio') return 'radio';
+    if (input.type === 'checkbox') return 'checkbox';
+    if (input.type === 'text') return 'text';
+    if (input.type === 'number') return 'number';
+    throw new Error(`Unsupported input type: ${input.type}`);
+  }
+
+  private getRadioValue(): string | null {
+    const checked = this.inputs.find((i) => i.checked);
+    return !!checked ? checked.value : null;
+  }
+
+  private setRadioValue(value: string): void {
+    const input = this.inputs.find((i) => i.value === value);
+    if (!input) throw new Error(`No radio input found with value: ${value}`);
+    input.checked = true;
+  }
+
+  private resetRadioInput(): void {
+    this.inputs.forEach((input) => {
+      input.checked = false;
+    });
+  }
+
+  private getCheckboxValues(): string[] {
+    const checked = this.inputs.filter((i) => i.checked);
+    return checked.map((input) => input.value);
+  }
+
+  private setCheckboxValues(values: string[]): void {
+    this.inputs.forEach((input) => {
+      input.checked = values.includes(input.value);
+    });
+  }
+
+  private resetCheckboxeInputs(): void {
+    this.inputs.forEach((input) => {
+      input.checked = false;
+    });
+  }
+
+  private getTextValue(): string | null {
+    const input = this.inputs[0];
+    return input ? input.value : null;
+  }
+
+  private setTextValue(value: string): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No text input found for text question');
+    input.value = value;
+  }
+
+  private resetTextInputs(): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No text input found for text question');
+    input.value = '';
+  }
+
+  private getNumberValue(): number | null {
+    const input = this.inputs[0];
+    if (!input) return null;
+    const value = parseFloat(input.value);
+    if (isNaN(value)) throw new Error('Invalid number input value');
+    return value;
+  }
+
+  private setNumberValue(value: number): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No number input found for number question');
+    input.value = value.toString();
+  }
+
+  private resetNumberInput(): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No number input found for number question');
+    input.value = '';
+  }
+
+  public getValue(): string | string[] | number | null {
+    switch (this.type) {
+      case 'radio':
+        return this.getRadioValue();
+      case 'checkbox':
+        return this.getCheckboxValues();
+      case 'text':
+        return this.getTextValue();
+      case 'number':
+        return this.getNumberValue();
+      default:
+        throw new Error(`Unsupported question type: ${this.type}`);
+    }
+  }
+
+  public setValue(value: string): void {
+    switch (this.type) {
+      case 'radio':
+        this.setRadioValue(value);
+        break;
+      case 'checkbox':
+        if (!Array.isArray(value)) {
+          throw new Error('Value for checkbox question must be an array');
+        }
+        this.setCheckboxValues(value);
+        break;
+      case 'text':
+        this.setTextValue(value);
+        break;
+      case 'number':
+        if (typeof value !== 'number') {
+          throw new Error('Value for number question must be a number');
+        }
+        this.setNumberValue(value);
+        break;
+      default:
+        throw new Error(`Unsupported question type: ${this.type}`);
+    }
+  }
+
+  public reset(): void {
+    switch (this.type) {
+      case 'radio':
+        this.resetRadioInput();
+        break;
+      case 'checkbox':
+        this.resetCheckboxeInputs();
+        break;
+      case 'text':
+        this.resetTextInputs();
+        break;
+      case 'number':
+        this.resetNumberInput();
+        break;
+      default:
+        throw new Error(`Unsupported question type: ${this.type}`);
+    }
+  }
+}
