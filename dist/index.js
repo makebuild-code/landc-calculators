@@ -16462,6 +16462,7 @@
   // src/mct/shared/manager.ts
   var state = {
     questions: {
+      componentEl: null,
       currentGroupIndex: 0,
       currentQuestionIndex: 0,
       answers: {},
@@ -16472,20 +16473,34 @@
     registerGroup(group) {
       state.questions.groups.push(group);
     },
-    saveAnswer(key, value) {
+    getGroups() {
+      return state.questions.groups;
+    },
+    setComponentEl(el) {
+      state.questions.componentEl = el;
+    },
+    getComponent() {
+      if (!state.questions.componentEl)
+        throw new Error("Component not set");
+      return state.questions.componentEl;
+    },
+    setAnswer(key, value) {
       state.questions.answers[key] = value;
+    },
+    clearAnswer(key) {
+      delete state.questions.answers[key];
     },
     getAnswer(key) {
       return state.questions.answers[key];
     },
-    getGroups() {
-      return state.questions.groups;
+    getAnswers() {
+      return { ...state.questions.answers };
     },
     getFirstQuestion() {
       return state.questions.groups[0].questions[0];
     },
     getLastQuestion() {
-      return state.questions.groups.at(-1)?.questions.at(-1);
+      return state.questions.groups.at(state.questions.currentGroupIndex)?.questions.at(-1);
     },
     nextGroup() {
       state.questions.currentGroupIndex += 1;
@@ -16493,11 +16508,12 @@
       if (next)
         next.show();
     },
-    resetJourney() {
+    reset() {
       state.questions.currentGroupIndex = 0;
       state.questions.currentQuestionIndex = 0;
       state.questions.answers = {};
       state.questions.groups.forEach((group) => group.reset());
+      state.questions.componentEl = null;
     },
     getState() {
       return { ...state };
@@ -16579,9 +16595,19 @@
     }
     hide() {
       this.el.style.display = "none";
+      this.isHidden = true;
+      manager.clearAnswer(this.name);
     }
     show() {
       this.el.style.removeProperty("display");
+      this.isHidden = false;
+    }
+    toggleActive(active) {
+      if (active === void 0) {
+        this.el.classList.toggle(classes.active);
+      } else {
+        this.el.classList.toggle(classes.active, active);
+      }
     }
     shouldBeVisible(answers) {
       if (!this.dependsOn || !this.dependsOnValue)
@@ -16726,6 +16752,26 @@
     }
   };
 
+  // src/mct/stages/questions/utils/prepareWrapper.ts
+  var prepareWrapper = () => {
+    const stage = getStage("questions");
+    const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
+    const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
+    if (!wrapper || !scroll)
+      return;
+    const groups = manager.getGroups();
+    if (groups.length === 0)
+      return;
+    const firstItem = manager.getFirstQuestion()?.el;
+    const lastItem = manager.getLastQuestion()?.el;
+    if (!firstItem || !lastItem)
+      return;
+    const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
+    const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
+    wrapper.style.paddingTop = `${topPad}px`;
+    wrapper.style.paddingBottom = `${bottomPad}px`;
+  };
+
   // src/mct/stages/questions/utils/updateNavigation.ts
   var updateNavigation = (options = {}) => {
     const stageComponent = getStage("questions");
@@ -16757,6 +16803,10 @@
         );
         if (index2 !== 0)
           question.disable();
+        if (question.dependsOn && question.dependsOnValue) {
+          question.hide();
+          question.isHidden = true;
+        }
         return question;
       });
     }
@@ -16764,7 +16814,9 @@
       if (index2 !== this.currentQuestionIndex)
         throw new Error(`Invalid question index: ${index2}. Expected: ${this.currentQuestionIndex}`);
       const question = this.questions[index2];
-      this.answers[question.name] = question.getValue()?.toString() ?? "";
+      manager.setAnswer(question.name, question.getValue()?.toString() ?? "");
+      this.evaluateVisibility();
+      prepareWrapper();
       this.onInputChange(question.isValid());
     }
     handleEnter(index2) {
@@ -16782,48 +16834,61 @@
       return this.questions[this.currentQuestionIndex];
     }
     evaluateVisibility() {
+      const currentAnswers = manager.getAnswers();
       this.questions.forEach((question) => {
-        const shouldBeVisible = question.shouldBeVisible(this.answers);
-        if (shouldBeVisible && question.isHidden) {
+        const shouldBeVisible = question.shouldBeVisible(currentAnswers);
+        if (shouldBeVisible) {
           question.show();
-          question.isHidden = false;
         } else {
           question.hide();
-          question.isHidden = true;
         }
       });
+    }
+    getNextVisibleIndex(start) {
+      let index2 = start + 1;
+      while (index2 < this.questions.length && this.questions[index2].isHidden) {
+        index2 += 1;
+      }
+      return index2;
     }
     advance() {
       const currentItem = this.getCurrentQuestion();
       currentItem.disable();
-      currentItem.el.classList.remove(classes.active);
-      const nextIndex = this.currentQuestionIndex + 1;
+      currentItem.toggleActive(false);
+      const nextIndex = this.getNextVisibleIndex(this.currentQuestionIndex);
       if (nextIndex < this.questions.length) {
         this.currentQuestionIndex = nextIndex;
         const nextItem = this.getCurrentQuestion();
         nextItem.enable();
         nextItem.focus();
-        nextItem.el.classList.add(classes.active);
+        nextItem.toggleActive(true);
         this.scrollTo(nextItem);
-        this.onInputChange(nextItem.isValid() ?? false);
+        this.onInputChange(nextItem.isValid());
         updateNavigation({ prevEnabled: true });
       } else {
       }
     }
+    getPrevVisibleIndex(start) {
+      let index2 = start - 1;
+      while (index2 >= 0 && this.questions[index2].isHidden) {
+        index2 -= 1;
+      }
+      return index2;
+    }
     goBack() {
-      const prevIndex = this.currentQuestionIndex - 1;
+      const prevIndex = this.getPrevVisibleIndex(this.currentQuestionIndex);
       if (prevIndex < 0)
         return;
       const currentItem = this.getCurrentQuestion();
       currentItem.disable();
-      currentItem.el.classList.remove(classes.active);
+      currentItem.toggleActive(false);
       this.currentQuestionIndex = prevIndex;
       const prevItem = this.getCurrentQuestion();
       prevItem.enable();
       prevItem.focus();
-      prevItem.el.classList.add(classes.active);
+      prevItem.toggleActive(true);
       this.scrollTo(prevItem);
-      this.onInputChange(prevItem.isValid() ?? false);
+      this.onInputChange(prevItem.isValid());
     }
     scrollTo(item) {
       this.scroll.scrollTo({
@@ -16848,26 +16913,6 @@
     }
   };
 
-  // src/mct/stages/questions/utils/prepareWrapper.ts
-  var prepareWrapper = () => {
-    const stage = getStage("questions");
-    const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
-    const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
-    if (!wrapper || !scroll)
-      return;
-    const groups = manager.getGroups();
-    if (groups.length === 0)
-      return;
-    const firstItem = manager.getFirstQuestion()?.el;
-    const lastItem = manager.getLastQuestion()?.el;
-    if (!firstItem || !lastItem)
-      return;
-    const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
-    const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
-    wrapper.style.paddingTop = `${topPad}px`;
-    wrapper.style.paddingBottom = `${bottomPad}px`;
-  };
-
   // src/mct/stages/questions/index.ts
   var currentGroup;
   var initQuestionsStage = () => {
@@ -16884,6 +16929,8 @@
     });
     prepareWrapper();
     [currentGroup] = groups;
+    currentGroup.show();
+    handleInputChange(currentGroup.getCurrentQuestion().isValid() ?? false);
     component2.addEventListener("mct:navigation:update", (event) => {
       const { nextEnabled, prevEnabled } = event.detail;
       if (typeof nextEnabled === "boolean")

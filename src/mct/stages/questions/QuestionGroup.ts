@@ -2,13 +2,14 @@
  * class for managing a group of questions
  */
 
-import { classes } from 'src/mct/shared/constants';
+import { manager } from 'src/mct/shared/manager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import { QuestionItem } from './QuestionItem';
+import { prepareWrapper } from './utils/prepareWrapper';
 import { updateNavigation } from './utils/updateNavigation';
 
 export class QuestionGroup {
@@ -48,8 +49,9 @@ export class QuestionGroup {
       throw new Error(`Invalid question index: ${index}. Expected: ${this.currentQuestionIndex}`);
 
     const question = this.questions[index];
-    this.answers[question.name] = question.getValue()?.toString() ?? '';
+    manager.setAnswer(question.name, question.getValue()?.toString() ?? ''); // @todo handle possible values
     this.evaluateVisibility();
+    prepareWrapper();
     this.onInputChange(question.isValid());
   }
 
@@ -71,70 +73,78 @@ export class QuestionGroup {
   }
 
   private evaluateVisibility(): void {
-    this.questions.forEach((question) => {
-      const shouldBeVisible = question.shouldBeVisible(this.answers);
+    const currentAnswers = manager.getAnswers();
 
-      if (shouldBeVisible && question.isHidden) {
+    this.questions.forEach((question) => {
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers);
+
+      if (shouldBeVisible) {
         question.show();
-        question.isHidden = false;
       } else {
         question.hide();
-        question.isHidden = true;
 
-        // Edge case: you're on a question that just became hidden
-        if (this.currentQuestionIndex === i) {
-          this.advance(); // or call recursively to skip forward
-        }
+        // @todo: handle the case where the current question is hidden
+        // // Edge case: you're on a question that just became hidden
+        // if (this.currentQuestionIndex === i) {
+        //   this.advance(); // or call recursively to skip forward
+        // }
       }
     });
+  }
+
+  private getNextVisibleIndex(start: number): number {
+    let index = start + 1;
+    while (index < this.questions.length && this.questions[index].isHidden) {
+      index += 1;
+    }
+    return index;
   }
 
   public advance(): void {
     const currentItem = this.getCurrentQuestion();
     currentItem.disable();
-    currentItem.el.classList.remove(classes.active);
+    currentItem.toggleActive(false);
 
-    const nextIndex = this.currentQuestionIndex + 1;
-
-    while (nextIndex < this.questions.length && this.questions[nextIndex].isHidden) {
-      nextIndex++;
-    }
-
+    const nextIndex = this.getNextVisibleIndex(this.currentQuestionIndex);
     if (nextIndex < this.questions.length) {
       this.currentQuestionIndex = nextIndex;
       const nextItem = this.getCurrentQuestion();
       nextItem.enable();
       nextItem.focus();
-      nextItem.el.classList.add(classes.active);
+      nextItem.toggleActive(true);
       this.scrollTo(nextItem);
-      this.onInputChange(nextItem.isValid() ?? false);
+      this.onInputChange(nextItem.isValid());
       updateNavigation({ prevEnabled: true });
     } else {
       // Trigger stage completion or manager progression
     }
   }
 
+  private getPrevVisibleIndex(start: number): number {
+    let index = start - 1;
+    while (index >= 0 && this.questions[index].isHidden) {
+      index -= 1;
+    }
+    return index;
+  }
+
   public goBack(): void {
-    const prevIndex = this.currentQuestionIndex - 1;
+    const prevIndex = this.getPrevVisibleIndex(this.currentQuestionIndex);
     if (prevIndex < 0) return;
 
     const currentItem = this.getCurrentQuestion();
     currentItem.disable();
-    currentItem.el.classList.remove(classes.active);
+    currentItem.toggleActive(false);
 
     this.currentQuestionIndex = prevIndex;
     const prevItem = this.getCurrentQuestion();
 
-    while (prevIndex < this.questions.length && this.questions[prevIndex].isHidden) {
-      prevIndex -= 1;
-    }
-
     prevItem.enable();
     prevItem.focus();
-    prevItem.el.classList.add(classes.active);
+    prevItem.toggleActive(true);
     this.scrollTo(prevItem);
 
-    this.onInputChange(prevItem.isValid() ?? false);
+    this.onInputChange(prevItem.isValid());
   }
 
   private scrollTo(item: QuestionItem): void {

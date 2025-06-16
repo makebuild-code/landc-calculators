@@ -2,6 +2,9 @@
  * class for individual questions
  */
 
+import { classes } from 'src/mct/shared/constants';
+import { manager } from 'src/mct/shared/manager';
+
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
@@ -87,10 +90,25 @@ export class QuestionItem {
 
   public hide(): void {
     this.el.style.display = 'none';
+    // this.el.style.borderColor = 'red';
+    // this.el.style.borderStyle = 'dashed';
+    // this.el.style.borderWidth = '1px';
+    this.isHidden = true;
+    manager.clearAnswer(this.name);
   }
 
   public show(): void {
     this.el.style.removeProperty('display');
+    // this.el.style.removeProperty('border-color');
+    this.isHidden = false;
+  }
+
+  public toggleActive(active?: boolean): void {
+    if (active === undefined) {
+      this.el.classList.toggle(classes.active);
+    } else {
+      this.el.classList.toggle(classes.active, active);
+    }
   }
 
   public shouldBeVisible(answers: Record<string, string>): boolean {

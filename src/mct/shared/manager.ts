@@ -43,6 +43,10 @@ export const manager = {
     state.questions.answers[key] = value;
   },
 
+  clearAnswer(key: string) {
+    delete state.questions.answers[key];
+  },
+
   getAnswer(key: string) {
     return state.questions.answers[key];
   },
