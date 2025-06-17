@@ -1,6 +1,6 @@
 import { generateLCID } from './api';
-import { manager } from './manager';
 import { initQuestionsStage } from '../stages/questions';
+import { manager } from './manager';
 
 export const route = async () => {
   console.log('routing');

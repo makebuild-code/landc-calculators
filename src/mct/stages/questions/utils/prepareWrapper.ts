@@ -3,7 +3,7 @@
  */
 
 import { getStage } from 'src/mct/shared/dom';
-import { manager } from 'src/mct/shared/manager';
+import { questionStageManager } from 'src/mct/stages/questions/QuestionStageManager';
 
 import { queryElement } from '$utils/queryElement';
 
@@ -15,11 +15,11 @@ export const prepareWrapper = (): void => {
   const scroll = queryElement(`[${attr.components}="scroll"]`, stage) as HTMLElement;
   if (!wrapper || !scroll) return;
 
-  const groups = manager.getGroups();
+  const groups = questionStageManager.getGroups();
   if (groups.length === 0) return;
 
-  const firstItem = manager.getFirstQuestion()?.el;
-  const lastItem = manager.getLastQuestion()?.el;
+  const firstItem = questionStageManager.getFirstQuestion()?.el;
+  const lastItem = questionStageManager.getLastQuestion()?.el;
   if (!firstItem || !lastItem) return;
 
   const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;

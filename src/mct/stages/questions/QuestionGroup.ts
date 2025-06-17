@@ -2,7 +2,7 @@
  * class for managing a group of questions
  */
 
-import { manager } from 'src/mct/shared/manager';
+import { questionStageManager } from 'src/mct/stages/questions/QuestionStageManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -10,14 +10,13 @@ import { queryElements } from '$utils/queryelements';
 import { attr } from './constants';
 import { QuestionItem } from './QuestionItem';
 import type { ProfileName } from './types';
-import { prepareWrapper } from './utils/prepareWrapper';
-import { updateNavigation } from './utils/updateNavigation';
+import { utils } from './utils';
 
 export class QuestionGroup {
   private groupEl: HTMLElement;
   public onInputChange: (isValid: boolean) => void;
   public questions: QuestionItem[];
-  public currentQuestionIndex: number = 0;
+  public activeQuestionIndex: number = 0;
   private scroll: HTMLElement;
   public profileName: ProfileName | null = null;
 
@@ -45,45 +44,37 @@ export class QuestionGroup {
   }
 
   private onItemChange(index: number): void {
-    if (index !== this.currentQuestionIndex)
-      throw new Error(`Invalid question index: ${index}. Expected: ${this.currentQuestionIndex}`);
+    if (index !== this.activeQuestionIndex)
+      throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
     const question = this.questions[index];
     this.evaluateVisibility();
-    prepareWrapper();
+    utils.prepareWrapper();
     this.onInputChange(question.isValid());
   }
 
   private handleEnter(index: number): void {
-    if (index !== this.currentQuestionIndex)
-      throw new Error(`Invalid question index: ${index}. Expected: ${this.currentQuestionIndex}`);
+    if (index !== this.activeQuestionIndex)
+      throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
-    const current = this.getCurrentQuestion();
+    const current = this.getActiveQuestion();
     if (current.isValid()) {
-      this.onInputChange(current.isValid());
       this.navigate('next');
     } else {
       current.updateVisualState(false);
     }
   }
 
-  public getCurrentQuestion(): QuestionItem {
-    return this.questions[this.currentQuestionIndex];
+  public getActiveQuestion(): QuestionItem {
+    return this.questions[this.activeQuestionIndex];
   }
 
   private evaluateVisibility(): void {
-    manager.refreshVisibleQuestionAnswers();
-    const currentAnswers = manager.getQuestionAnswers();
-    console.log('Evaluating visibility for group:', this.profileName);
-    console.log('Current answers:', currentAnswers);
+    questionStageManager.refreshVisibleQuestionAnswers();
+    const currentAnswers = questionStageManager.getQuestionAnswers();
 
     this.questions.forEach((question, index) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers);
-      console.log(`Question ${index} (${question.el.getAttribute(attr.item)}):`, {
-        shouldBeVisible,
-        dependsOn: question.dependsOn,
-        currentState: question.isVisible ? 'visible' : 'hidden',
-      });
 
       if (shouldBeVisible) {
         question.show();
@@ -110,43 +101,38 @@ export class QuestionGroup {
   }
 
   public navigate(direction: 'next' | 'prev') {
-    const currentItem = this.getCurrentQuestion();
-    this.deactivateQuestion(currentItem);
-
-    console.log(this.questions);
+    questionStageManager.refreshVisibleQuestionAnswers();
+    const activeQuestion = this.getActiveQuestion();
+    this.deactivateQuestion(activeQuestion);
 
     if (direction === 'next') {
-      const nextIndex = this.getNextVisibleIndex(this.currentQuestionIndex);
-
-      console.log('nextIndex', nextIndex);
+      const nextIndex = this.getNextVisibleIndex(this.activeQuestionIndex);
 
       // If there's a next question in this group
       if (nextIndex < this.questions.length) {
-        console.log('nextIndex is valid');
-        this.currentQuestionIndex = nextIndex;
-        const nextQuestion = this.getCurrentQuestion();
+        this.activeQuestionIndex = nextIndex;
+        const nextQuestion = this.getActiveQuestion();
         this.activateQuestion(nextQuestion);
-        updateNavigation({ prevEnabled: true });
+        utils.updateNavigation({ prevEnabled: true });
       } else {
         // If we're at the end of this group, try the next group
-        const nextGroup = manager.getNextGroupInSequence();
-        if (nextGroup) manager.navigateToNextGroup();
+        questionStageManager.navigateToNextGroup();
       }
     } else {
-      const prevIndex = this.getPrevVisibleIndex(this.currentQuestionIndex);
+      const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
 
       // If there's a previous question in this group
       if (prevIndex >= 0) {
-        this.currentQuestionIndex = prevIndex;
-        const prevItem = this.getCurrentQuestion();
+        this.activeQuestionIndex = prevIndex;
+        const prevItem = this.getActiveQuestion();
         this.activateQuestion(prevItem);
-        updateNavigation({
-          prevEnabled: !(manager.getActiveGroupIndex() === 0 && prevIndex === 0),
+        utils.updateNavigation({
+          prevEnabled: !(questionStageManager.getActiveGroupIndex() === 0 && prevIndex === 0),
         });
       } else {
         // If we're at the start of this group, try the previous group
-        const prevGroup = manager.getPreviousGroupInSequence();
-        if (prevGroup) manager.navigateToPreviousGroup();
+        const prevGroup = questionStageManager.getPreviousGroupInSequence();
+        if (prevGroup) questionStageManager.navigateToPreviousGroup();
       }
     }
   }

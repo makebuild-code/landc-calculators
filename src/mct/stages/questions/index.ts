@@ -3,37 +3,36 @@
  */
 
 import { getStage } from 'src/mct/shared/dom';
-import { manager } from 'src/mct/shared/manager';
+import { questionStageManager } from 'src/mct/stages/questions/QuestionStageManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import { QuestionGroup } from './QuestionGroup';
-import { prepareWrapper } from './utils/prepareWrapper';
-import { updateNavigation } from './utils/updateNavigation';
+import { utils } from './utils';
 
 export const initQuestionsStage = () => {
   const component = getStage('questions');
-  manager.setQuestionsComponent(component);
+  questionStageManager.setQuestionsComponent(component);
   const nextButton = queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement;
 
   const handleInputChange = (isValid: boolean) => {
-    updateNavigation({ nextEnabled: isValid });
+    utils.updateNavigation({ nextEnabled: isValid });
   };
 
   const groupEls = queryElements(`[${attr.group}]`, component) as HTMLElement[];
   const groups = groupEls.map((groupEl, index) => {
     const group = new QuestionGroup(groupEl, handleInputChange);
     index === 0 ? group.show() : group.hide();
-    manager.registerGroup(group);
+    questionStageManager.registerGroup(group);
     return group;
   });
 
-  prepareWrapper();
+  utils.prepareWrapper();
 
   // Initialize first group
-  const initialGroup = manager.getActiveGroup();
+  const initialGroup = questionStageManager.getActiveGroup();
   if (initialGroup) initialGroup.show();
 
   component.addEventListener('mct:navigation:update', (event: Event) => {
@@ -43,10 +42,10 @@ export const initQuestionsStage = () => {
   });
 
   nextButton.addEventListener('click', () => {
-    const currentGroup = manager.getActiveGroup();
+    const currentGroup = questionStageManager.getActiveGroup();
     if (!currentGroup) return;
 
-    const currentItem = currentGroup.getCurrentQuestion();
+    const currentItem = currentGroup.getActiveQuestion();
     if (!currentItem.isValid()) return;
 
     currentGroup.navigate('next');
@@ -58,7 +57,7 @@ export const initQuestionsStage = () => {
   ) as HTMLButtonElement;
 
   prevButton.addEventListener('click', () => {
-    const currentGroup = manager.getActiveGroup();
+    const currentGroup = questionStageManager.getActiveGroup();
     if (!currentGroup) return;
 
     currentGroup.navigate('prev');

@@ -3,7 +3,11 @@
  */
 
 import { classes } from 'src/mct/shared/constants';
-import { manager, type AnswerKey, type AnswerValue } from 'src/mct/shared/manager';
+import {
+  questionStageManager,
+  type AnswerKey,
+  type AnswerValue,
+} from 'src/mct/stages/questions/QuestionStageManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -103,17 +107,12 @@ export class QuestionItem {
   }
 
   public hide(): void {
-    console.log('hiding', this.name);
     this.el.style.display = 'none';
-    // this.el.style.borderColor = 'red';
-    // this.el.style.borderStyle = 'dashed';
-    // this.el.style.borderWidth = '1px';
     this.isVisible = false;
-    manager.clearQuestionAnswer(this.name);
+    questionStageManager.clearQuestionAnswer(this.name);
   }
 
   public show(): void {
-    console.log('showing', this.name);
     this.el.style.removeProperty('display');
     // this.el.style.removeProperty('border-color');
     this.isVisible = true;
@@ -128,7 +127,6 @@ export class QuestionItem {
   }
 
   public shouldBeVisible(answers: Record<AnswerKey, AnswerValue>): boolean {
-    console.log(answers);
     if (!this.dependsOn) return true;
     if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
     return answers[this.dependsOn] === this.dependsOnValue;
