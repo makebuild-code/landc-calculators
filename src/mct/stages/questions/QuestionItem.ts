@@ -3,7 +3,7 @@
  */
 
 import { classes } from 'src/mct/shared/constants';
-import { manager } from 'src/mct/shared/manager';
+import { manager, type AnswerKey, type AnswerValue } from 'src/mct/shared/manager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -21,7 +21,7 @@ export class QuestionItem {
   public name: string;
   public dependsOn: string | null;
   public dependsOnValue: string | null;
-  public isHidden: boolean = false;
+  public isVisible: boolean = false;
 
   constructor(el: HTMLElement, onChange: () => void, onEnter: () => void) {
     this.el = el;
@@ -38,11 +38,19 @@ export class QuestionItem {
 
   private bindEventListeners(): void {
     this.inputs.forEach((input) => {
-      input.addEventListener('change', () => {
-        const valid = this.isValid();
-        this.updateVisualState(valid);
-        this.onChange();
-      });
+      if (this.type === 'text' || this.type === 'number') {
+        input.addEventListener('input', () => {
+          const valid = this.isValid();
+          this.updateVisualState(valid);
+          this.onChange();
+        });
+      } else {
+        input.addEventListener('change', () => {
+          const valid = this.isValid();
+          this.updateVisualState(valid);
+          this.onChange();
+        });
+      }
 
       input.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
@@ -50,14 +58,20 @@ export class QuestionItem {
           this.onEnter();
         } else {
           this.updateVisualState(false);
+          this.onChange();
         }
       });
     });
   }
 
   public isValid(): boolean {
+    // Check if any of the inputs are invalid using the native validation API
+    const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
+    if (hasInvalidInput) return false;
+
     const value = this.getValue();
 
+    // Additional type-specific validation
     if (this.type === 'radio') return typeof value === 'string' && value !== '';
     if (this.type === 'checkbox') return Array.isArray(value) && value.length > 0;
     if (this.type === 'text') return typeof value === 'string' && value.trim() !== '';
@@ -89,18 +103,20 @@ export class QuestionItem {
   }
 
   public hide(): void {
+    console.log('hiding', this.name);
     this.el.style.display = 'none';
     // this.el.style.borderColor = 'red';
     // this.el.style.borderStyle = 'dashed';
     // this.el.style.borderWidth = '1px';
-    this.isHidden = true;
-    manager.clearAnswer(this.name);
+    this.isVisible = false;
+    manager.clearQuestionAnswer(this.name);
   }
 
   public show(): void {
+    console.log('showing', this.name);
     this.el.style.removeProperty('display');
     // this.el.style.removeProperty('border-color');
-    this.isHidden = false;
+    this.isVisible = true;
   }
 
   public toggleActive(active?: boolean): void {
@@ -111,8 +127,10 @@ export class QuestionItem {
     }
   }
 
-  public shouldBeVisible(answers: Record<string, string>): boolean {
-    if (!this.dependsOn || !this.dependsOnValue) return true;
+  public shouldBeVisible(answers: Record<AnswerKey, AnswerValue>): boolean {
+    console.log(answers);
+    if (!this.dependsOn) return true;
+    if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
     return answers[this.dependsOn] === this.dependsOnValue;
   }
 
@@ -181,9 +199,12 @@ export class QuestionItem {
   private getNumberValue(): number | null {
     const input = this.inputs[0];
     if (!input) return null;
-    const value = parseFloat(input.value);
-    if (isNaN(value)) throw new Error('Invalid number input value');
-    return value;
+
+    const value = input.value.trim();
+    if (!value) return null;
+
+    const number = parseFloat(value);
+    return isNaN(number) ? null : number;
   }
 
   private setNumberValue(value: number): void {

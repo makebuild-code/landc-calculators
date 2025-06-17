@@ -1,7 +1,7 @@
 import { initDOMRefs } from './shared/dom';
-import { initQuestionsStage } from './stages/questions';
+import { route } from './shared/route';
 
 export const mct = () => {
   initDOMRefs();
-  initQuestionsStage();
+  route();
 };

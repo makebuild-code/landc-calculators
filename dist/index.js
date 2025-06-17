@@ -16437,6 +16437,53 @@
   var classes = {
     active: "is-active"
   };
+  var PROFILES = [
+    {
+      name: "residential-purchase",
+      display: "Residential Purchase",
+      requirements: {
+        PurchRemo: "P",
+        BuyerType: "N",
+        ResiBtl: "R"
+      }
+    },
+    {
+      name: "ftb-residential-purchase",
+      display: "First Time Buyer - Purchase",
+      requirements: {
+        PurchRemo: "P",
+        BuyerType: "Y",
+        ResiBtl: "R"
+      }
+    },
+    {
+      name: "btl-purchase",
+      display: "Buy to Let - Purchase",
+      requirements: {
+        PurchRemo: "P",
+        BuyerType: "N",
+        ResiBtl: "B"
+      }
+    },
+    {
+      name: "residential-remortgage",
+      display: "Residential - Remortgage",
+      requirements: {
+        PurchRemo: "R",
+        BuyerType: "N",
+        ResiBtl: "R"
+      }
+    },
+    {
+      name: "btl-remortgage",
+      display: "Buy to Let - Remortgage",
+      requirements: {
+        PurchRemo: "R",
+        BuyerType: "N",
+        ResiBtl: "B"
+      }
+    }
+  ];
 
   // src/mct/shared/dom.ts
   var component = null;
@@ -16459,42 +16506,142 @@
     return stage;
   };
 
+  // src/mct/shared/api.ts
+  var generateLCID = async () => {
+    const data = {
+      lcid: "0FFA8FAE-1D74-45BE-9CDC-9FAF7783CA07"
+    };
+    return data.lcid;
+  };
+
   // src/mct/shared/manager.ts
   var state = {
+    lcid: null,
     questions: {
       componentEl: null,
       currentGroupIndex: 0,
       currentQuestionIndex: 0,
       answers: {},
-      groups: []
+      groups: [],
+      profile: null
     }
   };
   var manager = {
     registerGroup(group) {
       state.questions.groups.push(group);
     },
+    getActiveGroupIndex() {
+      return state.questions.currentGroupIndex;
+    },
+    getActiveGroup() {
+      return state.questions.groups[this.getActiveGroupIndex()];
+    },
+    determineProfile() {
+      const answers = this.getQuestionAnswers();
+      console.log("Answers:", answers);
+      const profile = PROFILES.find((profile2) => {
+        return Object.entries(profile2.requirements).every(([key, value]) => answers[key] === value);
+      });
+      console.log("Profile:", profile);
+      state.questions.profile = profile ? profile : null;
+      return profile ? profile : null;
+    },
+    findGroupByProfile(profile) {
+      return state.questions.groups.find((group) => group.profileName === profile.name);
+    },
+    getNextGroupInSequence() {
+      return state.questions.groups[this.getActiveGroupIndex() + 1];
+    },
+    getPreviousGroupInSequence() {
+      if (this.getActiveGroupIndex() <= 0)
+        return void 0;
+      return state.questions.groups[this.getActiveGroupIndex() - 1];
+    },
+    navigateToNextGroup() {
+      const currentGroup = this.getActiveGroup();
+      if (!currentGroup)
+        return;
+      if (this.getActiveGroupIndex() === 0) {
+        const profile = this.determineProfile();
+        if (!profile) {
+          console.log("Could not determine profile");
+          return;
+        }
+        const nextGroup = this.findGroupByProfile(profile);
+        if (!nextGroup) {
+          console.log("No matching group found for profile:", profile);
+          return;
+        }
+        const nextGroupIndex = this.getGroups().indexOf(nextGroup);
+        if (nextGroupIndex === -1) {
+          console.log("Next group index not found");
+          return;
+        }
+        state.questions.currentGroupIndex = nextGroupIndex;
+        nextGroup.show();
+        const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
+        if (firstVisibleIndex < nextGroup.questions.length) {
+          nextGroup.currentQuestionIndex = firstVisibleIndex;
+          const firstQuestion = nextGroup.getCurrentQuestion();
+          nextGroup.activateQuestion(firstQuestion);
+          nextGroup.onInputChange(firstQuestion.isValid());
+        }
+      } else {
+        console.log("End of groups");
+        console.log("Initiate logic for showing output");
+      }
+    },
+    navigateToPreviousGroup() {
+      const previousGroup = this.getPreviousGroupInSequence();
+      if (!previousGroup) {
+        console.log("no previous group");
+        return;
+      }
+      const previousGroupIndex = state.questions.groups.indexOf(previousGroup);
+      if (previousGroupIndex === -1) {
+        console.log("previous group not found");
+        return;
+      }
+      state.questions.currentGroupIndex = previousGroupIndex;
+      const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
+      if (lastVisibleIndex >= 0) {
+        previousGroup.currentQuestionIndex = lastVisibleIndex;
+        previousGroup.activateQuestion(previousGroup.getCurrentQuestion());
+        return;
+      }
+    },
     getGroups() {
       return state.questions.groups;
     },
-    setComponentEl(el) {
+    setQuestionsComponent(el) {
       state.questions.componentEl = el;
     },
-    getComponent() {
+    getQuestionsComponent() {
       if (!state.questions.componentEl)
         throw new Error("Component not set");
       return state.questions.componentEl;
     },
-    setAnswer(key, value) {
+    setQuestionAnswer(key, value) {
       state.questions.answers[key] = value;
     },
-    clearAnswer(key) {
+    clearQuestionAnswer(key) {
       delete state.questions.answers[key];
     },
-    getAnswer(key) {
+    getQuestionAnswer(key) {
       return state.questions.answers[key];
     },
-    getAnswers() {
+    getQuestionAnswers() {
       return { ...state.questions.answers };
+    },
+    refreshVisibleQuestionAnswers() {
+      state.questions.answers = {};
+      this.getGroups().forEach((group) => {
+        const visibleQuestions = group.questions.filter((question) => question.isVisible);
+        visibleQuestions.forEach((question) => {
+          const value = question.getValue();
+          this.setQuestionAnswer(question.name, value);
+        });
+      });
     },
     getFirstQuestion() {
       return state.questions.groups[0].questions[0];
@@ -16502,18 +16649,18 @@
     getLastQuestion() {
       return state.questions.groups.at(state.questions.currentGroupIndex)?.questions.at(-1);
     },
-    nextGroup() {
-      state.questions.currentGroupIndex += 1;
-      const next = state.questions.groups[state.questions.currentGroupIndex];
-      if (next)
-        next.show();
-    },
-    reset() {
+    resetQuestions() {
       state.questions.currentGroupIndex = 0;
       state.questions.currentQuestionIndex = 0;
       state.questions.answers = {};
       state.questions.groups.forEach((group) => group.reset());
       state.questions.componentEl = null;
+    },
+    setLCID(lcid) {
+      state.lcid = lcid;
+    },
+    getLCID() {
+      return state.lcid;
     },
     getState() {
       return { ...state };
@@ -16533,7 +16680,7 @@
   var QuestionItem = class {
     constructor(el, onChange, onEnter) {
       this.inputs = [];
-      this.isHidden = false;
+      this.isVisible = false;
       this.el = el;
       this.onChange = onChange;
       this.onEnter = onEnter;
@@ -16546,11 +16693,19 @@
     }
     bindEventListeners() {
       this.inputs.forEach((input) => {
-        input.addEventListener("change", () => {
-          const valid = this.isValid();
-          this.updateVisualState(valid);
-          this.onChange();
-        });
+        if (this.type === "text" || this.type === "number") {
+          input.addEventListener("input", () => {
+            const valid = this.isValid();
+            this.updateVisualState(valid);
+            this.onChange();
+          });
+        } else {
+          input.addEventListener("change", () => {
+            const valid = this.isValid();
+            this.updateVisualState(valid);
+            this.onChange();
+          });
+        }
         input.addEventListener("keydown", (e) => {
           if (e.key !== "Enter")
             return;
@@ -16558,11 +16713,15 @@
             this.onEnter();
           } else {
             this.updateVisualState(false);
+            this.onChange();
           }
         });
       });
     }
     isValid() {
+      const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
+      if (hasInvalidInput)
+        return false;
       const value = this.getValue();
       if (this.type === "radio")
         return typeof value === "string" && value !== "";
@@ -16594,13 +16753,15 @@
       });
     }
     hide() {
+      console.log("hiding", this.name);
       this.el.style.display = "none";
-      this.isHidden = true;
-      manager.clearAnswer(this.name);
+      this.isVisible = false;
+      manager.clearQuestionAnswer(this.name);
     }
     show() {
+      console.log("showing", this.name);
       this.el.style.removeProperty("display");
-      this.isHidden = false;
+      this.isVisible = true;
     }
     toggleActive(active) {
       if (active === void 0) {
@@ -16610,8 +16771,11 @@
       }
     }
     shouldBeVisible(answers) {
-      if (!this.dependsOn || !this.dependsOnValue)
+      console.log(answers);
+      if (!this.dependsOn)
         return true;
+      if (!this.dependsOnValue)
+        return answers[this.dependsOn] !== null;
       return answers[this.dependsOn] === this.dependsOnValue;
     }
     detectType() {
@@ -16677,10 +16841,11 @@
       const input = this.inputs[0];
       if (!input)
         return null;
-      const value = parseFloat(input.value);
-      if (isNaN(value))
-        throw new Error("Invalid number input value");
-      return value;
+      const value = input.value.trim();
+      if (!value)
+        return null;
+      const number = parseFloat(value);
+      return isNaN(number) ? null : number;
     }
     setNumberValue(value) {
       const input = this.inputs[0];
@@ -16787,11 +16952,13 @@
   var QuestionGroup = class {
     constructor(groupEl, onInputChange) {
       this.currentQuestionIndex = 0;
-      this.answers = {};
+      this.profileName = null;
       this.groupEl = groupEl;
       this.onInputChange = onInputChange;
       this.questions = this.initQuestions();
       this.scroll = queryElement(`[${attr7.components}="scroll"]`);
+      this.profileName = groupEl.getAttribute(attr7.group);
+      this.evaluateVisibility();
     }
     initQuestions() {
       const questionEls = queryElements(`[${attr7.item}]`, this.groupEl);
@@ -16803,10 +16970,8 @@
         );
         if (index2 !== 0)
           question.disable();
-        if (question.dependsOn && question.dependsOnValue) {
+        if (question.dependsOn)
           question.hide();
-          question.isHidden = true;
-        }
         return question;
       });
     }
@@ -16814,7 +16979,6 @@
       if (index2 !== this.currentQuestionIndex)
         throw new Error(`Invalid question index: ${index2}. Expected: ${this.currentQuestionIndex}`);
       const question = this.questions[index2];
-      manager.setAnswer(question.name, question.getValue()?.toString() ?? "");
       this.evaluateVisibility();
       prepareWrapper();
       this.onInputChange(question.isValid());
@@ -16824,8 +16988,8 @@
         throw new Error(`Invalid question index: ${index2}. Expected: ${this.currentQuestionIndex}`);
       const current = this.getCurrentQuestion();
       if (current.isValid()) {
-        this.advance();
-        this.onInputChange(this.getCurrentQuestion().isValid() ?? false);
+        this.onInputChange(current.isValid());
+        this.navigate("next");
       } else {
         current.updateVisualState(false);
       }
@@ -16834,9 +16998,17 @@
       return this.questions[this.currentQuestionIndex];
     }
     evaluateVisibility() {
-      const currentAnswers = manager.getAnswers();
-      this.questions.forEach((question) => {
+      manager.refreshVisibleQuestionAnswers();
+      const currentAnswers = manager.getQuestionAnswers();
+      console.log("Evaluating visibility for group:", this.profileName);
+      console.log("Current answers:", currentAnswers);
+      this.questions.forEach((question, index2) => {
         const shouldBeVisible = question.shouldBeVisible(currentAnswers);
+        console.log(`Question ${index2} (${question.el.getAttribute(attr7.item)}):`, {
+          shouldBeVisible,
+          dependsOn: question.dependsOn,
+          currentState: question.isVisible ? "visible" : "hidden"
+        });
         if (shouldBeVisible) {
           question.show();
         } else {
@@ -16846,49 +17018,62 @@
     }
     getNextVisibleIndex(start) {
       let index2 = start + 1;
-      while (index2 < this.questions.length && this.questions[index2].isHidden) {
+      while (index2 < this.questions.length && !this.questions[index2].isVisible) {
         index2 += 1;
       }
       return index2;
     }
-    advance() {
-      const currentItem = this.getCurrentQuestion();
-      currentItem.disable();
-      currentItem.toggleActive(false);
-      const nextIndex = this.getNextVisibleIndex(this.currentQuestionIndex);
-      if (nextIndex < this.questions.length) {
-        this.currentQuestionIndex = nextIndex;
-        const nextItem = this.getCurrentQuestion();
-        nextItem.enable();
-        nextItem.focus();
-        nextItem.toggleActive(true);
-        this.scrollTo(nextItem);
-        this.onInputChange(nextItem.isValid());
-        updateNavigation({ prevEnabled: true });
-      } else {
-      }
-    }
     getPrevVisibleIndex(start) {
       let index2 = start - 1;
-      while (index2 >= 0 && this.questions[index2].isHidden) {
+      while (index2 >= 0 && !this.questions[index2].isVisible) {
         index2 -= 1;
       }
       return index2;
     }
-    goBack() {
-      const prevIndex = this.getPrevVisibleIndex(this.currentQuestionIndex);
-      if (prevIndex < 0)
-        return;
+    navigate(direction) {
       const currentItem = this.getCurrentQuestion();
-      currentItem.disable();
-      currentItem.toggleActive(false);
-      this.currentQuestionIndex = prevIndex;
-      const prevItem = this.getCurrentQuestion();
-      prevItem.enable();
-      prevItem.focus();
-      prevItem.toggleActive(true);
-      this.scrollTo(prevItem);
-      this.onInputChange(prevItem.isValid());
+      this.deactivateQuestion(currentItem);
+      console.log(this.questions);
+      if (direction === "next") {
+        const nextIndex = this.getNextVisibleIndex(this.currentQuestionIndex);
+        console.log("nextIndex", nextIndex);
+        if (nextIndex < this.questions.length) {
+          console.log("nextIndex is valid");
+          this.currentQuestionIndex = nextIndex;
+          const nextQuestion = this.getCurrentQuestion();
+          this.activateQuestion(nextQuestion);
+          updateNavigation({ prevEnabled: true });
+        } else {
+          const nextGroup = manager.getNextGroupInSequence();
+          if (nextGroup)
+            manager.navigateToNextGroup();
+        }
+      } else {
+        const prevIndex = this.getPrevVisibleIndex(this.currentQuestionIndex);
+        if (prevIndex >= 0) {
+          this.currentQuestionIndex = prevIndex;
+          const prevItem = this.getCurrentQuestion();
+          this.activateQuestion(prevItem);
+          updateNavigation({
+            prevEnabled: !(manager.getActiveGroupIndex() === 0 && prevIndex === 0)
+          });
+        } else {
+          const prevGroup = manager.getPreviousGroupInSequence();
+          if (prevGroup)
+            manager.navigateToPreviousGroup();
+        }
+      }
+    }
+    activateQuestion(question) {
+      question.enable();
+      question.focus();
+      question.toggleActive(true);
+      this.scrollTo(question);
+      this.onInputChange(question.isValid());
+    }
+    deactivateQuestion(question) {
+      question.disable();
+      question.toggleActive(false);
     }
     scrollTo(item) {
       this.scroll.scrollTo({
@@ -16903,10 +17088,10 @@
     //   /* ... */
     // }
     show() {
-      this.groupEl.classList.remove("is-hidden");
+      this.groupEl.style.removeProperty("display");
     }
     hide() {
-      this.groupEl.classList.add("is-hidden");
+      this.groupEl.style.display = "none";
     }
     reset() {
       this.questions.forEach((question) => question.reset());
@@ -16914,23 +17099,24 @@
   };
 
   // src/mct/stages/questions/index.ts
-  var currentGroup;
   var initQuestionsStage = () => {
     const component2 = getStage("questions");
+    manager.setQuestionsComponent(component2);
     const nextButton = queryElement(`[${attr7.components}="next"]`, component2);
     const handleInputChange = (isValid) => {
       updateNavigation({ nextEnabled: isValid });
     };
     const groupEls = queryElements(`[${attr7.group}]`, component2);
-    const groups = groupEls.map((groupEl) => {
+    const groups = groupEls.map((groupEl, index2) => {
       const group = new QuestionGroup(groupEl, handleInputChange);
+      index2 === 0 ? group.show() : group.hide();
       manager.registerGroup(group);
       return group;
     });
     prepareWrapper();
-    [currentGroup] = groups;
-    currentGroup.show();
-    handleInputChange(currentGroup.getCurrentQuestion().isValid() ?? false);
+    const initialGroup = manager.getActiveGroup();
+    if (initialGroup)
+      initialGroup.show();
     component2.addEventListener("mct:navigation:update", (event) => {
       const { nextEnabled, prevEnabled } = event.detail;
       if (typeof nextEnabled === "boolean")
@@ -16939,29 +17125,44 @@
         prevButton.disabled = !prevEnabled;
     });
     nextButton.addEventListener("click", () => {
+      const currentGroup = manager.getActiveGroup();
+      if (!currentGroup)
+        return;
       const currentItem = currentGroup.getCurrentQuestion();
       if (!currentItem.isValid())
         return;
-      currentGroup.advance();
+      currentGroup.navigate("next");
     });
     const prevButton = queryElement(
       `[${attr7.components}="previous"]`,
       component2
     );
     prevButton.addEventListener("click", () => {
-      const { currentQuestionIndex } = currentGroup;
-      if (currentQuestionIndex === 0)
+      const currentGroup = manager.getActiveGroup();
+      if (!currentGroup)
         return;
-      currentGroup.goBack();
-      if (currentQuestionIndex === 1)
-        updateNavigation({ prevEnabled: false });
+      currentGroup.navigate("prev");
     });
+  };
+
+  // src/mct/shared/route.ts
+  var route = async () => {
+    console.log("routing");
+    try {
+      console.log("getting LCID");
+      const lcid = await generateLCID();
+      manager.setLCID(lcid);
+      console.log(`LCID: ${lcid}`);
+      initQuestionsStage();
+    } catch (error) {
+      console.error("Failed to initialize MCT:", error);
+    }
   };
 
   // src/mct/index.ts
   var mct = () => {
     initDOMRefs();
-    initQuestionsStage();
+    route();
   };
 
   // src/index.ts

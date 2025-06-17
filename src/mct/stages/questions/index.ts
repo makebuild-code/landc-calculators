@@ -13,10 +13,9 @@ import { QuestionGroup } from './QuestionGroup';
 import { prepareWrapper } from './utils/prepareWrapper';
 import { updateNavigation } from './utils/updateNavigation';
 
-let currentGroup: QuestionGroup;
-
 export const initQuestionsStage = () => {
   const component = getStage('questions');
+  manager.setQuestionsComponent(component);
   const nextButton = queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement;
 
   const handleInputChange = (isValid: boolean) => {
@@ -24,17 +23,18 @@ export const initQuestionsStage = () => {
   };
 
   const groupEls = queryElements(`[${attr.group}]`, component) as HTMLElement[];
-  const groups = groupEls.map((groupEl) => {
+  const groups = groupEls.map((groupEl, index) => {
     const group = new QuestionGroup(groupEl, handleInputChange);
+    index === 0 ? group.show() : group.hide();
     manager.registerGroup(group);
     return group;
   });
 
   prepareWrapper();
 
-  [currentGroup] = groups;
-  currentGroup.show();
-  handleInputChange(currentGroup.getCurrentQuestion().isValid() ?? false);
+  // Initialize first group
+  const initialGroup = manager.getActiveGroup();
+  if (initialGroup) initialGroup.show();
 
   component.addEventListener('mct:navigation:update', (event: Event) => {
     const { nextEnabled, prevEnabled } = (event as CustomEvent).detail;
@@ -43,10 +43,13 @@ export const initQuestionsStage = () => {
   });
 
   nextButton.addEventListener('click', () => {
+    const currentGroup = manager.getActiveGroup();
+    if (!currentGroup) return;
+
     const currentItem = currentGroup.getCurrentQuestion();
     if (!currentItem.isValid()) return;
 
-    currentGroup.advance();
+    currentGroup.navigate('next');
   });
 
   const prevButton = queryElement(
@@ -55,9 +58,9 @@ export const initQuestionsStage = () => {
   ) as HTMLButtonElement;
 
   prevButton.addEventListener('click', () => {
-    const { currentQuestionIndex } = currentGroup;
-    if (currentQuestionIndex === 0) return;
-    currentGroup.goBack();
-    if (currentQuestionIndex === 1) updateNavigation({ prevEnabled: false });
+    const currentGroup = manager.getActiveGroup();
+    if (!currentGroup) return;
+
+    currentGroup.navigate('prev');
   });
 };
