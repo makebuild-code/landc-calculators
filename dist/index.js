@@ -11,21 +11,20 @@
 
   // src/utils/getBaseURLForAPI.ts
   var getBaseURLForAPI = () => {
-    const ENDPOINTS = {
+    const ENDPOINTS2 = {
       prod: "https://www.landc.co.uk/api/",
       test: "https://test.landc.co.uk/api/"
     };
     const ENVIRONMENTS = [
-      { host: "www.landc.co.uk", api: ENDPOINTS.prod },
-      { host: "test.landc.co.uk", api: ENDPOINTS.test },
-      { host: "dev.landc.co.uk", api: ENDPOINTS.test }
+      { host: "www.landc.co.uk", api: ENDPOINTS2.prod },
+      { host: "test.landc.co.uk", api: ENDPOINTS2.test },
+      { host: "dev.landc.co.uk", api: ENDPOINTS2.test }
     ];
     const { hostname, search } = window.location;
     const params = new URLSearchParams(search);
     const apiParam = params.get("api");
-    if (apiParam)
-      return ENDPOINTS[apiParam] || ENDPOINTS.prod;
-    return ENVIRONMENTS.find((env) => env.host === hostname)?.api || ENDPOINTS.prod;
+    if (apiParam) return ENDPOINTS2[apiParam] || ENDPOINTS2.prod;
+    return ENVIRONMENTS.find((env) => env.host === hostname)?.api || ENDPOINTS2.prod;
   };
 
   // src/constants.ts
@@ -74,6 +73,12 @@
   var attr = "data-mini";
   var API_ENDPOINT = API_ENDPOINTS.productsTrigger;
   var HandleMini = class {
+    component;
+    values;
+    rows;
+    loader;
+    isLoading;
+    result;
     constructor(component2) {
       this.component = component2;
       this.values = this.getValues();
@@ -130,8 +135,7 @@
       try {
         const result = await this.makeAzureRequest();
         this.result = result.result;
-        if (isStaging)
-          console.log(result);
+        if (isStaging) console.log(result);
         if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
           this.toggleLoading(false);
         } else {
@@ -164,15 +168,13 @@
       return response.json();
     }
     displayResults() {
-      if (!this.result)
-        return;
+      if (!this.result) return;
       this.result.data.forEach((item, index2) => {
         const row = this.rows[index2];
         const outputs = queryElements(`[${attr}-output]`, row);
         outputs.forEach((output) => {
           const key = output.dataset.miniOutput;
-          if (!key)
-            return;
+          if (!key) return;
           const value = item[key];
           if (value === 0 || item[key]) {
             if (typeof value === "number") {
@@ -190,7 +192,7 @@
     }
   };
 
-  // node_modules/.pnpm/@finsweet+ts-utils@0.40.0/node_modules/@finsweet/ts-utils/dist/helpers/simulateEvent.js
+  // node_modules/@finsweet/ts-utils/dist/helpers/simulateEvent.js
   var simulateEvent = (target, events) => {
     if (!Array.isArray(events))
       events = [events];
@@ -206,8 +208,7 @@
       const open = queryElement(`[${attr8}="open"]`, component2);
       const dialog = queryElement("dialog", component2);
       const close = queryElement(`[${attr8}="close"]`, component2);
-      if (!open || !dialog || !close)
-        return;
+      if (!open || !dialog || !close) return;
       open.addEventListener("click", () => {
         dialog.showModal();
       });
@@ -231,14 +232,11 @@
         case "number":
           const { min, max } = input;
           let minValid = true;
-          if (!!min)
-            minValid = Number(value) >= Number(min);
+          if (!!min) minValid = Number(value) >= Number(min);
           let maxValid = true;
-          if (!!max)
-            maxValid = Number(value) <= Number(max);
+          if (!!max) maxValid = Number(value) <= Number(max);
           isValid = minValid && maxValid;
-          if (isValid)
-            break;
+          if (isValid) break;
           error = !minValid ? `Input needs to be ${min} or higher` : `Input needs to be ${max} or less`;
           break;
         default:
@@ -260,18 +258,15 @@
   function formatInput(input) {
     if (input instanceof HTMLInputElement) {
       const { type, value } = input;
-      if (type !== "number")
-        return;
+      if (type !== "number") return;
       const { step } = input;
-      if (Number(step) < 1)
-        return;
+      if (Number(step) < 1) return;
       input.value = Math.round(Number(value)).toString();
     } else if (input.type === "fieldset") {
       const radios = queryElements('input[type="radio"]');
       radios.forEach((radio) => {
         const { parentElement, checked } = radio;
-        if (!parentElement)
-          return;
+        if (!parentElement) return;
         if (checked) {
           parentElement.classList.add("checked");
         } else {
@@ -320,21 +315,17 @@
   // src/utils/setError.ts
   function setError(input, text) {
     const wrapper = getWrapper(input);
-    if (!wrapper)
-      return;
+    if (!wrapper) return;
     const message = queryElement('[data-calc-el="message"]', wrapper);
     const error = queryElement('[data-calc-el="error"]', wrapper);
-    if (!error)
-      return;
+    if (!error) return;
     if (text) {
       error.textContent = text;
       error.style.display = "block";
-      if (message)
-        message.style.display = "none";
+      if (message) message.style.display = "none";
     } else {
       error.style.display = "none";
-      if (message)
-        message.style.removeProperty("display");
+      if (message) message.style.removeProperty("display");
     }
   }
 
@@ -342,9 +333,29 @@
   var attr2 = "data-bb";
   var API_ENDPOINT2 = API_ENDPOINTS.productsTrigger;
   var HandleTable = class {
+    component;
+    template;
+    trigger = "onload";
+    clone;
+    inputs;
+    conditionals;
+    sort;
+    buttons;
+    resultsList;
+    loading;
+    noResults;
+    isLoading;
+    loadMoreWrapper;
+    loadMore;
+    scaffoldWrapper;
+    scaffoldCover;
+    scaffoldResult;
+    removeScaffold = true;
+    numberOfResultsShown;
+    productId;
+    formattedValues;
+    result;
     constructor(component2) {
-      this.trigger = "onload";
-      this.removeScaffold = true;
       this.component = component2;
       this.trigger = component2.dataset.bbTrigger === "onclick" ? "onclick" : "onload";
       this.template = queryElement(`[${attr2}-el="template"]`, component2);
@@ -387,11 +398,9 @@
       this.conditionalVisibility();
       if (this.trigger === "onload") {
         this.isLoading = true;
-        if (this.productId)
-          this.scrollIntoView();
+        if (this.productId) this.scrollIntoView();
         await this.handleAzureRequest();
-        if (this.productId)
-          this.scrollIntoView(this.productId);
+        if (this.productId) this.scrollIntoView(this.productId);
       } else if (this.trigger === "onclick") {
         this.loading.style.display = "none";
         this.noResults.style.display = "none";
@@ -410,8 +419,7 @@
       this.buttons.forEach((button) => {
         button.addEventListener("click", () => {
           const valid = this.validateInputs();
-          if (!valid)
-            return;
+          if (!valid) return;
           this.toggleLoading();
           this.numberOfResultsShown = 0;
           this.handleAzureRequest();
@@ -419,8 +427,7 @@
       });
       this.sort.addEventListener("change", () => {
         const valid = this.validateInputs();
-        if (!valid)
-          return;
+        if (!valid) return;
         this.toggleLoading();
         this.numberOfResultsShown = 0;
         this.handleAzureRequest();
@@ -446,12 +453,10 @@
     conditionalVisibility() {
       this.conditionals.forEach((item) => {
         const { conditions } = item.dataset;
-        if (!conditions)
-          return;
+        if (!conditions) return;
         const parsedConditions = JSON.parse(conditions);
         const input = this.inputs.find((input2) => input2.dataset.input === parsedConditions.dependsOn);
-        if (!input)
-          return;
+        if (!input) return;
         let conditionsMet = false;
         switch (parsedConditions.operator) {
           case "equal":
@@ -504,12 +509,10 @@
     getValues() {
       const preFormattedValues = {};
       this.inputs.forEach((input) => {
-        if (input.dataset.conditionsmet && input.dataset.conditionsmet === "false")
-          return;
+        if (input.dataset.conditionsmet && input.dataset.conditionsmet === "false") return;
         const key = input.dataset.input;
         const value = getInputValue(input);
-        if (!key || !value)
-          return;
+        if (!key || !value) return;
         preFormattedValues[key] = value;
       });
       const formattedValues = {
@@ -531,18 +534,12 @@
         SortColumn: preFormattedValues.SortColumn,
         UseStaticApr: false
       };
-      if (preFormattedValues.ShowAsTwoYear)
-        formattedValues.SchemePeriods.push("1");
-      if (preFormattedValues.ShowAsThreeYear)
-        formattedValues.SchemePeriods.push("2");
-      if (preFormattedValues.ShowAsFiveYear)
-        formattedValues.SchemePeriods.push("3");
-      if (preFormattedValues.ShowAsLongTerm)
-        formattedValues.SchemePeriods.push("4");
-      if (preFormattedValues.ShowAsFix)
-        formattedValues.SchemeTypes.push("1");
-      if (preFormattedValues.ShowAsVar)
-        formattedValues.SchemeTypes.push("2");
+      if (preFormattedValues.ShowAsTwoYear) formattedValues.SchemePeriods.push("1");
+      if (preFormattedValues.ShowAsThreeYear) formattedValues.SchemePeriods.push("2");
+      if (preFormattedValues.ShowAsFiveYear) formattedValues.SchemePeriods.push("3");
+      if (preFormattedValues.ShowAsLongTerm) formattedValues.SchemePeriods.push("4");
+      if (preFormattedValues.ShowAsFix) formattedValues.SchemeTypes.push("1");
+      if (preFormattedValues.ShowAsVar) formattedValues.SchemeTypes.push("2");
       this.formattedValues = formattedValues;
       return formattedValues;
     }
@@ -555,8 +552,7 @@
       try {
         const result = await this.makeAzureRequest();
         this.result = result.result;
-        if (isStaging)
-          console.log(result);
+        if (isStaging) console.log(result);
         if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
           this.toggleLoading(false);
         } else {
@@ -592,19 +588,16 @@
       this.resultsList.innerHTML = "";
     }
     displayResults(startIndex, show) {
-      if (!this.result)
-        return;
+      if (!this.result) return;
       this.result.data.forEach((item, index2) => {
-        if (index2 < startIndex || index2 > startIndex + show - 1)
-          return;
+        if (index2 < startIndex || index2 > startIndex + show - 1) return;
         const clone3 = this.clone.cloneNode(true);
         clone3.style.removeProperty("display");
         clone3.setAttribute("data-productId", item.ProductId);
         const outputs = queryElements(`[${attr2}-output]`, clone3);
         outputs.forEach((output) => {
           const key = output.dataset.bbOutput;
-          if (!key)
-            return;
+          if (!key) return;
           const value = item[key];
           if (value === 0 || value === "" || item[key]) {
             if (typeof value === "number") {
@@ -662,12 +655,10 @@
           this.resultsList
         );
         const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component2);
-        if (!moreToggle)
-          return;
+        if (!moreToggle) return;
         simulateEvent(moreToggle, "click");
       }
-      if (!component2)
-        return;
+      if (!component2) return;
       component2.scrollIntoView({ behavior: "instant" });
       window.scrollBy(0, -32);
     }
@@ -679,11 +670,9 @@
     const components2 = queryElements(`[${attr8}]`);
     components2.forEach((component2) => {
       const { bb } = component2.dataset;
-      if (!bb)
-        return;
+      if (!bb) return;
       const bestbuy = bb === "table" ? new HandleTable(component2) : bb === "mini" ? new HandleMini(component2) : null;
-      if (bestbuy === null)
-        return;
+      if (bestbuy === null) return;
       bestbuy.init();
     });
   };
@@ -715,17 +704,14 @@
   // src/utils/syncSlider.ts
   function syncSlider(inputId, initialValue) {
     const input = document.getElementById(inputId);
-    if (!input)
-      return;
+    if (!input) return;
     const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
     const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
     const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
-    if (!wrapper || !handle)
-      return;
+    if (!wrapper || !handle) return;
     const updateSliderUI = () => {
       const value = parseFloat(input.value);
-      if (isNaN(value))
-        return;
+      if (isNaN(value)) return;
       const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
       const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
       const clamped = Math.min(Math.max(value, min), max);
@@ -976,12 +962,10 @@
   // src/utils/handleConditionalVisibility.ts
   function handleConditionalVisibility(item, inputs) {
     const { condition } = item.dataset;
-    if (!condition)
-      return;
+    if (!condition) return;
     const parsedCondition = JSON.parse(condition);
     const input = inputs.find((input2) => input2.dataset.input === parsedCondition.dependsOn);
-    if (!input)
-      return;
+    if (!input) return;
     let conditionsMet = false;
     switch (parsedCondition.operator) {
       case "equal":
@@ -1001,6 +985,16 @@
   // src/calculators/handleInputRepeat.ts
   var attr3 = "data-calc";
   var HandleInputRepeat = class {
+    calculator;
+    name;
+    template;
+    templateWrapper;
+    inputs;
+    clone;
+    groups;
+    max;
+    type;
+    button;
     constructor(calculator, name) {
       this.calculator = calculator;
       this.name = name;
@@ -1026,8 +1020,7 @@
     }
     addTemplate() {
       const maxGroups = this.maxGroupsCheck();
-      if (maxGroups)
-        return;
+      if (maxGroups) return;
       const newItem = this.clone.cloneNode(true);
       const label = queryElement("label", newItem);
       const input = queryElement("input, select", newItem);
@@ -1054,16 +1047,14 @@
         if (this.type === "stringArray") {
           inputs.forEach((input) => {
             const value = getInputValue(input);
-            if (value)
-              values.push(value.toString());
+            if (value) values.push(value.toString());
           });
         } else if (this.type === "objectArray") {
           const object = {};
           inputs.forEach((input) => {
             const calcInput = input.dataset.input;
             const value = getInputValue(input);
-            if (!calcInput || !value)
-              return;
+            if (!calcInput || !value) return;
             object[calcInput] = value;
           });
           values.push(object);
@@ -1075,6 +1066,12 @@
 
   // src/calculators/handleInputs.ts
   var HandleInputs = class {
+    calculator;
+    config;
+    all;
+    repeats;
+    inputs;
+    conditionals;
     constructor(calculator) {
       this.calculator = calculator;
       this.config = calculator.config.inputs;
@@ -1088,8 +1085,7 @@
           const isRepeat = this.repeats?.some((repeat) => {
             return repeat.inputs.includes(input);
           });
-          if (!isRepeat)
-            this.inputs.push(input);
+          if (!isRepeat) this.inputs.push(input);
         });
       } else {
         this.inputs = queryElements(`[data-input]`, calculator.component);
@@ -1232,11 +1228,9 @@
         this.inputs.forEach((input) => {
           const calcInput = input.dataset.input;
           const value = getInputValue(input);
-          if (!calcInput || !value)
-            return;
+          if (!calcInput || !value) return;
           const { conditionsmet } = input.dataset;
-          if (conditionsmet === "false")
-            return;
+          if (conditionsmet === "false") return;
           values[calcInput] = value;
         });
         if (this.repeats) {
@@ -1265,7 +1259,7 @@
     }
   };
 
-  // node_modules/.pnpm/@kurkle+color@0.3.2/node_modules/@kurkle/color/dist/color.esm.js
+  // node_modules/@kurkle/color/dist/color.esm.js
   function round(v) {
     return v + 0.5 | 0;
   }
@@ -1822,7 +1816,7 @@
     }
   };
 
-  // node_modules/.pnpm/chart.js@4.4.2/node_modules/chart.js/dist/chunks/helpers.segment.js
+  // node_modules/chart.js/dist/chunks/helpers.segment.js
   function noop() {
   }
   var uid = /* @__PURE__ */ (() => {
@@ -1830,7 +1824,7 @@
     return () => id++;
   })();
   function isNullOrUndef(value) {
-    return value === null || typeof value === "undefined";
+    return value === null || value === void 0;
   }
   function isArray(value) {
     if (Array.isArray && Array.isArray(value)) {
@@ -2065,8 +2059,11 @@
     result.sort((a, b) => a - b).pop();
     return result;
   }
+  function isNonPrimitive(n) {
+    return typeof n === "symbol" || typeof n === "object" && n !== null && !(Symbol.toPrimitive in n || "toString" in n || "valueOf" in n);
+  }
   function isNumber(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n);
+    return !isNonPrimitive(n) && !isNaN(parseFloat(n)) && isFinite(n);
   }
   function almostWhole(x, epsilon) {
     const rounded = Math.round(x);
@@ -2284,24 +2281,35 @@
     let start = 0;
     let count = pointCount;
     if (meta._sorted) {
-      const { iScale, _parsed } = meta;
+      const { iScale, vScale, _parsed } = meta;
+      const spanGaps = meta.dataset ? meta.dataset.options ? meta.dataset.options.spanGaps : null : null;
       const axis = iScale.axis;
       const { min, max, minDefined, maxDefined } = iScale.getUserBounds();
       if (minDefined) {
-        start = _limitValue(Math.min(
+        start = Math.min(
           // @ts-expect-error Need to type _parsed
           _lookupByKey(_parsed, axis, min).lo,
           // @ts-expect-error Need to fix types on _lookupByKey
           animationsDisabled ? pointCount : _lookupByKey(points, axis, iScale.getPixelForValue(min)).lo
-        ), 0, pointCount - 1);
+        );
+        if (spanGaps) {
+          const distanceToDefinedLo = _parsed.slice(0, start + 1).reverse().findIndex((point) => !isNullOrUndef(point[vScale.axis]));
+          start -= Math.max(0, distanceToDefinedLo);
+        }
+        start = _limitValue(start, 0, pointCount - 1);
       }
       if (maxDefined) {
-        count = _limitValue(Math.max(
+        let end = Math.max(
           // @ts-expect-error Need to type _parsed
           _lookupByKey(_parsed, iScale.axis, max, true).hi + 1,
           // @ts-expect-error Need to fix types on _lookupByKey
           animationsDisabled ? 0 : _lookupByKey(points, axis, iScale.getPixelForValue(max), true).hi + 1
-        ), start, pointCount) - start;
+        );
+        if (spanGaps) {
+          const distanceToDefinedHi = _parsed.slice(end - 1).findIndex((point) => !isNullOrUndef(point[vScale.axis]));
+          end += Math.max(0, distanceToDefinedHi);
+        }
+        count = _limitValue(end, start, pointCount) - start;
       } else {
         count = pointCount - start;
       }
@@ -2815,6 +2823,9 @@
     return Math.round((pixel - halfWidth) * devicePixelRatio) / devicePixelRatio + halfWidth;
   }
   function clearCanvas(canvas, ctx) {
+    if (!ctx && !canvas) {
+      return;
+    }
     ctx = ctx || canvas.getContext("2d");
     ctx.save();
     ctx.resetTransform();
@@ -2846,6 +2857,7 @@
     }
     ctx.beginPath();
     switch (style) {
+      // Default includes circle
       default:
         if (w) {
           ctx.ellipse(x, y, w / 2, radius, 0, 0, TAU);
@@ -2884,6 +2896,7 @@
           break;
         }
         rad += QUARTER_PI;
+      /* falls through */
       case "rectRot":
         xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
         xOffset = Math.cos(rad) * radius;
@@ -2897,6 +2910,7 @@
         break;
       case "crossRot":
         rad += QUARTER_PI;
+      /* falls through */
       case "cross":
         xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
         xOffset = Math.cos(rad) * radius;
@@ -3318,7 +3332,7 @@
   var readKey = (prefix, name) => prefix ? prefix + _capitalize(name) : name;
   var needsSubResolver = (prop, value) => isObject(value) && prop !== "adapters" && (Object.getPrototypeOf(value) === null || value.constructor === Object);
   function _cached(target, prop, resolve2) {
-    if (Object.prototype.hasOwnProperty.call(target, prop)) {
+    if (Object.prototype.hasOwnProperty.call(target, prop) || prop === "constructor") {
       return target[prop];
     }
     const value = resolve2();
@@ -3713,7 +3727,7 @@
   function getContainerSize(canvas, width, height) {
     let maxWidth, maxHeight;
     if (width === void 0 || height === void 0) {
-      const container = _getParentNode(canvas);
+      const container = canvas && _getParentNode(canvas);
       if (!container) {
         width = canvas.clientWidth;
         height = canvas.clientHeight;
@@ -4187,7 +4201,7 @@
     return JSON.stringify(style, replacer) !== JSON.stringify(prevStyle, replacer);
   }
 
-  // node_modules/.pnpm/chart.js@4.4.2/node_modules/chart.js/dist/chart.js
+  // node_modules/chart.js/dist/chart.js
   var Animator = class {
     constructor() {
       this._request = null;
@@ -4615,9 +4629,11 @@
     if (value === null) {
       return;
     }
+    let found = false;
     for (i = 0, ilen = keys.length; i < ilen; ++i) {
       datasetIndex = +keys[i];
       if (datasetIndex === dsIndex) {
+        found = true;
         if (options.all) {
           continue;
         }
@@ -4628,17 +4644,23 @@
         value += otherValue;
       }
     }
+    if (!found && !options.all) {
+      return 0;
+    }
     return value;
   }
-  function convertObjectDataToArray(data) {
+  function convertObjectDataToArray(data, meta) {
+    const { iScale, vScale } = meta;
+    const iAxisKey = iScale.axis === "x" ? "x" : "y";
+    const vAxisKey = vScale.axis === "x" ? "x" : "y";
     const keys = Object.keys(data);
     const adata = new Array(keys.length);
     let i, ilen, key;
     for (i = 0, ilen = keys.length; i < ilen; ++i) {
       key = keys[i];
       adata[i] = {
-        x: key,
-        y: data[key]
+        [iAxisKey]: key,
+        [vAxisKey]: data[key]
       };
     }
     return adata;
@@ -4830,7 +4852,8 @@
       const data = dataset.data || (dataset.data = []);
       const _data = this._data;
       if (isObject(data)) {
-        this._data = convertObjectDataToArray(data);
+        const meta = this._cachedMeta;
+        this._data = convertObjectDataToArray(data, meta);
       } else if (_data !== data) {
         if (_data) {
           unlistenArrayEvents(_data, this);
@@ -4867,6 +4890,7 @@
       this._resyncElements(resetNewElements);
       if (stackChanged || oldStacked !== meta._stacked) {
         updateStacks(this, meta._parsed);
+        meta._stacked = isStacked(meta.vScale, meta);
       }
     }
     configure() {
@@ -5662,8 +5686,10 @@
       const metasets = iScale.getMatchingVisibleMetas(this._type).filter((meta) => meta.controller.options.grouped);
       const stacked = iScale.options.stacked;
       const stacks = [];
+      const currentParsed = this._cachedMeta.controller.getParsed(dataIndex);
+      const iScaleValue = currentParsed && currentParsed[iScale.axis];
       const skipNull = (meta) => {
-        const parsed = meta.controller.getParsed(dataIndex);
+        const parsed = meta._parsed.find((item) => item[iScale.axis] === iScaleValue);
         const val = parsed && parsed[meta.vScale.axis];
         if (isNullOrUndef(val) || isNaN(val)) {
           return true;
@@ -5802,7 +5828,7 @@
       const ilen = rects.length;
       let i = 0;
       for (; i < ilen; ++i) {
-        if (this.getParsed(i)[vScale.axis] !== null) {
+        if (this.getParsed(i)[vScale.axis] !== null && !rects[i].hidden) {
           rects[i].draw(this._ctx);
         }
       }
@@ -6782,10 +6808,20 @@
   function binarySearch(metaset, axis, value, intersect) {
     const { controller, data, _sorted } = metaset;
     const iScale = controller._cachedMeta.iScale;
+    const spanGaps = metaset.dataset ? metaset.dataset.options ? metaset.dataset.options.spanGaps : null : null;
     if (iScale && axis === iScale.axis && axis !== "r" && _sorted && data.length) {
       const lookupMethod = iScale._reversePixels ? _rlookupByKey : _lookupByKey;
       if (!intersect) {
-        return lookupMethod(data, axis, value);
+        const result = lookupMethod(data, axis, value);
+        if (spanGaps) {
+          const { vScale } = controller._cachedMeta;
+          const { _parsed } = metaset;
+          const distanceToDefinedLo = _parsed.slice(0, result.lo + 1).reverse().findIndex((point) => !isNullOrUndef(point[vScale.axis]));
+          result.lo -= Math.max(0, distanceToDefinedLo);
+          const distanceToDefinedHi = _parsed.slice(result.hi).findIndex((point) => !isNullOrUndef(point[vScale.axis]));
+          result.hi += Math.max(0, distanceToDefinedHi);
+        }
+        return result;
       } else if (controller._sharedOptions) {
         const el = data[0];
         const range = typeof el.getRange === "function" && el.getRange(axis);
@@ -6915,7 +6951,7 @@
     const rangeMethod = axis === "x" ? "inXRange" : "inYRange";
     let intersectsItem = false;
     evaluateInteractionItems(chart, axis, position, (element, datasetIndex, index2) => {
-      if (element[rangeMethod](position[axis], useFinalPosition)) {
+      if (element[rangeMethod] && element[rangeMethod](position[axis], useFinalPosition)) {
         items.push({
           element,
           datasetIndex,
@@ -7613,7 +7649,7 @@
       return getMaximumSize(canvas, width, height, aspectRatio);
     }
     isAttached(canvas) {
-      const container = _getParentNode(canvas);
+      const container = canvas && _getParentNode(canvas);
       return !!(container && container.isConnected);
     }
   };
@@ -9665,7 +9701,7 @@
     }
     return false;
   }
-  var version = "4.4.2";
+  var version = "4.4.8";
   var KNOWN_POSITIONS = [
     "top",
     "bottom",
@@ -10196,8 +10232,8 @@
       let i;
       if (this._resizeBeforeDraw) {
         const { width, height } = this._resizeBeforeDraw;
-        this._resize(width, height);
         this._resizeBeforeDraw = null;
+        this._resize(width, height);
       }
       this.clear();
       if (this.width <= 0 || this.height <= 0) {
@@ -10798,7 +10834,8 @@
       ], useFinalPosition);
       const rAdjust = (this.options.spacing + this.options.borderWidth) / 2;
       const _circumference = valueOrDefault(circumference, endAngle - startAngle);
-      const betweenAngles = _circumference >= TAU || _angleBetween(angle, startAngle, endAngle);
+      const nonZeroBetween = _angleBetween(angle, startAngle, endAngle) && startAngle !== endAngle;
+      const betweenAngles = _circumference >= TAU || nonZeroBetween;
       const withinRadius = _isBetween(distance, innerRadius + rAdjust, outerRadius + rAdjust);
       return betweenAngles && withinRadius;
     }
@@ -11460,6 +11497,9 @@
   function containsColorsDefinition(descriptor) {
     return descriptor && (descriptor.borderColor || descriptor.backgroundColor);
   }
+  function containsDefaultColorsDefenitions() {
+    return defaults.borderColor !== "rgba(0,0,0,0.1)" || defaults.backgroundColor !== "rgba(0,0,0,0.1)";
+  }
   var plugin_colors = {
     id: "colors",
     defaults: {
@@ -11472,7 +11512,8 @@
       }
       const { data: { datasets }, options: chartOptions } = chart.config;
       const { elements: elements2 } = chartOptions;
-      if (!options.forceOverride && (containsColorsDefinitions(datasets) || containsColorsDefinition(chartOptions) || elements2 && containsColorsDefinitions(elements2))) {
+      const containsColorDefenition = containsColorsDefinitions(datasets) || containsColorsDefinition(chartOptions) || elements2 && containsColorsDefinitions(elements2) || containsDefaultColorsDefenitions();
+      if (!options.forceOverride && containsColorDefenition) {
         return;
       }
       const colorizer = getColorizer(chart);
@@ -13001,6 +13042,9 @@
           y += pos.y;
           ++count;
         }
+      }
+      if (count === 0 || xSet.size === 0) {
+        return false;
       }
       const xAverage = [
         ...xSet
@@ -14748,7 +14792,7 @@
     ctx.save();
     ctx.strokeStyle = color2;
     ctx.lineWidth = lineWidth;
-    ctx.setLineDash(borderOpts.dash);
+    ctx.setLineDash(borderOpts.dash || []);
     ctx.lineDashOffset = borderOpts.dashOffset;
     ctx.beginPath();
     pathRadiusLine(scale, radius, circular, labelCount);
@@ -14952,7 +14996,7 @@
           ctx.strokeStyle = color2;
           ctx.setLineDash(optsAtIndex.borderDash);
           ctx.lineDashOffset = optsAtIndex.borderDashOffset;
-          offset = this.getDistanceFromCenterForValue(opts.ticks.reverse ? this.min : this.max);
+          offset = this.getDistanceFromCenterForValue(opts.reverse ? this.min : this.max);
           position = this.getPointPosition(i, offset);
           ctx.beginPath();
           ctx.moveTo(this.xCenter, this.yCenter);
@@ -15549,13 +15593,27 @@
     scales
   ];
 
-  // node_modules/.pnpm/chart.js@4.4.2/node_modules/chart.js/auto/auto.js
+  // node_modules/chart.js/auto/auto.js
   Chart.register(...registerables);
   var auto_default = Chart;
 
   // src/calculators/handleOutputs.ts
   var attr4 = "data-calc";
   var HandleOutputs = class {
+    calculator;
+    config;
+    all;
+    repeatTemplates;
+    repeatOutputs;
+    outputs;
+    repeatClones;
+    conditionals;
+    chart;
+    chartJS;
+    results;
+    result;
+    calcElement;
+    resultsId;
     constructor(calculator) {
       this.calculator = calculator;
       this.resultsId = calculator.component.getAttribute("data-results");
@@ -15581,8 +15639,7 @@
           output: name,
           present: !!output
         });
-        if (!output)
-          allPresent = false;
+        if (!output) allPresent = false;
       });
       if (isStaging) {
         console.groupCollapsed(`${allPresent ? "all outputs present" : "outputs missing"}`);
@@ -15603,8 +15660,7 @@
           template.style.display = "none";
           const fragment = document.createDocumentFragment();
           this.handleTemplateRepeats(template, fragment);
-          if (template.parentElement)
-            template.parentElement.appendChild(fragment);
+          if (template.parentElement) template.parentElement.appendChild(fragment);
         });
       }
       this.populateOutputs();
@@ -15618,8 +15674,7 @@
     }
     handleTemplateRepeats(template, fragment) {
       const repeatName = template.dataset.calcOutputRepeat;
-      if (!repeatName || !this.result || !this.result[repeatName])
-        return;
+      if (!repeatName || !this.result || !this.result[repeatName]) return;
       const clonesToDelete = this.repeatClones[repeatName];
       if (clonesToDelete) {
         clonesToDelete.forEach((cloneToDelete) => {
@@ -15627,8 +15682,7 @@
         });
       }
       const dataItems = this.result[repeatName];
-      if (!Array.isArray(dataItems))
-        return;
+      if (!Array.isArray(dataItems)) return;
       const clones = [];
       dataItems.forEach((dataItem) => {
         const clone3 = this.prepareClone(template, dataItem);
@@ -15649,8 +15703,7 @@
     populateOutput(output, value) {
       if (typeof value === "number") {
         const { calcOutputMod } = output.dataset;
-        if (calcOutputMod)
-          value = Number(calcOutputMod) * value;
+        if (calcOutputMod) value = Number(calcOutputMod) * value;
         output.textContent = numberToCurrency(value);
       } else {
         output.textContent = value;
@@ -15663,8 +15716,7 @@
       }
       outputs.forEach((output) => {
         const key = output.dataset.calcOutput;
-        if (!key)
-          return;
+        if (!key) return;
         const value = data[key];
         if (value === 0 || data[key]) {
           if (output instanceof HTMLInputElement) {
@@ -15679,8 +15731,7 @@
       });
     }
     populateChart() {
-      if (!this.result || !this.chart)
-        return;
+      if (!this.result || !this.chart) return;
       const chartLabels = this.result.ChartLabels;
       const labels = chartLabels.split(",");
       const chartData1 = this.result.ChartData;
@@ -15709,8 +15760,7 @@
       if (this.chartJS) {
         this.chartJS.data.labels = labels;
         this.chartJS.data.datasets[0].data = data1;
-        if (data2)
-          this.chartJS.data.datasets[1].data = data2;
+        if (data2) this.chartJS.data.datasets[1].data = data2;
         this.chartJS.update();
       } else {
         this.chartJS = new auto_default(this.chart, {
@@ -15751,6 +15801,18 @@
   var API_ENDPOINT3 = API_ENDPOINTS.calculatorTrigger;
   var API_ENDPOINT_PRODUCT = API_ENDPOINTS.productsTrigger;
   var HandleCalculator = class _HandleCalculator {
+    name;
+    component;
+    config;
+    inputs;
+    outputs;
+    conditionals;
+    button;
+    buttonText;
+    buttonLoader;
+    isLoading;
+    result;
+    isSyncing;
     constructor(component2) {
       this.name = component2.dataset.calc;
       this.component = component2;
@@ -15788,8 +15850,7 @@
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
       if (!isValid || !allPresent) {
-        if (isStaging)
-          console.log("inputs not valid or not all present");
+        if (isStaging) console.log("inputs not valid or not all present");
         this.toggleLoading(false);
         return;
       }
@@ -15891,12 +15952,10 @@
       }
     }
     populateProductCard(results) {
-      if (!results.data || !Array.isArray(results.data))
-        return;
+      if (!results.data || !Array.isArray(results.data)) return;
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
-        if (!key || !(key in results.data[0]))
-          return;
+        if (!key || !(key in results.data[0])) return;
         const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
@@ -16040,10 +16099,8 @@
     const rateSlider = queryElement(`[data-input="Rate"]`);
     if (repaymentValueSlider)
       repaymentValueSlider.setAttribute(`${attr8}-output`, "BorrowingAmountHigher");
-    if (depositAmountSlider)
-      depositAmountSlider.setAttribute(`${attr8}}-output`, "DepositAmount");
-    if (rateSlider)
-      rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
+    if (depositAmountSlider) depositAmountSlider.setAttribute(`${attr8}}-output`, "DepositAmount");
+    if (rateSlider) rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
     const components2 = queryElements(`[${attr8}]`);
     components2.forEach((component2) => {
       const calculator = new HandleCalculator(component2);
@@ -16059,6 +16116,9 @@
   // src/costofdoingnothing/handleCODNOutputs.ts
   var attr6 = "data-calc";
   var HandleCODNOutputs = class {
+    component;
+    outputs;
+    result;
     constructor(component2) {
       this.component = component2;
       this.outputs = queryElements(`[${attr6}-output]`, component2);
@@ -16072,8 +16132,7 @@
     populateOutput(output, value) {
       if (typeof value === "number") {
         const { calcOutputMod } = output.dataset;
-        if (calcOutputMod)
-          value = Number(calcOutputMod) * value;
+        if (calcOutputMod) value = Number(calcOutputMod) * value;
         output.textContent = numberToCurrency(value);
       } else {
         output.textContent = value;
@@ -16105,8 +16164,7 @@
         data["PaymentsAfterSwitch"] = data["CostOfRate2"] / 12;
         outputs.forEach((output) => {
           const key = output.dataset.calcOutput;
-          if (!key)
-            return;
+          if (!key) return;
           const value = data[key];
           if (value === 0 || data[key]) {
             this.populateOutput(output, value);
@@ -16118,6 +16176,18 @@
 
   // src/costofdoingnothing/handleCostOfDoingNothing.ts
   var CostOfDoingNothingCalculator = class {
+    component;
+    inputs;
+    buttons;
+    buttonsText;
+    buttonsLoader;
+    currentLenderDropdown;
+    mortgageTypeDropdown;
+    followOnField;
+    isLoading;
+    formattedValues;
+    formattedCostOfDoingNothingValues;
+    outputHandler;
     constructor(component2) {
       this.component = component2;
       this.inputs = queryElements(`[data-input], input, select`, component2);
@@ -16145,8 +16215,7 @@
       this.buttons.forEach((button) => {
         button.addEventListener("click", async () => {
           const valid = this.validateInputs();
-          if (!valid)
-            return;
+          if (!valid) return;
           this.toggleLoading();
           try {
             const bestBuyResult = await this.handleBestBuyRequest();
@@ -16394,8 +16463,7 @@
     }
     updateFollowOnField() {
       const selectedLenderOption = this.currentLenderDropdown.selectedOptions[0];
-      if (!selectedLenderOption)
-        return;
+      if (!selectedLenderOption) return;
       const mortgageType = this.mortgageTypeDropdown.value;
       let followOnRate = "";
       if (mortgageType === "Residential") {
@@ -16410,10 +16478,8 @@
       const costOfRate2 = response.data.CostOfRate2;
       const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
       const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
-      if (costOfRate1Element)
-        costOfRate1Element.textContent = `\xA3${costOfRate1}`;
-      if (costOfRate2Element)
-        costOfRate2Element.textContent = `\xA3${costOfRate2}`;
+      if (costOfRate1Element) costOfRate1Element.textContent = `\xA3${costOfRate1}`;
+      if (costOfRate2Element) costOfRate2Element.textContent = `\xA3${costOfRate2}`;
     }
     async init() {
       await this.handleSVRRequest();
@@ -16490,23 +16556,20 @@
   var stages = {};
   var initDOMRefs = () => {
     component = queryElement(`[${globalAttr.component}="component"]`);
-    if (!component)
-      throw new Error("MCT component wrapper not found");
+    if (!component) throw new Error("MCT component wrapper not found");
     const stageElements = queryElements(`[${globalAttr.stage}]`, component);
     stageElements.forEach((stage) => {
       const name = stage.getAttribute(globalAttr.stage);
-      if (name)
-        stages[name] = stage;
+      if (name) stages[name] = stage;
     });
   };
   var getStage = (name) => {
     const stage = stages[name];
-    if (!stage)
-      throw new Error(`Stage '${name}' not found`);
+    if (!stage) throw new Error(`Stage '${name}' not found`);
     return stage;
   };
 
-  // src/mct/shared/api.ts
+  // src/mct/shared/api/generateLCID.ts
   var generateLCID = async () => {
     const data = {
       lcid: "0FFA8FAE-1D74-45BE-9CDC-9FAF7783CA07"
@@ -16556,24 +16619,19 @@
       return state.groups.find((group) => group.profileName === profile.name);
     },
     getPreviousGroupInSequence() {
-      if (this.getActiveGroupIndex() <= 0)
-        return void 0;
+      if (this.getActiveGroupIndex() <= 0) return void 0;
       return state.groups[0];
     },
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
-      if (!activeGroup)
-        return;
+      if (!activeGroup) return;
       if (this.getActiveGroupIndex() === 0) {
         const profile = this.determineProfile();
-        if (!profile)
-          return sharedUtils.logError("Could not determine profile");
+        if (!profile) return sharedUtils.logError("Could not determine profile");
         const nextGroup = this.findGroupByProfile(profile);
-        if (!nextGroup)
-          return sharedUtils.logError("No matching group found for profile:", profile);
+        if (!nextGroup) return sharedUtils.logError("No matching group found for profile:", profile);
         const nextGroupIndex = this.getGroups().indexOf(nextGroup);
-        if (nextGroupIndex === -1)
-          return sharedUtils.logError("Next group index not found");
+        if (nextGroupIndex === -1) return sharedUtils.logError("Next group index not found");
         state.currentGroupIndex = nextGroupIndex;
         nextGroup.show();
         const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
@@ -16590,11 +16648,9 @@
     },
     navigateToPreviousGroup() {
       const previousGroup = this.getPreviousGroupInSequence();
-      if (!previousGroup)
-        return sharedUtils.logError("No previous group found");
+      if (!previousGroup) return sharedUtils.logError("No previous group found");
       const previousGroupIndex = state.groups.indexOf(previousGroup);
-      if (previousGroupIndex === -1)
-        return sharedUtils.logError("Previous group index not found");
+      if (previousGroupIndex === -1) return sharedUtils.logError("Previous group index not found");
       state.currentGroupIndex = previousGroupIndex;
       const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
       if (lastVisibleIndex >= 0) {
@@ -16610,8 +16666,7 @@
       state.componentEl = el;
     },
     getQuestionsComponent() {
-      if (!state.componentEl)
-        throw new Error("Component not set");
+      if (!state.componentEl) throw new Error("Component not set");
       return state.componentEl;
     },
     setQuestionAnswer(key, value) {
@@ -16665,9 +16720,16 @@
 
   // src/mct/stages/questions/QuestionItem.ts
   var QuestionItem = class {
+    el;
+    onChange;
+    onEnter;
+    inputs = [];
+    type;
+    name;
+    dependsOn;
+    dependsOnValue;
+    isVisible = false;
     constructor(el, onChange, onEnter) {
-      this.inputs = [];
-      this.isVisible = false;
       this.el = el;
       this.onChange = onChange;
       this.onEnter = onEnter;
@@ -16694,8 +16756,7 @@
           });
         }
         input.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter")
-            return;
+          if (e.key !== "Enter") return;
           if (this.isValid()) {
             this.onEnter();
           } else {
@@ -16707,17 +16768,12 @@
     }
     isValid() {
       const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
-      if (hasInvalidInput)
-        return false;
+      if (hasInvalidInput) return false;
       const value = this.getValue();
-      if (this.type === "radio")
-        return typeof value === "string" && value !== "";
-      if (this.type === "checkbox")
-        return Array.isArray(value) && value.length > 0;
-      if (this.type === "text")
-        return typeof value === "string" && value.trim() !== "";
-      if (this.type === "number")
-        return typeof value === "number" && !isNaN(value);
+      if (this.type === "radio") return typeof value === "string" && value !== "";
+      if (this.type === "checkbox") return Array.isArray(value) && value.length > 0;
+      if (this.type === "text") return typeof value === "string" && value.trim() !== "";
+      if (this.type === "number") return typeof value === "number" && !isNaN(value);
       return false;
     }
     updateVisualState(isValid) {
@@ -16730,8 +16786,7 @@
     }
     focus() {
       const input = this.inputs[0];
-      if (!input)
-        throw new Error("No input found to focus on");
+      if (!input) throw new Error("No input found to focus on");
       input.focus();
     }
     disable() {
@@ -16756,24 +16811,17 @@
       }
     }
     shouldBeVisible(answers) {
-      if (!this.dependsOn)
-        return true;
-      if (!this.dependsOnValue)
-        return answers[this.dependsOn] !== null;
+      if (!this.dependsOn) return true;
+      if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
       return answers[this.dependsOn] === this.dependsOnValue;
     }
     detectType() {
       const input = queryElement("input", this.el);
-      if (!input)
-        throw new Error('No "input" element found in question item');
-      if (input.type === "radio")
-        return "radio";
-      if (input.type === "checkbox")
-        return "checkbox";
-      if (input.type === "text")
-        return "text";
-      if (input.type === "number")
-        return "number";
+      if (!input) throw new Error('No "input" element found in question item');
+      if (input.type === "radio") return "radio";
+      if (input.type === "checkbox") return "checkbox";
+      if (input.type === "text") return "text";
+      if (input.type === "number") return "number";
       throw new Error(`Unsupported input type: ${input.type}`);
     }
     getRadioValue() {
@@ -16782,8 +16830,7 @@
     }
     setRadioValue(value) {
       const input = this.inputs.find((i) => i.value === value);
-      if (!input)
-        throw new Error(`No radio input found with value: ${value}`);
+      if (!input) throw new Error(`No radio input found with value: ${value}`);
       input.checked = true;
     }
     resetRadioInput() {
@@ -16811,36 +16858,30 @@
     }
     setTextValue(value) {
       const input = this.inputs[0];
-      if (!input)
-        throw new Error("No text input found for text question");
+      if (!input) throw new Error("No text input found for text question");
       input.value = value;
     }
     resetTextInputs() {
       const input = this.inputs[0];
-      if (!input)
-        throw new Error("No text input found for text question");
+      if (!input) throw new Error("No text input found for text question");
       input.value = "";
     }
     getNumberValue() {
       const input = this.inputs[0];
-      if (!input)
-        return null;
+      if (!input) return null;
       const value = input.value.trim();
-      if (!value)
-        return null;
+      if (!value) return null;
       const number = parseFloat(value);
       return isNaN(number) ? null : number;
     }
     setNumberValue(value) {
       const input = this.inputs[0];
-      if (!input)
-        throw new Error("No number input found for number question");
+      if (!input) throw new Error("No number input found for number question");
       input.value = value.toString();
     }
     resetNumberInput() {
       const input = this.inputs[0];
-      if (!input)
-        throw new Error("No number input found for number question");
+      if (!input) throw new Error("No number input found for number question");
       input.value = "";
     }
     getValue() {
@@ -16906,15 +16947,12 @@
     const stage = getStage("questions");
     const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
     const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
-    if (!wrapper || !scroll)
-      return;
+    if (!wrapper || !scroll) return;
     const groups = questionStageManager.getGroups();
-    if (groups.length === 0)
-      return;
+    if (groups.length === 0) return;
     const firstItem = questionStageManager.getFirstQuestion()?.el;
     const lastItem = questionStageManager.getLastQuestion()?.el;
-    if (!firstItem || !lastItem)
-      return;
+    if (!firstItem || !lastItem) return;
     const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
     const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
     wrapper.style.paddingTop = `${topPad}px`;
@@ -16940,9 +16978,13 @@
 
   // src/mct/stages/questions/QuestionGroup.ts
   var QuestionGroup = class {
+    groupEl;
+    onInputChange;
+    questions;
+    activeQuestionIndex = 0;
+    scroll;
+    profileName = null;
     constructor(groupEl, onInputChange) {
-      this.activeQuestionIndex = 0;
-      this.profileName = null;
       this.groupEl = groupEl;
       this.onInputChange = onInputChange;
       this.questions = this.initQuestions();
@@ -16958,10 +17000,8 @@
           () => this.onItemChange(index2),
           () => this.handleEnter(index2)
         );
-        if (index2 !== 0)
-          question.disable();
-        if (question.dependsOn)
-          question.hide();
+        if (index2 !== 0) question.disable();
+        if (question.dependsOn) question.hide();
         return question;
       });
     }
@@ -17037,8 +17077,7 @@
           });
         } else {
           const prevGroup = questionStageManager.getPreviousGroupInSequence();
-          if (prevGroup)
-            questionStageManager.navigateToPreviousGroup();
+          if (prevGroup) questionStageManager.navigateToPreviousGroup();
         }
       }
     }
@@ -17093,22 +17132,17 @@
     });
     utils.prepareWrapper();
     const initialGroup = questionStageManager.getActiveGroup();
-    if (initialGroup)
-      initialGroup.show();
+    if (initialGroup) initialGroup.show();
     component2.addEventListener("mct:navigation:update", (event) => {
       const { nextEnabled, prevEnabled } = event.detail;
-      if (typeof nextEnabled === "boolean")
-        nextButton.disabled = !nextEnabled;
-      if (typeof prevEnabled === "boolean")
-        prevButton.disabled = !prevEnabled;
+      if (typeof nextEnabled === "boolean") nextButton.disabled = !nextEnabled;
+      if (typeof prevEnabled === "boolean") prevButton.disabled = !prevEnabled;
     });
     nextButton.addEventListener("click", () => {
       const currentGroup = questionStageManager.getActiveGroup();
-      if (!currentGroup)
-        return;
+      if (!currentGroup) return;
       const currentItem = currentGroup.getActiveQuestion();
-      if (!currentItem.isValid())
-        return;
+      if (!currentItem.isValid()) return;
       currentGroup.navigate("next");
     });
     const prevButton = queryElement(
@@ -17117,8 +17151,7 @@
     );
     prevButton.addEventListener("click", () => {
       const currentGroup = questionStageManager.getActiveGroup();
-      if (!currentGroup)
-        return;
+      if (!currentGroup) return;
       currentGroup.navigate("prev");
     });
   };
@@ -17139,6 +17172,64 @@
     }
   };
 
+  // src/mct/shared/utils/fetchData.ts
+  var fetchData = async (endpoint, options) => {
+    const baseURL = getBaseURLForAPI();
+    const response = await fetch(`${baseURL}${endpoint}`, options);
+    if (!response.ok) {
+      throw new Error("Failed to fetch data");
+    }
+    return response.json();
+  };
+
+  // src/mct/shared/api/endpoints.ts
+  var ENDPOINTS = {
+    products: "/ProductsMCTHttpTrigger"
+  };
+
+  // src/mct/shared/api/fetchProducts.ts
+  var fetchProducts = async (input) => {
+    return fetchData(ENDPOINTS.products, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input })
+    });
+  };
+
+  // src/mct/shared/api/tests/testFetchProducts.ts
+  var testFetchProducts = async () => {
+    const input = {
+      PropertyValue: 25e4,
+      RepaymentValue: 125e3,
+      PropertyType: 1,
+      MortgageType: 1,
+      InterestOnlyValue: 0,
+      TermYears: 25,
+      SchemePurpose: 1,
+      SchemePeriods: [1, 2, 3, 4],
+      SchemeTypes: [1, 2],
+      NumberOfResults: 3,
+      Features: {
+        HelpToBuy: false,
+        Offset: false,
+        EarlyRepaymentCharge: false,
+        NewBuild: false
+      },
+      SortColumn: 1,
+      UseStaticApr: false,
+      SapValue: 50,
+      Lenders: "",
+      IncludeRetention: false,
+      RetentionLenderId: ""
+    };
+    try {
+      const response = await fetchProducts(input);
+      console.log("API Response:", response);
+    } catch (error) {
+      console.error("API Error:", error);
+    }
+  };
+
   // src/mct/shared/route.ts
   var route = async () => {
     console.log("routing");
@@ -17148,6 +17239,7 @@
       manager.setLCID(lcid);
       console.log(`LCID: ${lcid}`);
       initQuestionsStage();
+      testFetchProducts();
     } catch (error) {
       console.error("Failed to initialize MCT:", error);
     }
@@ -17173,25 +17265,18 @@
 
 @kurkle/color/dist/color.esm.js:
   (*!
-   * @kurkle/color v0.3.2
+   * @kurkle/color v0.3.4
    * https://github.com/kurkle/color#readme
-   * (c) 2023 Jukka Kurkela
+   * (c) 2024 Jukka Kurkela
    * Released under the MIT License
    *)
 
 chart.js/dist/chunks/helpers.segment.js:
-  (*!
-   * Chart.js v4.4.2
-   * https://www.chartjs.org
-   * (c) 2024 Chart.js Contributors
-   * Released under the MIT License
-   *)
-
 chart.js/dist/chart.js:
   (*!
-   * Chart.js v4.4.2
+   * Chart.js v4.4.8
    * https://www.chartjs.org
-   * (c) 2024 Chart.js Contributors
+   * (c) 2025 Chart.js Contributors
    * Released under the MIT License
    *)
 */

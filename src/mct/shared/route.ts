@@ -1,6 +1,7 @@
-import { generateLCID } from './api';
+import { generateLCID } from './api/generateLCID';
 import { initQuestionsStage } from '../stages/questions';
 import { manager } from './manager';
+import { testFetchProducts } from './api/tests/testFetchProducts';
 
 export const route = async () => {
   console.log('routing');
@@ -13,6 +14,8 @@ export const route = async () => {
     console.log(`LCID: ${lcid}`);
 
     initQuestionsStage();
+
+    testFetchProducts();
 
     // // Here you can add logic to determine where to direct the user
     // // For example:
