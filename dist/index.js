@@ -16655,6 +16655,35 @@
     logError
   };
 
+  // src/mct/stages/questions/constants.ts
+  var attr7 = {
+    components: "data-mct-questions",
+    item: "data-mct-questions-item",
+    dependsOn: "data-mct-questions-depends-on",
+    dependsOnValue: "data-mct-questions-depends-on-value",
+    group: "data-mct-questions-group"
+  };
+
+  // src/mct/stages/questions/utils/prepareWrapper.ts
+  var prepareWrapper = () => {
+    const stage = getStage("questions");
+    const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
+    const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
+    if (!wrapper || !scroll)
+      return;
+    const groups = questionStageManager.getGroups();
+    if (groups.length === 0)
+      return;
+    const firstItem = questionStageManager.getFirstQuestion()?.el;
+    const lastItem = questionStageManager.getLastQuestion()?.el;
+    if (!firstItem || !lastItem)
+      return;
+    const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
+    const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
+    wrapper.style.paddingTop = `${topPad}px`;
+    wrapper.style.paddingBottom = `${bottomPad}px`;
+  };
+
   // src/mct/stages/questions/QuestionStageManager.ts
   var state = {
     components: {
@@ -16667,7 +16696,8 @@
     currentQuestionIndex: 0,
     answers: {},
     groups: [],
-    profile: null
+    profile: null,
+    optionRemoved: false
   };
   var questionStageManager = {
     registerGroup(group) {
@@ -16713,6 +16743,7 @@
         state.currentGroupIndex = nextGroupIndex;
         nextGroup.show();
         this.showHeader("sticky");
+        prepareWrapper();
         const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
         if (firstVisibleIndex < nextGroup.questions.length) {
           nextGroup.activeQuestionIndex = firstVisibleIndex;
@@ -16749,15 +16780,12 @@
     },
     setHeader(el) {
       state.components.header = el;
-      console.log("header", el);
     },
     setStickyHeader(el) {
       state.components.stickyHeader = el;
-      console.log("stickyHeader", el);
     },
     setProfileSelect(el) {
       state.components.profileSelect = el;
-      console.log("profileSelect", el);
     },
     initialiseProfileSelect(value) {
       const { profileSelect } = state.components;
@@ -16765,7 +16793,9 @@
         return;
       profileSelect.value = value;
       simulateEvent(profileSelect, "change");
-      profileSelect.remove(0);
+      if (!state.optionRemoved)
+        profileSelect.remove(0);
+      state.optionRemoved = true;
     },
     showHeader(type) {
       const { header, stickyHeader } = state.components;
@@ -16822,15 +16852,6 @@
     getState() {
       return { ...state };
     }
-  };
-
-  // src/mct/stages/questions/constants.ts
-  var attr7 = {
-    components: "data-mct-questions",
-    item: "data-mct-questions-item",
-    dependsOn: "data-mct-questions-depends-on",
-    dependsOnValue: "data-mct-questions-depends-on-value",
-    group: "data-mct-questions-group"
   };
 
   // src/mct/stages/questions/QuestionItem.ts
@@ -17076,26 +17097,6 @@
           throw new Error(`Unsupported question type: ${this.type}`);
       }
     }
-  };
-
-  // src/mct/stages/questions/utils/prepareWrapper.ts
-  var prepareWrapper = () => {
-    const stage = getStage("questions");
-    const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
-    const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
-    if (!wrapper || !scroll)
-      return;
-    const groups = questionStageManager.getGroups();
-    if (groups.length === 0)
-      return;
-    const firstItem = questionStageManager.getFirstQuestion()?.el;
-    const lastItem = questionStageManager.getLastQuestion()?.el;
-    if (!firstItem || !lastItem)
-      return;
-    const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
-    const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
-    wrapper.style.paddingTop = `${topPad}px`;
-    wrapper.style.paddingBottom = `${bottomPad}px`;
   };
 
   // src/mct/stages/questions/utils/updateNavigation.ts

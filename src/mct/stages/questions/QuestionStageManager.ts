@@ -4,6 +4,8 @@ import type { Profile, ProfileName } from './types';
 import { PROFILES } from '../../shared/constants';
 import { sharedUtils } from 'src/mct/shared/utils';
 import { simulateEvent } from '@finsweet/ts-utils';
+import { prepareWrapper } from './utils/prepareWrapper';
+import { queryElement } from '$utils/queryElement';
 
 interface State {
   components: {
@@ -17,6 +19,7 @@ interface State {
   currentQuestionIndex: number;
   answers: Record<AnswerKey, AnswerValue>;
   profile: Profile | null;
+  optionRemoved: boolean;
 }
 
 export type AnswerKey = string;
@@ -34,6 +37,7 @@ const state: State = {
   answers: {},
   groups: [],
   profile: null,
+  optionRemoved: false,
 };
 
 export const questionStageManager = {
@@ -86,6 +90,7 @@ export const questionStageManager = {
       state.currentGroupIndex = nextGroupIndex;
       nextGroup.show();
       this.showHeader('sticky');
+      prepareWrapper();
       const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
       if (firstVisibleIndex < nextGroup.questions.length) {
         nextGroup.activeQuestionIndex = firstVisibleIndex;
@@ -130,17 +135,14 @@ export const questionStageManager = {
 
   setHeader(el: HTMLElement) {
     state.components.header = el;
-    console.log('header', el);
   },
 
   setStickyHeader(el: HTMLElement) {
     state.components.stickyHeader = el;
-    console.log('stickyHeader', el);
   },
 
   setProfileSelect(el: HTMLSelectElement) {
     state.components.profileSelect = el;
-    console.log('profileSelect', el);
   },
 
   initialiseProfileSelect(value: ProfileName) {
@@ -149,7 +151,9 @@ export const questionStageManager = {
 
     profileSelect.value = value;
     simulateEvent(profileSelect, 'change');
-    profileSelect.remove(0);
+
+    if (!state.optionRemoved) profileSelect.remove(0);
+    state.optionRemoved = true;
   },
 
   showHeader(type: 'static' | 'sticky') {
