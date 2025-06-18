@@ -29,7 +29,7 @@ export const testFetchProducts = async () => {
 
   try {
     const response = await fetchProducts(input);
-    console.log('API Response:', response);
+    console.log(response);
   } catch (error) {
     console.error('API Error:', error);
   }

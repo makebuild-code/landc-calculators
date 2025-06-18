@@ -1,3 +1,5 @@
+import type { BaseResponse } from './baseResponse';
+
 export interface ProductsRequest {
   PropertyValue: number;
   RepaymentValue: number;
@@ -77,7 +79,9 @@ export interface Product {
   AvailableFor: string;
 }
 
-export interface ProductsResponse extends BaseResponse {
+export interface ProductsResponseData {
   SummaryInfo: SummaryInfo;
   Products: Product[];
 }
+
+export type ProductsResponse = BaseResponse<ProductsResponseData>;

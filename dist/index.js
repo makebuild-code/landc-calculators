@@ -23,7 +23,8 @@
     const { hostname, search } = window.location;
     const params = new URLSearchParams(search);
     const apiParam = params.get("api");
-    if (apiParam) return ENDPOINTS2[apiParam] || ENDPOINTS2.prod;
+    if (apiParam)
+      return ENDPOINTS2[apiParam] || ENDPOINTS2.prod;
     return ENVIRONMENTS.find((env) => env.host === hostname)?.api || ENDPOINTS2.prod;
   };
 
@@ -135,7 +136,8 @@
       try {
         const result = await this.makeAzureRequest();
         this.result = result.result;
-        if (isStaging) console.log(result);
+        if (isStaging)
+          console.log(result);
         if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
           this.toggleLoading(false);
         } else {
@@ -168,13 +170,15 @@
       return response.json();
     }
     displayResults() {
-      if (!this.result) return;
+      if (!this.result)
+        return;
       this.result.data.forEach((item, index2) => {
         const row = this.rows[index2];
         const outputs = queryElements(`[${attr}-output]`, row);
         outputs.forEach((output) => {
           const key = output.dataset.miniOutput;
-          if (!key) return;
+          if (!key)
+            return;
           const value = item[key];
           if (value === 0 || item[key]) {
             if (typeof value === "number") {
@@ -208,7 +212,8 @@
       const open = queryElement(`[${attr8}="open"]`, component2);
       const dialog = queryElement("dialog", component2);
       const close = queryElement(`[${attr8}="close"]`, component2);
-      if (!open || !dialog || !close) return;
+      if (!open || !dialog || !close)
+        return;
       open.addEventListener("click", () => {
         dialog.showModal();
       });
@@ -232,11 +237,14 @@
         case "number":
           const { min, max } = input;
           let minValid = true;
-          if (!!min) minValid = Number(value) >= Number(min);
+          if (!!min)
+            minValid = Number(value) >= Number(min);
           let maxValid = true;
-          if (!!max) maxValid = Number(value) <= Number(max);
+          if (!!max)
+            maxValid = Number(value) <= Number(max);
           isValid = minValid && maxValid;
-          if (isValid) break;
+          if (isValid)
+            break;
           error = !minValid ? `Input needs to be ${min} or higher` : `Input needs to be ${max} or less`;
           break;
         default:
@@ -258,15 +266,18 @@
   function formatInput(input) {
     if (input instanceof HTMLInputElement) {
       const { type, value } = input;
-      if (type !== "number") return;
+      if (type !== "number")
+        return;
       const { step } = input;
-      if (Number(step) < 1) return;
+      if (Number(step) < 1)
+        return;
       input.value = Math.round(Number(value)).toString();
     } else if (input.type === "fieldset") {
       const radios = queryElements('input[type="radio"]');
       radios.forEach((radio) => {
         const { parentElement, checked } = radio;
-        if (!parentElement) return;
+        if (!parentElement)
+          return;
         if (checked) {
           parentElement.classList.add("checked");
         } else {
@@ -315,17 +326,21 @@
   // src/utils/setError.ts
   function setError(input, text) {
     const wrapper = getWrapper(input);
-    if (!wrapper) return;
+    if (!wrapper)
+      return;
     const message = queryElement('[data-calc-el="message"]', wrapper);
     const error = queryElement('[data-calc-el="error"]', wrapper);
-    if (!error) return;
+    if (!error)
+      return;
     if (text) {
       error.textContent = text;
       error.style.display = "block";
-      if (message) message.style.display = "none";
+      if (message)
+        message.style.display = "none";
     } else {
       error.style.display = "none";
-      if (message) message.style.removeProperty("display");
+      if (message)
+        message.style.removeProperty("display");
     }
   }
 
@@ -398,9 +413,11 @@
       this.conditionalVisibility();
       if (this.trigger === "onload") {
         this.isLoading = true;
-        if (this.productId) this.scrollIntoView();
+        if (this.productId)
+          this.scrollIntoView();
         await this.handleAzureRequest();
-        if (this.productId) this.scrollIntoView(this.productId);
+        if (this.productId)
+          this.scrollIntoView(this.productId);
       } else if (this.trigger === "onclick") {
         this.loading.style.display = "none";
         this.noResults.style.display = "none";
@@ -419,7 +436,8 @@
       this.buttons.forEach((button) => {
         button.addEventListener("click", () => {
           const valid = this.validateInputs();
-          if (!valid) return;
+          if (!valid)
+            return;
           this.toggleLoading();
           this.numberOfResultsShown = 0;
           this.handleAzureRequest();
@@ -427,7 +445,8 @@
       });
       this.sort.addEventListener("change", () => {
         const valid = this.validateInputs();
-        if (!valid) return;
+        if (!valid)
+          return;
         this.toggleLoading();
         this.numberOfResultsShown = 0;
         this.handleAzureRequest();
@@ -453,10 +472,12 @@
     conditionalVisibility() {
       this.conditionals.forEach((item) => {
         const { conditions } = item.dataset;
-        if (!conditions) return;
+        if (!conditions)
+          return;
         const parsedConditions = JSON.parse(conditions);
         const input = this.inputs.find((input2) => input2.dataset.input === parsedConditions.dependsOn);
-        if (!input) return;
+        if (!input)
+          return;
         let conditionsMet = false;
         switch (parsedConditions.operator) {
           case "equal":
@@ -509,10 +530,12 @@
     getValues() {
       const preFormattedValues = {};
       this.inputs.forEach((input) => {
-        if (input.dataset.conditionsmet && input.dataset.conditionsmet === "false") return;
+        if (input.dataset.conditionsmet && input.dataset.conditionsmet === "false")
+          return;
         const key = input.dataset.input;
         const value = getInputValue(input);
-        if (!key || !value) return;
+        if (!key || !value)
+          return;
         preFormattedValues[key] = value;
       });
       const formattedValues = {
@@ -534,12 +557,18 @@
         SortColumn: preFormattedValues.SortColumn,
         UseStaticApr: false
       };
-      if (preFormattedValues.ShowAsTwoYear) formattedValues.SchemePeriods.push("1");
-      if (preFormattedValues.ShowAsThreeYear) formattedValues.SchemePeriods.push("2");
-      if (preFormattedValues.ShowAsFiveYear) formattedValues.SchemePeriods.push("3");
-      if (preFormattedValues.ShowAsLongTerm) formattedValues.SchemePeriods.push("4");
-      if (preFormattedValues.ShowAsFix) formattedValues.SchemeTypes.push("1");
-      if (preFormattedValues.ShowAsVar) formattedValues.SchemeTypes.push("2");
+      if (preFormattedValues.ShowAsTwoYear)
+        formattedValues.SchemePeriods.push("1");
+      if (preFormattedValues.ShowAsThreeYear)
+        formattedValues.SchemePeriods.push("2");
+      if (preFormattedValues.ShowAsFiveYear)
+        formattedValues.SchemePeriods.push("3");
+      if (preFormattedValues.ShowAsLongTerm)
+        formattedValues.SchemePeriods.push("4");
+      if (preFormattedValues.ShowAsFix)
+        formattedValues.SchemeTypes.push("1");
+      if (preFormattedValues.ShowAsVar)
+        formattedValues.SchemeTypes.push("2");
       this.formattedValues = formattedValues;
       return formattedValues;
     }
@@ -552,7 +581,8 @@
       try {
         const result = await this.makeAzureRequest();
         this.result = result.result;
-        if (isStaging) console.log(result);
+        if (isStaging)
+          console.log(result);
         if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
           this.toggleLoading(false);
         } else {
@@ -588,16 +618,19 @@
       this.resultsList.innerHTML = "";
     }
     displayResults(startIndex, show) {
-      if (!this.result) return;
+      if (!this.result)
+        return;
       this.result.data.forEach((item, index2) => {
-        if (index2 < startIndex || index2 > startIndex + show - 1) return;
+        if (index2 < startIndex || index2 > startIndex + show - 1)
+          return;
         const clone3 = this.clone.cloneNode(true);
         clone3.style.removeProperty("display");
         clone3.setAttribute("data-productId", item.ProductId);
         const outputs = queryElements(`[${attr2}-output]`, clone3);
         outputs.forEach((output) => {
           const key = output.dataset.bbOutput;
-          if (!key) return;
+          if (!key)
+            return;
           const value = item[key];
           if (value === 0 || value === "" || item[key]) {
             if (typeof value === "number") {
@@ -655,10 +688,12 @@
           this.resultsList
         );
         const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component2);
-        if (!moreToggle) return;
+        if (!moreToggle)
+          return;
         simulateEvent(moreToggle, "click");
       }
-      if (!component2) return;
+      if (!component2)
+        return;
       component2.scrollIntoView({ behavior: "instant" });
       window.scrollBy(0, -32);
     }
@@ -670,9 +705,11 @@
     const components2 = queryElements(`[${attr8}]`);
     components2.forEach((component2) => {
       const { bb } = component2.dataset;
-      if (!bb) return;
+      if (!bb)
+        return;
       const bestbuy = bb === "table" ? new HandleTable(component2) : bb === "mini" ? new HandleMini(component2) : null;
-      if (bestbuy === null) return;
+      if (bestbuy === null)
+        return;
       bestbuy.init();
     });
   };
@@ -704,14 +741,17 @@
   // src/utils/syncSlider.ts
   function syncSlider(inputId, initialValue) {
     const input = document.getElementById(inputId);
-    if (!input) return;
+    if (!input)
+      return;
     const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
     const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
     const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
-    if (!wrapper || !handle) return;
+    if (!wrapper || !handle)
+      return;
     const updateSliderUI = () => {
       const value = parseFloat(input.value);
-      if (isNaN(value)) return;
+      if (isNaN(value))
+        return;
       const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
       const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
       const clamped = Math.min(Math.max(value, min), max);
@@ -962,10 +1002,12 @@
   // src/utils/handleConditionalVisibility.ts
   function handleConditionalVisibility(item, inputs) {
     const { condition } = item.dataset;
-    if (!condition) return;
+    if (!condition)
+      return;
     const parsedCondition = JSON.parse(condition);
     const input = inputs.find((input2) => input2.dataset.input === parsedCondition.dependsOn);
-    if (!input) return;
+    if (!input)
+      return;
     let conditionsMet = false;
     switch (parsedCondition.operator) {
       case "equal":
@@ -1020,7 +1062,8 @@
     }
     addTemplate() {
       const maxGroups = this.maxGroupsCheck();
-      if (maxGroups) return;
+      if (maxGroups)
+        return;
       const newItem = this.clone.cloneNode(true);
       const label = queryElement("label", newItem);
       const input = queryElement("input, select", newItem);
@@ -1047,14 +1090,16 @@
         if (this.type === "stringArray") {
           inputs.forEach((input) => {
             const value = getInputValue(input);
-            if (value) values.push(value.toString());
+            if (value)
+              values.push(value.toString());
           });
         } else if (this.type === "objectArray") {
           const object = {};
           inputs.forEach((input) => {
             const calcInput = input.dataset.input;
             const value = getInputValue(input);
-            if (!calcInput || !value) return;
+            if (!calcInput || !value)
+              return;
             object[calcInput] = value;
           });
           values.push(object);
@@ -1085,7 +1130,8 @@
           const isRepeat = this.repeats?.some((repeat) => {
             return repeat.inputs.includes(input);
           });
-          if (!isRepeat) this.inputs.push(input);
+          if (!isRepeat)
+            this.inputs.push(input);
         });
       } else {
         this.inputs = queryElements(`[data-input]`, calculator.component);
@@ -1228,9 +1274,11 @@
         this.inputs.forEach((input) => {
           const calcInput = input.dataset.input;
           const value = getInputValue(input);
-          if (!calcInput || !value) return;
+          if (!calcInput || !value)
+            return;
           const { conditionsmet } = input.dataset;
-          if (conditionsmet === "false") return;
+          if (conditionsmet === "false")
+            return;
           values[calcInput] = value;
         });
         if (this.repeats) {
@@ -2857,7 +2905,6 @@
     }
     ctx.beginPath();
     switch (style) {
-      // Default includes circle
       default:
         if (w) {
           ctx.ellipse(x, y, w / 2, radius, 0, 0, TAU);
@@ -2896,7 +2943,6 @@
           break;
         }
         rad += QUARTER_PI;
-      /* falls through */
       case "rectRot":
         xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
         xOffset = Math.cos(rad) * radius;
@@ -2910,7 +2956,6 @@
         break;
       case "crossRot":
         rad += QUARTER_PI;
-      /* falls through */
       case "cross":
         xOffsetW = Math.cos(rad) * (w ? w / 2 : radius);
         xOffset = Math.cos(rad) * radius;
@@ -15639,7 +15684,8 @@
           output: name,
           present: !!output
         });
-        if (!output) allPresent = false;
+        if (!output)
+          allPresent = false;
       });
       if (isStaging) {
         console.groupCollapsed(`${allPresent ? "all outputs present" : "outputs missing"}`);
@@ -15660,7 +15706,8 @@
           template.style.display = "none";
           const fragment = document.createDocumentFragment();
           this.handleTemplateRepeats(template, fragment);
-          if (template.parentElement) template.parentElement.appendChild(fragment);
+          if (template.parentElement)
+            template.parentElement.appendChild(fragment);
         });
       }
       this.populateOutputs();
@@ -15674,7 +15721,8 @@
     }
     handleTemplateRepeats(template, fragment) {
       const repeatName = template.dataset.calcOutputRepeat;
-      if (!repeatName || !this.result || !this.result[repeatName]) return;
+      if (!repeatName || !this.result || !this.result[repeatName])
+        return;
       const clonesToDelete = this.repeatClones[repeatName];
       if (clonesToDelete) {
         clonesToDelete.forEach((cloneToDelete) => {
@@ -15682,7 +15730,8 @@
         });
       }
       const dataItems = this.result[repeatName];
-      if (!Array.isArray(dataItems)) return;
+      if (!Array.isArray(dataItems))
+        return;
       const clones = [];
       dataItems.forEach((dataItem) => {
         const clone3 = this.prepareClone(template, dataItem);
@@ -15703,7 +15752,8 @@
     populateOutput(output, value) {
       if (typeof value === "number") {
         const { calcOutputMod } = output.dataset;
-        if (calcOutputMod) value = Number(calcOutputMod) * value;
+        if (calcOutputMod)
+          value = Number(calcOutputMod) * value;
         output.textContent = numberToCurrency(value);
       } else {
         output.textContent = value;
@@ -15716,7 +15766,8 @@
       }
       outputs.forEach((output) => {
         const key = output.dataset.calcOutput;
-        if (!key) return;
+        if (!key)
+          return;
         const value = data[key];
         if (value === 0 || data[key]) {
           if (output instanceof HTMLInputElement) {
@@ -15731,7 +15782,8 @@
       });
     }
     populateChart() {
-      if (!this.result || !this.chart) return;
+      if (!this.result || !this.chart)
+        return;
       const chartLabels = this.result.ChartLabels;
       const labels = chartLabels.split(",");
       const chartData1 = this.result.ChartData;
@@ -15760,7 +15812,8 @@
       if (this.chartJS) {
         this.chartJS.data.labels = labels;
         this.chartJS.data.datasets[0].data = data1;
-        if (data2) this.chartJS.data.datasets[1].data = data2;
+        if (data2)
+          this.chartJS.data.datasets[1].data = data2;
         this.chartJS.update();
       } else {
         this.chartJS = new auto_default(this.chart, {
@@ -15850,7 +15903,8 @@
       const isValid = this.inputs.validateInputs();
       const allPresent = this.inputs.check();
       if (!isValid || !allPresent) {
-        if (isStaging) console.log("inputs not valid or not all present");
+        if (isStaging)
+          console.log("inputs not valid or not all present");
         this.toggleLoading(false);
         return;
       }
@@ -15952,10 +16006,12 @@
       }
     }
     populateProductCard(results) {
-      if (!results.data || !Array.isArray(results.data)) return;
+      if (!results.data || !Array.isArray(results.data))
+        return;
       document.querySelectorAll("[data-calc-output]").forEach((output) => {
         const key = output.getAttribute("data-calc-output");
-        if (!key || !(key in results.data[0])) return;
+        if (!key || !(key in results.data[0]))
+          return;
         const value = results.data[0][key];
         const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
         if (output instanceof HTMLImageElement) {
@@ -16099,8 +16155,10 @@
     const rateSlider = queryElement(`[data-input="Rate"]`);
     if (repaymentValueSlider)
       repaymentValueSlider.setAttribute(`${attr8}-output`, "BorrowingAmountHigher");
-    if (depositAmountSlider) depositAmountSlider.setAttribute(`${attr8}}-output`, "DepositAmount");
-    if (rateSlider) rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
+    if (depositAmountSlider)
+      depositAmountSlider.setAttribute(`${attr8}}-output`, "DepositAmount");
+    if (rateSlider)
+      rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
     const components2 = queryElements(`[${attr8}]`);
     components2.forEach((component2) => {
       const calculator = new HandleCalculator(component2);
@@ -16132,7 +16190,8 @@
     populateOutput(output, value) {
       if (typeof value === "number") {
         const { calcOutputMod } = output.dataset;
-        if (calcOutputMod) value = Number(calcOutputMod) * value;
+        if (calcOutputMod)
+          value = Number(calcOutputMod) * value;
         output.textContent = numberToCurrency(value);
       } else {
         output.textContent = value;
@@ -16164,7 +16223,8 @@
         data["PaymentsAfterSwitch"] = data["CostOfRate2"] / 12;
         outputs.forEach((output) => {
           const key = output.dataset.calcOutput;
-          if (!key) return;
+          if (!key)
+            return;
           const value = data[key];
           if (value === 0 || data[key]) {
             this.populateOutput(output, value);
@@ -16215,7 +16275,8 @@
       this.buttons.forEach((button) => {
         button.addEventListener("click", async () => {
           const valid = this.validateInputs();
-          if (!valid) return;
+          if (!valid)
+            return;
           this.toggleLoading();
           try {
             const bestBuyResult = await this.handleBestBuyRequest();
@@ -16463,7 +16524,8 @@
     }
     updateFollowOnField() {
       const selectedLenderOption = this.currentLenderDropdown.selectedOptions[0];
-      if (!selectedLenderOption) return;
+      if (!selectedLenderOption)
+        return;
       const mortgageType = this.mortgageTypeDropdown.value;
       let followOnRate = "";
       if (mortgageType === "Residential") {
@@ -16478,8 +16540,10 @@
       const costOfRate2 = response.data.CostOfRate2;
       const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
       const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
-      if (costOfRate1Element) costOfRate1Element.textContent = `\xA3${costOfRate1}`;
-      if (costOfRate2Element) costOfRate2Element.textContent = `\xA3${costOfRate2}`;
+      if (costOfRate1Element)
+        costOfRate1Element.textContent = `\xA3${costOfRate1}`;
+      if (costOfRate2Element)
+        costOfRate2Element.textContent = `\xA3${costOfRate2}`;
     }
     async init() {
       await this.handleSVRRequest();
@@ -16556,16 +16620,19 @@
   var stages = {};
   var initDOMRefs = () => {
     component = queryElement(`[${globalAttr.component}="component"]`);
-    if (!component) throw new Error("MCT component wrapper not found");
+    if (!component)
+      throw new Error("MCT component wrapper not found");
     const stageElements = queryElements(`[${globalAttr.stage}]`, component);
     stageElements.forEach((stage) => {
       const name = stage.getAttribute(globalAttr.stage);
-      if (name) stages[name] = stage;
+      if (name)
+        stages[name] = stage;
     });
   };
   var getStage = (name) => {
     const stage = stages[name];
-    if (!stage) throw new Error(`Stage '${name}' not found`);
+    if (!stage)
+      throw new Error(`Stage '${name}' not found`);
     return stage;
   };
 
@@ -16590,7 +16657,12 @@
 
   // src/mct/stages/questions/QuestionStageManager.ts
   var state = {
-    componentEl: null,
+    components: {
+      element: null,
+      header: null,
+      stickyHeader: null,
+      profileSelect: null
+    },
     currentGroupIndex: 0,
     currentQuestionIndex: 0,
     answers: {},
@@ -16619,21 +16691,28 @@
       return state.groups.find((group) => group.profileName === profile.name);
     },
     getPreviousGroupInSequence() {
-      if (this.getActiveGroupIndex() <= 0) return void 0;
+      if (this.getActiveGroupIndex() <= 0)
+        return void 0;
       return state.groups[0];
     },
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
-      if (!activeGroup) return;
+      if (!activeGroup)
+        return;
       if (this.getActiveGroupIndex() === 0) {
         const profile = this.determineProfile();
-        if (!profile) return sharedUtils.logError("Could not determine profile");
+        if (!profile)
+          return sharedUtils.logError("Could not determine profile");
+        this.initialiseProfileSelect(profile.name);
         const nextGroup = this.findGroupByProfile(profile);
-        if (!nextGroup) return sharedUtils.logError("No matching group found for profile:", profile);
+        if (!nextGroup)
+          return sharedUtils.logError("No matching group found for profile:", profile);
         const nextGroupIndex = this.getGroups().indexOf(nextGroup);
-        if (nextGroupIndex === -1) return sharedUtils.logError("Next group index not found");
+        if (nextGroupIndex === -1)
+          return sharedUtils.logError("Next group index not found");
         state.currentGroupIndex = nextGroupIndex;
         nextGroup.show();
+        this.showHeader("sticky");
         const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
         if (firstVisibleIndex < nextGroup.questions.length) {
           nextGroup.activeQuestionIndex = firstVisibleIndex;
@@ -16648,10 +16727,13 @@
     },
     navigateToPreviousGroup() {
       const previousGroup = this.getPreviousGroupInSequence();
-      if (!previousGroup) return sharedUtils.logError("No previous group found");
+      if (!previousGroup)
+        return sharedUtils.logError("No previous group found");
       const previousGroupIndex = state.groups.indexOf(previousGroup);
-      if (previousGroupIndex === -1) return sharedUtils.logError("Previous group index not found");
+      if (previousGroupIndex === -1)
+        return sharedUtils.logError("Previous group index not found");
       state.currentGroupIndex = previousGroupIndex;
+      this.showHeader("static");
       const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
       if (lastVisibleIndex >= 0) {
         previousGroup.activeQuestionIndex = lastVisibleIndex;
@@ -16663,11 +16745,44 @@
       return state.groups;
     },
     setQuestionsComponent(el) {
-      state.componentEl = el;
+      state.components.element = el;
+    },
+    setHeader(el) {
+      state.components.header = el;
+      console.log("header", el);
+    },
+    setStickyHeader(el) {
+      state.components.stickyHeader = el;
+      console.log("stickyHeader", el);
+    },
+    setProfileSelect(el) {
+      state.components.profileSelect = el;
+      console.log("profileSelect", el);
+    },
+    initialiseProfileSelect(value) {
+      const { profileSelect } = state.components;
+      if (!profileSelect)
+        return;
+      profileSelect.value = value;
+      simulateEvent(profileSelect, "change");
+      profileSelect.remove(0);
+    },
+    showHeader(type) {
+      const { header, stickyHeader } = state.components;
+      if (!header || !stickyHeader)
+        return;
+      if (type === "static") {
+        header.style.removeProperty("display");
+        stickyHeader.style.display = "none";
+      } else if (type === "sticky") {
+        header.style.display = "none";
+        stickyHeader.style.removeProperty("display");
+      }
     },
     getQuestionsComponent() {
-      if (!state.componentEl) throw new Error("Component not set");
-      return state.componentEl;
+      if (!state.components.element)
+        throw new Error("Component not set");
+      return state.components.element;
     },
     setQuestionAnswer(key, value) {
       state.answers[key] = value;
@@ -16702,7 +16817,7 @@
       state.currentQuestionIndex = 0;
       state.answers = {};
       state.groups.forEach((group) => group.reset());
-      state.componentEl = null;
+      state.components.element = null;
     },
     getState() {
       return { ...state };
@@ -16756,7 +16871,8 @@
           });
         }
         input.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter") return;
+          if (e.key !== "Enter")
+            return;
           if (this.isValid()) {
             this.onEnter();
           } else {
@@ -16768,12 +16884,17 @@
     }
     isValid() {
       const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
-      if (hasInvalidInput) return false;
+      if (hasInvalidInput)
+        return false;
       const value = this.getValue();
-      if (this.type === "radio") return typeof value === "string" && value !== "";
-      if (this.type === "checkbox") return Array.isArray(value) && value.length > 0;
-      if (this.type === "text") return typeof value === "string" && value.trim() !== "";
-      if (this.type === "number") return typeof value === "number" && !isNaN(value);
+      if (this.type === "radio")
+        return typeof value === "string" && value !== "";
+      if (this.type === "checkbox")
+        return Array.isArray(value) && value.length > 0;
+      if (this.type === "text")
+        return typeof value === "string" && value.trim() !== "";
+      if (this.type === "number")
+        return typeof value === "number" && !isNaN(value);
       return false;
     }
     updateVisualState(isValid) {
@@ -16786,7 +16907,8 @@
     }
     focus() {
       const input = this.inputs[0];
-      if (!input) throw new Error("No input found to focus on");
+      if (!input)
+        throw new Error("No input found to focus on");
       input.focus();
     }
     disable() {
@@ -16811,17 +16933,24 @@
       }
     }
     shouldBeVisible(answers) {
-      if (!this.dependsOn) return true;
-      if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
+      if (!this.dependsOn)
+        return true;
+      if (!this.dependsOnValue)
+        return answers[this.dependsOn] !== null;
       return answers[this.dependsOn] === this.dependsOnValue;
     }
     detectType() {
       const input = queryElement("input", this.el);
-      if (!input) throw new Error('No "input" element found in question item');
-      if (input.type === "radio") return "radio";
-      if (input.type === "checkbox") return "checkbox";
-      if (input.type === "text") return "text";
-      if (input.type === "number") return "number";
+      if (!input)
+        throw new Error('No "input" element found in question item');
+      if (input.type === "radio")
+        return "radio";
+      if (input.type === "checkbox")
+        return "checkbox";
+      if (input.type === "text")
+        return "text";
+      if (input.type === "number")
+        return "number";
       throw new Error(`Unsupported input type: ${input.type}`);
     }
     getRadioValue() {
@@ -16830,7 +16959,8 @@
     }
     setRadioValue(value) {
       const input = this.inputs.find((i) => i.value === value);
-      if (!input) throw new Error(`No radio input found with value: ${value}`);
+      if (!input)
+        throw new Error(`No radio input found with value: ${value}`);
       input.checked = true;
     }
     resetRadioInput() {
@@ -16858,30 +16988,36 @@
     }
     setTextValue(value) {
       const input = this.inputs[0];
-      if (!input) throw new Error("No text input found for text question");
+      if (!input)
+        throw new Error("No text input found for text question");
       input.value = value;
     }
     resetTextInputs() {
       const input = this.inputs[0];
-      if (!input) throw new Error("No text input found for text question");
+      if (!input)
+        throw new Error("No text input found for text question");
       input.value = "";
     }
     getNumberValue() {
       const input = this.inputs[0];
-      if (!input) return null;
+      if (!input)
+        return null;
       const value = input.value.trim();
-      if (!value) return null;
+      if (!value)
+        return null;
       const number = parseFloat(value);
       return isNaN(number) ? null : number;
     }
     setNumberValue(value) {
       const input = this.inputs[0];
-      if (!input) throw new Error("No number input found for number question");
+      if (!input)
+        throw new Error("No number input found for number question");
       input.value = value.toString();
     }
     resetNumberInput() {
       const input = this.inputs[0];
-      if (!input) throw new Error("No number input found for number question");
+      if (!input)
+        throw new Error("No number input found for number question");
       input.value = "";
     }
     getValue() {
@@ -16947,12 +17083,15 @@
     const stage = getStage("questions");
     const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
     const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
-    if (!wrapper || !scroll) return;
+    if (!wrapper || !scroll)
+      return;
     const groups = questionStageManager.getGroups();
-    if (groups.length === 0) return;
+    if (groups.length === 0)
+      return;
     const firstItem = questionStageManager.getFirstQuestion()?.el;
     const lastItem = questionStageManager.getLastQuestion()?.el;
-    if (!firstItem || !lastItem) return;
+    if (!firstItem || !lastItem)
+      return;
     const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
     const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
     wrapper.style.paddingTop = `${topPad}px`;
@@ -17000,8 +17139,10 @@
           () => this.onItemChange(index2),
           () => this.handleEnter(index2)
         );
-        if (index2 !== 0) question.disable();
-        if (question.dependsOn) question.hide();
+        if (index2 !== 0)
+          question.disable();
+        if (question.dependsOn)
+          question.hide();
         return question;
       });
     }
@@ -17077,7 +17218,8 @@
           });
         } else {
           const prevGroup = questionStageManager.getPreviousGroupInSequence();
-          if (prevGroup) questionStageManager.navigateToPreviousGroup();
+          if (prevGroup)
+            questionStageManager.navigateToPreviousGroup();
         }
       }
     }
@@ -17119,30 +17261,50 @@
   var initQuestionsStage = () => {
     const component2 = getStage("questions");
     questionStageManager.setQuestionsComponent(component2);
+    const header = queryElement(`[${attr7.components}="header"]`, component2);
+    const stickyHeader = queryElement(
+      `[${attr7.components}="sticky-header"]`,
+      component2
+    );
+    const profileSelect = queryElement(
+      `[${attr7.components}="profile-select"]`,
+      component2
+    );
+    if (header)
+      questionStageManager.setHeader(header);
+    if (stickyHeader)
+      questionStageManager.setStickyHeader(stickyHeader);
+    if (profileSelect)
+      questionStageManager.setProfileSelect(profileSelect);
+    questionStageManager.showHeader("static");
     const nextButton = queryElement(`[${attr7.components}="next"]`, component2);
     const handleInputChange = (isValid) => {
       utils.updateNavigation({ nextEnabled: isValid });
     };
     const groupEls = queryElements(`[${attr7.group}]`, component2);
-    const groups = groupEls.map((groupEl, index2) => {
+    groupEls.forEach((groupEl, index2) => {
       const group = new QuestionGroup(groupEl, handleInputChange);
       index2 === 0 ? group.show() : group.hide();
       questionStageManager.registerGroup(group);
-      return group;
     });
     utils.prepareWrapper();
     const initialGroup = questionStageManager.getActiveGroup();
-    if (initialGroup) initialGroup.show();
+    if (initialGroup)
+      initialGroup.show();
     component2.addEventListener("mct:navigation:update", (event) => {
       const { nextEnabled, prevEnabled } = event.detail;
-      if (typeof nextEnabled === "boolean") nextButton.disabled = !nextEnabled;
-      if (typeof prevEnabled === "boolean") prevButton.disabled = !prevEnabled;
+      if (typeof nextEnabled === "boolean")
+        nextButton.disabled = !nextEnabled;
+      if (typeof prevEnabled === "boolean")
+        prevButton.disabled = !prevEnabled;
     });
     nextButton.addEventListener("click", () => {
       const currentGroup = questionStageManager.getActiveGroup();
-      if (!currentGroup) return;
+      if (!currentGroup)
+        return;
       const currentItem = currentGroup.getActiveQuestion();
-      if (!currentItem.isValid()) return;
+      if (!currentItem.isValid())
+        return;
       currentGroup.navigate("next");
     });
     const prevButton = queryElement(
@@ -17151,7 +17313,8 @@
     );
     prevButton.addEventListener("click", () => {
       const currentGroup = questionStageManager.getActiveGroup();
-      if (!currentGroup) return;
+      if (!currentGroup)
+        return;
       currentGroup.navigate("prev");
     });
   };
@@ -17172,64 +17335,6 @@
     }
   };
 
-  // src/mct/shared/utils/fetchData.ts
-  var fetchData = async (endpoint, options) => {
-    const baseURL = getBaseURLForAPI();
-    const response = await fetch(`${baseURL}${endpoint}`, options);
-    if (!response.ok) {
-      throw new Error("Failed to fetch data");
-    }
-    return response.json();
-  };
-
-  // src/mct/shared/api/endpoints.ts
-  var ENDPOINTS = {
-    products: "/ProductsMCTHttpTrigger"
-  };
-
-  // src/mct/shared/api/fetchProducts.ts
-  var fetchProducts = async (input) => {
-    return fetchData(ENDPOINTS.products, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input })
-    });
-  };
-
-  // src/mct/shared/api/tests/testFetchProducts.ts
-  var testFetchProducts = async () => {
-    const input = {
-      PropertyValue: 25e4,
-      RepaymentValue: 125e3,
-      PropertyType: 1,
-      MortgageType: 1,
-      InterestOnlyValue: 0,
-      TermYears: 25,
-      SchemePurpose: 1,
-      SchemePeriods: [1, 2, 3, 4],
-      SchemeTypes: [1, 2],
-      NumberOfResults: 3,
-      Features: {
-        HelpToBuy: false,
-        Offset: false,
-        EarlyRepaymentCharge: false,
-        NewBuild: false
-      },
-      SortColumn: 1,
-      UseStaticApr: false,
-      SapValue: 50,
-      Lenders: "",
-      IncludeRetention: false,
-      RetentionLenderId: ""
-    };
-    try {
-      const response = await fetchProducts(input);
-      console.log("API Response:", response);
-    } catch (error) {
-      console.error("API Error:", error);
-    }
-  };
-
   // src/mct/shared/route.ts
   var route = async () => {
     console.log("routing");
@@ -17239,7 +17344,6 @@
       manager.setLCID(lcid);
       console.log(`LCID: ${lcid}`);
       initQuestionsStage();
-      testFetchProducts();
     } catch (error) {
       console.error("Failed to initialize MCT:", error);
     }
@@ -17272,6 +17376,13 @@
    *)
 
 chart.js/dist/chunks/helpers.segment.js:
+  (*!
+   * Chart.js v4.4.8
+   * https://www.chartjs.org
+   * (c) 2025 Chart.js Contributors
+   * Released under the MIT License
+   *)
+
 chart.js/dist/chart.js:
   (*!
    * Chart.js v4.4.8

@@ -1,11 +1,17 @@
 import type { QuestionGroup } from './QuestionGroup';
 import type { QuestionItem } from './QuestionItem';
-import type { Profile } from './types';
+import type { Profile, ProfileName } from './types';
 import { PROFILES } from '../../shared/constants';
 import { sharedUtils } from 'src/mct/shared/utils';
+import { simulateEvent } from '@finsweet/ts-utils';
 
 interface State {
-  componentEl: HTMLElement | null;
+  components: {
+    element: HTMLElement | null;
+    header: HTMLElement | null;
+    stickyHeader: HTMLElement | null;
+    profileSelect: HTMLSelectElement | null;
+  };
   groups: QuestionGroup[];
   currentGroupIndex: number;
   currentQuestionIndex: number;
@@ -17,7 +23,12 @@ export type AnswerKey = string;
 export type AnswerValue = string | number | string[] | null;
 
 const state: State = {
-  componentEl: null,
+  components: {
+    element: null,
+    header: null,
+    stickyHeader: null,
+    profileSelect: null,
+  },
   currentGroupIndex: 0,
   currentQuestionIndex: 0,
   answers: {},
@@ -64,6 +75,7 @@ export const questionStageManager = {
     if (this.getActiveGroupIndex() === 0) {
       const profile = this.determineProfile();
       if (!profile) return sharedUtils.logError('Could not determine profile');
+      this.initialiseProfileSelect(profile.name);
 
       const nextGroup = this.findGroupByProfile(profile);
       if (!nextGroup) return sharedUtils.logError('No matching group found for profile:', profile);
@@ -73,6 +85,7 @@ export const questionStageManager = {
 
       state.currentGroupIndex = nextGroupIndex;
       nextGroup.show();
+      this.showHeader('sticky');
       const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
       if (firstVisibleIndex < nextGroup.questions.length) {
         nextGroup.activeQuestionIndex = firstVisibleIndex;
@@ -98,6 +111,7 @@ export const questionStageManager = {
 
     state.currentGroupIndex = previousGroupIndex;
     // previousGroup.show();
+    this.showHeader('static');
     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
     if (lastVisibleIndex >= 0) {
       previousGroup.activeQuestionIndex = lastVisibleIndex;
@@ -111,12 +125,48 @@ export const questionStageManager = {
   },
 
   setQuestionsComponent(el: HTMLElement) {
-    state.componentEl = el;
+    state.components.element = el;
+  },
+
+  setHeader(el: HTMLElement) {
+    state.components.header = el;
+    console.log('header', el);
+  },
+
+  setStickyHeader(el: HTMLElement) {
+    state.components.stickyHeader = el;
+    console.log('stickyHeader', el);
+  },
+
+  setProfileSelect(el: HTMLSelectElement) {
+    state.components.profileSelect = el;
+    console.log('profileSelect', el);
+  },
+
+  initialiseProfileSelect(value: ProfileName) {
+    const { profileSelect } = state.components;
+    if (!profileSelect) return;
+
+    profileSelect.value = value;
+    simulateEvent(profileSelect, 'change');
+    profileSelect.remove(0);
+  },
+
+  showHeader(type: 'static' | 'sticky') {
+    const { header, stickyHeader } = state.components;
+    if (!header || !stickyHeader) return;
+    if (type === 'static') {
+      header.style.removeProperty('display');
+      stickyHeader.style.display = 'none';
+    } else if (type === 'sticky') {
+      header.style.display = 'none';
+      stickyHeader.style.removeProperty('display');
+    }
   },
 
   getQuestionsComponent(): HTMLElement {
-    if (!state.componentEl) throw new Error('Component not set');
-    return state.componentEl;
+    if (!state.components.element) throw new Error('Component not set');
+    return state.components.element;
   },
 
   setQuestionAnswer(key: AnswerKey, value: AnswerValue) {
@@ -160,7 +210,7 @@ export const questionStageManager = {
     state.currentQuestionIndex = 0;
     state.answers = {};
     state.groups.forEach((group) => group.reset());
-    state.componentEl = null;
+    state.components.element = null;
   },
 
   getState() {

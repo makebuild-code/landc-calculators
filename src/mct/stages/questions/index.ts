@@ -15,6 +15,22 @@ import { utils } from './utils';
 export const initQuestionsStage = () => {
   const component = getStage('questions');
   questionStageManager.setQuestionsComponent(component);
+
+  const header = queryElement(`[${attr.components}="header"]`, component) as HTMLElement;
+  const stickyHeader = queryElement(
+    `[${attr.components}="sticky-header"]`,
+    component
+  ) as HTMLElement;
+  const profileSelect = queryElement(
+    `[${attr.components}="profile-select"]`,
+    component
+  ) as HTMLSelectElement;
+
+  if (header) questionStageManager.setHeader(header);
+  if (stickyHeader) questionStageManager.setStickyHeader(stickyHeader);
+  if (profileSelect) questionStageManager.setProfileSelect(profileSelect);
+  questionStageManager.showHeader('static');
+
   const nextButton = queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement;
 
   const handleInputChange = (isValid: boolean) => {
@@ -22,11 +38,10 @@ export const initQuestionsStage = () => {
   };
 
   const groupEls = queryElements(`[${attr.group}]`, component) as HTMLElement[];
-  const groups = groupEls.map((groupEl, index) => {
+  groupEls.forEach((groupEl, index) => {
     const group = new QuestionGroup(groupEl, handleInputChange);
     index === 0 ? group.show() : group.hide();
     questionStageManager.registerGroup(group);
-    return group;
   });
 
   utils.prepareWrapper();
