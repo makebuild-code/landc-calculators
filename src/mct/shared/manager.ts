@@ -71,7 +71,11 @@ export const MCTManager = {
   },
 
   route() {
-    initQuestions();
+    const mainQuestions = this.getStage('questions') as HTMLElement;
+    initQuestions(mainQuestions, {
+      mode: 'main',
+      prefill: false,
+    });
   },
 
   registerStage(stage: Stage) {

@@ -16559,6 +16559,17 @@
     }
   };
 
+  // src/mct/shared/utils/logError.ts
+  var logError = (message, data) => {
+    console.log(message, data || "");
+    return false;
+  };
+
+  // src/mct/shared/utils/index.ts
+  var sharedUtils = {
+    logError
+  };
+
   // src/mct/shared/constants.ts
   var mctAttr = {
     mct: "data-mct",
@@ -16615,77 +16626,6 @@
     }
   ];
 
-  // src/mct/shared/manager.ts
-  var stages = {};
-  var dom = {
-    mctComponent: null,
-    stages: {}
-  };
-  var state = {
-    lcid: null,
-    currentStageId: null
-  };
-  var MCTManager = {
-    initDOM: () => {
-      dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
-      if (!dom.mctComponent)
-        throw new Error("MCT component not found");
-      const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
-      stageElements.forEach((stage) => {
-        const name = stage.getAttribute(mctAttr.stage);
-        if (name)
-          dom.stages[name] = stage;
-      });
-      return dom;
-    },
-    getComponent: () => {
-      if (!dom.mctComponent)
-        throw new Error("MCT component not initialised");
-      return dom.mctComponent;
-    },
-    getStage: (name) => {
-      if (!dom.stages)
-        throw new Error("Stages not initialised");
-      const stage = dom.stages[name];
-      if (!stage)
-        throw new Error(`Stage '${name}' not found`);
-      return dom.stages[name];
-    },
-    registerStage(stage) {
-      stages[stage.id] = stage;
-    },
-    goToStage(stageId) {
-      if (state.currentStageId && stages[state.currentStageId]) {
-        stages[state.currentStageId].hide();
-      }
-      state.currentStageId = stageId;
-      if (stages[stageId]) {
-        stages[stageId].init?.();
-        stages[stageId].show();
-      }
-    },
-    setLCID(lcid) {
-      state.lcid = lcid;
-    },
-    getLCID() {
-      return state.lcid;
-    },
-    getState() {
-      return { ...state };
-    }
-  };
-
-  // src/mct/shared/utils/logError.ts
-  var logError = (message, data) => {
-    console.log(message, data || "");
-    return false;
-  };
-
-  // src/mct/shared/utils/index.ts
-  var sharedUtils = {
-    logError
-  };
-
   // src/mct/stages/questions/constants.ts
   var attr7 = {
     components: "data-mct-questions",
@@ -16702,11 +16642,11 @@
     const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
     if (!wrapper || !scroll)
       return;
-    const groups = questionsManager.getGroups();
+    const groups = questionsManager2.getGroups();
     if (groups.length === 0)
       return;
-    const firstItem = questionsManager.getFirstQuestion()?.el;
-    const lastItem = questionsManager.getLastQuestion()?.el;
+    const firstItem = questionsManager2.getFirstQuestion()?.el;
+    const lastItem = questionsManager2.getLastQuestion()?.el;
     if (!firstItem || !lastItem)
       return;
     const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
@@ -16716,7 +16656,7 @@
   };
 
   // src/mct/stages/questions/QuestionsManager.ts
-  var state2 = {
+  var state = {
     components: {
       element: null,
       header: null,
@@ -16730,31 +16670,31 @@
     profile: null,
     optionRemoved: false
   };
-  var questionsManager = {
+  var questionsManager2 = {
     registerGroup(group) {
-      state2.groups.push(group);
+      state.groups.push(group);
     },
     getActiveGroupIndex() {
-      return state2.currentGroupIndex;
+      return state.currentGroupIndex;
     },
     getActiveGroup() {
-      return state2.groups[this.getActiveGroupIndex()];
+      return state.groups[this.getActiveGroupIndex()];
     },
     determineProfile() {
       const answers = this.getAnswers();
       const profile = PROFILES.find((profile2) => {
         return Object.entries(profile2.requirements).every(([key, value]) => answers[key] === value);
       });
-      state2.profile = profile ? profile : null;
+      state.profile = profile ? profile : null;
       return profile ? profile : null;
     },
     findGroupByProfile(profile) {
-      return state2.groups.find((group) => group.profileName === profile.name);
+      return state.groups.find((group) => group.profileName === profile.name);
     },
     getPreviousGroupInSequence() {
       if (this.getActiveGroupIndex() <= 0)
         return void 0;
-      return state2.groups[0];
+      return state.groups[0];
     },
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
@@ -16771,7 +16711,7 @@
         const nextGroupIndex = this.getGroups().indexOf(nextGroup);
         if (nextGroupIndex === -1)
           return sharedUtils.logError("Next group index not found");
-        state2.currentGroupIndex = nextGroupIndex;
+        state.currentGroupIndex = nextGroupIndex;
         nextGroup.show();
         this.showHeader("sticky");
         prepareWrapper();
@@ -16791,10 +16731,10 @@
       const previousGroup = this.getPreviousGroupInSequence();
       if (!previousGroup)
         return sharedUtils.logError("No previous group found");
-      const previousGroupIndex = state2.groups.indexOf(previousGroup);
+      const previousGroupIndex = state.groups.indexOf(previousGroup);
       if (previousGroupIndex === -1)
         return sharedUtils.logError("Previous group index not found");
-      state2.currentGroupIndex = previousGroupIndex;
+      state.currentGroupIndex = previousGroupIndex;
       this.showHeader("static");
       const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
       if (lastVisibleIndex >= 0) {
@@ -16804,32 +16744,32 @@
       }
     },
     getGroups() {
-      return state2.groups;
+      return state.groups;
     },
     setComponent(el) {
-      state2.components.element = el;
+      state.components.element = el;
     },
     setHeader(el) {
-      state2.components.header = el;
+      state.components.header = el;
     },
     setStickyHeader(el) {
-      state2.components.stickyHeader = el;
+      state.components.stickyHeader = el;
     },
     setProfileSelect(el) {
-      state2.components.profileSelect = el;
+      state.components.profileSelect = el;
     },
     initialiseProfileSelect(value) {
-      const { profileSelect } = state2.components;
+      const { profileSelect } = state.components;
       if (!profileSelect)
         return;
       profileSelect.value = value;
       simulateEvent(profileSelect, "change");
-      if (!state2.optionRemoved)
+      if (!state.optionRemoved)
         profileSelect.remove(0);
-      state2.optionRemoved = true;
+      state.optionRemoved = true;
     },
     showHeader(type) {
-      const { header, stickyHeader } = state2.components;
+      const { header, stickyHeader } = state.components;
       if (!header || !stickyHeader)
         return;
       if (type === "static") {
@@ -16841,24 +16781,24 @@
       }
     },
     getComponent() {
-      if (!state2.components.element)
+      if (!state.components.element)
         throw new Error("Component not set");
-      return state2.components.element;
+      return state.components.element;
     },
     setAnswer(key, value) {
-      state2.answers[key] = value;
+      state.answers[key] = value;
     },
     getAnswer(key) {
-      return state2.answers[key];
+      return state.answers[key];
     },
     clearAnswer(key) {
-      delete state2.answers[key];
+      delete state.answers[key];
     },
     getAnswers() {
-      return { ...state2.answers };
+      return { ...state.answers };
     },
     refreshAnswers() {
-      state2.answers = {};
+      state.answers = {};
       this.getGroups().forEach((group) => {
         const visibleQuestions = group.questions.filter((question) => question.isVisible);
         visibleQuestions.forEach((question) => {
@@ -16868,21 +16808,178 @@
       });
     },
     getFirstQuestion() {
-      return state2.groups[0].questions[0];
+      return state.groups[0].questions[0];
     },
     getLastQuestion() {
-      return state2.groups.at(state2.currentGroupIndex)?.questions.at(-1);
+      return state.groups.at(state.currentGroupIndex)?.questions.at(-1);
     },
     reset() {
-      state2.currentGroupIndex = 0;
-      state2.currentQuestionIndex = 0;
-      state2.answers = {};
-      state2.groups.forEach((group) => group.reset());
-      state2.components.element = null;
+      state.currentGroupIndex = 0;
+      state.currentQuestionIndex = 0;
+      state.answers = {};
+      state.groups.forEach((group) => group.reset());
+      state.components.element = null;
     },
     getState() {
-      return { ...state2 };
+      return { ...state };
     }
+  };
+  var QuestionsManager = class {
+    component;
+    groups = [];
+    constructor(component) {
+      this.component = component;
+    }
+    registerGroup(group) {
+      this.groups.push(group);
+    }
+    prefill(answers) {
+    }
+    setAnswer(key, value) {
+      state.answers[key] = value;
+    }
+    getAnswer(key) {
+      return state.answers[key];
+    }
+    clearAnswer(key) {
+      delete state.answers[key];
+    }
+    refreshAnswers() {
+      state.answers = {};
+      this.getGroups().forEach((group) => {
+        const visibleQuestions = group.questions.filter((question) => question.isVisible);
+        visibleQuestions.forEach((question) => {
+          const value = question.getValue();
+          this.setAnswer(question.name, value);
+        });
+      });
+    }
+    getAnswers() {
+      return { ...state.answers };
+    }
+    determineProfile() {
+      const answers = this.getAnswers();
+      const profile = PROFILES.find((profile2) => {
+        return Object.entries(profile2.requirements).every(([key, value]) => answers[key] === value);
+      });
+      state.profile = profile ? profile : null;
+      return profile ? profile : null;
+    }
+    reset() {
+      state.answers = {};
+      state.groups.forEach((group) => group.reset());
+      state.currentQuestionIndex = 0;
+    }
+    getState() {
+      return { ...state };
+    }
+  };
+  var MainQuestionsManager = class extends QuestionsManager {
+    activeGroupIndex = 0;
+    activeQuestionIndex = 0;
+    components;
+    optionRemoved = false;
+    constructor(component) {
+      super(component);
+      this.components = {
+        header: queryElement(`[${attr7.components}="header"]`, component),
+        stickyHeader: queryElement(`[${attr7.components}="sticky-header"]`, component),
+        profileSelect: queryElement(`[${attr7.components}="profile-select"]`, component)
+      };
+    }
+    getActiveGroup() {
+      return this.groups[this.activeGroupIndex];
+    }
+    getGroupByProfile(profile) {
+      return this.groups.find((group) => group.profileName === profile.name);
+    }
+    getPreviousGroupInSequence() {
+      if (this.activeGroupIndex <= 0)
+        return void 0;
+      return this.groups[0];
+    }
+    navigateToNextGroup() {
+      const activeGroup = this.getActiveGroup();
+      if (!activeGroup)
+        return;
+      if (this.activeGroupIndex === 0) {
+        const profile = this.determineProfile();
+        if (!profile)
+          return sharedUtils.logError("Could not determine profile");
+        this.initialiseProfileSelect(profile.name);
+        const nextGroup = this.getGroupByProfile(profile);
+        if (!nextGroup)
+          return sharedUtils.logError("No matching group found for profile:", profile);
+        const nextGroupIndex = this.groups.indexOf(nextGroup);
+        if (nextGroupIndex === -1)
+          return sharedUtils.logError("Next group index not found");
+        this.activeGroupIndex = nextGroupIndex;
+        nextGroup.show();
+        this.showHeader("sticky");
+        prepareWrapper();
+        const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
+        if (firstVisibleIndex < nextGroup.questions.length) {
+          nextGroup.activeQuestionIndex = firstVisibleIndex;
+          const firstQuestion = nextGroup.getActiveQuestion();
+          nextGroup.activateQuestion(firstQuestion);
+          nextGroup.onInputChange(firstQuestion.isValid());
+        }
+      } else {
+        console.log("End of groups");
+        console.log("Initiate logic for showing output");
+      }
+    }
+    navigateToPreviousGroup() {
+      const previousGroup = this.getPreviousGroupInSequence();
+      if (!previousGroup)
+        return sharedUtils.logError("No previous group found");
+      const previousGroupIndex = this.groups.indexOf(previousGroup);
+      if (previousGroupIndex === -1)
+        return sharedUtils.logError("Previous group index not found");
+      this.activeGroupIndex = previousGroupIndex;
+      this.showHeader("static");
+      const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
+      if (lastVisibleIndex >= 0) {
+        previousGroup.activeQuestionIndex = lastVisibleIndex;
+        previousGroup.activateQuestion(previousGroup.getActiveQuestion());
+        return;
+      }
+    }
+    initialiseProfileSelect(value) {
+      const { profileSelect } = this.components;
+      if (!profileSelect)
+        return;
+      profileSelect.value = value;
+      simulateEvent(profileSelect, "change");
+      if (!state.optionRemoved)
+        profileSelect.remove(0);
+      state.optionRemoved = true;
+    }
+    showHeader(type) {
+      const { header, stickyHeader } = this.components;
+      if (!header || !stickyHeader)
+        return;
+      if (type === "static") {
+        header.style.removeProperty("display");
+        stickyHeader.style.display = "none";
+      } else if (type === "sticky") {
+        header.style.display = "none";
+        stickyHeader.style.removeProperty("display");
+      }
+    }
+    // public start(): void {
+    //   this.groups[0]?.show();
+    //   this.groups[0]?.activate(); // highlight + enable
+    // }
+    // public handleInputChange(): void {
+    //   const current = this.groups[this.currentGroupIndex];
+    //   current.evaluateVisibility();
+    //   const currentItem = current.getCurrentQuestion();
+    //   if (currentItem?.isValid()) {
+    //     current.advance();
+    //     // optionally check if done
+    //   }
+    // }
   };
 
   // src/mct/stages/questions/QuestionItem.ts
@@ -16971,7 +17068,7 @@
     hide() {
       this.el.style.display = "none";
       this.isVisible = false;
-      questionsManager.clearAnswer(this.name);
+      questionsManager2.clearAnswer(this.name);
     }
     show() {
       this.el.style.removeProperty("display");
@@ -17200,8 +17297,8 @@
       return this.questions[this.activeQuestionIndex];
     }
     evaluateVisibility() {
-      questionsManager.refreshAnswers();
-      const currentAnswers = questionsManager.getAnswers();
+      questionsManager2.refreshAnswers();
+      const currentAnswers = questionsManager2.getAnswers();
       this.questions.forEach((question) => {
         const shouldBeVisible = question.shouldBeVisible(currentAnswers);
         if (shouldBeVisible) {
@@ -17226,7 +17323,7 @@
       return index2;
     }
     navigate(direction) {
-      questionsManager.refreshAnswers();
+      questionsManager2.refreshAnswers();
       const activeQuestion = this.getActiveQuestion();
       this.deactivateQuestion(activeQuestion);
       if (direction === "next") {
@@ -17237,7 +17334,7 @@
           this.activateQuestion(nextQuestion);
           utils.updateNavigation({ prevEnabled: true });
         } else {
-          questionsManager.navigateToNextGroup();
+          questionsManager2.navigateToNextGroup();
         }
       } else {
         const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
@@ -17246,12 +17343,12 @@
           const prevItem = this.getActiveQuestion();
           this.activateQuestion(prevItem);
           utils.updateNavigation({
-            prevEnabled: !(questionsManager.getActiveGroupIndex() === 0 && prevIndex === 0)
+            prevEnabled: !(questionsManager2.getActiveGroupIndex() === 0 && prevIndex === 0)
           });
         } else {
-          const prevGroup = questionsManager.getPreviousGroupInSequence();
+          const prevGroup = questionsManager2.getPreviousGroupInSequence();
           if (prevGroup)
-            questionsManager.navigateToPreviousGroup();
+            questionsManager2.navigateToPreviousGroup();
         }
       }
     }
@@ -17290,18 +17387,15 @@
   };
 
   // src/mct/stages/questions/index.ts
-  var initQuestionsStage = () => {
-    const component = MCTManager.getStage("questions");
+  var initQuestions = (component, options) => {
+    const manager = options.mode === "main" ? new MainQuestionsManager(component) : null;
+    if (!manager)
+      return;
     questionsManager.setComponent(component);
+    console.log(component);
     const header = queryElement(`[${attr7.components}="header"]`, component);
-    const stickyHeader = queryElement(
-      `[${attr7.components}="sticky-header"]`,
-      component
-    );
-    const profileSelect = queryElement(
-      `[${attr7.components}="profile-select"]`,
-      component
-    );
+    const stickyHeader = queryElement(`[${attr7.components}="sticky-header"]`, component);
+    const profileSelect = queryElement(`[${attr7.components}="profile-select"]`, component);
     if (header)
       questionsManager.setHeader(header);
     if (stickyHeader)
@@ -17339,10 +17433,7 @@
         return;
       currentGroup.navigate("next");
     });
-    const prevButton = queryElement(
-      `[${attr7.components}="previous"]`,
-      component
-    );
+    const prevButton = queryElement(`[${attr7.components}="previous"]`, component);
     prevButton.addEventListener("click", () => {
       const currentGroup = questionsManager.getActiveGroup();
       if (!currentGroup)
@@ -17359,21 +17450,86 @@
     return data.lcid;
   };
 
-  // src/mct/shared/route.ts
-  var route = async () => {
-    try {
-      const lcid = await generateLCID();
-      MCTManager.setLCID(lcid);
-    } catch {
-      console.error("Failed to generate LCID");
+  // src/mct/shared/manager.ts
+  var stages = {};
+  var dom = {
+    mctComponent: null,
+    stages: {}
+  };
+  var state2 = {
+    lcid: null,
+    currentStageId: null
+  };
+  var MCTManager = {
+    initDOM() {
+      dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
+      if (!dom.mctComponent)
+        throw new Error("MCT component not found");
+      const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
+      stageElements.forEach((stage) => {
+        const name = stage.getAttribute(mctAttr.stage);
+        if (name)
+          dom.stages[name] = stage;
+      });
+      return dom;
+    },
+    getComponent() {
+      if (!dom.mctComponent)
+        throw new Error("MCT component not initialised");
+      return dom.mctComponent;
+    },
+    getStage(name) {
+      if (!dom.stages)
+        throw new Error("Stages not initialised");
+      const stage = dom.stages[name];
+      if (!stage)
+        throw new Error(`Stage '${name}' not found`);
+      return dom.stages[name];
+    },
+    async preInit() {
+      try {
+        const lcid = await generateLCID();
+        this.setLCID(lcid);
+      } catch {
+        console.error("Failed to generate LCID");
+      }
+    },
+    route() {
+      const mainQuestions = this.getStage("questions");
+      initQuestions(mainQuestions, {
+        mode: "main",
+        prefill: false
+      });
+    },
+    registerStage(stage) {
+      stages[stage.id] = stage;
+    },
+    goToStage(stageId) {
+      if (state2.currentStageId && stages[state2.currentStageId]) {
+        stages[state2.currentStageId].hide();
+      }
+      state2.currentStageId = stageId;
+      if (stages[stageId]) {
+        stages[stageId].init?.();
+        stages[stageId].show();
+      }
+    },
+    setLCID(lcid) {
+      state2.lcid = lcid;
+    },
+    getLCID() {
+      return state2.lcid;
+    },
+    getState() {
+      return { ...state2 };
     }
-    initQuestionsStage();
   };
 
   // src/mct/index.ts
   var mct = () => {
     MCTManager.initDOM();
-    route();
+    MCTManager.preInit();
+    MCTManager.route();
   };
 
   // src/index.ts

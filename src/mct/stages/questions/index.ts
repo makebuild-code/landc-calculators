@@ -3,7 +3,7 @@
  */
 
 import { MCTManager } from 'src/mct/shared/manager';
-import { questionsManager } from 'src/mct/stages/questions/QuestionsManager';
+import { MainQuestionsManager } from 'src/mct/stages/questions/QuestionsManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -11,11 +11,16 @@ import { queryElements } from '$utils/queryelements';
 import { attr } from './constants';
 import { QuestionGroup } from './QuestionGroup';
 import { utils } from './utils';
+import type { Options } from './types';
 
-export const initQuestions = () => {
-  const component = MCTManager.getStage('questions');
-  if (!component) throw new Error('Questions stage not found');
+export const initQuestions = (component: HTMLElement, options: Options) => {
+  const manager = options.mode === 'main' ? new MainQuestionsManager(component) : null;
+  if (!manager) return;
+
+  // const { mode, prefill } = options;
   questionsManager.setComponent(component);
+
+  console.log(component);
 
   const header = queryElement(`[${attr.components}="header"]`, component) as HTMLElement;
   const stickyHeader = queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement;

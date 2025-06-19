@@ -2,6 +2,11 @@
  * interfaces and types
  */
 
+export interface Options {
+  mode: 'main' | 'sidebar';
+  prefill: boolean;
+}
+
 export type ProfileName =
   | 'customer-identifier'
   | 'residential-purchase'
