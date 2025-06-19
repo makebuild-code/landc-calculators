@@ -3,8 +3,3 @@ export interface OutputData {
   // This is a placeholder - we'll need the actual API response structure
   [key: string]: string | number;
 }
-
-export interface OutputStageConfig {
-  apiEndpoint: string;
-  // Add any other configuration options needed
-}

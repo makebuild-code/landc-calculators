@@ -4,9 +4,9 @@
 
 import { classes } from 'src/mct/shared/constants';
 import {
-  questionStageManager,
   type AnswerKey,
   type AnswerValue,
+  questionStageManager,
 } from 'src/mct/stages/questions/QuestionStageManager';
 
 import { queryElement } from '$utils/queryElement';

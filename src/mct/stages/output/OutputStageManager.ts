@@ -1,13 +1,12 @@
-import { attr } from './constants';
 import { fetchData } from '../../shared/utils/fetchData';
-import type { OutputData, OutputStageConfig } from './types';
+import { attr } from './constants';
+import type { OutputData } from './types';
 
 interface State {
   componentEl: HTMLElement | null;
   outputData: OutputData | null;
   isLoading: boolean;
   error: Error | null;
-  config: OutputStageConfig | null;
 }
 
 const state: State = {
@@ -15,7 +14,6 @@ const state: State = {
   outputData: null,
   isLoading: false,
   error: null,
-  config: null,
 };
 
 export const outputStageManager = {

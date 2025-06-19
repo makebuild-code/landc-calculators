@@ -1,6 +1,6 @@
-import { generateLCID } from './api/generateLCID';
 import { initQuestionsStage } from '../stages/questions';
-import { manager } from './manager';
+import { generateLCID } from './api/generateLCID';
+import { MCTManager } from './manager';
 
 export const route = async () => {
   console.log('routing');
@@ -8,7 +8,7 @@ export const route = async () => {
     console.log('getting LCID');
     // Generate LCID
     const lcid = await generateLCID();
-    manager.setLCID(lcid);
+    MCTManager.setLCID(lcid);
 
     console.log(`LCID: ${lcid}`);
 
