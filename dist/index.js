@@ -80,11 +80,11 @@
     loader;
     isLoading;
     result;
-    constructor(component2) {
-      this.component = component2;
+    constructor(component) {
+      this.component = component;
       this.values = this.getValues();
-      this.rows = queryElements(`[${attr}-el="row"]`, component2);
-      this.loader = queryElement(`[${attr}-el="loader"]`, component2);
+      this.rows = queryElements(`[${attr}-el="row"]`, component);
+      this.loader = queryElement(`[${attr}-el="loader"]`, component);
       this.isLoading = true;
     }
     init() {
@@ -208,10 +208,10 @@
   var dialogs = () => {
     const attr8 = "data-dialog";
     const components2 = queryElements(`[${attr8}="component"]`);
-    components2.forEach((component2) => {
-      const open = queryElement(`[${attr8}="open"]`, component2);
-      const dialog = queryElement("dialog", component2);
-      const close = queryElement(`[${attr8}="close"]`, component2);
+    components2.forEach((component) => {
+      const open = queryElement(`[${attr8}="open"]`, component);
+      const dialog = queryElement("dialog", component);
+      const close = queryElement(`[${attr8}="close"]`, component);
       if (!open || !dialog || !close)
         return;
       open.addEventListener("click", () => {
@@ -370,25 +370,25 @@
     productId;
     formattedValues;
     result;
-    constructor(component2) {
-      this.component = component2;
-      this.trigger = component2.dataset.bbTrigger === "onclick" ? "onclick" : "onload";
-      this.template = queryElement(`[${attr2}-el="template"]`, component2);
+    constructor(component) {
+      this.component = component;
+      this.trigger = component.dataset.bbTrigger === "onclick" ? "onclick" : "onload";
+      this.template = queryElement(`[${attr2}-el="template"]`, component);
       this.clone = this.template.cloneNode(true);
       this.clone.removeAttribute("data-bb-el");
-      this.inputs = queryElements(`[data-input], input, select`, component2);
-      this.conditionals = queryElements(`[data-conditions]`, component2);
-      this.buttons = queryElements(`[${attr2}-el="button"]`, component2);
-      this.sort = queryElement(`[data-input="SortColumn"]`, component2);
+      this.inputs = queryElements(`[data-input], input, select`, component);
+      this.conditionals = queryElements(`[data-conditions]`, component);
+      this.buttons = queryElements(`[${attr2}-el="button"]`, component);
+      this.sort = queryElement(`[data-input="SortColumn"]`, component);
       this.resultsList = queryElement(`[${attr2}-el="results-list"]`);
-      this.loading = queryElement(`[${attr2}-el="loading"]`, component2);
-      this.noResults = queryElement(`[${attr2}-el="no-results"]`, component2);
+      this.loading = queryElement(`[${attr2}-el="loading"]`, component);
+      this.noResults = queryElement(`[${attr2}-el="no-results"]`, component);
       this.isLoading = false;
-      this.loadMoreWrapper = queryElement(`[${attr2}-el="load-more"]`, component2);
+      this.loadMoreWrapper = queryElement(`[${attr2}-el="load-more"]`, component);
       this.loadMore = queryElement("button", this.loadMoreWrapper);
       this.scaffoldWrapper = queryElement(
         `[${attr2}-el="scaffold-wrapper"]`,
-        component2
+        component
       );
       this.scaffoldCover = queryElement(
         `[${attr2}-el="scaffold-cover"]`,
@@ -679,22 +679,22 @@
       dialogs();
     }
     scrollIntoView(productId) {
-      let component2;
+      let component;
       if (!productId) {
-        component2 = queryElement(".best-buy_main");
+        component = queryElement(".best-buy_main");
       } else {
-        component2 = queryElement(
+        component = queryElement(
           `.bb-result_component[data-productId="${productId}"]`,
           this.resultsList
         );
-        const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component2);
+        const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component);
         if (!moreToggle)
           return;
         simulateEvent(moreToggle, "click");
       }
-      if (!component2)
+      if (!component)
         return;
-      component2.scrollIntoView({ behavior: "instant" });
+      component.scrollIntoView({ behavior: "instant" });
       window.scrollBy(0, -32);
     }
   };
@@ -703,11 +703,11 @@
   var bestbuys = () => {
     const attr8 = "data-bb";
     const components2 = queryElements(`[${attr8}]`);
-    components2.forEach((component2) => {
-      const { bb } = component2.dataset;
+    components2.forEach((component) => {
+      const { bb } = component.dataset;
       if (!bb)
         return;
-      const bestbuy = bb === "table" ? new HandleTable(component2) : bb === "mini" ? new HandleMini(component2) : null;
+      const bestbuy = bb === "table" ? new HandleTable(component) : bb === "mini" ? new HandleMini(component) : null;
       if (bestbuy === null)
         return;
       bestbuy.init();
@@ -9268,11 +9268,11 @@
         }
       });
     }
-    _exec(method, registry2, component2) {
+    _exec(method, registry2, component) {
       const camelMethod = _capitalize(method);
-      callback(component2["before" + camelMethod], [], component2);
-      registry2[method](component2);
-      callback(component2["after" + camelMethod], [], component2);
+      callback(component["before" + camelMethod], [], component);
+      registry2[method](component);
+      callback(component["after" + camelMethod], [], component);
     }
     _getRegistryForType(type) {
       for (let i = 0; i < this._typedRegistries.length; i++) {
@@ -15866,9 +15866,9 @@
     isLoading;
     result;
     isSyncing;
-    constructor(component2) {
-      this.name = component2.dataset.calc;
-      this.component = component2;
+    constructor(component) {
+      this.name = component.dataset.calc;
+      this.component = component;
       this.config = calculatorConfig[this.name];
       this.inputs = new HandleInputs(this);
       this.outputs = new HandleOutputs(this);
@@ -16160,8 +16160,8 @@
     if (rateSlider)
       rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
     const components2 = queryElements(`[${attr8}]`);
-    components2.forEach((component2) => {
-      const calculator = new HandleCalculator(component2);
+    components2.forEach((component) => {
+      const calculator = new HandleCalculator(component);
       calculator.init();
     });
   };
@@ -16177,9 +16177,9 @@
     component;
     outputs;
     result;
-    constructor(component2) {
-      this.component = component2;
-      this.outputs = queryElements(`[${attr6}-output]`, component2);
+    constructor(component) {
+      this.component = component;
+      this.outputs = queryElements(`[${attr6}-output]`, component);
     }
     displayResults(result) {
       this.result = result;
@@ -16248,20 +16248,20 @@
     formattedValues;
     formattedCostOfDoingNothingValues;
     outputHandler;
-    constructor(component2) {
-      this.component = component2;
-      this.inputs = queryElements(`[data-input], input, select`, component2);
-      this.buttons = queryElements(`[data-calc-el="button"]`, component2);
-      this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component2);
+    constructor(component) {
+      this.component = component;
+      this.inputs = queryElements(`[data-input], input, select`, component);
+      this.buttons = queryElements(`[data-calc-el="button"]`, component);
+      this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component);
       this.buttonsLoader = queryElement(
         `[data-calc-el="button-loader"]`,
-        component2
+        component
       );
-      this.currentLenderDropdown = queryElement(`#CurrentLender`, component2);
-      this.mortgageTypeDropdown = queryElement(`#MortgageType`, component2);
-      this.followOnField = queryElement(`#FollowOn`, component2);
+      this.currentLenderDropdown = queryElement(`#CurrentLender`, component);
+      this.mortgageTypeDropdown = queryElement(`#MortgageType`, component);
+      this.followOnField = queryElement(`#FollowOn`, component);
       this.isLoading = false;
-      this.outputHandler = new HandleCODNOutputs(component2);
+      this.outputHandler = new HandleCODNOutputs(component);
       this.bindEvents();
       this.init();
     }
@@ -16553,15 +16553,15 @@
 
   // src/costofdoingnothing/index.ts
   var costOfDoingNothing = () => {
-    const component2 = document.querySelector('[data-calc="costofdoingnothing"]');
-    if (component2) {
-      new CostOfDoingNothingCalculator(component2);
+    const component = document.querySelector('[data-calc="costofdoingnothing"]');
+    if (component) {
+      new CostOfDoingNothingCalculator(component);
     }
   };
 
   // src/mct/shared/constants.ts
-  var globalAttr = {
-    component: "data-mct",
+  var mctAttr = {
+    mct: "data-mct",
     stage: "data-mct-stage"
   };
   var classes = {
@@ -16615,25 +16615,64 @@
     }
   ];
 
-  // src/mct/shared/dom.ts
-  var component = null;
+  // src/mct/shared/manager.ts
   var stages = {};
-  var initDOMRefs = () => {
-    component = queryElement(`[${globalAttr.component}="component"]`);
-    if (!component)
-      throw new Error("MCT component wrapper not found");
-    const stageElements = queryElements(`[${globalAttr.stage}]`, component);
-    stageElements.forEach((stage) => {
-      const name = stage.getAttribute(globalAttr.stage);
-      if (name)
-        stages[name] = stage;
-    });
+  var dom = {
+    mctComponent: null,
+    stages: {}
   };
-  var getStage = (name) => {
-    const stage = stages[name];
-    if (!stage)
-      throw new Error(`Stage '${name}' not found`);
-    return stage;
+  var state = {
+    lcid: null,
+    currentStageId: null
+  };
+  var MCTManager = {
+    initDOM: () => {
+      dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
+      if (!dom.mctComponent)
+        throw new Error("MCT component not found");
+      const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
+      stageElements.forEach((stage) => {
+        const name = stage.getAttribute(mctAttr.stage);
+        if (name)
+          dom.stages[name] = stage;
+      });
+      return dom;
+    },
+    getComponent: () => {
+      if (!dom.mctComponent)
+        throw new Error("MCT component not initialised");
+      return dom.mctComponent;
+    },
+    getStage: (name) => {
+      if (!dom.stages)
+        throw new Error("Stages not initialised");
+      const stage = dom.stages[name];
+      if (!stage)
+        throw new Error(`Stage '${name}' not found`);
+      return dom.stages[name];
+    },
+    registerStage(stage) {
+      stages[stage.id] = stage;
+    },
+    goToStage(stageId) {
+      if (state.currentStageId && stages[state.currentStageId]) {
+        stages[state.currentStageId].hide();
+      }
+      state.currentStageId = stageId;
+      if (stages[stageId]) {
+        stages[stageId].init?.();
+        stages[stageId].show();
+      }
+    },
+    setLCID(lcid) {
+      state.lcid = lcid;
+    },
+    getLCID() {
+      return state.lcid;
+    },
+    getState() {
+      return { ...state };
+    }
   };
 
   // src/mct/shared/utils/logError.ts
@@ -16658,16 +16697,16 @@
 
   // src/mct/stages/questions/utils/prepareWrapper.ts
   var prepareWrapper = () => {
-    const stage = getStage("questions");
+    const stage = MCTManager.getStage("questions");
     const wrapper = queryElement(`[${attr7.components}="wrapper"]`, stage);
     const scroll = queryElement(`[${attr7.components}="scroll"]`, stage);
     if (!wrapper || !scroll)
       return;
-    const groups = questionStageManager.getGroups();
+    const groups = questionsManager.getGroups();
     if (groups.length === 0)
       return;
-    const firstItem = questionStageManager.getFirstQuestion()?.el;
-    const lastItem = questionStageManager.getLastQuestion()?.el;
+    const firstItem = questionsManager.getFirstQuestion()?.el;
+    const lastItem = questionsManager.getLastQuestion()?.el;
     if (!firstItem || !lastItem)
       return;
     const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
@@ -16676,8 +16715,8 @@
     wrapper.style.paddingBottom = `${bottomPad}px`;
   };
 
-  // src/mct/stages/questions/QuestionStageManager.ts
-  var state = {
+  // src/mct/stages/questions/QuestionsManager.ts
+  var state2 = {
     components: {
       element: null,
       header: null,
@@ -16691,31 +16730,31 @@
     profile: null,
     optionRemoved: false
   };
-  var questionStageManager = {
+  var questionsManager = {
     registerGroup(group) {
-      state.groups.push(group);
+      state2.groups.push(group);
     },
     getActiveGroupIndex() {
-      return state.currentGroupIndex;
+      return state2.currentGroupIndex;
     },
     getActiveGroup() {
-      return state.groups[this.getActiveGroupIndex()];
+      return state2.groups[this.getActiveGroupIndex()];
     },
     determineProfile() {
-      const answers = this.getQuestionAnswers();
+      const answers = this.getAnswers();
       const profile = PROFILES.find((profile2) => {
         return Object.entries(profile2.requirements).every(([key, value]) => answers[key] === value);
       });
-      state.profile = profile ? profile : null;
+      state2.profile = profile ? profile : null;
       return profile ? profile : null;
     },
     findGroupByProfile(profile) {
-      return state.groups.find((group) => group.profileName === profile.name);
+      return state2.groups.find((group) => group.profileName === profile.name);
     },
     getPreviousGroupInSequence() {
       if (this.getActiveGroupIndex() <= 0)
         return void 0;
-      return state.groups[0];
+      return state2.groups[0];
     },
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
@@ -16732,7 +16771,7 @@
         const nextGroupIndex = this.getGroups().indexOf(nextGroup);
         if (nextGroupIndex === -1)
           return sharedUtils.logError("Next group index not found");
-        state.currentGroupIndex = nextGroupIndex;
+        state2.currentGroupIndex = nextGroupIndex;
         nextGroup.show();
         this.showHeader("sticky");
         prepareWrapper();
@@ -16752,10 +16791,10 @@
       const previousGroup = this.getPreviousGroupInSequence();
       if (!previousGroup)
         return sharedUtils.logError("No previous group found");
-      const previousGroupIndex = state.groups.indexOf(previousGroup);
+      const previousGroupIndex = state2.groups.indexOf(previousGroup);
       if (previousGroupIndex === -1)
         return sharedUtils.logError("Previous group index not found");
-      state.currentGroupIndex = previousGroupIndex;
+      state2.currentGroupIndex = previousGroupIndex;
       this.showHeader("static");
       const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
       if (lastVisibleIndex >= 0) {
@@ -16765,32 +16804,32 @@
       }
     },
     getGroups() {
-      return state.groups;
+      return state2.groups;
     },
-    setQuestionsComponent(el) {
-      state.components.element = el;
+    setComponent(el) {
+      state2.components.element = el;
     },
     setHeader(el) {
-      state.components.header = el;
+      state2.components.header = el;
     },
     setStickyHeader(el) {
-      state.components.stickyHeader = el;
+      state2.components.stickyHeader = el;
     },
     setProfileSelect(el) {
-      state.components.profileSelect = el;
+      state2.components.profileSelect = el;
     },
     initialiseProfileSelect(value) {
-      const { profileSelect } = state.components;
+      const { profileSelect } = state2.components;
       if (!profileSelect)
         return;
       profileSelect.value = value;
       simulateEvent(profileSelect, "change");
-      if (!state.optionRemoved)
+      if (!state2.optionRemoved)
         profileSelect.remove(0);
-      state.optionRemoved = true;
+      state2.optionRemoved = true;
     },
     showHeader(type) {
-      const { header, stickyHeader } = state.components;
+      const { header, stickyHeader } = state2.components;
       if (!header || !stickyHeader)
         return;
       if (type === "static") {
@@ -16801,48 +16840,48 @@
         stickyHeader.style.removeProperty("display");
       }
     },
-    getQuestionsComponent() {
-      if (!state.components.element)
+    getComponent() {
+      if (!state2.components.element)
         throw new Error("Component not set");
-      return state.components.element;
+      return state2.components.element;
     },
-    setQuestionAnswer(key, value) {
-      state.answers[key] = value;
+    setAnswer(key, value) {
+      state2.answers[key] = value;
     },
-    clearQuestionAnswer(key) {
-      delete state.answers[key];
+    getAnswer(key) {
+      return state2.answers[key];
     },
-    getQuestionAnswer(key) {
-      return state.answers[key];
+    clearAnswer(key) {
+      delete state2.answers[key];
     },
-    getQuestionAnswers() {
-      return { ...state.answers };
+    getAnswers() {
+      return { ...state2.answers };
     },
-    refreshVisibleQuestionAnswers() {
-      state.answers = {};
+    refreshAnswers() {
+      state2.answers = {};
       this.getGroups().forEach((group) => {
         const visibleQuestions = group.questions.filter((question) => question.isVisible);
         visibleQuestions.forEach((question) => {
           const value = question.getValue();
-          this.setQuestionAnswer(question.name, value);
+          this.setAnswer(question.name, value);
         });
       });
     },
     getFirstQuestion() {
-      return state.groups[0].questions[0];
+      return state2.groups[0].questions[0];
     },
     getLastQuestion() {
-      return state.groups.at(state.currentGroupIndex)?.questions.at(-1);
+      return state2.groups.at(state2.currentGroupIndex)?.questions.at(-1);
     },
-    resetQuestions() {
-      state.currentGroupIndex = 0;
-      state.currentQuestionIndex = 0;
-      state.answers = {};
-      state.groups.forEach((group) => group.reset());
-      state.components.element = null;
+    reset() {
+      state2.currentGroupIndex = 0;
+      state2.currentQuestionIndex = 0;
+      state2.answers = {};
+      state2.groups.forEach((group) => group.reset());
+      state2.components.element = null;
     },
     getState() {
-      return { ...state };
+      return { ...state2 };
     }
   };
 
@@ -16932,7 +16971,7 @@
     hide() {
       this.el.style.display = "none";
       this.isVisible = false;
-      questionStageManager.clearQuestionAnswer(this.name);
+      questionsManager.clearAnswer(this.name);
     }
     show() {
       this.el.style.removeProperty("display");
@@ -17093,7 +17132,7 @@
 
   // src/mct/stages/questions/utils/updateNavigation.ts
   var updateNavigation = (options = {}) => {
-    const stageComponent = getStage("questions");
+    const stageComponent = MCTManager.getStage("questions");
     stageComponent.dispatchEvent(
       new CustomEvent("mct:navigation:update", {
         detail: options,
@@ -17161,9 +17200,9 @@
       return this.questions[this.activeQuestionIndex];
     }
     evaluateVisibility() {
-      questionStageManager.refreshVisibleQuestionAnswers();
-      const currentAnswers = questionStageManager.getQuestionAnswers();
-      this.questions.forEach((question, index2) => {
+      questionsManager.refreshAnswers();
+      const currentAnswers = questionsManager.getAnswers();
+      this.questions.forEach((question) => {
         const shouldBeVisible = question.shouldBeVisible(currentAnswers);
         if (shouldBeVisible) {
           question.show();
@@ -17187,7 +17226,7 @@
       return index2;
     }
     navigate(direction) {
-      questionStageManager.refreshVisibleQuestionAnswers();
+      questionsManager.refreshAnswers();
       const activeQuestion = this.getActiveQuestion();
       this.deactivateQuestion(activeQuestion);
       if (direction === "next") {
@@ -17198,7 +17237,7 @@
           this.activateQuestion(nextQuestion);
           utils.updateNavigation({ prevEnabled: true });
         } else {
-          questionStageManager.navigateToNextGroup();
+          questionsManager.navigateToNextGroup();
         }
       } else {
         const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
@@ -17207,12 +17246,12 @@
           const prevItem = this.getActiveQuestion();
           this.activateQuestion(prevItem);
           utils.updateNavigation({
-            prevEnabled: !(questionStageManager.getActiveGroupIndex() === 0 && prevIndex === 0)
+            prevEnabled: !(questionsManager.getActiveGroupIndex() === 0 && prevIndex === 0)
           });
         } else {
-          const prevGroup = questionStageManager.getPreviousGroupInSequence();
+          const prevGroup = questionsManager.getPreviousGroupInSequence();
           if (prevGroup)
-            questionStageManager.navigateToPreviousGroup();
+            questionsManager.navigateToPreviousGroup();
         }
       }
     }
@@ -17252,39 +17291,39 @@
 
   // src/mct/stages/questions/index.ts
   var initQuestionsStage = () => {
-    const component2 = getStage("questions");
-    questionStageManager.setQuestionsComponent(component2);
-    const header = queryElement(`[${attr7.components}="header"]`, component2);
+    const component = MCTManager.getStage("questions");
+    questionsManager.setComponent(component);
+    const header = queryElement(`[${attr7.components}="header"]`, component);
     const stickyHeader = queryElement(
       `[${attr7.components}="sticky-header"]`,
-      component2
+      component
     );
     const profileSelect = queryElement(
       `[${attr7.components}="profile-select"]`,
-      component2
+      component
     );
     if (header)
-      questionStageManager.setHeader(header);
+      questionsManager.setHeader(header);
     if (stickyHeader)
-      questionStageManager.setStickyHeader(stickyHeader);
+      questionsManager.setStickyHeader(stickyHeader);
     if (profileSelect)
-      questionStageManager.setProfileSelect(profileSelect);
-    questionStageManager.showHeader("static");
-    const nextButton = queryElement(`[${attr7.components}="next"]`, component2);
+      questionsManager.setProfileSelect(profileSelect);
+    questionsManager.showHeader("static");
+    const nextButton = queryElement(`[${attr7.components}="next"]`, component);
     const handleInputChange = (isValid) => {
       utils.updateNavigation({ nextEnabled: isValid });
     };
-    const groupEls = queryElements(`[${attr7.group}]`, component2);
+    const groupEls = queryElements(`[${attr7.group}]`, component);
     groupEls.forEach((groupEl, index2) => {
       const group = new QuestionGroup(groupEl, handleInputChange);
       index2 === 0 ? group.show() : group.hide();
-      questionStageManager.registerGroup(group);
+      questionsManager.registerGroup(group);
     });
     utils.prepareWrapper();
-    const initialGroup = questionStageManager.getActiveGroup();
+    const initialGroup = questionsManager.getActiveGroup();
     if (initialGroup)
       initialGroup.show();
-    component2.addEventListener("mct:navigation:update", (event) => {
+    component.addEventListener("mct:navigation:update", (event) => {
       const { nextEnabled, prevEnabled } = event.detail;
       if (typeof nextEnabled === "boolean")
         nextButton.disabled = !nextEnabled;
@@ -17292,7 +17331,7 @@
         prevButton.disabled = !prevEnabled;
     });
     nextButton.addEventListener("click", () => {
-      const currentGroup = questionStageManager.getActiveGroup();
+      const currentGroup = questionsManager.getActiveGroup();
       if (!currentGroup)
         return;
       const currentItem = currentGroup.getActiveQuestion();
@@ -17302,10 +17341,10 @@
     });
     const prevButton = queryElement(
       `[${attr7.components}="previous"]`,
-      component2
+      component
     );
     prevButton.addEventListener("click", () => {
-      const currentGroup = questionStageManager.getActiveGroup();
+      const currentGroup = questionsManager.getActiveGroup();
       if (!currentGroup)
         return;
       currentGroup.navigate("prev");
@@ -17320,54 +17359,20 @@
     return data.lcid;
   };
 
-  // src/mct/shared/manager.ts
-  var state2 = {
-    lcid: null,
-    currentStageId: null
-  };
-  var stages2 = {};
-  var MCTManager = {
-    registerStage(stage) {
-      stages2[stage.id] = stage;
-    },
-    goToStage(stageId) {
-      if (state2.currentStageId && stages2[state2.currentStageId]) {
-        stages2[state2.currentStageId].hide();
-      }
-      state2.currentStageId = stageId;
-      if (stages2[stageId]) {
-        stages2[stageId].init?.();
-        stages2[stageId].show();
-      }
-    },
-    setLCID(lcid) {
-      state2.lcid = lcid;
-    },
-    getLCID() {
-      return state2.lcid;
-    },
-    getState() {
-      return { ...state2 };
-    }
-  };
-
   // src/mct/shared/route.ts
   var route = async () => {
-    console.log("routing");
     try {
-      console.log("getting LCID");
       const lcid = await generateLCID();
       MCTManager.setLCID(lcid);
-      console.log(`LCID: ${lcid}`);
-      initQuestionsStage();
-    } catch (error) {
-      console.error("Failed to initialize MCT:", error);
+    } catch {
+      console.error("Failed to generate LCID");
     }
+    initQuestionsStage();
   };
 
   // src/mct/index.ts
   var mct = () => {
-    initDOMRefs();
+    MCTManager.initDOM();
     route();
   };
 

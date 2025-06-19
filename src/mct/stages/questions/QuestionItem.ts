@@ -6,8 +6,8 @@ import { classes } from 'src/mct/shared/constants';
 import {
   type AnswerKey,
   type AnswerValue,
-  questionStageManager,
-} from 'src/mct/stages/questions/QuestionStageManager';
+  questionsManager,
+} from 'src/mct/stages/questions/QuestionsManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -109,7 +109,7 @@ export class QuestionItem {
   public hide(): void {
     this.el.style.display = 'none';
     this.isVisible = false;
-    questionStageManager.clearQuestionAnswer(this.name);
+    questionsManager.clearAnswer(this.name);
   }
 
   public show(): void {

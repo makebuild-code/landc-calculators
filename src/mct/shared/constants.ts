@@ -1,7 +1,7 @@
 import type { Profile } from '../stages/questions/types';
 
-export const globalAttr = {
-  component: 'data-mct',
+export const mctAttr = {
+  mct: 'data-mct',
   stage: 'data-mct-stage',
 };
 

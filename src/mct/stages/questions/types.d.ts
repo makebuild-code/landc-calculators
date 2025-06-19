@@ -2,8 +2,6 @@
  * interfaces and types
  */
 
-export type Stage = 'questions' | 'output' | 'results' | 'calendar';
-
 export type ProfileName =
   | 'customer-identifier'
   | 'residential-purchase'
@@ -20,4 +18,4 @@ export interface Profile {
   };
 }
 
-export type Input = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+export type Input = HTMLInputElement;

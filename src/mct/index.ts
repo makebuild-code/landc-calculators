@@ -1,7 +1,7 @@
-import { initDOMRefs } from './shared/dom';
-import { route } from './shared/route';
+import { MCTManager } from './shared/manager';
 
 export const mct = () => {
-  initDOMRefs();
-  route();
+  MCTManager.initDOM();
+  MCTManager.preInit();
+  MCTManager.route();
 };

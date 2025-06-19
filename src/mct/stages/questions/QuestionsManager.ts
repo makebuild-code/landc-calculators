@@ -1,11 +1,11 @@
+import { simulateEvent } from '@finsweet/ts-utils';
+import { sharedUtils } from 'src/mct/shared/utils';
+
+import { PROFILES } from '../../shared/constants';
 import type { QuestionGroup } from './QuestionGroup';
 import type { QuestionItem } from './QuestionItem';
 import type { Profile, ProfileName } from './types';
-import { PROFILES } from '../../shared/constants';
-import { sharedUtils } from 'src/mct/shared/utils';
-import { simulateEvent } from '@finsweet/ts-utils';
 import { prepareWrapper } from './utils/prepareWrapper';
-import { queryElement } from '$utils/queryElement';
 
 interface State {
   components: {
@@ -40,7 +40,7 @@ const state: State = {
   optionRemoved: false,
 };
 
-export const questionStageManager = {
+export const questionsManager = {
   registerGroup(group: QuestionGroup) {
     state.groups.push(group);
   },
@@ -54,7 +54,7 @@ export const questionStageManager = {
   },
 
   determineProfile(): Profile | null {
-    const answers = this.getQuestionAnswers();
+    const answers = this.getAnswers();
     const profile: Profile | undefined = PROFILES.find((profile) => {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key] === value);
     });
@@ -129,7 +129,7 @@ export const questionStageManager = {
     return state.groups;
   },
 
-  setQuestionsComponent(el: HTMLElement) {
+  setComponent(el: HTMLElement) {
     state.components.element = el;
   },
 
@@ -168,35 +168,35 @@ export const questionStageManager = {
     }
   },
 
-  getQuestionsComponent(): HTMLElement {
+  getComponent(): HTMLElement {
     if (!state.components.element) throw new Error('Component not set');
     return state.components.element;
   },
 
-  setQuestionAnswer(key: AnswerKey, value: AnswerValue) {
+  setAnswer(key: AnswerKey, value: AnswerValue) {
     state.answers[key] = value;
   },
 
-  clearQuestionAnswer(key: AnswerKey) {
-    delete state.answers[key];
-  },
-
-  getQuestionAnswer(key: AnswerKey) {
+  getAnswer(key: AnswerKey) {
     return state.answers[key];
   },
 
-  getQuestionAnswers() {
+  clearAnswer(key: AnswerKey) {
+    delete state.answers[key];
+  },
+
+  getAnswers() {
     return { ...state.answers };
   },
 
-  refreshVisibleQuestionAnswers(): void {
+  refreshAnswers(): void {
     state.answers = {};
 
     this.getGroups().forEach((group) => {
       const visibleQuestions = group.questions.filter((question) => question.isVisible);
       visibleQuestions.forEach((question) => {
         const value = question.getValue();
-        this.setQuestionAnswer(question.name, value);
+        this.setAnswer(question.name, value);
       });
     });
   },
@@ -209,7 +209,7 @@ export const questionStageManager = {
     return state.groups.at(state.currentGroupIndex)?.questions.at(-1);
   },
 
-  resetQuestions() {
+  reset() {
     state.currentGroupIndex = 0;
     state.currentQuestionIndex = 0;
     state.answers = {};

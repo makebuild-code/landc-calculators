@@ -2,8 +2,8 @@
  * entry point for the stage
  */
 
-import { getStage } from 'src/mct/shared/dom';
-import { questionStageManager } from 'src/mct/stages/questions/QuestionStageManager';
+import { MCTManager } from 'src/mct/shared/manager';
+import { questionsManager } from 'src/mct/stages/questions/QuestionsManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -12,24 +12,19 @@ import { attr } from './constants';
 import { QuestionGroup } from './QuestionGroup';
 import { utils } from './utils';
 
-export const initQuestionsStage = () => {
-  const component = getStage('questions');
-  questionStageManager.setQuestionsComponent(component);
+export const initQuestions = () => {
+  const component = MCTManager.getStage('questions');
+  if (!component) throw new Error('Questions stage not found');
+  questionsManager.setComponent(component);
 
   const header = queryElement(`[${attr.components}="header"]`, component) as HTMLElement;
-  const stickyHeader = queryElement(
-    `[${attr.components}="sticky-header"]`,
-    component
-  ) as HTMLElement;
-  const profileSelect = queryElement(
-    `[${attr.components}="profile-select"]`,
-    component
-  ) as HTMLSelectElement;
+  const stickyHeader = queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement;
+  const profileSelect = queryElement(`[${attr.components}="profile-select"]`, component) as HTMLSelectElement;
 
-  if (header) questionStageManager.setHeader(header);
-  if (stickyHeader) questionStageManager.setStickyHeader(stickyHeader);
-  if (profileSelect) questionStageManager.setProfileSelect(profileSelect);
-  questionStageManager.showHeader('static');
+  if (header) questionsManager.setHeader(header);
+  if (stickyHeader) questionsManager.setStickyHeader(stickyHeader);
+  if (profileSelect) questionsManager.setProfileSelect(profileSelect);
+  questionsManager.showHeader('static');
 
   const nextButton = queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement;
 
@@ -41,13 +36,13 @@ export const initQuestionsStage = () => {
   groupEls.forEach((groupEl, index) => {
     const group = new QuestionGroup(groupEl, handleInputChange);
     index === 0 ? group.show() : group.hide();
-    questionStageManager.registerGroup(group);
+    questionsManager.registerGroup(group);
   });
 
   utils.prepareWrapper();
 
   // Initialize first group
-  const initialGroup = questionStageManager.getActiveGroup();
+  const initialGroup = questionsManager.getActiveGroup();
   if (initialGroup) initialGroup.show();
 
   component.addEventListener('mct:navigation:update', (event: Event) => {
@@ -57,7 +52,7 @@ export const initQuestionsStage = () => {
   });
 
   nextButton.addEventListener('click', () => {
-    const currentGroup = questionStageManager.getActiveGroup();
+    const currentGroup = questionsManager.getActiveGroup();
     if (!currentGroup) return;
 
     const currentItem = currentGroup.getActiveQuestion();
@@ -66,13 +61,10 @@ export const initQuestionsStage = () => {
     currentGroup.navigate('next');
   });
 
-  const prevButton = queryElement(
-    `[${attr.components}="previous"]`,
-    component
-  ) as HTMLButtonElement;
+  const prevButton = queryElement(`[${attr.components}="previous"]`, component) as HTMLButtonElement;
 
   prevButton.addEventListener('click', () => {
-    const currentGroup = questionStageManager.getActiveGroup();
+    const currentGroup = questionsManager.getActiveGroup();
     if (!currentGroup) return;
 
     currentGroup.navigate('prev');

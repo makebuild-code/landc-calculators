@@ -2,7 +2,7 @@
  * class for managing a group of questions
  */
 
-import { questionStageManager } from 'src/mct/stages/questions/QuestionStageManager';
+import { questionsManager } from 'src/mct/stages/questions/QuestionsManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
@@ -70,10 +70,10 @@ export class QuestionGroup {
   }
 
   private evaluateVisibility(): void {
-    questionStageManager.refreshVisibleQuestionAnswers();
-    const currentAnswers = questionStageManager.getQuestionAnswers();
+    questionsManager.refreshAnswers();
+    const currentAnswers = questionsManager.getAnswers();
 
-    this.questions.forEach((question, index) => {
+    this.questions.forEach((question) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers);
 
       if (shouldBeVisible) {
@@ -101,7 +101,7 @@ export class QuestionGroup {
   }
 
   public navigate(direction: 'next' | 'prev') {
-    questionStageManager.refreshVisibleQuestionAnswers();
+    questionsManager.refreshAnswers();
     const activeQuestion = this.getActiveQuestion();
     this.deactivateQuestion(activeQuestion);
 
@@ -116,7 +116,7 @@ export class QuestionGroup {
         utils.updateNavigation({ prevEnabled: true });
       } else {
         // If we're at the end of this group, try the next group
-        questionStageManager.navigateToNextGroup();
+        questionsManager.navigateToNextGroup();
       }
     } else {
       const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
@@ -127,12 +127,12 @@ export class QuestionGroup {
         const prevItem = this.getActiveQuestion();
         this.activateQuestion(prevItem);
         utils.updateNavigation({
-          prevEnabled: !(questionStageManager.getActiveGroupIndex() === 0 && prevIndex === 0),
+          prevEnabled: !(questionsManager.getActiveGroupIndex() === 0 && prevIndex === 0),
         });
       } else {
         // If we're at the start of this group, try the previous group
-        const prevGroup = questionStageManager.getPreviousGroupInSequence();
-        if (prevGroup) questionStageManager.navigateToPreviousGroup();
+        const prevGroup = questionsManager.getPreviousGroupInSequence();
+        if (prevGroup) questionsManager.navigateToPreviousGroup();
       }
     }
   }
