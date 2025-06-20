@@ -2,58 +2,102 @@
  * class for managing a group of questions
  */
 
-import { questionsManager } from 'src/mct/stages/questions/QuestionsManager';
-
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import { QuestionItem } from './QuestionItem';
+import type { MainQuestionsManager, QuestionsManager } from './QuestionsManager';
 import type { ProfileName } from './types';
-import { utils } from './utils';
 
-export class QuestionGroup {
-  private groupEl: HTMLElement;
-  public onInputChange: (isValid: boolean) => void;
-  public questions: QuestionItem[];
+export abstract class QuestionGroup {
+  protected component: HTMLElement;
+  protected manager: QuestionsManager;
+  public questions: QuestionItem[] = [];
+  public isVisible: boolean = false;
   public activeQuestionIndex: number = 0;
-  private scroll: HTMLElement;
   public profileName: ProfileName | null = null;
 
-  constructor(groupEl: HTMLElement, onInputChange: (isValid: boolean) => void) {
-    this.groupEl = groupEl;
-    this.onInputChange = onInputChange;
+  constructor(component: HTMLElement, manager: QuestionsManager) {
+    this.component = component;
+    this.manager = manager;
+    this.profileName = component.getAttribute(attr.group) as ProfileName | null;
+  }
+
+  abstract handleChange(index: number): void;
+
+  abstract handleEnter(index: number): void;
+
+  public evaluateVisibility(): void {
+    this.manager.refreshAnswers();
+    const currentAnswers = this.manager.getAnswers();
+
+    this.questions.forEach((question) => {
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers);
+
+      if (shouldBeVisible) {
+        question.show();
+      } else {
+        question.hide();
+      }
+    });
+  }
+
+  public show(): void {
+    this.component.style.removeProperty('display');
+    this.isVisible = true;
+  }
+
+  public hide(): void {
+    this.component.style.display = 'none';
+    this.isVisible = false;
+  }
+
+  public reset(): void {
+    if (this.questions.length === 0) return;
+    this.questions.forEach((question) => question.reset());
+  }
+}
+
+export class MainQuestionGroup extends QuestionGroup {
+  protected manager: MainQuestionsManager;
+  private scroll: HTMLElement;
+
+  constructor(component: HTMLElement, manager: MainQuestionsManager) {
+    super(component, manager);
+    this.manager = manager;
     this.questions = this.initQuestions();
     this.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
-    this.profileName = groupEl.getAttribute(attr.group) as ProfileName | null;
     this.evaluateVisibility();
   }
 
   private initQuestions(): QuestionItem[] {
-    const questionEls = queryElements(`[${attr.item}]`, this.groupEl) as HTMLElement[];
+    const questionEls = queryElements(`[${attr.item}]`, this.component) as HTMLElement[];
     return questionEls.map((el, index) => {
-      const question = new QuestionItem(
-        el,
-        () => this.onItemChange(index),
-        () => this.handleEnter(index)
-      );
+      const question = new QuestionItem(el, {
+        onChange: () => this.handleChange(index),
+        onEnter: () => this.handleEnter(index),
+        manager: this.manager,
+      });
       if (index !== 0) question.disable();
-      if (question.dependsOn) question.hide();
+      if (question.dependsOn) {
+        question.hide();
+      }
       return question;
     });
   }
 
-  private onItemChange(index: number): void {
+  public handleChange(index: number): void {
     if (index !== this.activeQuestionIndex)
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
     const question = this.questions[index];
     this.evaluateVisibility();
-    utils.prepareWrapper();
-    this.onInputChange(question.isValid());
+    this.manager.prepareWrapper();
+    this.handleNextButton(question.isValid());
   }
 
-  private handleEnter(index: number): void {
+  public handleEnter(index: number): void {
     if (index !== this.activeQuestionIndex)
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
@@ -65,23 +109,12 @@ export class QuestionGroup {
     }
   }
 
-  public getActiveQuestion(): QuestionItem {
-    return this.questions[this.activeQuestionIndex];
+  public handleNextButton(isValid: boolean) {
+    this.manager.updateNavigation({ nextEnabled: isValid });
   }
 
-  private evaluateVisibility(): void {
-    questionsManager.refreshAnswers();
-    const currentAnswers = questionsManager.getAnswers();
-
-    this.questions.forEach((question) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers);
-
-      if (shouldBeVisible) {
-        question.show();
-      } else {
-        question.hide();
-      }
-    });
+  public getActiveQuestion(): QuestionItem {
+    return this.questions[this.activeQuestionIndex];
   }
 
   public getNextVisibleIndex(start: number): number {
@@ -101,7 +134,7 @@ export class QuestionGroup {
   }
 
   public navigate(direction: 'next' | 'prev') {
-    questionsManager.refreshAnswers();
+    this.manager.refreshAnswers();
     const activeQuestion = this.getActiveQuestion();
     this.deactivateQuestion(activeQuestion);
 
@@ -113,10 +146,10 @@ export class QuestionGroup {
         this.activeQuestionIndex = nextIndex;
         const nextQuestion = this.getActiveQuestion();
         this.activateQuestion(nextQuestion);
-        utils.updateNavigation({ prevEnabled: true });
+        this.manager.updateNavigation({ prevEnabled: true });
       } else {
         // If we're at the end of this group, try the next group
-        questionsManager.navigateToNextGroup();
+        this.manager.navigateToNextGroup();
       }
     } else {
       const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
@@ -126,13 +159,13 @@ export class QuestionGroup {
         this.activeQuestionIndex = prevIndex;
         const prevItem = this.getActiveQuestion();
         this.activateQuestion(prevItem);
-        utils.updateNavigation({
-          prevEnabled: !(questionsManager.getActiveGroupIndex() === 0 && prevIndex === 0),
+        this.manager.updateNavigation({
+          prevEnabled: !(this.manager.activeGroupIndex === 0 && prevIndex === 0),
         });
       } else {
         // If we're at the start of this group, try the previous group
-        const prevGroup = questionsManager.getPreviousGroupInSequence();
-        if (prevGroup) questionsManager.navigateToPreviousGroup();
+        const prevGroup = this.manager.getPreviousGroupInSequence();
+        if (prevGroup) this.manager.navigateToPreviousGroup();
       }
     }
   }
@@ -142,7 +175,7 @@ export class QuestionGroup {
     question.focus();
     question.toggleActive(true);
     this.scrollTo(question);
-    this.onInputChange(question.isValid());
+    this.handleNextButton(question.isValid());
   }
 
   private deactivateQuestion(question: QuestionItem): void {
@@ -155,25 +188,5 @@ export class QuestionGroup {
       top: item.el.offsetTop - this.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
       behavior: 'smooth',
     });
-  }
-
-  // public getAnswers(): Record<string, any> {
-  //   /* ... */
-  // }
-
-  // public validate(): boolean {
-  //   /* ... */
-  // }
-
-  public show(): void {
-    this.groupEl.style.removeProperty('display');
-  }
-
-  public hide(): void {
-    this.groupEl.style.display = 'none';
-  }
-
-  public reset(): void {
-    this.questions.forEach((question) => question.reset());
   }
 }

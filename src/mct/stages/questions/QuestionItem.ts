@@ -3,21 +3,25 @@
  */
 
 import { classes } from 'src/mct/shared/constants';
-import {
-  type AnswerKey,
-  type AnswerValue,
-  questionsManager,
-} from 'src/mct/stages/questions/QuestionsManager';
 
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
+import type { AnswerKey, Answers, AnswerValue } from 'src/mct/shared/types';
+import type { QuestionsManager } from './QuestionsManager';
 
 type InputType = 'radio' | 'checkbox' | 'text' | 'number';
 
+type QuestionItemOptions = {
+  onChange: () => void;
+  onEnter: () => void;
+  manager: QuestionsManager;
+};
+
 export class QuestionItem {
   public el: HTMLElement;
+  private manager: QuestionsManager;
   private onChange: () => void;
   private onEnter: () => void;
   private inputs: HTMLInputElement[] = [];
@@ -27,10 +31,11 @@ export class QuestionItem {
   public dependsOnValue: string | null;
   public isVisible: boolean = false;
 
-  constructor(el: HTMLElement, onChange: () => void, onEnter: () => void) {
+  constructor(el: HTMLElement, options: QuestionItemOptions) {
     this.el = el;
-    this.onChange = onChange;
-    this.onEnter = onEnter;
+    this.manager = options.manager;
+    this.onChange = options.onChange;
+    this.onEnter = options.onEnter;
     this.inputs = queryElements('input', this.el) as HTMLInputElement[];
     this.type = this.detectType();
     this.name = this.el.getAttribute(attr.item) as string;
@@ -39,6 +44,19 @@ export class QuestionItem {
 
     this.bindEventListeners();
   }
+
+  // constructor(el: HTMLElement, onChange: () => void, onEnter: () => void) {
+  //   this.el = el;
+  //   this.onChange = onChange;
+  //   this.onEnter = onEnter;
+  //   this.inputs = queryElements('input', this.el) as HTMLInputElement[];
+  //   this.type = this.detectType();
+  //   this.name = this.el.getAttribute(attr.item) as string;
+  //   this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
+  //   this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
+
+  //   this.bindEventListeners();
+  // }
 
   private bindEventListeners(): void {
     this.inputs.forEach((input) => {
@@ -109,12 +127,10 @@ export class QuestionItem {
   public hide(): void {
     this.el.style.display = 'none';
     this.isVisible = false;
-    questionsManager.clearAnswer(this.name);
   }
 
   public show(): void {
     this.el.style.removeProperty('display');
-    // this.el.style.removeProperty('border-color');
     this.isVisible = true;
   }
 
@@ -126,7 +142,8 @@ export class QuestionItem {
     }
   }
 
-  public shouldBeVisible(answers: Record<AnswerKey, AnswerValue>): boolean {
+  public shouldBeVisible(answers: Answers): boolean {
+    // was AnswerKey, AnswerValue
     if (!this.dependsOn) return true;
     if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
     return answers[this.dependsOn] === this.dependsOnValue;
