@@ -1,4 +1,4 @@
-import type { Profile } from '../stages/questions/types';
+import type { Profile } from '../stages/form/types';
 
 export const mctAttr = {
   mct: 'data-mct',

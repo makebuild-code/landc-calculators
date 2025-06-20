@@ -9,19 +9,19 @@ import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import type { AnswerKey, Answers, AnswerValue } from 'src/mct/shared/types';
-import type { QuestionsManager } from './QuestionsManager';
+import type { FormManager } from './Manager';
 
 type InputType = 'radio' | 'checkbox' | 'text' | 'number';
 
-type QuestionItemOptions = {
+type QuestionOptions = {
   onChange: () => void;
   onEnter: () => void;
-  manager: QuestionsManager;
+  manager: FormManager;
 };
 
-export class QuestionItem {
+export class Question {
   public el: HTMLElement;
-  private manager: QuestionsManager;
+  private manager: FormManager;
   private onChange: () => void;
   private onEnter: () => void;
   private inputs: HTMLInputElement[] = [];
@@ -31,14 +31,14 @@ export class QuestionItem {
   public dependsOnValue: string | null;
   public isVisible: boolean = false;
 
-  constructor(el: HTMLElement, options: QuestionItemOptions) {
+  constructor(el: HTMLElement, options: QuestionOptions) {
     this.el = el;
     this.manager = options.manager;
     this.onChange = options.onChange;
     this.onEnter = options.onEnter;
     this.inputs = queryElements('input', this.el) as HTMLInputElement[];
     this.type = this.detectType();
-    this.name = this.el.getAttribute(attr.item) as string;
+    this.name = this.el.getAttribute(attr.question) as string;
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
 

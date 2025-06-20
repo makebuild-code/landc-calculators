@@ -6,22 +6,43 @@ import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
-import { QuestionItem } from './QuestionItem';
-import type { MainQuestionsManager, QuestionsManager } from './QuestionsManager';
-import type { ProfileName } from './types';
+import { Question } from './Questions';
+import type { MainFormManager, FormManager } from './Manager';
+import type { GroupName } from './types';
 
-export abstract class QuestionGroup {
+export abstract class BaseGroup {
   protected component: HTMLElement;
-  protected manager: QuestionsManager;
-  public questions: QuestionItem[] = [];
+  protected manager: FormManager;
   public isVisible: boolean = false;
-  public activeQuestionIndex: number = 0;
-  public profileName: ProfileName | null = null;
+  public name: GroupName | null = null;
 
-  constructor(component: HTMLElement, manager: QuestionsManager) {
+  constructor(component: HTMLElement, manager: FormManager) {
     this.component = component;
     this.manager = manager;
-    this.profileName = component.getAttribute(attr.group) as ProfileName | null;
+    this.name = component.getAttribute(attr.group) as GroupName | null;
+  }
+
+  public getComponent(): HTMLElement {
+    return this.component;
+  }
+
+  public show(): void {
+    this.component.style.removeProperty('display');
+    this.isVisible = true;
+  }
+
+  public hide(): void {
+    this.component.style.display = 'none';
+    this.isVisible = false;
+  }
+}
+
+export abstract class QuestionGroup extends BaseGroup {
+  public questions: Question[] = [];
+  public activeQuestionIndex: number = 0;
+
+  constructor(component: HTMLElement, manager: FormManager) {
+    super(component, manager);
   }
 
   abstract handleChange(index: number): void;
@@ -43,38 +64,27 @@ export abstract class QuestionGroup {
     });
   }
 
-  public show(): void {
-    this.component.style.removeProperty('display');
-    this.isVisible = true;
-  }
-
-  public hide(): void {
-    this.component.style.display = 'none';
-    this.isVisible = false;
-  }
-
   public reset(): void {
     if (this.questions.length === 0) return;
     this.questions.forEach((question) => question.reset());
   }
 }
 
-export class MainQuestionGroup extends QuestionGroup {
-  protected manager: MainQuestionsManager;
-  private scroll: HTMLElement;
+export class MainGroup extends QuestionGroup {
+  protected manager: MainFormManager;
 
-  constructor(component: HTMLElement, manager: MainQuestionsManager) {
+  constructor(component: HTMLElement, manager: MainFormManager) {
     super(component, manager);
     this.manager = manager;
     this.questions = this.initQuestions();
-    this.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
+    this.manager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
     this.evaluateVisibility();
   }
 
-  private initQuestions(): QuestionItem[] {
-    const questionEls = queryElements(`[${attr.item}]`, this.component) as HTMLElement[];
+  private initQuestions(): Question[] {
+    const questionEls = queryElements(`[${attr.question}]`, this.component) as HTMLElement[];
     return questionEls.map((el, index) => {
-      const question = new QuestionItem(el, {
+      const question = new Question(el, {
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         manager: this.manager,
@@ -113,8 +123,12 @@ export class MainQuestionGroup extends QuestionGroup {
     this.manager.updateNavigation({ nextEnabled: isValid });
   }
 
-  public getActiveQuestion(): QuestionItem {
+  public getActiveQuestion(): Question {
     return this.questions[this.activeQuestionIndex];
+  }
+
+  public getVisibleQuestions(): Question[] {
+    return this.questions.filter((question) => question.isVisible);
   }
 
   public getNextVisibleIndex(start: number): number {
@@ -170,23 +184,54 @@ export class MainQuestionGroup extends QuestionGroup {
     }
   }
 
-  public activateQuestion(question: QuestionItem): void {
+  public activateQuestion(question: Question): void {
     question.enable();
     question.focus();
     question.toggleActive(true);
-    this.scrollTo(question);
+    this.scrollToQuestion(question);
     this.handleNextButton(question.isValid());
   }
 
-  private deactivateQuestion(question: QuestionItem): void {
+  private deactivateQuestion(question: Question): void {
     question.disable();
     question.toggleActive(false);
   }
 
-  private scrollTo(item: QuestionItem): void {
-    this.scroll.scrollTo({
-      top: item.el.offsetTop - this.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
+  private scrollToQuestion(item: Question): void {
+    this.manager.components.scroll.scrollTo({
+      top: item.el.offsetTop - this.manager.components.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
       behavior: 'smooth',
+    });
+  }
+}
+
+export class OutputGroup extends BaseGroup {
+  protected manager: MainFormManager;
+  public outputs: HTMLSpanElement[] = [];
+
+  constructor(component: HTMLElement, manager: MainFormManager) {
+    super(component, manager);
+    this.manager = manager;
+    this.outputs = queryElements(`[${attr.output}]`, this.component) as HTMLSpanElement[];
+  }
+
+  public getComponent(): HTMLElement {
+    return this.component;
+  }
+
+  public scrollToOutput(): void {
+    this.manager.components.scroll.scrollTo({
+      top: this.component.offsetTop - this.manager.components.scroll.offsetHeight / 2 + this.component.offsetHeight / 2,
+      behavior: 'smooth',
+    });
+  }
+
+  updateOutputs(data: { [key: string]: string }) {
+    this.outputs.forEach((output) => {
+      const key = output.getAttribute(attr.output);
+      if (key) {
+        output.textContent = data[key];
+      }
     });
   }
 }

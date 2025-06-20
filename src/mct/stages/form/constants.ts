@@ -1,7 +1,9 @@
 export const attr = {
   components: 'data-mct-questions',
-  item: 'data-mct-questions-item',
+  group: 'data-mct-questions-group',
+  question: 'data-mct-questions-question',
   dependsOn: 'data-mct-questions-depends-on',
   dependsOnValue: 'data-mct-questions-depends-on-value',
-  group: 'data-mct-questions-group',
+  output: 'data-mct-questions-output',
+  type: 'data-mct-questions-outputs-type',
 };

@@ -2,13 +2,13 @@ import { simulateEvent } from '@finsweet/ts-utils';
 import { sharedUtils } from 'src/mct/shared/utils';
 
 import { PROFILES } from '../../shared/constants';
-import { MainQuestionGroup, QuestionGroup } from './QuestionGroup';
-import type { Profile, ProfileName } from './types';
+import { MainGroup, BaseGroup, OutputGroup } from './Groups';
+import type { GroupName, Profile, ProfileName } from './types';
 import type { AnswerKey, Answers, AnswerValue } from 'src/mct/shared/types';
 import { queryElement } from '$utils/queryElement';
 import { attr } from './constants';
 import { queryElements } from '$utils/queryelements';
-import type { QuestionItem } from './QuestionItem';
+import type { Question } from './Questions';
 import { MCTManager, type AppState } from 'src/mct/shared/manager';
 
 interface State {
@@ -19,15 +19,15 @@ const state: State = {
   profile: null,
 };
 
-export abstract class QuestionsManager {
+export abstract class FormManager {
   protected component: HTMLElement;
-  protected groups: QuestionGroup[] = [];
+  protected groups: BaseGroup[] = [];
 
   constructor(component: HTMLElement) {
     this.component = component;
   }
 
-  protected registerGroup(group: QuestionGroup) {
+  protected registerGroup(group: BaseGroup) {
     this.groups.push(group);
   }
 
@@ -92,11 +92,10 @@ export abstract class QuestionsManager {
   // }
 }
 
-export class MainQuestionsManager extends QuestionsManager {
-  public groups: MainQuestionGroup[] = [];
+export class MainFormManager extends FormManager {
+  public groups: (MainGroup | OutputGroup)[] = [];
   public activeGroupIndex: number = 0;
-  private activeQuestionIndex: number = 0;
-  private components: {
+  public components: {
     header: HTMLElement;
     stickyHeader: HTMLElement;
     profileSelect: HTMLSelectElement;
@@ -128,7 +127,14 @@ export class MainQuestionsManager extends QuestionsManager {
     this.showHeader('static');
 
     this.components.groupElements.forEach((groupEl, index) => {
-      const group = new MainQuestionGroup(groupEl, this);
+      const name = groupEl.getAttribute(attr.group) as GroupName;
+      if (!name) return;
+
+      console.log(groupEl);
+      console.log(name);
+
+      console.log(name === 'output');
+      const group = name === 'output' ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
@@ -165,8 +171,8 @@ export class MainQuestionsManager extends QuestionsManager {
   public prepareWrapper(): void {
     if (this.groups.length === 0) return;
 
-    const firstItem = this.getFirstQuestion()?.el;
-    const lastItem = this.getLastQuestion()?.el;
+    const firstItem = this.getFirstEl();
+    const lastItem = this.getLastEl();
     if (!firstItem || !lastItem) return;
 
     const { scroll, wrapper } = this.components;
@@ -178,12 +184,23 @@ export class MainQuestionsManager extends QuestionsManager {
     wrapper.style.paddingBottom = `${bottomPad}px`;
   }
 
-  private getFirstQuestion(): QuestionItem | null {
-    return this.groups[0].questions[0];
+  private getFirstEl(): HTMLElement | null {
+    const group = this.groups[0];
+    if (group instanceof MainGroup) return group.questions[0].el;
+    if (group instanceof OutputGroup) return group.getComponent();
+    return null;
   }
 
-  private getLastQuestion(): QuestionItem | undefined {
-    return this.groups.at(this.activeGroupIndex)?.questions.at(-1);
+  private getLastEl(): HTMLElement | undefined {
+    const group = this.groups.at(this.activeGroupIndex);
+    if (group instanceof MainGroup) {
+      // Find the last visible question
+      const visibleQuestions = group.getVisibleQuestions();
+      if (visibleQuestions.length === 0) return undefined;
+      return visibleQuestions.at(-1)?.el;
+    }
+    if (group instanceof OutputGroup) return group.getComponent();
+    return undefined;
   }
 
   public updateNavigation(options: { nextEnabled?: boolean; prevEnabled?: boolean } = {}): void {
@@ -199,15 +216,15 @@ export class MainQuestionsManager extends QuestionsManager {
     this.updateNavigation({ nextEnabled: isValid });
   }
 
-  private getActiveGroup(): MainQuestionGroup | undefined {
+  private getActiveGroup(): MainGroup | OutputGroup | undefined {
     return this.groups[this.activeGroupIndex];
   }
 
-  private getGroupByProfile(profile: Profile): MainQuestionGroup | undefined {
-    return this.groups.find((group) => group.profileName === profile.name);
+  private getGroupByName(name: GroupName): MainGroup | OutputGroup | undefined {
+    return this.groups.find((group) => group.name === name);
   }
 
-  public getPreviousGroupInSequence(): MainQuestionGroup | undefined {
+  public getPreviousGroupInSequence(): MainGroup | OutputGroup | undefined {
     if (this.activeGroupIndex <= 0) return undefined;
     return this.groups[0];
   }
@@ -216,16 +233,20 @@ export class MainQuestionsManager extends QuestionsManager {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup) return;
 
-    if (this.activeGroupIndex === 0) {
+    const { name } = activeGroup;
+
+    if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
+      // progress to profile group
       const profile = this.determineProfile();
       if (!profile) return sharedUtils.logError('Could not determine profile');
       this.initialiseProfileSelect(profile.name);
 
-      const nextGroup = this.getGroupByProfile(profile);
+      const nextGroup = this.getGroupByName(profile.name);
       if (!nextGroup) return sharedUtils.logError('No matching group found for profile:', profile);
+      if (!(nextGroup instanceof MainGroup)) return sharedUtils.logError('nextGroup is not a MainGroup', profile);
 
       const nextGroupIndex = this.groups.indexOf(nextGroup);
-      if (nextGroupIndex === -1) return sharedUtils.logError('Next group index not found');
+      if (nextGroupIndex === -1) return sharedUtils.logError('Profile group index not found');
 
       this.activeGroupIndex = nextGroupIndex;
       nextGroup.show();
@@ -238,6 +259,24 @@ export class MainQuestionsManager extends QuestionsManager {
         nextGroup.activateQuestion(firstQuestion);
         nextGroup.handleNextButton(firstQuestion.isValid());
       }
+    } else if (name !== 'output' && activeGroup instanceof MainGroup) {
+      // progress to the output group
+      const nextGroup = this.getGroupByName('output');
+      if (!nextGroup) return sharedUtils.logError('No output group found');
+      if (!(nextGroup instanceof OutputGroup)) return sharedUtils.logError('nextGroup is not an OutputGroup');
+
+      const nextGroupIndex = this.groups.indexOf(nextGroup);
+      if (nextGroupIndex === -1) return sharedUtils.logError('Output group index not found');
+
+      this.activeGroupIndex = nextGroupIndex;
+      nextGroup.show();
+      this.prepareWrapper();
+      nextGroup.scrollToOutput();
+    } else if (name === 'output') {
+      // end of form
+    }
+
+    if (this.activeGroupIndex === 0) {
     } else {
       console.log('End of groups');
       console.log('Initiate logic for showing output');
@@ -290,7 +329,6 @@ export class MainQuestionsManager extends QuestionsManager {
   public reset() {
     MCTManager.clearAnswers();
     this.groups.forEach((group) => group.reset());
-    this.activeQuestionIndex = 0;
   }
 
   // public start(): void {

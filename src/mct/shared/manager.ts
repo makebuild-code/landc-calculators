@@ -1,7 +1,7 @@
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
-import { initQuestions } from '../stages/questions';
+import { initForm } from '../stages/form';
 import { generateLCID } from './api/generateLCID';
 import { mctAttr } from './constants';
 import type { AnswerKey, Answers, AnswerValue, StageName } from './types';
@@ -84,7 +84,7 @@ export const MCTManager = {
 
   route() {
     const mainQuestions = this.getStage('questions') as HTMLElement;
-    initQuestions(mainQuestions, {
+    initForm(mainQuestions, {
       mode: 'main',
       prefill: false,
     });

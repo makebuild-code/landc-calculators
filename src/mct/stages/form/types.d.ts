@@ -8,12 +8,13 @@ export interface Options {
 }
 
 export type ProfileName =
-  | 'customer-identifier'
   | 'residential-purchase'
   | 'ftb-residential-purchase'
   | 'btl-purchase'
   | 'residential-remortgage'
   | 'btl-remortgage';
+
+export type GroupName = ProfileName | 'customer-identifier' | 'output';
 
 export interface Profile {
   name: ProfileName;
