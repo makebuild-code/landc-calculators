@@ -27,7 +27,7 @@ export const testFetchProducts = async () => {
     // RetentionLenderId: ,
   };
 
-  console.log(input);
+  console.log('input', input);
 
   try {
     const response = await fetchProducts(input);
@@ -36,3 +36,10 @@ export const testFetchProducts = async () => {
     console.error('API Error:', error);
   }
 };
+
+// Run the test if this file is executed directly (ESM compatible)
+if (import.meta.url === `file://${process.cwd()}/src/mct/shared/api/tests/test_fetchProducts.ts`) {
+  testFetchProducts();
+}
+
+// npx tsx src/mct/shared/api/tests/test_fetchProducts.ts
