@@ -5,5 +5,6 @@
  */
 
 export const ENDPOINTS = {
+  lcid: 'EnquiryHttpTrigger',
   products: 'ProductsMCTHttpTrigger',
 };
