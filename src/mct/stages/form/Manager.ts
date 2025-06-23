@@ -22,10 +22,6 @@ export abstract class FormManager {
 
   public abstract init(): void;
 
-  // protected registerGroup(group: MainGroup | OutputGroup) {
-  //   this.groups.push(group);
-  // }
-
   protected prefill(answers: Answers) {
     /**
      * @todo:
@@ -243,29 +239,6 @@ export class MainFormManager extends FormManager {
     return this.groups[0];
   }
 
-  /**
-   * @plan
-   * - new functions to determine which groups are visible
-   *
-   * - when a question is answered
-   *
-   * - if current group is 'customer-identifier'
-   * - get the profile
-   * - get the group for the profile
-   * - show the group
-   * - hide other groups
-   *
-   * - if current group is not 'output'
-   * - check if all non-dependsOn questions are answered
-   * - if so, show the 'output' group
-   *
-   * - if current group is 'output'
-   * - do nothing
-   *
-   * - What this changes:
-   * - navigation functions just handle moving to first/last question of the next/previous group
-   */
-
   public navigateToNextGroup() {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup) return sharedUtils.logError(`Next group: No active group found`);
@@ -356,60 +329,6 @@ export class MainFormManager extends FormManager {
     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
   }
 
-  // public navigateToPreviousGroup() {
-  //   /**
-  //    * @todo: check if this keeps groups active that shouldn't be
-  //    */
-
-  //   const activeGroup = this.getActiveGroup();
-  //   if (!activeGroup) return;
-
-  //   const { name } = activeGroup;
-
-  //   /**
-  //    * @todo:
-  //    * - update the remaining code for this
-  //    * - add logic to determine group visibility
-  //    * - add flag on groups for whether all required questions are answered
-  //    * - e.g.
-  //    */
-  //   if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
-  //     // do nothing
-  //   } else if (name !== 'output' && activeGroup instanceof MainGroup) {
-  //     // return to identifier group
-
-  //     const previousGroup = this.getGroupByName('customer-identifier') as MainGroup;
-  //     const previousGroupIndex = this.groups.indexOf(previousGroup);
-  //     this.activeGroupIndex = previousGroupIndex;
-  //     this.showHeader('static');
-  //     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-  //     if (lastVisibleIndex < 0) return sharedUtils.logError('No previous group found');
-
-  //     previousGroup.activeQuestionIndex = lastVisibleIndex;
-  //     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
-  //     return;
-  //   } else if (name === 'output' && activeGroup instanceof OutputGroup) {
-  //     // return to profile group
-  //   } else {
-  //     // decide what to do
-  //   }
-
-  //   const previousGroup = this.getPreviousGroupInSequence();
-  //   if (!previousGroup) return sharedUtils.logError('No previous group found');
-
-  //   const previousGroupIndex = this.groups.indexOf(previousGroup);
-  //   if (previousGroupIndex === -1) return sharedUtils.logError('Previous group index not found');
-
-  //   this.activeGroupIndex = previousGroupIndex;
-  //   this.showHeader('static');
-  //   const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-  //   if (lastVisibleIndex >= 0) {
-  //     previousGroup.activeQuestionIndex = lastVisibleIndex;
-  //     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
-  //     return;
-  //   }
-  // }
-
   private initialiseProfileSelect(value: ProfileName) {
     const { profileSelect } = this.components;
     if (!profileSelect) return;
@@ -437,21 +356,4 @@ export class MainFormManager extends FormManager {
     MCTManager.clearAnswers();
     this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
   }
-
-  // public start(): void {
-  //   this.groups[0]?.show();
-  //   this.groups[0]?.activate(); // highlight + enable
-  // }
-
-  // public handleInputChange(): void {
-  //   const current = this.groups[this.currentGroupIndex];
-
-  //   current.evaluateVisibility();
-  //   const currentItem = current.getCurrentQuestion();
-
-  //   if (currentItem?.isValid()) {
-  //     current.advance();
-  //     // optionally check if done
-  //   }
-  // }
 }
