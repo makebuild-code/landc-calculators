@@ -1,5 +1,7 @@
+import { getFromCookie } from '$utils/getFromCookie';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
+import { setToCookie } from '$utils/setToCookie';
 
 import { initForm } from '../stages/form';
 import { generateLCID } from './api/generateLCID';
@@ -48,6 +50,18 @@ interface MCTData {
 }
 
 export const MCTManager = {
+  /**
+   * @plan
+   *
+   * - generate new LCID
+   * - save to the data and cookies
+   */
+  start() {
+    this.initDOM();
+    this.initICID();
+    this.initLCID();
+  },
+
   initDOM(): DOM {
     dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`) as HTMLElement;
     if (!dom.mctComponent) throw new Error('MCT component not found');
@@ -61,6 +75,23 @@ export const MCTManager = {
     return dom;
   },
 
+  initICID() {
+    const icid = getFromCookie('ICID');
+    this.setICID(icid ?? 'default');
+  },
+
+  async initLCID() {
+    const currentLCID = getFromCookie('LCID');
+    this.setLCID(currentLCID ?? null);
+
+    try {
+      const lcid = await generateLCID();
+      this.setLCID(lcid);
+    } catch {
+      console.error('Failed to generate LCID');
+    }
+  },
+
   getComponent() {
     if (!dom.mctComponent) throw new Error('MCT component not initialised');
     return dom.mctComponent;
@@ -71,15 +102,6 @@ export const MCTManager = {
     const stage = dom.stages[name];
     if (!stage) throw new Error(`Stage '${name}' not found`);
     return dom.stages[name];
-  },
-
-  async preInit() {
-    try {
-      const lcid = await generateLCID();
-      this.setLCID(lcid);
-    } catch {
-      console.error('Failed to generate LCID');
-    }
   },
 
   route() {
@@ -119,26 +141,28 @@ export const MCTManager = {
     localStorage.setItem(MCT_ANSWERS_STORAGE_KEY, JSON.stringify(data));
   },
 
-  setLCID(lcid: string) {
-    const data = this.getPersistedData();
-    data.lcid = lcid;
-    this.setPersistedData(data);
-    state.lcid = lcid;
-  },
-
-  getLCID(): string | null {
-    return state.lcid;
-  },
-
   setICID(icid: string) {
     const data = this.getPersistedData();
     data.icid = icid;
     this.setPersistedData(data);
     state.icid = icid;
+    setToCookie('ICID', icid);
   },
 
   getICID(): string | null {
     return state.icid;
+  },
+
+  setLCID(lcid: string | null) {
+    const data = this.getPersistedData();
+    data.lcid = lcid;
+    this.setPersistedData(data);
+    state.lcid = lcid;
+    setToCookie('LCID', lcid ?? '');
+  },
+
+  getLCID(): string | null {
+    return state.lcid;
   },
 
   setAnswer(key: AnswerKey, value: AnswerValue) {
