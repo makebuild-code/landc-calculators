@@ -1,7 +1,3 @@
-/**
- * entry point for the stage
- */
-
 import { MainFormManager } from 'src/mct/stages/form/Manager';
 import type { Options } from './types';
 

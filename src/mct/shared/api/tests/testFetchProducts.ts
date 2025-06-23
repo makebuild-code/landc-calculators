@@ -13,19 +13,21 @@ export const testFetchProducts = async () => {
     SchemePeriods: [1, 2, 3, 4],
     SchemeTypes: [1, 2],
     NumberOfResults: 3,
-    Features: {
-      HelpToBuy: false,
-      Offset: false,
-      EarlyRepaymentCharge: false,
-      NewBuild: false,
-    },
+    // Features: {
+    //   HelpToBuy: false,
+    //   Offset: false,
+    //   EarlyRepaymentCharge: false,
+    //   NewBuild: false,
+    // },
     SortColumn: 1,
-    UseStaticApr: false,
-    SapValue: 50,
-    Lenders: '',
-    IncludeRetention: false,
-    RetentionLenderId: '',
+    // UseStaticApr: false,
+    // SapValue: 50,
+    // Lenders: '',
+    // IncludeRetention: false,
+    // RetentionLenderId: ,
   };
+
+  console.log(input);
 
   try {
     const response = await fetchProducts(input);

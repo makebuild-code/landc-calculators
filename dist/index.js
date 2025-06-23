@@ -16559,6 +16559,64 @@
     }
   };
 
+  // src/mct/shared/utils/fetchData.ts
+  var fetchData = async (endpoint, options) => {
+    const baseURL = getBaseURLForAPI();
+    const response = await fetch(`${baseURL}${endpoint}`, options);
+    if (!response.ok)
+      throw new Error("Failed to fetch data");
+    return response.json();
+  };
+
+  // src/mct/shared/api/endpoints.ts
+  var ENDPOINTS = {
+    products: "ProductsMCTHttpTrigger"
+  };
+
+  // src/mct/shared/api/fetchProducts.ts
+  var fetchProducts = async (input) => {
+    return fetchData(ENDPOINTS.products, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input })
+    });
+  };
+
+  // src/mct/shared/api/tests/testFetchProducts.ts
+  var testFetchProducts = async () => {
+    const input = {
+      PropertyValue: 25e4,
+      RepaymentValue: 125e3,
+      PropertyType: 1,
+      MortgageType: 1,
+      InterestOnlyValue: 0,
+      TermYears: 25,
+      SchemePurpose: 1,
+      SchemePeriods: [1, 2, 3, 4],
+      SchemeTypes: [1, 2],
+      NumberOfResults: 3,
+      // Features: {
+      //   HelpToBuy: false,
+      //   Offset: false,
+      //   EarlyRepaymentCharge: false,
+      //   NewBuild: false,
+      // },
+      SortColumn: 1
+      // UseStaticApr: false,
+      // SapValue: 50,
+      // Lenders: '',
+      // IncludeRetention: false,
+      // RetentionLenderId: ,
+    };
+    console.log(input);
+    try {
+      const response = await fetchProducts(input);
+      console.log(response);
+    } catch (error) {
+      console.error("API Error:", error);
+    }
+  };
+
   // src/mct/shared/utils/logError.ts
   var logError = (message, data) => {
     console.log(message, data || "");
@@ -16633,6 +16691,7 @@
     question: "data-mct-questions-question",
     dependsOn: "data-mct-questions-depends-on",
     dependsOnValue: "data-mct-questions-depends-on-value",
+    element: "data-mct-questions-element",
     output: "data-mct-questions-output",
     type: "data-mct-questions-outputs-type"
   };
@@ -17057,11 +17116,17 @@
   };
   var OutputGroup = class extends BaseGroup {
     manager;
+    card;
     outputs = [];
+    loader;
+    products = null;
+    outputData = [];
     constructor(component, manager) {
       super(component, manager);
       this.manager = manager;
+      this.card = queryElement(`[${attr7.element}="output-card"]`);
       this.outputs = queryElements(`[${attr7.output}]`, this.component);
+      this.loader = queryElement(`[${attr7.element}="output-loader"]`);
     }
     getComponent() {
       return this.component;
@@ -17072,14 +17137,82 @@
         behavior: "smooth"
       });
     }
-    updateOutputs(data) {
-      this.outputs.forEach((output) => {
-        const key = output.getAttribute(attr7.output);
-        if (key) {
-          output.textContent = data[key];
-        }
-      });
+    showLoader(show) {
+      if (show) {
+        this.loader.style.removeProperty("display");
+      } else {
+        this.loader.style.display = "none";
+      }
     }
+    activate() {
+      this.card.classList.add(classes.active);
+      this.scrollToOutput();
+      this.handleProducts();
+    }
+    async handleProducts() {
+      console.log(this.manager.getAnswers());
+      this.outputData = this.buildOutputData();
+      this.showLoader(false);
+    }
+    async fetchProducts() {
+      const input = this.buildProductsInput();
+      const response = await fetchProducts(input);
+      console.log(response);
+      return response;
+    }
+    buildProductsInput() {
+      const answers = this.manager.getAnswers();
+      console.log(answers);
+      const PropertyValue = answers.PropertyValue;
+      const DepositAmount = answers.DepositAmount;
+      let RepaymentValue = answers.RepaymentValue || null;
+      if (!RepaymentValue)
+        RepaymentValue = PropertyValue - DepositAmount;
+      const PropertyType = 1;
+      const MortgageType = answers.ResiBtl === "R" ? 1 : 2;
+      const TermYears = answers.MortgageLength;
+      const SchemePurpose = answers.PurchRemo === "P" ? 1 : 2;
+      const NumberOfResults = 1;
+      const SortColumn = 1;
+      return {
+        PropertyValue,
+        RepaymentValue,
+        PropertyType,
+        MortgageType,
+        TermYears,
+        SchemePurpose,
+        NumberOfResults,
+        SortColumn
+      };
+    }
+    buildOutputData() {
+      const answers = this.manager.getAnswers();
+      console.log(answers);
+      const data = [];
+      const RepaymentValue = `\xA3${answers.RepaymentValue}`;
+      const TermYears = answers.MortgageLength === 1 ? `${answers.MortgageLength} year` : `${answers.MortgageLength} years`;
+      const SchemePeriod = answers.SchemePeriod === "A" ? null : `${answers.SchemePeriod} year`;
+      const SchemeType = answers.SchemeType === "F" ? "Fixed" : answers.SchemeType === "V" ? "Variable" : null;
+      if (RepaymentValue)
+        data.push({ key: "RepaymentValue", value: RepaymentValue });
+      if (TermYears)
+        data.push({ key: "TermYears", value: TermYears });
+      if (SchemePeriod)
+        data.push({ key: "SchemePeriod", value: SchemePeriod });
+      if (SchemeType)
+        data.push({ key: "SchemeType", value: SchemeType });
+      console.log(data);
+      return data;
+    }
+    // private updateOutputs() {
+    //   if (!this.products) return;
+    //   const data = this.products.result.this.outputs.forEach((output) => {
+    //     const key = output.getAttribute(attr.output);
+    //     if (key) {
+    //       output.textContent = data[key];
+    //     }
+    //   });
+    // }
   };
 
   // src/mct/stages/form/Manager.ts
@@ -17092,9 +17225,9 @@
     constructor(component) {
       this.component = component;
     }
-    registerGroup(group) {
-      this.groups.push(group);
-    }
+    // protected registerGroup(group: MainGroup | OutputGroup) {
+    //   this.groups.push(group);
+    // }
     prefill(answers) {
     }
     setAnswer(key, value) {
@@ -17110,6 +17243,8 @@
       MCTManager.clearAnswers();
       const visibleGroups = this.groups.filter((group) => group.isVisible);
       visibleGroups.forEach((group) => {
+        if (!(group instanceof MainGroup))
+          return;
         const visibleQuestions = group.questions.filter((question) => question.isVisible);
         visibleQuestions.forEach((question) => {
           const value = question.getValue();
@@ -17130,11 +17265,8 @@
     }
     reset() {
       MCTManager.clearAnswers();
-      this.groups.forEach((group) => group.reset());
+      this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
     }
-    // protected getState(): State {
-    //   return { ...state };
-    // }
   };
   var MainFormManager = class extends FormManager {
     groups = [];
@@ -17153,7 +17285,6 @@
         prevButton: queryElement(`[${attr7.components}="previous"]`, component),
         groupElements: queryElements(`[${attr7.group}]`, component)
       };
-      console.log(this.components);
     }
     init() {
       this.showHeader("static");
@@ -17161,13 +17292,12 @@
         const name = groupEl.getAttribute(attr7.group);
         if (!name)
           return;
-        console.log(groupEl);
-        console.log(name);
-        console.log(name === "output");
         const group = name === "output" ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
         index2 === 0 ? group.show() : group.hide();
         this.groups.push(group);
       });
+      console.log(this.groups);
+      console.log("prepare wrapper: MainFormManager init");
       this.prepareWrapper();
       const initialGroup = this.getActiveGroup();
       if (initialGroup)
@@ -17181,7 +17311,7 @@
       });
       this.components.nextButton.addEventListener("click", () => {
         const currentGroup = this.getActiveGroup();
-        if (!currentGroup)
+        if (!currentGroup || currentGroup instanceof OutputGroup)
           return;
         const currentItem = currentGroup.getActiveQuestion();
         if (!currentItem.isValid())
@@ -17190,7 +17320,7 @@
       });
       this.components.prevButton.addEventListener("click", () => {
         const currentGroup = this.getActiveGroup();
-        if (!currentGroup)
+        if (!currentGroup || currentGroup instanceof OutputGroup)
           return;
         currentGroup.navigate("prev");
       });
@@ -17209,6 +17339,7 @@
       wrapper.style.paddingBottom = `${bottomPad}px`;
     }
     getFirstEl() {
+      console.log(this);
       const group = this.groups[0];
       if (group instanceof MainGroup)
         return group.questions[0].el;
@@ -17250,6 +17381,28 @@
         return void 0;
       return this.groups[0];
     }
+    /**
+     * @plan
+     * - new functions to determine which groups are visible
+     *
+     * - when a question is answered
+     *
+     * - if current group is 'customer-identifier'
+     * - get the profile
+     * - get the group for the profile
+     * - show the group
+     * - hide other groups
+     *
+     * - if current group is not 'output'
+     * - check if all non-dependsOn questions are answered
+     * - if so, show the 'output' group
+     *
+     * - if current group is 'output'
+     * - do nothing
+     *
+     * - What this changes:
+     * - navigation functions just handle moving to first/last question of the next/previous group
+     */
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
       if (!activeGroup)
@@ -17269,7 +17422,6 @@
         if (nextGroupIndex === -1)
           return sharedUtils.logError("Profile group index not found");
         this.activeGroupIndex = nextGroupIndex;
-        nextGroup.show();
         this.showHeader("sticky");
         this.prepareWrapper();
         const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
@@ -17291,7 +17443,7 @@
         this.activeGroupIndex = nextGroupIndex;
         nextGroup.show();
         this.prepareWrapper();
-        nextGroup.scrollToOutput();
+        nextGroup.activate();
       } else if (name === "output") {
       }
       if (this.activeGroupIndex === 0) {
@@ -17301,6 +17453,25 @@
       }
     }
     navigateToPreviousGroup() {
+      const activeGroup = this.getActiveGroup();
+      if (!activeGroup)
+        return;
+      const { name } = activeGroup;
+      if (name === "customer-identifier" && activeGroup instanceof MainGroup) {
+      } else if (name !== "output" && activeGroup instanceof MainGroup) {
+        const previousGroup2 = this.getGroupByName("customer-identifier");
+        const previousGroupIndex2 = this.groups.indexOf(previousGroup2);
+        this.activeGroupIndex = previousGroupIndex2;
+        this.showHeader("static");
+        const lastVisibleIndex2 = previousGroup2.getPrevVisibleIndex(previousGroup2.questions.length);
+        if (lastVisibleIndex2 < 0)
+          return sharedUtils.logError("No previous group found");
+        previousGroup2.activeQuestionIndex = lastVisibleIndex2;
+        previousGroup2.activateQuestion(previousGroup2.getActiveQuestion());
+        return;
+      } else if (name === "output" && activeGroup instanceof OutputGroup) {
+      } else {
+      }
       const previousGroup = this.getPreviousGroupInSequence();
       if (!previousGroup)
         return sharedUtils.logError("No previous group found");
@@ -17340,7 +17511,7 @@
     }
     reset() {
       MCTManager.clearAnswers();
-      this.groups.forEach((group) => group.reset());
+      this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
     }
     // public start(): void {
     //   this.groups[0]?.show();
@@ -17373,7 +17544,7 @@
     return data.lcid;
   };
 
-  // src/mct/shared/manager.ts
+  // src/mct/shared/MCTManager.ts
   var stages = {};
   var dom = {
     mctComponent: null,
@@ -17478,8 +17649,6 @@
       data.answers[key] = value;
       this.setPersistedData(data);
       state2.answers[key] = value;
-      console.log(this.getPersistedData());
-      console.log(state2.answers);
     },
     getAnswer(key) {
       return state2.answers?.[key];
@@ -17492,8 +17661,6 @@
       delete data.answers?.[key];
       this.setPersistedData(data);
       delete state2.answers[key];
-      console.log(this.getPersistedData());
-      console.log(state2.answers);
     },
     clearAnswers() {
       const data = this.getPersistedData();
@@ -17517,6 +17684,7 @@
     MCTManager.initDOM();
     MCTManager.preInit();
     MCTManager.route();
+    testFetchProducts();
   };
 
   // src/index.ts

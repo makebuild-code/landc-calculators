@@ -147,9 +147,6 @@ export const MCTManager = {
     data.answers[key] = value;
     this.setPersistedData(data);
     state.answers[key] = value;
-
-    console.log(this.getPersistedData());
-    console.log(state.answers);
   },
 
   getAnswer(key: AnswerKey): AnswerValue | null {
@@ -165,9 +162,6 @@ export const MCTManager = {
     delete data.answers?.[key];
     this.setPersistedData(data);
     delete state.answers[key];
-
-    console.log(this.getPersistedData());
-    console.log(state.answers);
   },
 
   clearAnswers() {

@@ -9,7 +9,7 @@ import { queryElement } from '$utils/queryElement';
 import { attr } from './constants';
 import { queryElements } from '$utils/queryelements';
 import type { Question } from './Questions';
-import { MCTManager, type AppState } from 'src/mct/shared/manager';
+import { MCTManager, type AppState } from 'src/mct/shared/MCTManager';
 
 interface State {
   profile: Profile | null;
@@ -21,15 +21,17 @@ const state: State = {
 
 export abstract class FormManager {
   protected component: HTMLElement;
-  protected groups: BaseGroup[] = [];
+  protected groups: (MainGroup | OutputGroup)[] = [];
 
   constructor(component: HTMLElement) {
     this.component = component;
   }
 
-  protected registerGroup(group: BaseGroup) {
-    this.groups.push(group);
-  }
+  public abstract init(): void;
+
+  // protected registerGroup(group: MainGroup | OutputGroup) {
+  //   this.groups.push(group);
+  // }
 
   protected prefill(answers: Answers) {
     /**
@@ -60,6 +62,7 @@ export abstract class FormManager {
 
     const visibleGroups = this.groups.filter((group) => group.isVisible);
     visibleGroups.forEach((group) => {
+      if (!(group instanceof MainGroup)) return;
       const visibleQuestions = group.questions.filter((question) => question.isVisible);
       visibleQuestions.forEach((question) => {
         const value = question.getValue();
@@ -84,12 +87,8 @@ export abstract class FormManager {
 
   protected reset(): void {
     MCTManager.clearAnswers();
-    this.groups.forEach((group) => group.reset());
+    this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
   }
-
-  // protected getState(): State {
-  //   return { ...state };
-  // }
 }
 
 export class MainFormManager extends FormManager {
@@ -119,8 +118,6 @@ export class MainFormManager extends FormManager {
       prevButton: queryElement(`[${attr.components}="previous"]`, component) as HTMLButtonElement,
       groupElements: queryElements(`[${attr.group}]`, component) as HTMLElement[],
     };
-
-    console.log(this.components);
   }
 
   public init(): void {
@@ -130,15 +127,13 @@ export class MainFormManager extends FormManager {
       const name = groupEl.getAttribute(attr.group) as GroupName;
       if (!name) return;
 
-      console.log(groupEl);
-      console.log(name);
-
-      console.log(name === 'output');
       const group = name === 'output' ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
 
+    console.log(this.groups);
+    console.log('prepare wrapper: MainFormManager init');
     this.prepareWrapper();
 
     const initialGroup = this.getActiveGroup();
@@ -152,7 +147,7 @@ export class MainFormManager extends FormManager {
 
     this.components.nextButton.addEventListener('click', () => {
       const currentGroup = this.getActiveGroup();
-      if (!currentGroup) return;
+      if (!currentGroup || currentGroup instanceof OutputGroup) return;
 
       const currentItem = currentGroup.getActiveQuestion();
       if (!currentItem.isValid()) return;
@@ -162,7 +157,7 @@ export class MainFormManager extends FormManager {
 
     this.components.prevButton.addEventListener('click', () => {
       const currentGroup = this.getActiveGroup();
-      if (!currentGroup) return;
+      if (!currentGroup || currentGroup instanceof OutputGroup) return;
 
       currentGroup.navigate('prev');
     });
@@ -185,6 +180,7 @@ export class MainFormManager extends FormManager {
   }
 
   private getFirstEl(): HTMLElement | null {
+    console.log(this);
     const group = this.groups[0];
     if (group instanceof MainGroup) return group.questions[0].el;
     if (group instanceof OutputGroup) return group.getComponent();
@@ -229,6 +225,29 @@ export class MainFormManager extends FormManager {
     return this.groups[0];
   }
 
+  /**
+   * @plan
+   * - new functions to determine which groups are visible
+   *
+   * - when a question is answered
+   *
+   * - if current group is 'customer-identifier'
+   * - get the profile
+   * - get the group for the profile
+   * - show the group
+   * - hide other groups
+   *
+   * - if current group is not 'output'
+   * - check if all non-dependsOn questions are answered
+   * - if so, show the 'output' group
+   *
+   * - if current group is 'output'
+   * - do nothing
+   *
+   * - What this changes:
+   * - navigation functions just handle moving to first/last question of the next/previous group
+   */
+
   public navigateToNextGroup() {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup) return;
@@ -249,7 +268,6 @@ export class MainFormManager extends FormManager {
       if (nextGroupIndex === -1) return sharedUtils.logError('Profile group index not found');
 
       this.activeGroupIndex = nextGroupIndex;
-      nextGroup.show();
       this.showHeader('sticky');
       this.prepareWrapper();
       const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
@@ -271,7 +289,7 @@ export class MainFormManager extends FormManager {
       this.activeGroupIndex = nextGroupIndex;
       nextGroup.show();
       this.prepareWrapper();
-      nextGroup.scrollToOutput();
+      nextGroup.activate();
     } else if (name === 'output') {
       // end of form
     }
@@ -287,6 +305,40 @@ export class MainFormManager extends FormManager {
     /**
      * @todo: check if this keeps groups active that shouldn't be
      */
+
+    const activeGroup = this.getActiveGroup();
+    if (!activeGroup) return;
+
+    const { name } = activeGroup;
+
+    /**
+     * @todo:
+     * - update the remaining code for this
+     * - add logic to determine group visibility
+     * - add flag on groups for whether all required questions are answered
+     * - e.g.
+     */
+    if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
+      // do nothing
+    } else if (name !== 'output' && activeGroup instanceof MainGroup) {
+      // return to identifier group
+
+      const previousGroup = this.getGroupByName('customer-identifier') as MainGroup;
+      const previousGroupIndex = this.groups.indexOf(previousGroup);
+      this.activeGroupIndex = previousGroupIndex;
+      this.showHeader('static');
+      const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
+      if (lastVisibleIndex < 0) return sharedUtils.logError('No previous group found');
+
+      previousGroup.activeQuestionIndex = lastVisibleIndex;
+      previousGroup.activateQuestion(previousGroup.getActiveQuestion());
+      return;
+    } else if (name === 'output' && activeGroup instanceof OutputGroup) {
+      // return to profile group
+    } else {
+      // decide what to do
+    }
+
     const previousGroup = this.getPreviousGroupInSequence();
     if (!previousGroup) return sharedUtils.logError('No previous group found');
 
@@ -328,7 +380,7 @@ export class MainFormManager extends FormManager {
 
   public reset() {
     MCTManager.clearAnswers();
-    this.groups.forEach((group) => group.reset());
+    this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
   }
 
   // public start(): void {

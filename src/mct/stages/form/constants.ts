@@ -4,6 +4,7 @@ export const attr = {
   question: 'data-mct-questions-question',
   dependsOn: 'data-mct-questions-depends-on',
   dependsOnValue: 'data-mct-questions-depends-on-value',
+  element: 'data-mct-questions-element',
   output: 'data-mct-questions-output',
   type: 'data-mct-questions-outputs-type',
 };

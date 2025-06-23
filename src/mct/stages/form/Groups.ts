@@ -9,6 +9,9 @@ import { attr } from './constants';
 import { Question } from './Questions';
 import type { MainFormManager, FormManager } from './Manager';
 import type { GroupName } from './types';
+import { classes } from 'src/mct/shared/constants';
+import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
+import type { ProductsRequest, ProductsResponse } from 'src/mct/shared/api/types/fetchProducts';
 
 export abstract class BaseGroup {
   protected component: HTMLElement;
@@ -205,33 +208,121 @@ export class MainGroup extends QuestionGroup {
   }
 }
 
+type OutputData = { [key: string]: string | number | string[] };
 export class OutputGroup extends BaseGroup {
   protected manager: MainFormManager;
+  private card: HTMLElement;
   public outputs: HTMLSpanElement[] = [];
+  private loader: HTMLElement;
+  private products: ProductsResponse | null = null;
+  private outputData: OutputData[] = [];
 
   constructor(component: HTMLElement, manager: MainFormManager) {
     super(component, manager);
     this.manager = manager;
+    this.card = queryElement(`[${attr.element}="output-card"]`) as HTMLElement;
     this.outputs = queryElements(`[${attr.output}]`, this.component) as HTMLSpanElement[];
+    this.loader = queryElement(`[${attr.element}="output-loader"]`) as HTMLElement;
   }
 
   public getComponent(): HTMLElement {
     return this.component;
   }
 
-  public scrollToOutput(): void {
+  private scrollToOutput(): void {
     this.manager.components.scroll.scrollTo({
       top: this.component.offsetTop - this.manager.components.scroll.offsetHeight / 2 + this.component.offsetHeight / 2,
       behavior: 'smooth',
     });
   }
 
-  updateOutputs(data: { [key: string]: string }) {
-    this.outputs.forEach((output) => {
-      const key = output.getAttribute(attr.output);
-      if (key) {
-        output.textContent = data[key];
-      }
-    });
+  private showLoader(show: boolean): void {
+    if (show) {
+      this.loader.style.removeProperty('display');
+    } else {
+      this.loader.style.display = 'none';
+    }
   }
+
+  public activate(): void {
+    this.card.classList.add(classes.active);
+    this.scrollToOutput();
+    this.handleProducts();
+  }
+
+  private async handleProducts(): Promise<void> {
+    console.log(this.manager.getAnswers());
+    // this.products = await this.fetchProducts();
+    this.outputData = this.buildOutputData();
+    // this.updateOutputs();
+    this.showLoader(false);
+  }
+
+  private async fetchProducts(): Promise<ProductsResponse> {
+    const input = this.buildProductsInput();
+    const response = await fetchProducts(input);
+    console.log(response);
+
+    return response;
+  }
+
+  private buildProductsInput(): ProductsRequest {
+    const answers = this.manager.getAnswers();
+    console.log(answers);
+
+    const PropertyValue = answers.PropertyValue as number;
+    const DepositAmount = answers.DepositAmount as number;
+    let RepaymentValue = (answers.RepaymentValue as number) || null;
+
+    if (!RepaymentValue) RepaymentValue = PropertyValue - DepositAmount;
+
+    const PropertyType = 1; // property type not a question
+    const MortgageType = answers.ResiBtl === 'R' ? 1 : 2;
+    const TermYears = answers.MortgageLength as number;
+    const SchemePurpose = answers.PurchRemo === 'P' ? 1 : 2;
+    const NumberOfResults = 1;
+    const SortColumn = 1;
+
+    return {
+      PropertyValue,
+      RepaymentValue,
+      PropertyType,
+      MortgageType,
+      TermYears,
+      SchemePurpose,
+      NumberOfResults,
+      SortColumn,
+    };
+  }
+
+  private buildOutputData(): OutputData[] {
+    const answers = this.manager.getAnswers();
+    console.log(answers);
+    const data = [];
+
+    const RepaymentValue = `£${answers.RepaymentValue}`;
+    const TermYears =
+      answers.MortgageLength === 1 ? `${answers.MortgageLength} year` : `${answers.MortgageLength} years`;
+    const SchemePeriod = answers.SchemePeriod === 'A' ? null : `${answers.SchemePeriod} year`;
+    const SchemeType = answers.SchemeType === 'F' ? 'Fixed' : answers.SchemeType === 'V' ? 'Variable' : null;
+
+    if (RepaymentValue) data.push({ key: 'RepaymentValue', value: RepaymentValue });
+    if (TermYears) data.push({ key: 'TermYears', value: TermYears });
+    if (SchemePeriod) data.push({ key: 'SchemePeriod', value: SchemePeriod });
+    if (SchemeType) data.push({ key: 'SchemeType', value: SchemeType });
+
+    console.log(data);
+
+    return data;
+  }
+
+  // private updateOutputs() {
+  //   if (!this.products) return;
+  //   const data = this.products.result.this.outputs.forEach((output) => {
+  //     const key = output.getAttribute(attr.output);
+  //     if (key) {
+  //       output.textContent = data[key];
+  //     }
+  //   });
+  // }
 }
