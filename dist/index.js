@@ -20,6 +20,8 @@
       { host: "test.landc.co.uk", api: ENDPOINTS2.test },
       { host: "dev.landc.co.uk", api: ENDPOINTS2.test }
     ];
+    if (typeof window === "undefined")
+      return ENDPOINTS2.test;
     const { hostname, search } = window.location;
     const params = new URLSearchParams(search);
     const apiParam = params.get("api");
@@ -16559,62 +16561,17 @@
     }
   };
 
-  // src/mct/shared/utils/fetchData.ts
-  var fetchData = async (endpoint, options) => {
-    const baseURL = getBaseURLForAPI();
-    const response = await fetch(`${baseURL}${endpoint}`, options);
-    if (!response.ok)
-      throw new Error("Failed to fetch data");
-    return response.json();
+  // src/utils/getFromCookie.ts
+  var getFromCookie = (key) => {
+    const cookie = document.cookie.split("; ").find((row) => row.startsWith(`${key}=`));
+    if (cookie)
+      return cookie.split("=")[1];
+    return null;
   };
 
-  // src/mct/shared/api/endpoints.ts
-  var ENDPOINTS = {
-    products: "ProductsMCTHttpTrigger"
-  };
-
-  // src/mct/shared/api/fetchProducts.ts
-  var fetchProducts = async (input) => {
-    return fetchData(ENDPOINTS.products, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input })
-    });
-  };
-
-  // src/mct/shared/api/tests/testFetchProducts.ts
-  var testFetchProducts = async () => {
-    const input = {
-      PropertyValue: 25e4,
-      RepaymentValue: 125e3,
-      PropertyType: 1,
-      MortgageType: 1,
-      InterestOnlyValue: 0,
-      TermYears: 25,
-      SchemePurpose: 1,
-      SchemePeriods: [1, 2, 3, 4],
-      SchemeTypes: [1, 2],
-      NumberOfResults: 3,
-      // Features: {
-      //   HelpToBuy: false,
-      //   Offset: false,
-      //   EarlyRepaymentCharge: false,
-      //   NewBuild: false,
-      // },
-      SortColumn: 1
-      // UseStaticApr: false,
-      // SapValue: 50,
-      // Lenders: '',
-      // IncludeRetention: false,
-      // RetentionLenderId: ,
-    };
-    console.log(input);
-    try {
-      const response = await fetchProducts(input);
-      console.log(response);
-    } catch (error) {
-      console.error("API Error:", error);
-    }
+  // src/utils/setToCookie.ts
+  var setToCookie = (key, value) => {
+    document.cookie = `${key}=${value}; path=/`;
   };
 
   // src/mct/shared/utils/logError.ts
@@ -16699,7 +16656,6 @@
   // src/mct/stages/form/Questions.ts
   var Question = class {
     el;
-    manager;
     onChange;
     onEnter;
     inputs = [];
@@ -16710,7 +16666,6 @@
     isVisible = false;
     constructor(el, options) {
       this.el = el;
-      this.manager = options.manager;
       this.onChange = options.onChange;
       this.onEnter = options.onEnter;
       this.inputs = queryElements("input", this.el);
@@ -16720,17 +16675,6 @@
       this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
       this.bindEventListeners();
     }
-    // constructor(el: HTMLElement, onChange: () => void, onEnter: () => void) {
-    //   this.el = el;
-    //   this.onChange = onChange;
-    //   this.onEnter = onEnter;
-    //   this.inputs = queryElements('input', this.el) as HTMLInputElement[];
-    //   this.type = this.detectType();
-    //   this.name = this.el.getAttribute(attr.item) as string;
-    //   this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
-    //   this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
-    //   this.bindEventListeners();
-    // }
     bindEventListeners() {
       this.inputs.forEach((input) => {
         if (this.type === "text" || this.type === "number") {
@@ -16951,6 +16895,30 @@
           throw new Error(`Unsupported question type: ${this.type}`);
       }
     }
+  };
+
+  // src/mct/shared/utils/fetchData.ts
+  var fetchData = async (endpoint, options) => {
+    const baseURL = getBaseURLForAPI();
+    const response = await fetch(`${baseURL}${endpoint}`, options);
+    if (!response.ok)
+      throw new Error("Failed to fetch data");
+    return response.json();
+  };
+
+  // src/mct/shared/api/endpoints.ts
+  var ENDPOINTS = {
+    lcid: "EnquiryHttpTrigger",
+    products: "ProductsMCTHttpTrigger"
+  };
+
+  // src/mct/shared/api/fetchProducts.ts
+  var fetchProducts = async (input) => {
+    return fetchData(ENDPOINTS.products, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input })
+    });
   };
 
   // src/mct/stages/form/Groups.ts
@@ -17227,9 +17195,6 @@
     constructor(component) {
       this.component = component;
     }
-    // protected registerGroup(group: MainGroup | OutputGroup) {
-    //   this.groups.push(group);
-    // }
     prefill(answers) {
     }
     setAnswer(key, value) {
@@ -17398,28 +17363,6 @@
         return void 0;
       return this.groups[0];
     }
-    /**
-     * @plan
-     * - new functions to determine which groups are visible
-     *
-     * - when a question is answered
-     *
-     * - if current group is 'customer-identifier'
-     * - get the profile
-     * - get the group for the profile
-     * - show the group
-     * - hide other groups
-     *
-     * - if current group is not 'output'
-     * - check if all non-dependsOn questions are answered
-     * - if so, show the 'output' group
-     *
-     * - if current group is 'output'
-     * - do nothing
-     *
-     * - What this changes:
-     * - navigation functions just handle moving to first/last question of the next/previous group
-     */
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
       if (!activeGroup)
@@ -17496,51 +17439,6 @@
       previousGroup.activeQuestionIndex = lastVisibleIndex;
       previousGroup.activateQuestion(previousGroup.getActiveQuestion());
     }
-    // public navigateToPreviousGroup() {
-    //   /**
-    //    * @todo: check if this keeps groups active that shouldn't be
-    //    */
-    //   const activeGroup = this.getActiveGroup();
-    //   if (!activeGroup) return;
-    //   const { name } = activeGroup;
-    //   /**
-    //    * @todo:
-    //    * - update the remaining code for this
-    //    * - add logic to determine group visibility
-    //    * - add flag on groups for whether all required questions are answered
-    //    * - e.g.
-    //    */
-    //   if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
-    //     // do nothing
-    //   } else if (name !== 'output' && activeGroup instanceof MainGroup) {
-    //     // return to identifier group
-    //     const previousGroup = this.getGroupByName('customer-identifier') as MainGroup;
-    //     const previousGroupIndex = this.groups.indexOf(previousGroup);
-    //     this.activeGroupIndex = previousGroupIndex;
-    //     this.showHeader('static');
-    //     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-    //     if (lastVisibleIndex < 0) return sharedUtils.logError('No previous group found');
-    //     previousGroup.activeQuestionIndex = lastVisibleIndex;
-    //     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
-    //     return;
-    //   } else if (name === 'output' && activeGroup instanceof OutputGroup) {
-    //     // return to profile group
-    //   } else {
-    //     // decide what to do
-    //   }
-    //   const previousGroup = this.getPreviousGroupInSequence();
-    //   if (!previousGroup) return sharedUtils.logError('No previous group found');
-    //   const previousGroupIndex = this.groups.indexOf(previousGroup);
-    //   if (previousGroupIndex === -1) return sharedUtils.logError('Previous group index not found');
-    //   this.activeGroupIndex = previousGroupIndex;
-    //   this.showHeader('static');
-    //   const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-    //   if (lastVisibleIndex >= 0) {
-    //     previousGroup.activeQuestionIndex = lastVisibleIndex;
-    //     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
-    //     return;
-    //   }
-    // }
     initialiseProfileSelect(value) {
       const { profileSelect } = this.components;
       if (!profileSelect)
@@ -17567,19 +17465,6 @@
       MCTManager.clearAnswers();
       this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
     }
-    // public start(): void {
-    //   this.groups[0]?.show();
-    //   this.groups[0]?.activate(); // highlight + enable
-    // }
-    // public handleInputChange(): void {
-    //   const current = this.groups[this.currentGroupIndex];
-    //   current.evaluateVisibility();
-    //   const currentItem = current.getCurrentQuestion();
-    //   if (currentItem?.isValid()) {
-    //     current.advance();
-    //     // optionally check if done
-    //   }
-    // }
   };
 
   // src/mct/stages/form/index.ts
@@ -17592,10 +17477,22 @@
 
   // src/mct/shared/api/generateLCID.ts
   var generateLCID = async () => {
-    const data = {
-      lcid: "0FFA8FAE-1D74-45BE-9CDC-9FAF7783CA07"
-    };
-    return data.lcid;
+    const response = await fetchData(ENDPOINTS.lcid, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: "NewEnquiry",
+        input: {
+          lcid: MCTManager.getLCID(),
+          icid: MCTManager.getICID(),
+          partnerId: "",
+          partnerName: ""
+        }
+      })
+    });
+    if (!response?.result?.lcid)
+      throw new Error("Failed to generate LCID");
+    return response.result.lcid;
   };
 
   // src/mct/shared/MCTManager.ts
@@ -17612,6 +17509,17 @@
   };
   var MCT_ANSWERS_STORAGE_KEY = "mct_data";
   var MCTManager = {
+    /**
+     * @plan
+     *
+     * - generate new LCID
+     * - save to the data and cookies
+     */
+    start() {
+      this.initDOM();
+      this.initICID();
+      this.initLCID();
+    },
     initDOM() {
       dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
       if (!dom.mctComponent)
@@ -17623,6 +17531,20 @@
           dom.stages[name] = stage;
       });
       return dom;
+    },
+    initICID() {
+      const icid = getFromCookie("ICID");
+      this.setICID(icid ?? "default");
+    },
+    async initLCID() {
+      const currentLCID = getFromCookie("LCID");
+      this.setLCID(currentLCID ?? null);
+      try {
+        const lcid = await generateLCID();
+        this.setLCID(lcid);
+      } catch {
+        console.error("Failed to generate LCID");
+      }
     },
     getComponent() {
       if (!dom.mctComponent)
@@ -17636,14 +17558,6 @@
       if (!stage)
         throw new Error(`Stage '${name}' not found`);
       return dom.stages[name];
-    },
-    async preInit() {
-      try {
-        const lcid = await generateLCID();
-        this.setLCID(lcid);
-      } catch {
-        console.error("Failed to generate LCID");
-      }
     },
     route() {
       const mainQuestions = this.getStage("questions");
@@ -17678,23 +17592,25 @@
     setPersistedData(data) {
       localStorage.setItem(MCT_ANSWERS_STORAGE_KEY, JSON.stringify(data));
     },
-    setLCID(lcid) {
-      const data = this.getPersistedData();
-      data.lcid = lcid;
-      this.setPersistedData(data);
-      state.lcid = lcid;
-    },
-    getLCID() {
-      return state.lcid;
-    },
     setICID(icid) {
       const data = this.getPersistedData();
       data.icid = icid;
       this.setPersistedData(data);
       state.icid = icid;
+      setToCookie("ICID", icid);
     },
     getICID() {
       return state.icid;
+    },
+    setLCID(lcid) {
+      const data = this.getPersistedData();
+      data.lcid = lcid;
+      this.setPersistedData(data);
+      state.lcid = lcid;
+      setToCookie("LCID", lcid ?? "");
+    },
+    getLCID() {
+      return state.lcid;
     },
     setAnswer(key, value) {
       const data = this.getPersistedData();
@@ -17735,10 +17651,8 @@
 
   // src/mct/index.ts
   var mct = () => {
-    MCTManager.initDOM();
-    MCTManager.preInit();
+    MCTManager.start();
     MCTManager.route();
-    testFetchProducts();
   };
 
   // src/index.ts
