@@ -11,16 +11,9 @@ import { queryElements } from '$utils/queryelements';
 import type { Question } from './Questions';
 import { MCTManager, type AppState } from 'src/mct/shared/MCTManager';
 
-interface State {
-  profile: Profile | null;
-}
-
-const state: State = {
-  profile: null,
-};
-
 export abstract class FormManager {
   protected component: HTMLElement;
+  protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
 
   constructor(component: HTMLElement) {
@@ -81,7 +74,7 @@ export abstract class FormManager {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key] === value);
     });
 
-    state.profile = profile ? profile : null;
+    this.profile = profile ? profile : null;
     return profile ? profile : null;
   }
 
@@ -180,7 +173,6 @@ export class MainFormManager extends FormManager {
   }
 
   private getFirstEl(): HTMLElement | null {
-    console.log(this);
     const group = this.groups[0];
     if (group instanceof MainGroup) return group.questions[0].el;
     if (group instanceof OutputGroup) return group.getComponent();
@@ -220,6 +212,32 @@ export class MainFormManager extends FormManager {
     return this.groups.find((group) => group.name === name);
   }
 
+  public updateGroupVisibility(): void {
+    // Always show customer-identifier
+    const identifierGroup = this.getGroupByName('customer-identifier') as MainGroup;
+    identifierGroup.show();
+
+    // Get the profile
+    const profile = this.determineProfile();
+    if (!profile) return;
+
+    // Show the profile group if it exists
+    const profileGroup = this.getGroupByName(profile.name) as MainGroup;
+    profileGroup.show();
+
+    // Show output group if it exists
+    const outputGroup = this.getGroupByName('output') as OutputGroup;
+    if (profileGroup.isComplete()) {
+      outputGroup.show();
+    } else {
+      outputGroup.hide();
+    }
+
+    this.groups
+      .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)
+      .forEach((group) => group.hide());
+  }
+
   public getPreviousGroupInSequence(): MainGroup | OutputGroup | undefined {
     if (this.activeGroupIndex <= 0) return undefined;
     return this.groups[0];
@@ -250,110 +268,147 @@ export class MainFormManager extends FormManager {
 
   public navigateToNextGroup() {
     const activeGroup = this.getActiveGroup();
-    if (!activeGroup) return;
+    if (!activeGroup) return sharedUtils.logError(`Next group: No active group found`);
+    if (!this.profile) return sharedUtils.logError(`Next group: No profile found`);
 
     const { name } = activeGroup;
-
     if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
-      // progress to profile group
-      const profile = this.determineProfile();
-      if (!profile) return sharedUtils.logError('Could not determine profile');
-      this.initialiseProfileSelect(profile.name);
+      // progress to profile group from identifier group
+      this.initialiseProfileSelect(this.profile.name);
 
-      const nextGroup = this.getGroupByName(profile.name);
-      if (!nextGroup) return sharedUtils.logError('No matching group found for profile:', profile);
-      if (!(nextGroup instanceof MainGroup)) return sharedUtils.logError('nextGroup is not a MainGroup', profile);
+      const profileGroup = this.getGroupByName(this.profile.name) as MainGroup;
+      if (!profileGroup) return sharedUtils.logError(`Next group: No matching group for profile: ${this.profile.name}`);
 
-      const nextGroupIndex = this.groups.indexOf(nextGroup);
-      if (nextGroupIndex === -1) return sharedUtils.logError('Profile group index not found');
+      const profileGroupIndex = this.groups.indexOf(profileGroup);
+      if (profileGroupIndex === -1)
+        return sharedUtils.logError(`Next group: No group index for profile: ${this.profile.name}`);
 
-      this.activeGroupIndex = nextGroupIndex;
+      this.activeGroupIndex = profileGroupIndex;
       this.showHeader('sticky');
-      this.prepareWrapper();
-      const firstVisibleIndex = nextGroup.getNextVisibleIndex(-1);
-      if (firstVisibleIndex < nextGroup.questions.length) {
-        nextGroup.activeQuestionIndex = firstVisibleIndex;
-        const firstQuestion = nextGroup.getActiveQuestion();
-        nextGroup.activateQuestion(firstQuestion);
-        nextGroup.handleNextButton(firstQuestion.isValid());
+
+      const firstVisibleIndex = profileGroup.getNextVisibleIndex(-1);
+      if (firstVisibleIndex < profileGroup.questions.length) {
+        profileGroup.activeQuestionIndex = firstVisibleIndex;
+        const firstQuestion = profileGroup.getActiveQuestion();
+        profileGroup.activateQuestion(firstQuestion);
+        profileGroup.handleNextButton(firstQuestion.isValid());
       }
     } else if (name !== 'output' && activeGroup instanceof MainGroup) {
-      // progress to the output group
-      const nextGroup = this.getGroupByName('output');
-      if (!nextGroup) return sharedUtils.logError('No output group found');
-      if (!(nextGroup instanceof OutputGroup)) return sharedUtils.logError('nextGroup is not an OutputGroup');
+      // progress to the output group from profile group
+      const outputGroup = this.getGroupByName('output') as OutputGroup;
+      if (!outputGroup) return sharedUtils.logError(`Next group: No output group found`);
 
-      const nextGroupIndex = this.groups.indexOf(nextGroup);
-      if (nextGroupIndex === -1) return sharedUtils.logError('Output group index not found');
+      const outputGroupIndex = this.groups.indexOf(outputGroup);
+      if (outputGroupIndex === -1) return sharedUtils.logError(`Next group: No group index for output`);
 
-      this.activeGroupIndex = nextGroupIndex;
-      nextGroup.show();
-      this.prepareWrapper();
-      nextGroup.activate();
-    } else if (name === 'output') {
-      // end of form
-    }
-
-    if (this.activeGroupIndex === 0) {
-    } else {
-      console.log('End of groups');
-      console.log('Initiate logic for showing output');
+      this.activeGroupIndex = outputGroupIndex;
+      outputGroup.activate();
+    } else if (name === 'output' && activeGroup instanceof OutputGroup) {
+      // end of form, determine next step
     }
   }
 
   public navigateToPreviousGroup() {
-    /**
-     * @todo: check if this keeps groups active that shouldn't be
-     */
-
     const activeGroup = this.getActiveGroup();
-    if (!activeGroup) return;
+    if (!activeGroup) return sharedUtils.logError(`Previous group: No active group found`);
+    if (!this.profile) return sharedUtils.logError(`Previous group: No profile found`);
+
+    // save previous group to determine which group to navigate to
+    let previousGroup: MainGroup | OutputGroup | undefined;
 
     const { name } = activeGroup;
+    if (name === 'output' && activeGroup instanceof OutputGroup) {
+      // revert to profile group from output group
+      const profileGroup = this.getGroupByName(this.profile.name) as MainGroup;
+      if (!profileGroup)
+        return sharedUtils.logError(`Previous group: No matching group for profile: ${this.profile.name}`);
 
-    /**
-     * @todo:
-     * - update the remaining code for this
-     * - add logic to determine group visibility
-     * - add flag on groups for whether all required questions are answered
-     * - e.g.
-     */
-    if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
-      // do nothing
-    } else if (name !== 'output' && activeGroup instanceof MainGroup) {
-      // return to identifier group
+      const profileGroupIndex = this.groups.indexOf(profileGroup);
+      if (profileGroupIndex === -1)
+        return sharedUtils.logError(`Previous group: No group index for profile: ${this.profile.name}`);
 
-      const previousGroup = this.getGroupByName('customer-identifier') as MainGroup;
-      const previousGroupIndex = this.groups.indexOf(previousGroup);
-      this.activeGroupIndex = previousGroupIndex;
+      this.activeGroupIndex = profileGroupIndex;
+      this.showHeader('sticky');
+      previousGroup = profileGroup;
+    } else if (name !== 'customer-identifier' && activeGroup instanceof MainGroup) {
+      // revert to the identifier group from profile group
+      const identifierGroup = this.getGroupByName('customer-identifier') as MainGroup;
+      if (!identifierGroup) return sharedUtils.logError(`Previous group: No identifier group found`);
+
+      const identifierGroupIndex = this.groups.indexOf(identifierGroup);
+      if (identifierGroupIndex === -1) return sharedUtils.logError(`Previous group: No group index for identifier`);
+
+      this.activeGroupIndex = identifierGroupIndex;
       this.showHeader('static');
-      const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-      if (lastVisibleIndex < 0) return sharedUtils.logError('No previous group found');
+      previousGroup = identifierGroup;
+    } else return; // start of form, do nothing
 
-      previousGroup.activeQuestionIndex = lastVisibleIndex;
-      previousGroup.activateQuestion(previousGroup.getActiveQuestion());
-      return;
-    } else if (name === 'output' && activeGroup instanceof OutputGroup) {
-      // return to profile group
-    } else {
-      // decide what to do
-    }
+    if (!previousGroup) return sharedUtils.logError(`Previous group: No previous group found`);
+    if (!(previousGroup instanceof MainGroup))
+      return sharedUtils.logError(`Previous group: Previous group is not a main group`);
 
-    const previousGroup = this.getPreviousGroupInSequence();
-    if (!previousGroup) return sharedUtils.logError('No previous group found');
-
-    const previousGroupIndex = this.groups.indexOf(previousGroup);
-    if (previousGroupIndex === -1) return sharedUtils.logError('Previous group index not found');
-
-    this.activeGroupIndex = previousGroupIndex;
-    this.showHeader('static');
+    // get the last visible question in the identifier group and activate it
     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-    if (lastVisibleIndex >= 0) {
-      previousGroup.activeQuestionIndex = lastVisibleIndex;
-      previousGroup.activateQuestion(previousGroup.getActiveQuestion());
-      return;
-    }
+    if (lastVisibleIndex < 0)
+      return sharedUtils.logError(`Previous group: No last visible index group for profile: ${this.profile}`);
+
+    previousGroup.activeQuestionIndex = lastVisibleIndex;
+    previousGroup.activateQuestion(previousGroup.getActiveQuestion());
   }
+
+  // public navigateToPreviousGroup() {
+  //   /**
+  //    * @todo: check if this keeps groups active that shouldn't be
+  //    */
+
+  //   const activeGroup = this.getActiveGroup();
+  //   if (!activeGroup) return;
+
+  //   const { name } = activeGroup;
+
+  //   /**
+  //    * @todo:
+  //    * - update the remaining code for this
+  //    * - add logic to determine group visibility
+  //    * - add flag on groups for whether all required questions are answered
+  //    * - e.g.
+  //    */
+  //   if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
+  //     // do nothing
+  //   } else if (name !== 'output' && activeGroup instanceof MainGroup) {
+  //     // return to identifier group
+
+  //     const previousGroup = this.getGroupByName('customer-identifier') as MainGroup;
+  //     const previousGroupIndex = this.groups.indexOf(previousGroup);
+  //     this.activeGroupIndex = previousGroupIndex;
+  //     this.showHeader('static');
+  //     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
+  //     if (lastVisibleIndex < 0) return sharedUtils.logError('No previous group found');
+
+  //     previousGroup.activeQuestionIndex = lastVisibleIndex;
+  //     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
+  //     return;
+  //   } else if (name === 'output' && activeGroup instanceof OutputGroup) {
+  //     // return to profile group
+  //   } else {
+  //     // decide what to do
+  //   }
+
+  //   const previousGroup = this.getPreviousGroupInSequence();
+  //   if (!previousGroup) return sharedUtils.logError('No previous group found');
+
+  //   const previousGroupIndex = this.groups.indexOf(previousGroup);
+  //   if (previousGroupIndex === -1) return sharedUtils.logError('Previous group index not found');
+
+  //   this.activeGroupIndex = previousGroupIndex;
+  //   this.showHeader('static');
+  //   const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
+  //   if (lastVisibleIndex >= 0) {
+  //     previousGroup.activeQuestionIndex = lastVisibleIndex;
+  //     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
+  //     return;
+  //   }
+  // }
 
   private initialiseProfileSelect(value: ProfileName) {
     const { profileSelect } = this.components;

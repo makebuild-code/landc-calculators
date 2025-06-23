@@ -13,6 +13,7 @@ import { classes } from 'src/mct/shared/constants';
 import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
 import type { ProductsRequest, ProductsResponse } from 'src/mct/shared/api/types/fetchProducts';
 
+// @description: Base class for all groups
 export abstract class BaseGroup {
   protected component: HTMLElement;
   protected manager: FormManager;
@@ -40,6 +41,7 @@ export abstract class BaseGroup {
   }
 }
 
+// @description: Base class for all question groups
 export abstract class QuestionGroup extends BaseGroup {
   public questions: Question[] = [];
   public activeQuestionIndex: number = 0;
@@ -52,7 +54,7 @@ export abstract class QuestionGroup extends BaseGroup {
 
   abstract handleEnter(index: number): void;
 
-  public evaluateVisibility(): void {
+  public updateQuestionVisibility(): void {
     this.manager.refreshAnswers();
     const currentAnswers = this.manager.getAnswers();
 
@@ -67,12 +69,17 @@ export abstract class QuestionGroup extends BaseGroup {
     });
   }
 
+  public isComplete(): boolean {
+    return this.questions.filter((question) => !question.dependsOn).every((question) => question.isValid());
+  }
+
   public reset(): void {
     if (this.questions.length === 0) return;
     this.questions.forEach((question) => question.reset());
   }
 }
 
+// @description: Class for managing a main group of questions
 export class MainGroup extends QuestionGroup {
   protected manager: MainFormManager;
 
@@ -81,7 +88,7 @@ export class MainGroup extends QuestionGroup {
     this.manager = manager;
     this.questions = this.initQuestions();
     this.manager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
-    this.evaluateVisibility();
+    this.updateQuestionVisibility();
   }
 
   private initQuestions(): Question[] {
@@ -105,7 +112,8 @@ export class MainGroup extends QuestionGroup {
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
     const question = this.questions[index];
-    this.evaluateVisibility();
+    this.updateQuestionVisibility();
+    this.manager.updateGroupVisibility();
     this.manager.prepareWrapper();
     this.handleNextButton(question.isValid());
   }
@@ -208,6 +216,7 @@ export class MainGroup extends QuestionGroup {
   }
 }
 
+// @description: Output group of questions
 type OutputData = { [key: string]: string | number | string[] };
 export class OutputGroup extends BaseGroup {
   protected manager: MainFormManager;
