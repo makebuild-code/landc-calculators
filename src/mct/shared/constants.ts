@@ -15,7 +15,7 @@ export const PROFILES: Profile[] = [
     display: 'Residential Purchase',
     requirements: {
       PurchRemo: 'P',
-      BuyerType: 'N',
+      FTB: 'N',
       ResiBtl: 'R',
     },
   },
@@ -24,7 +24,7 @@ export const PROFILES: Profile[] = [
     display: 'First Time Buyer - Purchase',
     requirements: {
       PurchRemo: 'P',
-      BuyerType: 'Y',
+      FTB: 'Y',
       ResiBtl: 'R',
     },
   },
@@ -33,7 +33,7 @@ export const PROFILES: Profile[] = [
     display: 'Buy to Let - Purchase',
     requirements: {
       PurchRemo: 'P',
-      BuyerType: 'N',
+      FTB: 'N',
       ResiBtl: 'B',
     },
   },
@@ -42,7 +42,7 @@ export const PROFILES: Profile[] = [
     display: 'Residential - Remortgage',
     requirements: {
       PurchRemo: 'R',
-      BuyerType: 'N',
+      FTB: 'N',
       ResiBtl: 'R',
     },
   },
@@ -51,7 +51,7 @@ export const PROFILES: Profile[] = [
     display: 'Buy to Let - Remortgage',
     requirements: {
       PurchRemo: 'R',
-      BuyerType: 'N',
+      FTB: 'N',
       ResiBtl: 'B',
     },
   },

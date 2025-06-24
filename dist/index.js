@@ -16599,7 +16599,7 @@
       display: "Residential Purchase",
       requirements: {
         PurchRemo: "P",
-        BuyerType: "N",
+        FTB: "N",
         ResiBtl: "R"
       }
     },
@@ -16608,7 +16608,7 @@
       display: "First Time Buyer - Purchase",
       requirements: {
         PurchRemo: "P",
-        BuyerType: "Y",
+        FTB: "Y",
         ResiBtl: "R"
       }
     },
@@ -16617,7 +16617,7 @@
       display: "Buy to Let - Purchase",
       requirements: {
         PurchRemo: "P",
-        BuyerType: "N",
+        FTB: "N",
         ResiBtl: "B"
       }
     },
@@ -16626,7 +16626,7 @@
       display: "Residential - Remortgage",
       requirements: {
         PurchRemo: "R",
-        BuyerType: "N",
+        FTB: "N",
         ResiBtl: "R"
       }
     },
@@ -16635,7 +16635,7 @@
       display: "Buy to Let - Remortgage",
       requirements: {
         PurchRemo: "R",
-        BuyerType: "N",
+        FTB: "N",
         ResiBtl: "B"
       }
     }
@@ -16856,26 +16856,34 @@
     setValue(value) {
       switch (this.type) {
         case "radio":
+          if (typeof value !== "string")
+            throw new Error("Value for radio question must be a string");
           this.setRadioValue(value);
           break;
         case "checkbox":
-          if (!Array.isArray(value)) {
+          if (!Array.isArray(value))
             throw new Error("Value for checkbox question must be an array");
-          }
           this.setCheckboxValues(value);
           break;
         case "text":
+          if (typeof value !== "string")
+            throw new Error("Value for text question must be a string");
           this.setTextValue(value);
           break;
         case "number":
-          if (typeof value !== "number") {
+          if (typeof value !== "number")
             throw new Error("Value for number question must be a number");
-          }
           this.setNumberValue(value);
           break;
         default:
           throw new Error(`Unsupported question type: ${this.type}`);
       }
+    }
+    getLabels() {
+      const checked = this.inputs.filter((i) => i.checked);
+      const labelEls = checked.map((input) => queryElement(`label[for="${input.id}"]`, this.el));
+      const labels = labelEls.map((label) => label.textContent);
+      return labels;
     }
     reset() {
       switch (this.type) {
@@ -16921,6 +16929,21 @@
     });
   };
 
+  // src/utils/filterAllowed.ts
+  function filterAllowed(values, allowed) {
+    return values.map(Number).filter((v) => allowed.includes(v));
+  }
+
+  // src/utils/formatNumber.ts
+  function formatNumber2(value, options) {
+    const { currency = false, fallback = "" } = options || {};
+    let num = typeof value === "number" ? value : parseFloat(value.replace(/,/g, ""));
+    if (isNaN(num))
+      return fallback;
+    const formatted = num.toLocaleString("en-GB", { maximumFractionDigits: 0 });
+    return currency ? `\xA3${formatted}` : formatted;
+  }
+
   // src/mct/stages/form/Groups.ts
   var BaseGroup = class {
     component;
@@ -16957,8 +16980,10 @@
         const shouldBeVisible = question.shouldBeVisible(currentAnswers);
         if (shouldBeVisible) {
           question.show();
+          this.manager.saveQuestion(question);
         } else {
           question.hide();
+          this.manager.removeQuestion(question);
         }
       });
     }
@@ -16985,8 +17010,7 @@
       return questionEls.map((el, index2) => {
         const question = new Question(el, {
           onChange: () => this.handleChange(index2),
-          onEnter: () => this.handleEnter(index2),
-          manager: this.manager
+          onEnter: () => this.handleEnter(index2)
         });
         if (index2 !== 0)
           question.disable();
@@ -17089,16 +17113,19 @@
   var OutputGroup = class extends BaseGroup {
     manager;
     card;
-    outputs = [];
+    productsAPIInput = null;
     loader;
     products = null;
     outputData = [];
+    summary;
+    lenders;
     constructor(component, manager) {
       super(component, manager);
       this.manager = manager;
       this.card = queryElement(`[${attr7.element}="output-card"]`);
-      this.outputs = queryElements(`[${attr7.output}]`, this.component);
       this.loader = queryElement(`[${attr7.element}="output-loader"]`);
+      this.summary = queryElement(`[${attr7.output}="summary"]`);
+      this.lenders = queryElement(`[${attr7.output}="lenders"]`);
     }
     getComponent() {
       return this.component;
@@ -17122,15 +17149,24 @@
       this.handleProducts();
     }
     async handleProducts() {
-      console.log(this.manager.getAnswers());
+      this.products = await this.fetchProducts();
+      if (!this.products)
+        return;
       this.outputData = this.buildOutputData();
+      console.log(this.products);
+      console.log(this.outputData);
+      this.updateSummary();
       this.showLoader(false);
     }
     async fetchProducts() {
-      const input = this.buildProductsInput();
-      const response = await fetchProducts(input);
-      console.log(response);
-      return response;
+      try {
+        this.productsAPIInput = this.buildProductsInput();
+        const response = await fetchProducts(this.productsAPIInput);
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        return null;
+      }
     }
     buildProductsInput() {
       const answers = this.manager.getAnswers();
@@ -17151,40 +17187,47 @@
         RepaymentValue,
         PropertyType,
         MortgageType,
+        InterestOnlyValue: answers.InterestOnlyValue,
         TermYears,
         SchemePurpose,
+        SchemePeriods: filterAllowed(answers.SchemePeriods ?? [], [1, 2, 3, 4]),
+        SchemeTypes: filterAllowed(answers.SchemeTypes ?? [], [1, 2]),
         NumberOfResults,
         SortColumn
       };
     }
     buildOutputData() {
       const answers = this.manager.getAnswers();
-      console.log(answers);
-      const data = [];
-      const RepaymentValue = `\xA3${answers.RepaymentValue}`;
-      const TermYears = answers.MortgageLength === 1 ? `${answers.MortgageLength} year` : `${answers.MortgageLength} years`;
-      const SchemePeriod = answers.SchemePeriod === "A" ? null : `${answers.SchemePeriod} year`;
-      const SchemeType = answers.SchemeType === "F" ? "Fixed" : answers.SchemeType === "V" ? "Variable" : null;
-      if (RepaymentValue)
-        data.push({ key: "RepaymentValue", value: RepaymentValue });
-      if (TermYears)
-        data.push({ key: "TermYears", value: TermYears });
-      if (SchemePeriod)
-        data.push({ key: "SchemePeriod", value: SchemePeriod });
-      if (SchemeType)
-        data.push({ key: "SchemeType", value: SchemeType });
-      console.log(data);
-      return data;
+      if (!this.productsAPIInput || !this.products)
+        return [];
+      const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = this.productsAPIInput;
+      const { RepaymentType } = answers;
+      const RepaymentValueText = formatNumber2(RepaymentValue, { currency: true });
+      const TermYearsText = `${TermYears} years`;
+      const RepaymentTypeText = RepaymentType === "R" ? "repayment" : RepaymentType === "I" ? "interest only" : "part repayment part interest";
+      const SchemeTypesMap = SchemeTypes.map((type) => type === 1 ? "fixed" : "variable");
+      const SchemePeriodsMap = SchemePeriods.map(
+        (period) => period === 1 ? "2" : period === 2 ? "3" : period === 3 ? "5" : "5+"
+      );
+      const SchemePeriodsText = SchemePeriodsMap.length === 1 ? `${SchemePeriodsMap[0]} year` : SchemePeriodsMap.length > 1 ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year` : null;
+      const SchemeTypesText = SchemeTypesMap.length === 1 ? `${SchemeTypesMap[0]} rate` : SchemeTypesMap.length > 1 ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate` : null;
+      const summmaryText = `Looks like you want to borrow ${RepaymentValueText} over ${TermYearsText} with a ${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText} mortgage`;
+      const lendersText = `We\u2019ve found ${this.products.result.SummaryInfo.NumberOfProducts} products for you across ${this.products.result.SummaryInfo.NumberOfLenders} lenders.`;
+      return [
+        { key: "summary", value: summmaryText },
+        { key: "lenders", value: lendersText }
+      ];
     }
-    // private updateOutputs() {
-    //   if (!this.products) return;
-    //   const data = this.products.result.this.outputs.forEach((output) => {
-    //     const key = output.getAttribute(attr.output);
-    //     if (key) {
-    //       output.textContent = data[key];
-    //     }
-    //   });
-    // }
+    updateSummary() {
+      this.outputData.forEach((data) => {
+        const key = data.key;
+        const value = data.value;
+        if (key === "summary")
+          this.summary.textContent = value;
+        if (key === "lenders")
+          this.lenders.textContent = value;
+      });
+    }
   };
 
   // src/mct/stages/form/Manager.ts
@@ -17192,6 +17235,7 @@
     component;
     profile = null;
     groups = [];
+    questions = /* @__PURE__ */ new Set();
     constructor(component) {
       this.component = component;
     }
@@ -17222,6 +17266,15 @@
     getAnswers() {
       return { ...MCTManager.getAnswers() };
     }
+    saveQuestion(question) {
+      this.questions.add(question);
+    }
+    removeQuestion(question) {
+      this.questions.delete(question);
+    }
+    getQuestions() {
+      return this.questions;
+    }
     determineProfile() {
       const answers = this.getAnswers();
       const profile = PROFILES.find((profile2) => {
@@ -17236,7 +17289,6 @@
     }
   };
   var MainFormManager = class extends FormManager {
-    groups = [];
     activeGroupIndex = 0;
     components;
     optionRemoved = false;
@@ -17263,8 +17315,6 @@
         index2 === 0 ? group.show() : group.hide();
         this.groups.push(group);
       });
-      console.log(this.groups);
-      console.log("prepare wrapper: MainFormManager init");
       this.prepareWrapper();
       const initialGroup = this.getActiveGroup();
       if (initialGroup)
@@ -17397,6 +17447,7 @@
         this.activeGroupIndex = outputGroupIndex;
         outputGroup.activate();
       } else if (name === "output" && activeGroup instanceof OutputGroup) {
+        console.log(this.getAnswers());
       }
     }
     navigateToPreviousGroup() {
@@ -17460,6 +17511,7 @@
         header.style.display = "none";
         stickyHeader.style.removeProperty("display");
       }
+      this.prepareWrapper();
     }
     reset() {
       MCTManager.clearAnswers();

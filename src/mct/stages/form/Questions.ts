@@ -9,6 +9,7 @@ import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import type { Answers } from 'src/mct/shared/types';
+import type { CheckboxValues, InputValue, NumberValue, RadioValue, TextValue } from './types';
 
 type InputType = 'radio' | 'checkbox' | 'text' | 'number';
 
@@ -143,12 +144,12 @@ export class Question {
     throw new Error(`Unsupported input type: ${input.type}`);
   }
 
-  private getRadioValue(): string | null {
+  private getRadioValue(): RadioValue | null {
     const checked = this.inputs.find((i) => i.checked);
     return !!checked ? checked.value : null;
   }
 
-  private setRadioValue(value: string): void {
+  private setRadioValue(value: RadioValue): void {
     const input = this.inputs.find((i) => i.value === value);
     if (!input) throw new Error(`No radio input found with value: ${value}`);
     input.checked = true;
@@ -160,12 +161,12 @@ export class Question {
     });
   }
 
-  private getCheckboxValues(): string[] {
+  private getCheckboxValues(): CheckboxValues {
     const checked = this.inputs.filter((i) => i.checked);
     return checked.map((input) => input.value);
   }
 
-  private setCheckboxValues(values: string[]): void {
+  private setCheckboxValues(values: CheckboxValues): void {
     this.inputs.forEach((input) => {
       input.checked = values.includes(input.value);
     });
@@ -177,12 +178,12 @@ export class Question {
     });
   }
 
-  private getTextValue(): string | null {
+  private getTextValue(): TextValue | null {
     const input = this.inputs[0];
     return input ? input.value : null;
   }
 
-  private setTextValue(value: string): void {
+  private setTextValue(value: TextValue): void {
     const input = this.inputs[0];
     if (!input) throw new Error('No text input found for text question');
     input.value = value;
@@ -194,7 +195,7 @@ export class Question {
     input.value = '';
   }
 
-  private getNumberValue(): number | null {
+  private getNumberValue(): NumberValue | null {
     const input = this.inputs[0];
     if (!input) return null;
 
@@ -205,7 +206,7 @@ export class Question {
     return isNaN(number) ? null : number;
   }
 
-  private setNumberValue(value: number): void {
+  private setNumberValue(value: NumberValue): void {
     const input = this.inputs[0];
     if (!input) throw new Error('No number input found for number question');
     input.value = value.toString();
@@ -217,7 +218,7 @@ export class Question {
     input.value = '';
   }
 
-  public getValue(): string | string[] | number | null {
+  public getValue(): InputValue | null {
     switch (this.type) {
       case 'radio':
         return this.getRadioValue();
@@ -232,29 +233,34 @@ export class Question {
     }
   }
 
-  public setValue(value: string): void {
+  public setValue(value: InputValue): void {
     switch (this.type) {
       case 'radio':
+        if (typeof value !== 'string') throw new Error('Value for radio question must be a string');
         this.setRadioValue(value);
         break;
       case 'checkbox':
-        if (!Array.isArray(value)) {
-          throw new Error('Value for checkbox question must be an array');
-        }
+        if (!Array.isArray(value)) throw new Error('Value for checkbox question must be an array');
         this.setCheckboxValues(value);
         break;
       case 'text':
+        if (typeof value !== 'string') throw new Error('Value for text question must be a string');
         this.setTextValue(value);
         break;
       case 'number':
-        if (typeof value !== 'number') {
-          throw new Error('Value for number question must be a number');
-        }
+        if (typeof value !== 'number') throw new Error('Value for number question must be a number');
         this.setNumberValue(value);
         break;
       default:
         throw new Error(`Unsupported question type: ${this.type}`);
     }
+  }
+
+  public getLabels(): string[] {
+    const checked = this.inputs.filter((i) => i.checked);
+    const labelEls = checked.map((input) => queryElement(`label[for="${input.id}"]`, this.el) as HTMLLabelElement);
+    const labels = labelEls.map((label) => label.textContent as string);
+    return labels;
   }
 
   public reset(): void {

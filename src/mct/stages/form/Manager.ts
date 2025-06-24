@@ -15,6 +15,7 @@ export abstract class FormManager {
   protected component: HTMLElement;
   protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
+  protected questions: Set<Question> = new Set();
 
   constructor(component: HTMLElement) {
     this.component = component;
@@ -64,6 +65,18 @@ export abstract class FormManager {
     return { ...MCTManager.getAnswers() };
   }
 
+  public saveQuestion(question: Question): void {
+    this.questions.add(question);
+  }
+
+  public removeQuestion(question: Question): void {
+    this.questions.delete(question);
+  }
+
+  public getQuestions(): Set<Question> {
+    return this.questions;
+  }
+
   public determineProfile(): Profile | null {
     const answers = this.getAnswers();
     const profile: Profile | undefined = PROFILES.find((profile) => {
@@ -81,7 +94,6 @@ export abstract class FormManager {
 }
 
 export class MainFormManager extends FormManager {
-  public groups: (MainGroup | OutputGroup)[] = [];
   public activeGroupIndex: number = 0;
   public components: {
     header: HTMLElement;
@@ -121,8 +133,6 @@ export class MainFormManager extends FormManager {
       this.groups.push(group);
     });
 
-    console.log(this.groups);
-    console.log('prepare wrapper: MainFormManager init');
     this.prepareWrapper();
 
     const initialGroup = this.getActiveGroup();
@@ -278,6 +288,8 @@ export class MainFormManager extends FormManager {
       outputGroup.activate();
     } else if (name === 'output' && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
+
+      console.log(this.getAnswers());
     }
   }
 
@@ -350,6 +362,8 @@ export class MainFormManager extends FormManager {
       header.style.display = 'none';
       stickyHeader.style.removeProperty('display');
     }
+
+    this.prepareWrapper();
   }
 
   public reset() {

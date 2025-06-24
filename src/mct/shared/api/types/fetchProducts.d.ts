@@ -18,8 +18,8 @@ export interface ProductsRequest {
   InterestOnlyValue?: number;
   TermYears: number;
   SchemePurpose: 1 | 2; // 1 = purchase, 2 = remortgage
-  SchemePeriods?: (1 | 2 | 3 | 4)[]; // 1 = 2 years, 2 = 3 years, 3 = 5 years, 4 = 5+ years
-  SchemeTypes?: (1 | 2)[]; // 1 = fixed, 2 = variable
+  SchemePeriods: (1 | 2 | 3 | 4)[] | ('1' | '2' | '3' | '4')[]; // 1 = 2 years, 2 = 3 years, 3 = 5 years, 4 = 5+ years
+  SchemeTypes: (1 | 2)[] | ('1' | '2')[]; // 1 = fixed, 2 = variable
   NumberOfResults: number;
   Features?: {
     HelpToBuy?: boolean;
