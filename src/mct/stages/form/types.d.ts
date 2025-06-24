@@ -30,4 +30,5 @@ export type RadioValue = string;
 export type CheckboxValues = (number | string)[];
 export type TextValue = string;
 export type NumberValue = number;
-export type InputValue = RadioValue | CheckboxValues | TextValue | NumberValue;
+export type SelectValue = string;
+export type InputValue = RadioValue | CheckboxValues | TextValue | NumberValue | SelectValue;
