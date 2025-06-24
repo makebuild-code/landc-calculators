@@ -16656,6 +16656,7 @@
   // src/mct/stages/form/Questions.ts
   var Question = class {
     el;
+    formManager;
     onChange;
     onEnter;
     inputs = [];
@@ -16664,8 +16665,10 @@
     dependsOn;
     dependsOnValue;
     isVisible = false;
+    indexInGroup;
     constructor(el, options) {
       this.el = el;
+      this.formManager = options.formManager;
       this.onChange = options.onChange;
       this.onEnter = options.onEnter;
       this.inputs = queryElements("input", this.el);
@@ -16673,6 +16676,7 @@
       this.name = this.el.getAttribute(attr7.question);
       this.dependsOn = this.el.getAttribute(attr7.dependsOn) || null;
       this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
+      this.indexInGroup = options.indexInGroup;
       this.bindEventListeners();
     }
     bindEventListeners() {
@@ -16737,10 +16741,12 @@
       });
     }
     hide() {
+      this.formManager.removeQuestion(this);
       this.el.style.display = "none";
       this.isVisible = false;
     }
     show() {
+      this.formManager.saveQuestion(this);
       this.el.style.removeProperty("display");
       this.isVisible = true;
     }
@@ -16944,15 +16950,29 @@
     return currency ? `\xA3${formatted}` : formatted;
   }
 
+  // src/utils/trackGAEvent.ts
+  function trackGAEvent(eventName, params = {}) {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      window.gtag("event", eventName, params);
+      return;
+    }
+    if (typeof window !== "undefined" && typeof window.ga === "function") {
+      window.ga("send", "event", params.category || "", eventName, params.label, params.value);
+      return;
+    }
+    if (true)
+      console.log("[GA] Event:", eventName, params);
+  }
+
   // src/mct/stages/form/Groups.ts
   var BaseGroup = class {
     component;
-    manager;
+    formManager;
     isVisible = false;
     name = null;
-    constructor(component, manager) {
+    constructor(component, formManager) {
       this.component = component;
-      this.manager = manager;
+      this.formManager = formManager;
       this.name = component.getAttribute(attr7.group);
     }
     getComponent() {
@@ -16970,20 +16990,18 @@
   var QuestionGroup = class extends BaseGroup {
     questions = [];
     activeQuestionIndex = 0;
-    constructor(component, manager) {
-      super(component, manager);
+    constructor(component, formManager) {
+      super(component, formManager);
     }
     updateQuestionVisibility() {
-      this.manager.refreshAnswers();
-      const currentAnswers = this.manager.getAnswers();
+      this.formManager.refreshAnswers();
+      const currentAnswers = this.formManager.getAnswers();
       this.questions.forEach((question) => {
         const shouldBeVisible = question.shouldBeVisible(currentAnswers);
         if (shouldBeVisible) {
           question.show();
-          this.manager.saveQuestion(question);
         } else {
           question.hide();
-          this.manager.removeQuestion(question);
         }
       });
     }
@@ -16997,26 +17015,27 @@
     }
   };
   var MainGroup = class extends QuestionGroup {
-    manager;
-    constructor(component, manager) {
-      super(component, manager);
-      this.manager = manager;
+    formManager;
+    constructor(component, formManager) {
+      super(component, formManager);
+      this.formManager = formManager;
       this.questions = this.initQuestions();
-      this.manager.components.scroll = queryElement(`[${attr7.components}="scroll"]`);
+      this.formManager.components.scroll = queryElement(`[${attr7.components}="scroll"]`);
       this.updateQuestionVisibility();
     }
     initQuestions() {
       const questionEls = queryElements(`[${attr7.question}]`, this.component);
       return questionEls.map((el, index2) => {
         const question = new Question(el, {
+          formManager: this.formManager,
           onChange: () => this.handleChange(index2),
-          onEnter: () => this.handleEnter(index2)
+          onEnter: () => this.handleEnter(index2),
+          indexInGroup: index2
         });
         if (index2 !== 0)
           question.disable();
-        if (question.dependsOn) {
+        if (question.dependsOn)
           question.hide();
-        }
         return question;
       });
     }
@@ -17025,9 +17044,13 @@
         throw new Error(`Invalid question index: ${index2}. Expected: ${this.activeQuestionIndex}`);
       const question = this.questions[index2];
       this.updateQuestionVisibility();
-      this.manager.updateGroupVisibility();
-      this.manager.prepareWrapper();
+      this.formManager.updateGroupVisibility();
+      this.formManager.prepareWrapper();
       this.handleNextButton(question.isValid());
+      trackGAEvent("form_interaction", {
+        event_category: "MCTForm",
+        event_label: `MCT_${question.name}`
+      });
     }
     handleEnter(index2) {
       if (index2 !== this.activeQuestionIndex)
@@ -17040,7 +17063,7 @@
       }
     }
     handleNextButton(isValid) {
-      this.manager.updateNavigation({ nextEnabled: isValid });
+      this.formManager.updateNavigation({ nextEnabled: isValid });
     }
     getActiveQuestion() {
       return this.questions[this.activeQuestionIndex];
@@ -17063,7 +17086,7 @@
       return index2;
     }
     navigate(direction) {
-      this.manager.refreshAnswers();
+      this.formManager.refreshAnswers();
       const activeQuestion = this.getActiveQuestion();
       this.deactivateQuestion(activeQuestion);
       if (direction === "next") {
@@ -17072,9 +17095,9 @@
           this.activeQuestionIndex = nextIndex;
           const nextQuestion = this.getActiveQuestion();
           this.activateQuestion(nextQuestion);
-          this.manager.updateNavigation({ prevEnabled: true });
+          this.formManager.updateNavigation({ prevEnabled: true });
         } else {
-          this.manager.navigateToNextGroup();
+          this.formManager.navigateToNextGroup();
         }
       } else {
         const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
@@ -17082,13 +17105,13 @@
           this.activeQuestionIndex = prevIndex;
           const prevItem = this.getActiveQuestion();
           this.activateQuestion(prevItem);
-          this.manager.updateNavigation({
-            prevEnabled: !(this.manager.activeGroupIndex === 0 && prevIndex === 0)
+          this.formManager.updateNavigation({
+            prevEnabled: !(this.formManager.activeGroupIndex === 0 && prevIndex === 0)
           });
         } else {
-          const prevGroup = this.manager.getPreviousGroupInSequence();
+          const prevGroup = this.formManager.getPreviousGroupInSequence();
           if (prevGroup)
-            this.manager.navigateToPreviousGroup();
+            this.formManager.navigateToPreviousGroup();
         }
       }
     }
@@ -17104,14 +17127,14 @@
       question.toggleActive(false);
     }
     scrollToQuestion(item) {
-      this.manager.components.scroll.scrollTo({
-        top: item.el.offsetTop - this.manager.components.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
+      this.formManager.components.scroll.scrollTo({
+        top: item.el.offsetTop - this.formManager.components.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
         behavior: "smooth"
       });
     }
   };
   var OutputGroup = class extends BaseGroup {
-    manager;
+    formManager;
     card;
     productsAPIInput = null;
     loader;
@@ -17119,20 +17142,26 @@
     outputData = [];
     summary;
     lenders;
-    constructor(component, manager) {
-      super(component, manager);
-      this.manager = manager;
+    button;
+    constructor(component, formManager) {
+      super(component, formManager);
+      this.formManager = formManager;
       this.card = queryElement(`[${attr7.element}="output-card"]`);
       this.loader = queryElement(`[${attr7.element}="output-loader"]`);
       this.summary = queryElement(`[${attr7.output}="summary"]`);
       this.lenders = queryElement(`[${attr7.output}="lenders"]`);
+      this.button = queryElement(`[${attr7.element}="get-results"]`);
+      this.bindEvents();
+    }
+    bindEvents() {
+      this.button.addEventListener("click", () => this.navigateToResults());
     }
     getComponent() {
       return this.component;
     }
     scrollToOutput() {
-      this.manager.components.scroll.scrollTo({
-        top: this.component.offsetTop - this.manager.components.scroll.offsetHeight / 2 + this.component.offsetHeight / 2,
+      this.formManager.components.scroll.scrollTo({
+        top: this.component.offsetTop - this.formManager.components.scroll.offsetHeight / 2 + this.component.offsetHeight / 2,
         behavior: "smooth"
       });
     }
@@ -17149,14 +17178,15 @@
       this.handleProducts();
     }
     async handleProducts() {
+      this.showLoader(true);
+      this.button.disabled = true;
       this.products = await this.fetchProducts();
       if (!this.products)
         return;
       this.outputData = this.buildOutputData();
-      console.log(this.products);
-      console.log(this.outputData);
       this.updateSummary();
       this.showLoader(false);
+      this.button.disabled = false;
     }
     async fetchProducts() {
       try {
@@ -17169,7 +17199,7 @@
       }
     }
     buildProductsInput() {
-      const answers = this.manager.getAnswers();
+      const answers = this.formManager.getAnswers();
       console.log(answers);
       const PropertyValue = answers.PropertyValue;
       const DepositAmount = answers.DepositAmount;
@@ -17197,7 +17227,7 @@
       };
     }
     buildOutputData() {
-      const answers = this.manager.getAnswers();
+      const answers = this.formManager.getAnswers();
       if (!this.productsAPIInput || !this.products)
         return [];
       const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = this.productsAPIInput;
@@ -17227,6 +17257,10 @@
         if (key === "lenders")
           this.lenders.textContent = value;
       });
+    }
+    navigateToResults() {
+      this.formManager.navigateToNextGroup();
+      this.button.disabled = true;
     }
   };
 
@@ -17337,8 +17371,10 @@
       });
       this.components.prevButton.addEventListener("click", () => {
         const currentGroup = this.getActiveGroup();
-        if (!currentGroup || currentGroup instanceof OutputGroup)
+        if (!currentGroup || currentGroup instanceof OutputGroup) {
+          this.navigateToPreviousGroup();
           return;
+        }
         currentGroup.navigate("prev");
       });
     }
@@ -17447,7 +17483,8 @@
         this.activeGroupIndex = outputGroupIndex;
         outputGroup.activate();
       } else if (name === "output" && activeGroup instanceof OutputGroup) {
-        console.log(this.getAnswers());
+        console.log("End of form, navigate to results");
+        MCTManager.goToStage("results");
       }
     }
     navigateToPreviousGroup() {

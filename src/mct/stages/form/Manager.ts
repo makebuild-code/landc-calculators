@@ -156,7 +156,10 @@ export class MainFormManager extends FormManager {
 
     this.components.prevButton.addEventListener('click', () => {
       const currentGroup = this.getActiveGroup();
-      if (!currentGroup || currentGroup instanceof OutputGroup) return;
+      if (!currentGroup || currentGroup instanceof OutputGroup) {
+        this.navigateToPreviousGroup();
+        return;
+      }
 
       currentGroup.navigate('prev');
     });
@@ -288,8 +291,8 @@ export class MainFormManager extends FormManager {
       outputGroup.activate();
     } else if (name === 'output' && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-
-      console.log(this.getAnswers());
+      console.log('End of form, navigate to results');
+      MCTManager.goToStage('results');
     }
   }
 

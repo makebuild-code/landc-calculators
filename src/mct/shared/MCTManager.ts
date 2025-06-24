@@ -6,10 +6,10 @@ import { setToCookie } from '$utils/setToCookie';
 import { initForm } from '../stages/form';
 import { generateLCID } from './api/generateLCID';
 import { mctAttr } from './constants';
-import type { AnswerKey, Answers, AnswerValue, StageName } from './types';
+import type { AnswerKey, Answers, AnswerValue, StageID } from './types';
 
 interface Stage {
-  id: StageName;
+  id: StageID;
   show: () => void;
   hide: () => void;
   init: () => void;
@@ -19,7 +19,7 @@ const stages: Record<string, Stage> = {};
 
 interface DOM {
   mctComponent: HTMLElement | null;
-  stages: Partial<Record<StageName, HTMLElement>>;
+  stages: Partial<Record<StageID, HTMLElement>>;
 }
 
 const dom: DOM = {
@@ -69,7 +69,7 @@ export const MCTManager = {
     const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
     stageElements.forEach((stage) => {
       const name = stage.getAttribute(mctAttr.stage);
-      if (name) dom.stages[name as StageName] = stage as HTMLElement;
+      if (name) dom.stages[name as StageID] = stage as HTMLElement;
     });
 
     return dom;
@@ -97,7 +97,7 @@ export const MCTManager = {
     return dom.mctComponent;
   },
 
-  getStage(name: StageName) {
+  getStage(name: StageID) {
     if (!dom.stages) throw new Error('Stages not initialised');
     const stage = dom.stages[name];
     if (!stage) throw new Error(`Stage '${name}' not found`);
@@ -116,7 +116,7 @@ export const MCTManager = {
     stages[stage.id] = stage;
   },
 
-  goToStage(stageId: string) {
+  goToStage(stageId: StageID) {
     if (state.currentStageId && stages[state.currentStageId]) {
       stages[state.currentStageId].hide();
     }

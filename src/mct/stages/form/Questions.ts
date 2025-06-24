@@ -10,16 +10,20 @@ import { queryElements } from '$utils/queryelements';
 import { attr } from './constants';
 import type { Answers } from 'src/mct/shared/types';
 import type { CheckboxValues, InputValue, NumberValue, RadioValue, TextValue } from './types';
+import type { FormManager } from './Manager';
 
 type InputType = 'radio' | 'checkbox' | 'text' | 'number';
 
 type QuestionOptions = {
+  formManager: FormManager;
   onChange: () => void;
   onEnter: () => void;
+  indexInGroup: number;
 };
 
 export class Question {
   public el: HTMLElement;
+  private formManager: FormManager;
   private onChange: () => void;
   private onEnter: () => void;
   private inputs: HTMLInputElement[] = [];
@@ -28,9 +32,11 @@ export class Question {
   public dependsOn: string | null;
   public dependsOnValue: string | null;
   public isVisible: boolean = false;
+  public indexInGroup: number;
 
   constructor(el: HTMLElement, options: QuestionOptions) {
     this.el = el;
+    this.formManager = options.formManager;
     this.onChange = options.onChange;
     this.onEnter = options.onEnter;
     this.inputs = queryElements('input', this.el) as HTMLInputElement[];
@@ -38,6 +44,7 @@ export class Question {
     this.name = this.el.getAttribute(attr.question) as string;
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
+    this.indexInGroup = options.indexInGroup;
 
     this.bindEventListeners();
   }
@@ -109,11 +116,13 @@ export class Question {
   }
 
   public hide(): void {
+    this.formManager.removeQuestion(this);
     this.el.style.display = 'none';
     this.isVisible = false;
   }
 
   public show(): void {
+    this.formManager.saveQuestion(this);
     this.el.style.removeProperty('display');
     this.isVisible = true;
   }
