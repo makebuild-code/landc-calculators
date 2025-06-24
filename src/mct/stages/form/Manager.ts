@@ -35,36 +35,6 @@ export abstract class FormManager {
     // this.groups.forEach((group) => group.evaluateVisibility());
   }
 
-  public setAnswer(key: AnswerKey, value: AnswerValue): void {
-    MCTManager.setAnswer(key, value);
-  }
-
-  public getAnswer(key: AnswerKey): AnswerValue | null {
-    return MCTManager.getAnswer(key);
-  }
-
-  public clearAnswer(key: AnswerKey): void {
-    MCTManager.clearAnswer(key);
-  }
-
-  public refreshAnswers(): void {
-    MCTManager.clearAnswers();
-
-    const visibleGroups = this.groups.filter((group) => group.isVisible);
-    visibleGroups.forEach((group) => {
-      if (!(group instanceof MainGroup)) return;
-      const visibleQuestions = group.questions.filter((question) => question.isVisible);
-      visibleQuestions.forEach((question) => {
-        const value = question.getValue();
-        this.setAnswer(question.name, value);
-      });
-    });
-  }
-
-  public getAnswers(): Answers {
-    return { ...MCTManager.getAnswers() };
-  }
-
   public saveQuestion(question: Question): void {
     this.questions.add(question);
   }
@@ -75,6 +45,19 @@ export abstract class FormManager {
 
   public getQuestions(): Set<Question> {
     return this.questions;
+  }
+
+  public saveAnswersToMCT(): void {
+    MCTManager.clearAnswers();
+
+    [...this.questions].forEach((question) => {
+      const value = question.getValue();
+      if (value) MCTManager.setAnswer(question.name, value);
+    });
+  }
+
+  public getAnswers(): Answers {
+    return { ...MCTManager.getAnswers() };
   }
 
   public determineProfile(): Profile | null {

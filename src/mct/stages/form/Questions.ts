@@ -115,16 +115,16 @@ export class Question {
     });
   }
 
-  public hide(): void {
-    this.formManager.removeQuestion(this);
-    this.el.style.display = 'none';
-    this.isVisible = false;
-  }
-
-  public show(): void {
+  public require(): void {
     this.formManager.saveQuestion(this);
     this.el.style.removeProperty('display');
     this.isVisible = true;
+  }
+
+  public unrequire(): void {
+    this.formManager.removeQuestion(this);
+    this.el.style.display = 'none';
+    this.isVisible = false;
   }
 
   public toggleActive(active?: boolean): void {

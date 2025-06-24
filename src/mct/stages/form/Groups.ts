@@ -57,18 +57,13 @@ export abstract class QuestionGroup extends BaseGroup {
 
   abstract handleEnter(index: number): void;
 
-  public updateQuestionVisibility(): void {
-    this.formManager.refreshAnswers();
+  public updateActiveQuestions(): void {
+    this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
     this.questions.forEach((question) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers);
-
-      if (shouldBeVisible) {
-        question.show();
-      } else {
-        question.hide();
-      }
+      shouldBeVisible ? question.require() : question.unrequire();
     });
   }
 
@@ -91,7 +86,7 @@ export class MainGroup extends QuestionGroup {
     this.formManager = formManager;
     this.questions = this.initQuestions();
     this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
-    this.updateQuestionVisibility();
+    this.updateActiveQuestions();
   }
 
   private initQuestions(): Question[] {
@@ -105,7 +100,7 @@ export class MainGroup extends QuestionGroup {
       });
 
       if (index !== 0) question.disable();
-      if (question.dependsOn) question.hide();
+      if (question.dependsOn) question.unrequire();
       return question;
     });
   }
@@ -115,7 +110,7 @@ export class MainGroup extends QuestionGroup {
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
     const question = this.questions[index];
-    this.updateQuestionVisibility();
+    this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
@@ -166,7 +161,7 @@ export class MainGroup extends QuestionGroup {
   }
 
   public navigate(direction: 'next' | 'prev') {
-    this.formManager.refreshAnswers();
+    this.formManager.saveAnswersToMCT();
     const activeQuestion = this.getActiveQuestion();
     this.deactivateQuestion(activeQuestion);
 
@@ -336,6 +331,7 @@ export class OutputGroup extends BaseGroup {
 
   private buildOutputData(): Record<string, string>[] {
     const answers = this.formManager.getAnswers();
+
     if (!this.productsAPIInput || !this.products) return [];
 
     const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = this.productsAPIInput;

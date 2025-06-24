@@ -16740,15 +16740,15 @@
         input.disabled = true;
       });
     }
-    hide() {
-      this.formManager.removeQuestion(this);
-      this.el.style.display = "none";
-      this.isVisible = false;
-    }
-    show() {
+    require() {
       this.formManager.saveQuestion(this);
       this.el.style.removeProperty("display");
       this.isVisible = true;
+    }
+    unrequire() {
+      this.formManager.removeQuestion(this);
+      this.el.style.display = "none";
+      this.isVisible = false;
     }
     toggleActive(active) {
       if (active === void 0) {
@@ -16993,16 +16993,12 @@
     constructor(component, formManager) {
       super(component, formManager);
     }
-    updateQuestionVisibility() {
-      this.formManager.refreshAnswers();
+    updateActiveQuestions() {
+      this.formManager.saveAnswersToMCT();
       const currentAnswers = this.formManager.getAnswers();
       this.questions.forEach((question) => {
         const shouldBeVisible = question.shouldBeVisible(currentAnswers);
-        if (shouldBeVisible) {
-          question.show();
-        } else {
-          question.hide();
-        }
+        shouldBeVisible ? question.require() : question.unrequire();
       });
     }
     isComplete() {
@@ -17021,7 +17017,7 @@
       this.formManager = formManager;
       this.questions = this.initQuestions();
       this.formManager.components.scroll = queryElement(`[${attr7.components}="scroll"]`);
-      this.updateQuestionVisibility();
+      this.updateActiveQuestions();
     }
     initQuestions() {
       const questionEls = queryElements(`[${attr7.question}]`, this.component);
@@ -17035,7 +17031,7 @@
         if (index2 !== 0)
           question.disable();
         if (question.dependsOn)
-          question.hide();
+          question.unrequire();
         return question;
       });
     }
@@ -17043,7 +17039,7 @@
       if (index2 !== this.activeQuestionIndex)
         throw new Error(`Invalid question index: ${index2}. Expected: ${this.activeQuestionIndex}`);
       const question = this.questions[index2];
-      this.updateQuestionVisibility();
+      this.updateActiveQuestions();
       this.formManager.updateGroupVisibility();
       this.formManager.prepareWrapper();
       this.handleNextButton(question.isValid());
@@ -17086,7 +17082,7 @@
       return index2;
     }
     navigate(direction) {
-      this.formManager.refreshAnswers();
+      this.formManager.saveAnswersToMCT();
       const activeQuestion = this.getActiveQuestion();
       this.deactivateQuestion(activeQuestion);
       if (direction === "next") {
@@ -17275,31 +17271,6 @@
     }
     prefill(answers) {
     }
-    setAnswer(key, value) {
-      MCTManager.setAnswer(key, value);
-    }
-    getAnswer(key) {
-      return MCTManager.getAnswer(key);
-    }
-    clearAnswer(key) {
-      MCTManager.clearAnswer(key);
-    }
-    refreshAnswers() {
-      MCTManager.clearAnswers();
-      const visibleGroups = this.groups.filter((group) => group.isVisible);
-      visibleGroups.forEach((group) => {
-        if (!(group instanceof MainGroup))
-          return;
-        const visibleQuestions = group.questions.filter((question) => question.isVisible);
-        visibleQuestions.forEach((question) => {
-          const value = question.getValue();
-          this.setAnswer(question.name, value);
-        });
-      });
-    }
-    getAnswers() {
-      return { ...MCTManager.getAnswers() };
-    }
     saveQuestion(question) {
       this.questions.add(question);
     }
@@ -17308,6 +17279,17 @@
     }
     getQuestions() {
       return this.questions;
+    }
+    saveAnswersToMCT() {
+      MCTManager.clearAnswers();
+      [...this.questions].forEach((question) => {
+        const value = question.getValue();
+        if (value)
+          MCTManager.setAnswer(question.name, value);
+      });
+    }
+    getAnswers() {
+      return { ...MCTManager.getAnswers() };
     }
     determineProfile() {
       const answers = this.getAnswers();
