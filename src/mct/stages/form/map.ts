@@ -1,4 +1,8 @@
-// // src/mct/stages/form/map.ts
+// export const PurchRemoToSchemePurposeMap = {
+//   Key: 'SchemePurpose',
+//   P: 1,
+//   R: 2,
+// };
 
 // // Map Webflow input values to API values
 // export const MortgageTypeMap = {
