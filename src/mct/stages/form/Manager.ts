@@ -66,6 +66,8 @@ export abstract class FormManager {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key] === value);
     });
 
+    console.log(profile);
+
     this.profile = profile ? profile : null;
     return profile ? profile : null;
   }
@@ -211,7 +213,10 @@ export class MainFormManager extends FormManager {
 
     // Get the profile
     const profile = this.determineProfile();
-    if (!profile) return;
+    if (!profile) {
+      this.groups.filter((group) => group !== identifierGroup).forEach((group) => group.hide());
+      return;
+    }
 
     // Show the profile group if it exists
     const profileGroup = this.getGroupByName(profile.name) as MainGroup;
@@ -219,11 +224,7 @@ export class MainFormManager extends FormManager {
 
     // Show output group if it exists
     const outputGroup = this.getGroupByName('output') as OutputGroup;
-    if (profileGroup.isComplete()) {
-      outputGroup.show();
-    } else {
-      outputGroup.hide();
-    }
+    profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
 
     this.groups
       .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)
