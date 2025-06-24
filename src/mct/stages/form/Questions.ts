@@ -9,10 +9,16 @@ import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import type { Answers } from 'src/mct/shared/types';
-import type { CheckboxValues, InputValue, NumberValue, RadioValue, TextValue } from './types';
+import type { CheckboxValues, InputValue, NumberValue, RadioValue, SelectValue, TextValue } from './types';
 import type { FormManager } from './Manager';
+import { fetchLenders } from 'src/mct/shared/api/fetchLenders';
 
-type InputType = 'radio' | 'checkbox' | 'text' | 'number';
+type Input = HTMLInputElement | HTMLSelectElement;
+type InputType = 'radio' | 'checkbox' | 'text' | 'number' | 'select-one';
+type SelectOption = {
+  value: string;
+  label: string;
+};
 
 type QuestionOptions = {
   formManager: FormManager;
@@ -26,7 +32,7 @@ export class Question {
   private formManager: FormManager;
   private onChange: () => void;
   private onEnter: () => void;
-  private inputs: HTMLInputElement[] = [];
+  private inputs: Input[] = [];
   private type: InputType;
   public name: string;
   public dependsOn: string | null;
@@ -39,14 +45,38 @@ export class Question {
     this.formManager = options.formManager;
     this.onChange = options.onChange;
     this.onEnter = options.onEnter;
-    this.inputs = queryElements('input', this.el) as HTMLInputElement[];
+    this.inputs = queryElements('input, select', this.el) as Input[];
     this.type = this.detectType();
     this.name = this.el.getAttribute(attr.question) as string;
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
     this.indexInGroup = options.indexInGroup;
 
+    this.init();
     this.bindEventListeners();
+  }
+
+  private init(): void {
+    this.handleLenderSelect();
+  }
+
+  private async handleLenderSelect(): Promise<void> {
+    if (this.name !== 'Lender') return;
+    console.log(this.name);
+
+    try {
+      const lenders = await fetchLenders();
+      const lenderOptions = lenders.map(
+        (lender): SelectOption => ({
+          value: lender.MasterLenderId.toString(),
+          label: lender.LenderName,
+        })
+      );
+
+      this.setSelectOptions(lenderOptions);
+    } catch (error) {
+      console.error('Failed to fetch lenders:', error);
+    }
   }
 
   private bindEventListeners(): void {
@@ -65,8 +95,10 @@ export class Question {
         });
       }
 
-      input.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter') return;
+      input.addEventListener('keydown', (event: Event) => {
+        const ke = event as KeyboardEvent;
+        if (ke.key !== 'Enter') return;
+
         if (this.isValid()) {
           this.onEnter();
         } else {
@@ -104,6 +136,7 @@ export class Question {
   }
 
   public focus(): void {
+    console.log(this.inputs);
     const input = this.inputs[0];
     if (!input) throw new Error('No input found to focus on');
     input.focus();
@@ -143,47 +176,54 @@ export class Question {
   }
 
   private detectType(): InputType {
-    const input = queryElement('input', this.el) as HTMLInputElement;
+    const input = queryElement('input, select', this.el) as Input;
     if (!input) throw new Error('No "input" element found in question item');
 
     if (input.type === 'radio') return 'radio';
     if (input.type === 'checkbox') return 'checkbox';
     if (input.type === 'text') return 'text';
     if (input.type === 'number') return 'number';
+    if (input.type === 'select-one') return 'select-one';
     throw new Error(`Unsupported input type: ${input.type}`);
   }
 
   private getRadioValue(): RadioValue | null {
-    const checked = this.inputs.find((i) => i.checked);
+    const checked = this.inputs.find((input) => {
+      if (input instanceof HTMLInputElement) return input.checked;
+      return false;
+    });
     return !!checked ? checked.value : null;
   }
 
   private setRadioValue(value: RadioValue): void {
     const input = this.inputs.find((i) => i.value === value);
-    if (!input) throw new Error(`No radio input found with value: ${value}`);
+    if (!input || !(input instanceof HTMLInputElement)) throw new Error(`No radio input found with value: ${value}`);
     input.checked = true;
   }
 
   private resetRadioInput(): void {
     this.inputs.forEach((input) => {
-      input.checked = false;
+      if (input instanceof HTMLInputElement) input.checked = false;
     });
   }
 
   private getCheckboxValues(): CheckboxValues {
-    const checked = this.inputs.filter((i) => i.checked);
+    const checked = this.inputs.filter((input) => {
+      if (input instanceof HTMLInputElement) return input.checked;
+      return false;
+    });
     return checked.map((input) => input.value);
   }
 
   private setCheckboxValues(values: CheckboxValues): void {
     this.inputs.forEach((input) => {
-      input.checked = values.includes(input.value);
+      if (input instanceof HTMLInputElement) input.checked = values.includes(input.value);
     });
   }
 
   private resetCheckboxeInputs(): void {
     this.inputs.forEach((input) => {
-      input.checked = false;
+      if (input instanceof HTMLInputElement) input.checked = false;
     });
   }
 
@@ -227,6 +267,41 @@ export class Question {
     input.value = '';
   }
 
+  private getSelectValue(): SelectValue | null {
+    const input = this.inputs[0];
+    if (!input) return null;
+    return input.value;
+  }
+
+  private setSelectValue(value: SelectValue): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No select input found for select question');
+    input.value = value;
+  }
+
+  private resetSelectInput(): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No select input found for select question');
+    input.value = '';
+  }
+
+  private setSelectOptions(options: SelectOption[]): void {
+    const input = this.inputs[0];
+    if (!input) throw new Error('No select input found for select question');
+    if (!(input instanceof HTMLSelectElement)) throw new Error('No select input found for select question');
+
+    // Remove all existing options
+    input.innerHTML = '';
+
+    // Add new options
+    options.forEach((option) => {
+      const optionEl = document.createElement('option');
+      optionEl.value = option.value;
+      optionEl.text = option.label;
+      input.appendChild(optionEl);
+    });
+  }
+
   public getValue(): InputValue | null {
     switch (this.type) {
       case 'radio':
@@ -237,6 +312,8 @@ export class Question {
         return this.getTextValue();
       case 'number':
         return this.getNumberValue();
+      case 'select-one':
+        return this.getSelectValue();
       default:
         throw new Error(`Unsupported question type: ${this.type}`);
     }
@@ -260,13 +337,20 @@ export class Question {
         if (typeof value !== 'number') throw new Error('Value for number question must be a number');
         this.setNumberValue(value);
         break;
+      case 'select-one':
+        if (typeof value !== 'string') throw new Error('Value for select question must be a string');
+        this.setSelectValue(value);
+        break;
       default:
         throw new Error(`Unsupported question type: ${this.type}`);
     }
   }
 
   public getLabels(): string[] {
-    const checked = this.inputs.filter((i) => i.checked);
+    const checked = this.inputs.filter((input) => {
+      if (input instanceof HTMLInputElement) return input.checked;
+      return false;
+    });
     const labelEls = checked.map((input) => queryElement(`label[for="${input.id}"]`, this.el) as HTMLLabelElement);
     const labels = labelEls.map((label) => label.textContent as string);
     return labels;
@@ -285,6 +369,9 @@ export class Question {
         break;
       case 'number':
         this.resetNumberInput();
+        break;
+      case 'select-one':
+        this.resetSelectInput();
         break;
       default:
         throw new Error(`Unsupported question type: ${this.type}`);
