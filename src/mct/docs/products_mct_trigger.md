@@ -55,7 +55,7 @@ e.g. `/productdata/bestbuysMCT`
     "input": {
         "PropertyValue": INT,
         "RepaymentValue": INT,
-        "PropertyType": PropertyType // Enum - INT - valid values - house (1) or flat (2),
+        "PropertyType": PropertyType // Enum - INT - valid values - house (1) or flat (2), --- Should we default to house for the products call given we don't have a relevant question?
         "MortgageType": MortgageType // Enum - INT - valid values - Residential (1) or Buy to Let (2),
         "InterestOnlyValue": INT,
         "TermYears": INT,
@@ -77,14 +77,7 @@ e.g. `/productdata/bestbuysMCT`
             "EarlyRepaymentCharge": BOOLEAN,
             "NewBuild": BOOLEAN
         },
-        "SortColumn":  SortColumn // Enum - INT
-        // Valid Values:
-        // Rate = 1
-        // AverageAnnualCost = 2
-        // MaxLTV = 3
-        // MonthlyPayment = 4
-        // Lender = 5
-        // Fees = 6
+        "SortColumn":  SortColumn // Valid Values: Rate = 1, AverageAnnualCost = 2, MaxLTV = 3, MonthlyPayment = 4, Lender = 5, Fees = 6
         "UseStaticApr": BOOLEAN,
         "SapValue": INT,
         "Lenders" : STRING, // Csv string of master lender ids to filter by Else empty OR null to bring back all lenders
