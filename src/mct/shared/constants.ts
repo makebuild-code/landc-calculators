@@ -42,7 +42,7 @@ export const PROFILES: Profile[] = [
     display: 'Residential - Remortgage',
     requirements: {
       PurchRemo: 'R',
-      FTB: 'N',
+      // FTB: 'N',
       ResiBtl: 'R',
     },
   },
@@ -51,7 +51,7 @@ export const PROFILES: Profile[] = [
     display: 'Buy to Let - Remortgage',
     requirements: {
       PurchRemo: 'R',
-      FTB: 'N',
+      // FTB: 'N',
       ResiBtl: 'B',
     },
   },
