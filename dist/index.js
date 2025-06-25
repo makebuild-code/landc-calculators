@@ -16591,7 +16591,8 @@
     stage: "data-mct-stage"
   };
   var classes = {
-    active: "is-active"
+    active: "is-active",
+    highlight: "mct_highlight"
   };
   var PROFILES = [
     {
@@ -16701,7 +16702,6 @@
     async handleLenderSelect() {
       if (this.name !== "Lender")
         return;
-      console.log(this.name);
       try {
         const lenders = await fetchLenders();
         const lenderOptions = lenders.map(
@@ -16767,7 +16767,6 @@
       });
     }
     focus() {
-      console.log(this.inputs);
       const input = this.inputs[0];
       if (!input)
         throw new Error("No input found to focus on");
@@ -16795,7 +16794,9 @@
         this.el.classList.toggle(classes.active, active);
       }
     }
-    shouldBeVisible(answers) {
+    shouldBeVisible(answers, groupIsVisible) {
+      if (!groupIsVisible)
+        return false;
       if (!this.dependsOn)
         return true;
       if (!this.dependsOnValue)
@@ -17066,14 +17067,6 @@
     getComponent() {
       return this.component;
     }
-    show() {
-      this.component.style.removeProperty("display");
-      this.isVisible = true;
-    }
-    hide() {
-      this.component.style.display = "none";
-      this.isVisible = false;
-    }
   };
   var QuestionGroup = class extends BaseGroup {
     questions = [];
@@ -17081,11 +17074,21 @@
     constructor(component, formManager) {
       super(component, formManager);
     }
+    show() {
+      this.component.style.removeProperty("display");
+      this.isVisible = true;
+      this.updateActiveQuestions();
+    }
+    hide() {
+      this.component.style.display = "none";
+      this.isVisible = false;
+      this.updateActiveQuestions();
+    }
     updateActiveQuestions() {
       this.formManager.saveAnswersToMCT();
       const currentAnswers = this.formManager.getAnswers();
       this.questions.forEach((question) => {
-        const shouldBeVisible = question.shouldBeVisible(currentAnswers);
+        const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
         shouldBeVisible ? question.require() : question.unrequire();
       });
     }
@@ -17243,6 +17246,14 @@
     getComponent() {
       return this.component;
     }
+    show() {
+      this.component.style.removeProperty("display");
+      this.isVisible = true;
+    }
+    hide() {
+      this.component.style.display = "none";
+      this.isVisible = false;
+    }
     scrollToOutput() {
       this.formManager.components.scroll.scrollTo({
         top: this.component.offsetTop - this.formManager.components.scroll.offsetHeight / 2 + this.component.offsetHeight / 2,
@@ -17284,7 +17295,6 @@
     }
     buildProductsInput() {
       const answers = this.formManager.getAnswers();
-      console.log(answers);
       const PropertyValue = answers.PropertyValue;
       const DepositAmount = answers.DepositAmount;
       let RepaymentValue = answers.RepaymentValue || null;
@@ -17325,8 +17335,8 @@
       );
       const SchemePeriodsText = SchemePeriodsMap.length === 1 ? `${SchemePeriodsMap[0]} year` : SchemePeriodsMap.length > 1 ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year` : null;
       const SchemeTypesText = SchemeTypesMap.length === 1 ? `${SchemeTypesMap[0]} rate` : SchemeTypesMap.length > 1 ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate` : null;
-      const summmaryText = `Looks like you want to borrow ${RepaymentValueText} over ${TermYearsText} with a ${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText} mortgage`;
-      const lendersText = `We\u2019ve found ${this.products.result.SummaryInfo.NumberOfProducts} products for you across ${this.products.result.SummaryInfo.NumberOfLenders} lenders.`;
+      const summmaryText = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
+      const lendersText = `We\u2019ve found <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfLenders}</span> lenders.`;
       return [
         { key: "summary", value: summmaryText },
         { key: "lenders", value: lendersText }
@@ -17337,9 +17347,9 @@
         const key = data.key;
         const value = data.value;
         if (key === "summary")
-          this.summary.textContent = value;
+          this.summary.innerHTML = value;
         if (key === "lenders")
-          this.lenders.textContent = value;
+          this.lenders.innerHTML = value;
       });
     }
     navigateToResults() {
@@ -17384,7 +17394,6 @@
       const profile = PROFILES.find((profile2) => {
         return Object.entries(profile2.requirements).every(([key, value]) => answers[key] === value);
       });
-      console.log(profile);
       this.profile = profile ? profile : null;
       return profile ? profile : null;
     }
@@ -17677,6 +17686,7 @@
       this.initDOM();
       this.initICID();
       this.initLCID();
+      console.log(dom);
     },
     initDOM() {
       dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
@@ -17728,12 +17738,11 @@
       stages[stage.id] = stage;
     },
     goToStage(stageId) {
-      if (state.currentStageId && stages[state.currentStageId]) {
+      if (state.currentStageId && stages[state.currentStageId])
         stages[state.currentStageId].hide();
-      }
       state.currentStageId = stageId;
       if (stages[stageId]) {
-        stages[stageId].init?.();
+        stages[stageId].init();
         stages[stageId].show();
       }
     },
