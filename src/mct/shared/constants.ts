@@ -7,6 +7,7 @@ export const mctAttr = {
 
 export const classes = {
   active: 'is-active',
+  highlight: 'mct_highlight',
 };
 
 export const PROFILES: Profile[] = [
