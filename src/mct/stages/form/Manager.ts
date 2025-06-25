@@ -66,8 +66,6 @@ export abstract class FormManager {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key] === value);
     });
 
-    console.log(profile);
-
     this.profile = profile ? profile : null;
     return profile ? profile : null;
   }
