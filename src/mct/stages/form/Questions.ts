@@ -62,7 +62,6 @@ export class Question {
 
   private async handleLenderSelect(): Promise<void> {
     if (this.name !== 'Lender') return;
-    console.log(this.name);
 
     try {
       const lenders = await fetchLenders();
@@ -136,7 +135,6 @@ export class Question {
   }
 
   public focus(): void {
-    console.log(this.inputs);
     const input = this.inputs[0];
     if (!input) throw new Error('No input found to focus on');
     input.focus();
@@ -168,10 +166,17 @@ export class Question {
     }
   }
 
-  public shouldBeVisible(answers: Answers): boolean {
-    // was AnswerKey, AnswerValue
+  public shouldBeVisible(answers: Answers, groupIsVisible: boolean): boolean {
+    // parent group is not visible
+    if (!groupIsVisible) return false;
+
+    // question depends on nothing
     if (!this.dependsOn) return true;
+
+    // question depends on a prior question being answered, no specific value
     if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
+
+    // question depends on a prior question being answered, with a specific value
     return answers[this.dependsOn] === this.dependsOnValue;
   }
 
