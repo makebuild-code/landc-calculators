@@ -33,15 +33,8 @@ export abstract class BaseGroup {
     return this.component;
   }
 
-  public show(): void {
-    this.component.style.removeProperty('display');
-    this.isVisible = true;
-  }
-
-  public hide(): void {
-    this.component.style.display = 'none';
-    this.isVisible = false;
-  }
+  protected abstract show(): void;
+  protected abstract hide(): void;
 }
 
 // @description: Base class for all question groups
@@ -57,12 +50,24 @@ export abstract class QuestionGroup extends BaseGroup {
 
   abstract handleEnter(index: number): void;
 
+  public show(): void {
+    this.component.style.removeProperty('display');
+    this.isVisible = true;
+    this.updateActiveQuestions();
+  }
+
+  public hide(): void {
+    this.component.style.display = 'none';
+    this.isVisible = false;
+    this.updateActiveQuestions();
+  }
+
   public updateActiveQuestions(): void {
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
     this.questions.forEach((question) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers);
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
       shouldBeVisible ? question.require() : question.unrequire();
     });
   }
@@ -250,6 +255,16 @@ export class OutputGroup extends BaseGroup {
     return this.component;
   }
 
+  public show(): void {
+    this.component.style.removeProperty('display');
+    this.isVisible = true;
+  }
+
+  public hide(): void {
+    this.component.style.display = 'none';
+    this.isVisible = false;
+  }
+
   private scrollToOutput(): void {
     this.formManager.components.scroll.scrollTo({
       top:
@@ -299,7 +314,6 @@ export class OutputGroup extends BaseGroup {
 
   private buildProductsInput(): ProductsRequest {
     const answers = this.formManager.getAnswers();
-    console.log(answers);
 
     const PropertyValue = answers.PropertyValue as number;
     const DepositAmount = answers.DepositAmount as number;
@@ -361,8 +375,8 @@ export class OutputGroup extends BaseGroup {
           ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
           : null;
 
-    const summmaryText = `Looks like you want to borrow ${RepaymentValueText} over ${TermYearsText} with a ${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText} mortgage`;
-    const lendersText = `We’ve found ${this.products.result.SummaryInfo.NumberOfProducts} products for you across ${this.products.result.SummaryInfo.NumberOfLenders} lenders.`;
+    const summmaryText = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
+    const lendersText = `We’ve found <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfLenders}</span> lenders.`;
 
     return [
       { key: 'summary', value: summmaryText },
@@ -374,8 +388,8 @@ export class OutputGroup extends BaseGroup {
     this.outputData.forEach((data) => {
       const key = data.key;
       const value = data.value;
-      if (key === 'summary') this.summary.textContent = value;
-      if (key === 'lenders') this.lenders.textContent = value;
+      if (key === 'summary') this.summary.innerHTML = value;
+      if (key === 'lenders') this.lenders.innerHTML = value;
     });
   }
 
