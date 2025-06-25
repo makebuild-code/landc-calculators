@@ -10,9 +10,9 @@ import type { AnswerKey, Answers, AnswerValue, StageID } from './types';
 
 interface Stage {
   id: StageID;
+  init: () => void;
   show: () => void;
   hide: () => void;
-  init: () => void;
 }
 
 const stages: Record<string, Stage> = {};
@@ -60,6 +60,8 @@ export const MCTManager = {
     this.initDOM();
     this.initICID();
     this.initLCID();
+
+    console.log(dom);
   },
 
   initDOM(): DOM {
@@ -117,12 +119,11 @@ export const MCTManager = {
   },
 
   goToStage(stageId: StageID) {
-    if (state.currentStageId && stages[state.currentStageId]) {
-      stages[state.currentStageId].hide();
-    }
+    if (state.currentStageId && stages[state.currentStageId]) stages[state.currentStageId].hide();
+
     state.currentStageId = stageId;
     if (stages[stageId]) {
-      stages[stageId].init?.();
+      stages[stageId].init();
       stages[stageId].show();
     }
   },
