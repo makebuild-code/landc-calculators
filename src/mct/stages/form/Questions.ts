@@ -24,6 +24,7 @@ type QuestionOptions = {
   formManager: FormManager;
   onChange: () => void;
   onEnter: () => void;
+  groupName: string;
   indexInGroup: number;
 };
 
@@ -38,6 +39,7 @@ export class Question {
   public dependsOn: string | null;
   public dependsOnValue: string | null;
   public isVisible: boolean = false;
+  public groupName: string;
   public indexInGroup: number;
 
   constructor(el: HTMLElement, options: QuestionOptions) {
@@ -50,14 +52,38 @@ export class Question {
     this.name = this.el.getAttribute(attr.question) as string;
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
+    this.groupName = options.groupName;
     this.indexInGroup = options.indexInGroup;
 
     this.init();
-    this.bindEventListeners();
   }
 
   private init(): void {
+    this.formatInputNamesAndIDs();
     this.handleLenderSelect();
+    this.bindEventListeners();
+  }
+
+  private formatInputNamesAndIDs(): void {
+    if (this.type === 'radio' || this.type === 'checkbox') {
+      this.inputs.forEach((input) => {
+        const label = queryElement('label', input.parentElement as HTMLElement) as HTMLLabelElement;
+        const id = `${this.groupName}-${input.name}-${input.value}`;
+        const name = `${this.groupName}-${input.name}`;
+
+        label.setAttribute('for', id);
+        input.id = id;
+        input.name = name;
+      });
+    } else {
+      const label = queryElement('label', this.el) as HTMLLabelElement;
+      const input = this.inputs[0];
+      const nameAndID = `${this.groupName}-${input.name}`;
+
+      label.setAttribute('for', nameAndID);
+      input.id = nameAndID;
+      input.name = nameAndID;
+    }
   }
 
   private async handleLenderSelect(): Promise<void> {
@@ -193,11 +219,8 @@ export class Question {
   }
 
   private getRadioValue(): RadioValue | null {
-    const checked = this.inputs.find((input) => {
-      if (input instanceof HTMLInputElement) return input.checked;
-      return false;
-    });
-    return !!checked ? checked.value : null;
+    const checked = this.inputs.find((input) => (input instanceof HTMLInputElement ? input.checked : false));
+    return checked?.value || null;
   }
 
   private setRadioValue(value: RadioValue): void {
@@ -207,29 +230,22 @@ export class Question {
   }
 
   private resetRadioInput(): void {
-    this.inputs.forEach((input) => {
-      if (input instanceof HTMLInputElement) input.checked = false;
-    });
+    this.inputs.forEach((input) => (input instanceof HTMLInputElement ? (input.checked = false) : null));
   }
 
   private getCheckboxValues(): CheckboxValues {
-    const checked = this.inputs.filter((input) => {
-      if (input instanceof HTMLInputElement) return input.checked;
-      return false;
-    });
+    const checked = this.inputs.filter((input) => (input instanceof HTMLInputElement ? input.checked : false));
     return checked.map((input) => input.value);
   }
 
   private setCheckboxValues(values: CheckboxValues): void {
-    this.inputs.forEach((input) => {
-      if (input instanceof HTMLInputElement) input.checked = values.includes(input.value);
-    });
+    this.inputs.forEach((input) =>
+      input instanceof HTMLInputElement ? (input.checked = values.includes(input.value)) : null
+    );
   }
 
   private resetCheckboxeInputs(): void {
-    this.inputs.forEach((input) => {
-      if (input instanceof HTMLInputElement) input.checked = false;
-    });
+    this.inputs.forEach((input) => (input instanceof HTMLInputElement ? (input.checked = false) : null));
   }
 
   private getTextValue(): TextValue | null {

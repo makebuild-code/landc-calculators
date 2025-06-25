@@ -102,6 +102,7 @@ export class MainGroup extends QuestionGroup {
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         indexInGroup: index,
+        groupName: this.name as string,
       });
 
       if (index !== 0) question.disable();

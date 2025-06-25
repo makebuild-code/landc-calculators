@@ -16681,6 +16681,7 @@
     dependsOn;
     dependsOnValue;
     isVisible = false;
+    groupName;
     indexInGroup;
     constructor(el, options) {
       this.el = el;
@@ -16692,12 +16693,33 @@
       this.name = this.el.getAttribute(attr7.question);
       this.dependsOn = this.el.getAttribute(attr7.dependsOn) || null;
       this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
+      this.groupName = options.groupName;
       this.indexInGroup = options.indexInGroup;
       this.init();
-      this.bindEventListeners();
     }
     init() {
+      this.formatInputNamesAndIDs();
       this.handleLenderSelect();
+      this.bindEventListeners();
+    }
+    formatInputNamesAndIDs() {
+      if (this.type === "radio" || this.type === "checkbox") {
+        this.inputs.forEach((input) => {
+          const label = queryElement("label", input.parentElement);
+          const id = `${this.groupName}-${input.name}-${input.value}`;
+          const name = `${this.groupName}-${input.name}`;
+          label.setAttribute("for", id);
+          input.id = id;
+          input.name = name;
+        });
+      } else {
+        const label = queryElement("label", this.el);
+        const input = this.inputs[0];
+        const nameAndID = `${this.groupName}-${input.name}`;
+        label.setAttribute("for", nameAndID);
+        input.id = nameAndID;
+        input.name = nameAndID;
+      }
     }
     async handleLenderSelect() {
       if (this.name !== "Lender")
@@ -16820,12 +16842,8 @@
       throw new Error(`Unsupported input type: ${input.type}`);
     }
     getRadioValue() {
-      const checked = this.inputs.find((input) => {
-        if (input instanceof HTMLInputElement)
-          return input.checked;
-        return false;
-      });
-      return !!checked ? checked.value : null;
+      const checked = this.inputs.find((input) => input instanceof HTMLInputElement ? input.checked : false);
+      return checked?.value || null;
     }
     setRadioValue(value) {
       const input = this.inputs.find((i) => i.value === value);
@@ -16834,30 +16852,19 @@
       input.checked = true;
     }
     resetRadioInput() {
-      this.inputs.forEach((input) => {
-        if (input instanceof HTMLInputElement)
-          input.checked = false;
-      });
+      this.inputs.forEach((input) => input instanceof HTMLInputElement ? input.checked = false : null);
     }
     getCheckboxValues() {
-      const checked = this.inputs.filter((input) => {
-        if (input instanceof HTMLInputElement)
-          return input.checked;
-        return false;
-      });
+      const checked = this.inputs.filter((input) => input instanceof HTMLInputElement ? input.checked : false);
       return checked.map((input) => input.value);
     }
     setCheckboxValues(values) {
-      this.inputs.forEach((input) => {
-        if (input instanceof HTMLInputElement)
-          input.checked = values.includes(input.value);
-      });
+      this.inputs.forEach(
+        (input) => input instanceof HTMLInputElement ? input.checked = values.includes(input.value) : null
+      );
     }
     resetCheckboxeInputs() {
-      this.inputs.forEach((input) => {
-        if (input instanceof HTMLInputElement)
-          input.checked = false;
-      });
+      this.inputs.forEach((input) => input instanceof HTMLInputElement ? input.checked = false : null);
     }
     getTextValue() {
       const input = this.inputs[0];
@@ -17117,7 +17124,8 @@
           formManager: this.formManager,
           onChange: () => this.handleChange(index2),
           onEnter: () => this.handleEnter(index2),
-          indexInGroup: index2
+          indexInGroup: index2,
+          groupName: this.name
         });
         if (index2 !== 0)
           question.disable();
