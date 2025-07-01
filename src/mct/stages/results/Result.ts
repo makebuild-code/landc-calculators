@@ -14,7 +14,6 @@ interface Options {
 }
 
 export class Result {
-  private component: HTMLElement | null = null;
   private wrapper: HTMLElement;
   private template: HTMLElement;
   private product: Product;
@@ -46,7 +45,7 @@ export class Result {
     this.outputs.forEach((output) => {
       const outputName = output.getAttribute(attr.output) as keyof Product;
       const outputType = output.getAttribute(attr.type);
-      let outputValue = this.product[outputName];
+      let outputValue = this.product[outputName] ?? 0;
 
       switch (outputType) {
         case 'currency':
