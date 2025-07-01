@@ -12,6 +12,9 @@ export const getBaseURLForAPI = (): string => {
     { host: 'dev.landc.co.uk', api: ENDPOINTS.test },
   ];
 
+  // If window is not defined (Node.js/SSR), default to test
+  if (typeof window === 'undefined') return ENDPOINTS.test;
+
   const { hostname, search } = window.location;
   const params = new URLSearchParams(search);
   const apiParam = params.get('api');
