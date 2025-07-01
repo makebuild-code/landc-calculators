@@ -57,7 +57,7 @@ export abstract class FormManager {
 
     [...this.questions].forEach((question) => {
       const value = question.getValue();
-      if (value) MCTManager.setAnswer(question.name, value);
+      if (value) MCTManager.setAnswer(question.name, value as AnswerValue);
     });
   }
 

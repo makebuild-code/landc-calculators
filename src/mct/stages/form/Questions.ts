@@ -37,7 +37,6 @@ export class Question extends InputGroupBase {
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
     this.indexInGroup = options.indexInGroup;
-    // this.name = this.el.getAttribute(attr.question) as string;
   }
 
   protected init(): void {

@@ -118,6 +118,9 @@ export class MainGroup extends QuestionGroup {
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
 
     const question = this.questions[index];
+
+    console.log(question);
+    console.log(question.isValid());
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
