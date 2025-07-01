@@ -10,9 +10,9 @@ export const testFetchProducts = async () => {
     InterestOnlyValue: 0,
     TermYears: 25,
     SchemePurpose: 1,
-    SchemePeriods: [1, 2, 3, 4],
+    SchemePeriods: [1],
     SchemeTypes: [1, 2],
-    NumberOfResults: 3,
+    NumberOfResults: 100,
     // Features: {
     //   HelpToBuy: false,
     //   Offset: false,
@@ -38,7 +38,11 @@ export const testFetchProducts = async () => {
 };
 
 // Run the test if this file is executed directly (ESM compatible)
-if (import.meta.url === `file://${process.cwd()}/src/mct/shared/api/tests/test_fetchProducts.ts`) {
+if (
+  typeof process !== 'undefined' &&
+  process?.cwd &&
+  import.meta.url === `file://${process.cwd()}/src/mct/shared/api/tests/test_fetchProducts.ts`
+) {
   testFetchProducts();
 }
 

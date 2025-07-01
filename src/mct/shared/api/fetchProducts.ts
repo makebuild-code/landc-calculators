@@ -1,4 +1,6 @@
+import type { Answers } from '../types';
 import { fetchData } from '../utils/fetchData';
+import { generateProductsAPIInput } from '../utils/generateProductsAPIInput';
 import { ENDPOINTS } from './endpoints';
 import type { ProductsRequest, ProductsResponse } from './types/fetchProducts';
 

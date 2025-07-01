@@ -8,13 +8,14 @@ import { queryElements } from '$utils/queryelements';
 import { attr } from './constants';
 import { Question } from './Questions';
 import type { MainFormManager, FormManager } from './Manager';
-import type { CheckboxValues, GroupName } from './types';
+import type { GroupName } from './types';
 import { classes } from 'src/mct/shared/constants';
 import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
-import type { ProductsRequest, ProductsResponse } from 'src/mct/shared/api/types/fetchProducts';
-import { filterAllowed } from '$utils/filterAllowed';
-import { formatNumber } from '$utils/formatNumber';
+import type { ProductsResponse, SummaryInfo } from 'src/mct/shared/api/types/fetchProducts';
 import { trackGAEvent } from '$utils/trackGAEvent';
+import { MCTManager } from 'src/mct/shared/MCTManager';
+import { generateSummaryLines, type SummaryLines } from 'src/mct/shared/utils/generateSummaryLines';
+import { generateProductsAPIInput } from 'src/mct/shared/utils/generateProductsAPIInput';
 
 // @description: Base class for all groups
 export abstract class BaseGroup {
@@ -228,22 +229,19 @@ export class MainGroup extends QuestionGroup {
 export class OutputGroup extends BaseGroup {
   protected formManager: MainFormManager;
   private card: HTMLElement;
-  private productsAPIInput: ProductsRequest | null = null;
   private loader: HTMLElement;
-  private products: ProductsResponse | null = null;
-  private outputData: Record<string, string>[] = [];
-  private summary: HTMLParagraphElement;
-  private lenders: HTMLParagraphElement;
+  private productsResponse: ProductsResponse | null = null;
+  private summaryInfo: SummaryInfo | null = null;
+  private outputs: HTMLDivElement[];
   private button: HTMLButtonElement;
 
   constructor(component: HTMLElement, formManager: MainFormManager) {
     super(component, formManager);
     this.formManager = formManager;
-    this.card = queryElement(`[${attr.element}="output-card"]`) as HTMLElement;
-    this.loader = queryElement(`[${attr.element}="output-loader"]`) as HTMLElement;
-    this.summary = queryElement(`[${attr.output}="summary"]`) as HTMLParagraphElement;
-    this.lenders = queryElement(`[${attr.output}="lenders"]`) as HTMLParagraphElement;
-    this.button = queryElement(`[${attr.element}="get-results"]`) as HTMLButtonElement;
+    this.card = queryElement(`[${attr.element}="output-card"]`, this.component) as HTMLElement;
+    this.loader = queryElement(`[${attr.element}="output-loader"]`, this.component) as HTMLElement;
+    this.outputs = queryElements(`[${attr.output}]`, this.component) as HTMLDivElement[];
+    this.button = queryElement(`[${attr.element}="get-results"]`, this.component) as HTMLButtonElement;
 
     this.bindEvents();
   }
@@ -252,9 +250,9 @@ export class OutputGroup extends BaseGroup {
     this.button.addEventListener('click', () => this.navigateToResults());
   }
 
-  public getComponent(): HTMLElement {
-    return this.component;
-  }
+  // public getComponent(): HTMLElement {
+  //   return this.component;
+  // }
 
   public show(): void {
     this.component.style.removeProperty('display');
@@ -293,19 +291,18 @@ export class OutputGroup extends BaseGroup {
   private async handleProducts(): Promise<void> {
     this.showLoader(true);
     this.button.disabled = true;
-    this.products = await this.fetchProducts();
-    if (!this.products) return;
-    this.outputData = this.buildOutputData();
+    this.productsResponse = await this.fetchProducts();
+    if (!this.productsResponse) return;
 
-    this.updateSummary();
+    this.updateOutputs();
     this.showLoader(false);
     this.button.disabled = false;
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
+    const input = generateProductsAPIInput(this.formManager.getAnswers());
     try {
-      this.productsAPIInput = this.buildProductsInput();
-      const response = await fetchProducts(this.productsAPIInput);
+      const response = await fetchProducts(input);
       return response;
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -313,89 +310,19 @@ export class OutputGroup extends BaseGroup {
     }
   }
 
-  private buildProductsInput(): ProductsRequest {
-    const answers = this.formManager.getAnswers();
+  private updateOutputs(): void {
+    if (!this.summaryInfo) return;
 
-    const PropertyValue = answers.PropertyValue as number;
-    const DepositAmount = answers.DepositAmount as number;
-    let RepaymentValue = (answers.RepaymentValue as number) || null;
+    const summaryLines = generateSummaryLines(this.summaryInfo, this.formManager.getAnswers());
+    if (!summaryLines) return;
 
-    if (!RepaymentValue) RepaymentValue = PropertyValue - DepositAmount;
-
-    const PropertyType = 1; // property type not a question
-    const MortgageType = answers.ResiBtl === 'R' ? 1 : 2;
-    const TermYears = answers.MortgageLength as number;
-    const SchemePurpose = answers.PurchRemo === 'P' ? 1 : 2;
-    const NumberOfResults = 1;
-    const SortColumn = 1;
-
-    return {
-      PropertyValue,
-      RepaymentValue,
-      PropertyType,
-      MortgageType,
-      InterestOnlyValue: answers.InterestOnlyValue as number,
-      TermYears,
-      SchemePurpose,
-      SchemePeriods: filterAllowed((answers.SchemePeriods as CheckboxValues) ?? [], [1, 2, 3, 4] as const),
-      SchemeTypes: filterAllowed((answers.SchemeTypes as CheckboxValues) ?? [], [1, 2] as const),
-      NumberOfResults,
-      SortColumn,
-    };
-  }
-
-  private buildOutputData(): Record<string, string>[] {
-    const answers = this.formManager.getAnswers();
-
-    if (!this.productsAPIInput || !this.products) return [];
-
-    const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = this.productsAPIInput;
-    const { RepaymentType } = answers;
-
-    const RepaymentValueText = formatNumber(RepaymentValue, { currency: true });
-    const TermYearsText = `${TermYears} years`;
-    const RepaymentTypeText =
-      RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
-
-    const SchemeTypesMap = SchemeTypes.map((type) => (type === 1 ? 'fixed' : 'variable'));
-    const SchemePeriodsMap = SchemePeriods.map((period) =>
-      period === 1 ? '2' : period === 2 ? '3' : period === 3 ? '5' : '5+'
-    );
-
-    const SchemePeriodsText =
-      SchemePeriodsMap.length === 1
-        ? `${SchemePeriodsMap[0]} year`
-        : SchemePeriodsMap.length > 1
-          ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year`
-          : null;
-
-    const SchemeTypesText =
-      SchemeTypesMap.length === 1
-        ? `${SchemeTypesMap[0]} rate`
-        : SchemeTypesMap.length > 1
-          ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
-          : null;
-
-    const summmaryText = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-    const lendersText = `We’ve found <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfLenders}</span> lenders.`;
-
-    return [
-      { key: 'summary', value: summmaryText },
-      { key: 'lenders', value: lendersText },
-    ];
-  }
-
-  private updateSummary(): void {
-    this.outputData.forEach((data) => {
-      const key = data.key;
-      const value = data.value;
-      if (key === 'summary') this.summary.innerHTML = value;
-      if (key === 'lenders') this.lenders.innerHTML = value;
+    this.outputs.forEach((output) => {
+      const key = output.getAttribute(attr.output) as keyof SummaryLines;
+      output.innerHTML = summaryLines[key];
     });
   }
 
   private navigateToResults(): void {
     this.formManager.navigateToNextGroup();
-    this.button.disabled = true;
   }
 }

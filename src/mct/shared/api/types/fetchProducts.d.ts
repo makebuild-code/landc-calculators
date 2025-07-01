@@ -10,6 +10,14 @@ import type { BaseResponse } from './baseResponse';
  * NumberOfResults
  * SortColumn
  */
+
+export interface Features {
+  HelpToBuy?: boolean;
+  Offset?: boolean;
+  EarlyRepaymentCharge?: boolean;
+  NewBuild?: boolean;
+}
+
 export interface ProductsRequest {
   PropertyValue: number;
   RepaymentValue: number;
@@ -21,12 +29,7 @@ export interface ProductsRequest {
   SchemePeriods: (1 | 2 | 3 | 4)[] | ('1' | '2' | '3' | '4')[]; // 1 = 2 years, 2 = 3 years, 3 = 5 years, 4 = 5+ years
   SchemeTypes: (1 | 2)[] | ('1' | '2')[]; // 1 = fixed, 2 = variable
   NumberOfResults: number;
-  Features?: {
-    HelpToBuy?: boolean;
-    Offset?: boolean;
-    EarlyRepaymentCharge?: boolean;
-    NewBuild?: boolean;
-  };
+  Features?: Features;
   SortColumn: 1 | 2 | 3 | 4 | 5 | 6; // 1 = rate, 2 = average annual cost, 3 = max ltv, 4 = monthly payment, 5 = lender, 6 = fees
   UseStaticApr?: boolean;
   SapValue?: number;

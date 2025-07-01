@@ -4,7 +4,11 @@ import { queryElements } from '$utils/queryelements';
 import { setToCookie } from '$utils/setToCookie';
 
 import { initForm } from '../stages/form';
+import type { FormManager, MainFormManager } from '../stages/form/Manager';
+import { initResults } from '../stages/results';
+import type { ResultsManager } from '../stages/results/Manager';
 import { generateLCID } from './api/generateLCID';
+import type { Product, ProductsResponse, SummaryInfo } from './api/types/fetchProducts';
 import { mctAttr } from './constants';
 import type { AnswerKey, Answers, AnswerValue, StageID } from './types';
 
@@ -15,7 +19,7 @@ interface Stage {
   hide: () => void;
 }
 
-const stages: Record<string, Stage> = {};
+const stageManagers: Record<string, Stage> = {};
 
 interface DOM {
   mctComponent: HTMLElement | null;
@@ -32,6 +36,8 @@ export interface AppState {
   icid: string | null;
   currentStageId: string | null;
   answers: Answers;
+  summary: SummaryInfo | null;
+  products: Product[] | null;
 }
 
 const state: AppState = {
@@ -39,6 +45,8 @@ const state: AppState = {
   icid: null,
   currentStageId: null,
   answers: {},
+  summary: null,
+  products: null,
 };
 
 const MCT_ANSWERS_STORAGE_KEY = 'mct_data';
@@ -60,8 +68,8 @@ export const MCTManager = {
     this.initDOM();
     this.initICID();
     this.initLCID();
-
-    console.log(dom);
+    this.initStages();
+    this.route();
   },
 
   initDOM(): DOM {
@@ -94,12 +102,28 @@ export const MCTManager = {
     }
   },
 
-  getComponent() {
+  initStages() {
+    const mainForm = this.getStageDOM('questions') as HTMLElement;
+    const mainFormManager = initForm(mainForm, {
+      mode: 'main',
+      prefill: false,
+    });
+    mainFormManager?.hide();
+
+    const results = this.getStageDOM('results') as HTMLElement;
+    const resultsManager = initResults(results);
+    resultsManager?.hide();
+
+    stageManagers['questions'] = mainFormManager as MainFormManager;
+    stageManagers['results'] = resultsManager as ResultsManager;
+  },
+
+  getComponentDOM() {
     if (!dom.mctComponent) throw new Error('MCT component not initialised');
     return dom.mctComponent;
   },
 
-  getStage(name: StageID) {
+  getStageDOM(name: StageID) {
     if (!dom.stages) throw new Error('Stages not initialised');
     const stage = dom.stages[name];
     if (!stage) throw new Error(`Stage '${name}' not found`);
@@ -107,35 +131,40 @@ export const MCTManager = {
   },
 
   route() {
-    const mainQuestions = this.getStage('questions') as HTMLElement;
-    initForm(mainQuestions, {
-      mode: 'main',
-      prefill: false,
-    });
+    /**
+     * @plan
+     * - need to check local storage on load and populate the state
+     * - if user came from another page still show the form?
+     * - if user came from another page, prefill the results? Maybe click a button to do so?
+     * - populate the customer-identifier? populate the whole form?
+     *
+     * - once questions are done, init the results
+     */
+
+    // this.goToStage('questions');
+    this.goToStage('results');
   },
 
-  registerStage(stage: Stage) {
-    stages[stage.id] = stage;
-  },
+  goToStage(stageId: StageID): boolean {
+    // get the stage and cancel if not found
+    const nextStage = stageManagers[stageId] ?? null;
+    if (!nextStage) return false;
 
-  goToStage(stageId: StageID) {
-    if (state.currentStageId && stages[state.currentStageId]) stages[state.currentStageId].hide();
+    // hide the current stage
+    const currentStage = stageManagers[state.currentStageId as StageID] ?? null;
+    if (currentStage) currentStage.hide();
 
+    // update the state, init and show the next stage
     state.currentStageId = stageId;
-    if (stages[stageId]) {
-      stages[stageId].init();
-      stages[stageId].show();
-    }
+    nextStage.show();
+    nextStage.init();
+    return true;
   },
 
   getPersistedData(): MCTData {
     const stored = localStorage.getItem(MCT_ANSWERS_STORAGE_KEY);
     if (!stored) return {};
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return {};
-    }
+    return JSON.parse(stored);
   },
 
   setPersistedData(data: MCTData) {
@@ -201,6 +230,22 @@ export const MCTManager = {
     state.lcid = data.lcid ?? null;
     state.icid = data.icid ?? null;
     state.answers = data.answers ?? {};
+  },
+
+  setProducts(products: Product[]) {
+    state.products = products;
+  },
+
+  getProducts(): Product[] | null {
+    return state.products;
+  },
+
+  setSummary(summary: SummaryInfo) {
+    state.summary = summary;
+  },
+
+  getSummary(): SummaryInfo | null {
+    return state.summary;
   },
 
   getState(): AppState {

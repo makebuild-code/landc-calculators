@@ -27,7 +27,7 @@ export interface Profile {
 export type Input = HTMLInputElement;
 
 export type RadioValue = string;
-export type CheckboxValues = (number | string)[];
+export type CheckboxValues = (number | string)[] | boolean;
 export type TextValue = string;
 export type NumberValue = number;
 export type SelectValue = string;

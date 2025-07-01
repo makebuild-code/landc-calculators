@@ -1,27 +1,32 @@
 import { simulateEvent } from '@finsweet/ts-utils';
-import { sharedUtils } from 'src/mct/shared/utils';
 
 import { PROFILES } from '../../shared/constants';
 import { MainGroup, BaseGroup, OutputGroup } from './Groups';
 import type { GroupName, Profile, ProfileName } from './types';
-import type { AnswerKey, Answers, AnswerValue } from 'src/mct/shared/types';
+import type { AnswerKey, Answers, AnswerValue, StageID } from 'src/mct/shared/types';
 import { queryElement } from '$utils/queryElement';
 import { attr } from './constants';
 import { queryElements } from '$utils/queryelements';
 import type { Question } from './Questions';
 import { MCTManager, type AppState } from 'src/mct/shared/MCTManager';
+import { logError } from 'src/mct/shared/utils/logError';
 
 export abstract class FormManager {
   protected component: HTMLElement;
+  public id: StageID;
   protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
   protected questions: Set<Question> = new Set();
+  protected isInitialised: boolean = false;
 
   constructor(component: HTMLElement) {
     this.component = component;
+    this.id = 'questions';
   }
 
   public abstract init(): void;
+  public abstract show(): void;
+  public abstract hide(): void;
 
   protected prefill(answers: Answers) {
     /**
@@ -105,6 +110,9 @@ export class MainFormManager extends FormManager {
   }
 
   public init(): void {
+    if (this.isInitialised) return;
+    this.isInitialised = true;
+
     this.showHeader('static');
 
     this.components.groupElements.forEach((groupEl, index) => {
@@ -146,6 +154,14 @@ export class MainFormManager extends FormManager {
 
       currentGroup.navigate('prev');
     });
+  }
+
+  public show(): void {
+    this.component.style.removeProperty('display');
+  }
+
+  public hide(): void {
+    this.component.style.display = 'none';
   }
 
   public prepareWrapper(): void {
@@ -236,8 +252,8 @@ export class MainFormManager extends FormManager {
 
   public navigateToNextGroup() {
     const activeGroup = this.getActiveGroup();
-    if (!activeGroup) return sharedUtils.logError(`Next group: No active group found`);
-    if (!this.profile) return sharedUtils.logError(`Next group: No profile found`);
+    if (!activeGroup) return logError(`Next group: No active group found`);
+    if (!this.profile) return logError(`Next group: No profile found`);
 
     const { name } = activeGroup;
     if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
@@ -245,11 +261,10 @@ export class MainFormManager extends FormManager {
       this.initialiseProfileSelect(this.profile.name);
 
       const profileGroup = this.getGroupByName(this.profile.name) as MainGroup;
-      if (!profileGroup) return sharedUtils.logError(`Next group: No matching group for profile: ${this.profile.name}`);
+      if (!profileGroup) return logError(`Next group: No matching group for profile: ${this.profile.name}`);
 
       const profileGroupIndex = this.groups.indexOf(profileGroup);
-      if (profileGroupIndex === -1)
-        return sharedUtils.logError(`Next group: No group index for profile: ${this.profile.name}`);
+      if (profileGroupIndex === -1) return logError(`Next group: No group index for profile: ${this.profile.name}`);
 
       this.activeGroupIndex = profileGroupIndex;
       this.showHeader('sticky');
@@ -264,24 +279,25 @@ export class MainFormManager extends FormManager {
     } else if (name !== 'output' && activeGroup instanceof MainGroup) {
       // progress to the output group from profile group
       const outputGroup = this.getGroupByName('output') as OutputGroup;
-      if (!outputGroup) return sharedUtils.logError(`Next group: No output group found`);
+      if (!outputGroup) return logError(`Next group: No output group found`);
 
       const outputGroupIndex = this.groups.indexOf(outputGroup);
-      if (outputGroupIndex === -1) return sharedUtils.logError(`Next group: No group index for output`);
+      if (outputGroupIndex === -1) return logError(`Next group: No group index for output`);
 
       this.activeGroupIndex = outputGroupIndex;
       outputGroup.activate();
     } else if (name === 'output' && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
       console.log('End of form, navigate to results');
+      console.log(MCTManager.getAnswers());
       MCTManager.goToStage('results');
     }
   }
 
   public navigateToPreviousGroup() {
     const activeGroup = this.getActiveGroup();
-    if (!activeGroup) return sharedUtils.logError(`Previous group: No active group found`);
-    if (!this.profile) return sharedUtils.logError(`Previous group: No profile found`);
+    if (!activeGroup) return logError(`Previous group: No active group found`);
+    if (!this.profile) return logError(`Previous group: No profile found`);
 
     // save previous group to determine which group to navigate to
     let previousGroup: MainGroup | OutputGroup | undefined;
@@ -290,12 +306,10 @@ export class MainFormManager extends FormManager {
     if (name === 'output' && activeGroup instanceof OutputGroup) {
       // revert to profile group from output group
       const profileGroup = this.getGroupByName(this.profile.name) as MainGroup;
-      if (!profileGroup)
-        return sharedUtils.logError(`Previous group: No matching group for profile: ${this.profile.name}`);
+      if (!profileGroup) return logError(`Previous group: No matching group for profile: ${this.profile.name}`);
 
       const profileGroupIndex = this.groups.indexOf(profileGroup);
-      if (profileGroupIndex === -1)
-        return sharedUtils.logError(`Previous group: No group index for profile: ${this.profile.name}`);
+      if (profileGroupIndex === -1) return logError(`Previous group: No group index for profile: ${this.profile.name}`);
 
       this.activeGroupIndex = profileGroupIndex;
       this.showHeader('sticky');
@@ -303,24 +317,23 @@ export class MainFormManager extends FormManager {
     } else if (name !== 'customer-identifier' && activeGroup instanceof MainGroup) {
       // revert to the identifier group from profile group
       const identifierGroup = this.getGroupByName('customer-identifier') as MainGroup;
-      if (!identifierGroup) return sharedUtils.logError(`Previous group: No identifier group found`);
+      if (!identifierGroup) return logError(`Previous group: No identifier group found`);
 
       const identifierGroupIndex = this.groups.indexOf(identifierGroup);
-      if (identifierGroupIndex === -1) return sharedUtils.logError(`Previous group: No group index for identifier`);
+      if (identifierGroupIndex === -1) return logError(`Previous group: No group index for identifier`);
 
       this.activeGroupIndex = identifierGroupIndex;
       this.showHeader('static');
       previousGroup = identifierGroup;
     } else return; // start of form, do nothing
 
-    if (!previousGroup) return sharedUtils.logError(`Previous group: No previous group found`);
-    if (!(previousGroup instanceof MainGroup))
-      return sharedUtils.logError(`Previous group: Previous group is not a main group`);
+    if (!previousGroup) return logError(`Previous group: No previous group found`);
+    if (!(previousGroup instanceof MainGroup)) return logError(`Previous group: Previous group is not a main group`);
 
     // get the last visible question in the identifier group and activate it
     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
     if (lastVisibleIndex < 0)
-      return sharedUtils.logError(`Previous group: No last visible index group for profile: ${this.profile}`);
+      return logError(`Previous group: No last visible index group for profile: ${this.profile}`);
 
     previousGroup.activeQuestionIndex = lastVisibleIndex;
     previousGroup.activateQuestion(previousGroup.getActiveQuestion());

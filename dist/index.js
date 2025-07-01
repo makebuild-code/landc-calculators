@@ -208,12 +208,12 @@
 
   // src/components/dialogs.ts
   var dialogs = () => {
-    const attr8 = "data-dialog";
-    const components2 = queryElements(`[${attr8}="component"]`);
+    const attr10 = "data-dialog";
+    const components2 = queryElements(`[${attr10}="component"]`);
     components2.forEach((component) => {
-      const open = queryElement(`[${attr8}="open"]`, component);
+      const open = queryElement(`[${attr10}="open"]`, component);
       const dialog = queryElement("dialog", component);
-      const close = queryElement(`[${attr8}="close"]`, component);
+      const close = queryElement(`[${attr10}="close"]`, component);
       if (!open || !dialog || !close)
         return;
       open.addEventListener("click", () => {
@@ -703,8 +703,8 @@
 
   // src/bestbuys/index.ts
   var bestbuys = () => {
-    const attr8 = "data-bb";
-    const components2 = queryElements(`[${attr8}]`);
+    const attr10 = "data-bb";
+    const components2 = queryElements(`[${attr10}]`);
     components2.forEach((component) => {
       const { bb } = component.dataset;
       if (!bb)
@@ -16151,17 +16151,17 @@
 
   // src/calculators/index.ts
   var calculators = () => {
-    const attr8 = "data-calc";
+    const attr10 = "data-calc";
     const repaymentValueSlider = queryElement(`[data-input="RepaymentValue"]`);
     const depositAmountSlider = queryElement(`[data-input="DepositAmountSlider"]`);
     const rateSlider = queryElement(`[data-input="Rate"]`);
     if (repaymentValueSlider)
-      repaymentValueSlider.setAttribute(`${attr8}-output`, "BorrowingAmountHigher");
+      repaymentValueSlider.setAttribute(`${attr10}-output`, "BorrowingAmountHigher");
     if (depositAmountSlider)
-      depositAmountSlider.setAttribute(`${attr8}}-output`, "DepositAmount");
+      depositAmountSlider.setAttribute(`${attr10}}-output`, "DepositAmount");
     if (rateSlider)
-      rateSlider.setAttribute(`${attr8}}-output`, "InitialRate");
-    const components2 = queryElements(`[${attr8}]`);
+      rateSlider.setAttribute(`${attr10}}-output`, "InitialRate");
+    const components2 = queryElements(`[${attr10}]`);
     components2.forEach((component) => {
       const calculator = new HandleCalculator(component);
       calculator.init();
@@ -16574,17 +16574,6 @@
     document.cookie = `${key}=${value}; path=/`;
   };
 
-  // src/mct/shared/utils/logError.ts
-  var logError = (message, data) => {
-    console.log(message, data || "");
-    return false;
-  };
-
-  // src/mct/shared/utils/index.ts
-  var sharedUtils = {
-    logError
-  };
-
   // src/mct/shared/constants.ts
   var mctAttr = {
     mct: "data-mct",
@@ -16669,38 +16658,27 @@
     return data.result.lenders;
   };
 
-  // src/mct/stages/form/Questions.ts
-  var Question = class {
+  // src/mct/shared/classes/InputGroupBase.ts
+  var InputGroupBase = class {
     el;
-    formManager;
     onChange;
-    onEnter;
     inputs = [];
     type;
-    name;
-    dependsOn;
-    dependsOnValue;
-    isVisible = false;
     groupName;
-    indexInGroup;
+    name;
     constructor(el, options) {
       this.el = el;
-      this.formManager = options.formManager;
       this.onChange = options.onChange;
-      this.onEnter = options.onEnter;
+      this.groupName = options.groupName;
       this.inputs = queryElements("input, select", this.el);
       this.type = this.detectType();
-      this.name = this.el.getAttribute(attr7.question);
-      this.dependsOn = this.el.getAttribute(attr7.dependsOn) || null;
-      this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
-      this.groupName = options.groupName;
-      this.indexInGroup = options.indexInGroup;
-      this.init();
+      this.name = this.inputs.find((input) => !!input.name)?.name;
+      this.baseInit();
     }
-    init() {
+    baseInit() {
       this.formatInputNamesAndIDs();
-      this.handleLenderSelect();
       this.bindEventListeners();
+      this.init();
     }
     formatInputNamesAndIDs() {
       if (this.type === "radio" || this.type === "checkbox") {
@@ -16721,48 +16699,13 @@
         input.name = nameAndID;
       }
     }
-    async handleLenderSelect() {
-      if (this.name !== "Lender")
-        return;
-      try {
-        const lenders = await fetchLenders();
-        const lenderOptions = lenders.map(
-          (lender) => ({
-            value: lender.MasterLenderId.toString(),
-            label: lender.LenderName
-          })
-        );
-        this.setSelectOptions(lenderOptions);
-      } catch (error) {
-        console.error("Failed to fetch lenders:", error);
-      }
-    }
     bindEventListeners() {
       this.inputs.forEach((input) => {
         if (this.type === "text" || this.type === "number") {
-          input.addEventListener("input", () => {
-            const valid = this.isValid();
-            this.updateVisualState(valid);
-            this.onChange();
-          });
+          input.addEventListener("input", () => this.onChange());
         } else {
-          input.addEventListener("change", () => {
-            const valid = this.isValid();
-            this.updateVisualState(valid);
-            this.onChange();
-          });
+          input.addEventListener("change", () => this.onChange());
         }
-        input.addEventListener("keydown", (event) => {
-          const ke = event;
-          if (ke.key !== "Enter")
-            return;
-          if (this.isValid()) {
-            this.onEnter();
-          } else {
-            this.updateVisualState(false);
-            this.onChange();
-          }
-        });
       });
     }
     isValid() {
@@ -16772,58 +16715,16 @@
       const value = this.getValue();
       if (this.type === "radio")
         return typeof value === "string" && value !== "";
-      if (this.type === "checkbox")
+      if (this.type === "checkbox") {
+        if (typeof value === "boolean")
+          return true;
         return Array.isArray(value) && value.length > 0;
+      }
       if (this.type === "text")
         return typeof value === "string" && value.trim() !== "";
       if (this.type === "number")
         return typeof value === "number" && !isNaN(value);
       return false;
-    }
-    updateVisualState(isValid) {
-      this.el.classList.toggle("has-error", !isValid);
-    }
-    enable() {
-      this.inputs.forEach((input) => {
-        input.disabled = false;
-      });
-    }
-    focus() {
-      const input = this.inputs[0];
-      if (!input)
-        throw new Error("No input found to focus on");
-      input.focus();
-    }
-    disable() {
-      this.inputs.forEach((input) => {
-        input.disabled = true;
-      });
-    }
-    require() {
-      this.formManager.saveQuestion(this);
-      this.el.style.removeProperty("display");
-      this.isVisible = true;
-    }
-    unrequire() {
-      this.formManager.removeQuestion(this);
-      this.el.style.display = "none";
-      this.isVisible = false;
-    }
-    toggleActive(active) {
-      if (active === void 0) {
-        this.el.classList.toggle(classes.active);
-      } else {
-        this.el.classList.toggle(classes.active, active);
-      }
-    }
-    shouldBeVisible(answers, groupIsVisible) {
-      if (!groupIsVisible)
-        return false;
-      if (!this.dependsOn)
-        return true;
-      if (!this.dependsOnValue)
-        return answers[this.dependsOn] !== null;
-      return answers[this.dependsOn] === this.dependsOnValue;
     }
     detectType() {
       const input = queryElement("input, select", this.el);
@@ -16855,13 +16756,25 @@
       this.inputs.forEach((input) => input instanceof HTMLInputElement ? input.checked = false : null);
     }
     getCheckboxValues() {
+      if (this.inputs.length === 1) {
+        const input = this.inputs[0];
+        return input instanceof HTMLInputElement ? input.checked : false;
+      }
       const checked = this.inputs.filter((input) => input instanceof HTMLInputElement ? input.checked : false);
       return checked.map((input) => input.value);
     }
     setCheckboxValues(values) {
-      this.inputs.forEach(
-        (input) => input instanceof HTMLInputElement ? input.checked = values.includes(input.value) : null
-      );
+      if (this.inputs.length === 1 && typeof values === "boolean") {
+        const input = this.inputs[0];
+        if (input instanceof HTMLInputElement)
+          input.checked = values;
+        return;
+      }
+      if (Array.isArray(values)) {
+        this.inputs.forEach(
+          (input) => input instanceof HTMLInputElement ? input.checked = values.includes(input.value) : null
+        );
+      }
     }
     resetCheckboxeInputs() {
       this.inputs.forEach((input) => input instanceof HTMLInputElement ? input.checked = false : null);
@@ -16983,6 +16896,40 @@
           throw new Error(`Unsupported question type: ${this.type}`);
       }
     }
+    // public getValuesObject(): Record<string, InputValue | null> {
+    //   // Get unique input names
+    //   const uniqueNames = [...new Set(this.inputs.map((input) => input.name))];
+    //   // If there's only one name, return simple object
+    //   if (uniqueNames.length === 1) {
+    //     const name = uniqueNames[0];
+    //     return { [name]: this.getValue() };
+    //   }
+    //   // If there are multiple names, build object with each name-value pair
+    //   const result: Record<string, InputValue | null> = {};
+    //   uniqueNames.forEach((name) => {
+    //     // Filter inputs by name and get their values
+    //     const inputsWithName = this.inputs.filter((input) => input.name === name);
+    //     if (this.type === 'checkbox') {
+    //       // For checkboxes, get all checked values for this name
+    //       const checkedValues = inputsWithName
+    //         .filter((input) => input instanceof HTMLInputElement && input.checked)
+    //         .map((input) => input.value);
+    //       result[name] = checkedValues;
+    //     } else {
+    //       // For other types, get the first input's value (should be the only one)
+    //       const input = inputsWithName[0];
+    //       if (input) {
+    //         if (this.type === 'number') {
+    //           const value = input.value.trim();
+    //           result[name] = value ? parseFloat(value) : null;
+    //         } else {
+    //           result[name] = input.value || null;
+    //         }
+    //       }
+    //     }
+    //   });
+    //   return result;
+    // }
     getLabels() {
       const checked = this.inputs.filter((input) => {
         if (input instanceof HTMLInputElement)
@@ -17016,6 +16963,166 @@
     }
   };
 
+  // src/mct/stages/form/Questions.ts
+  var Question = class extends InputGroupBase {
+    formManager;
+    onEnter;
+    dependsOn;
+    dependsOnValue;
+    isVisible = false;
+    // public name: string;
+    indexInGroup;
+    constructor(el, options) {
+      super(el, options);
+      this.formManager = options.formManager;
+      this.onEnter = options.onEnter;
+      this.dependsOn = this.el.getAttribute(attr7.dependsOn) || null;
+      this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
+      this.indexInGroup = options.indexInGroup;
+    }
+    init() {
+      this.handleLenderSelect();
+    }
+    async handleLenderSelect() {
+      if (this.name !== "Lender")
+        return;
+      try {
+        const lenders = await fetchLenders();
+        const lenderOptions = lenders.map(
+          (lender) => ({
+            value: lender.MasterLenderId.toString(),
+            label: lender.LenderName
+          })
+        );
+        this.setSelectOptions(lenderOptions);
+      } catch (error) {
+        console.error("Failed to fetch lenders:", error);
+      }
+    }
+    bindEventListeners() {
+      this.inputs.forEach((input) => {
+        if (this.type === "text" || this.type === "number") {
+          input.addEventListener("input", () => this.onChange());
+        } else {
+          input.addEventListener("change", () => this.onChange());
+        }
+        input.addEventListener("keydown", (event) => {
+          const ke = event;
+          if (ke.key !== "Enter")
+            return;
+          if (this.isValid()) {
+            this.onEnter();
+          } else {
+            this.onChange();
+          }
+        });
+      });
+    }
+    updateVisualState(isValid) {
+      this.el.classList.toggle("has-error", !isValid);
+    }
+    enable() {
+      this.inputs.forEach((input) => {
+        input.disabled = false;
+      });
+    }
+    focus() {
+      const input = this.inputs[0];
+      if (!input)
+        throw new Error("No input found to focus on");
+      input.focus();
+    }
+    disable() {
+      this.inputs.forEach((input) => {
+        input.disabled = true;
+      });
+    }
+    require() {
+      this.formManager.saveQuestion(this);
+      this.el.style.removeProperty("display");
+      this.isVisible = true;
+    }
+    unrequire() {
+      this.formManager.removeQuestion(this);
+      this.el.style.display = "none";
+      this.isVisible = false;
+    }
+    toggleActive(active) {
+      if (active === void 0) {
+        this.el.classList.toggle(classes.active);
+      } else {
+        this.el.classList.toggle(classes.active, active);
+      }
+    }
+    shouldBeVisible(answers, groupIsVisible) {
+      if (!groupIsVisible)
+        return false;
+      if (!this.dependsOn)
+        return true;
+      if (!this.dependsOnValue)
+        return answers[this.dependsOn] !== null;
+      return answers[this.dependsOn] === this.dependsOnValue;
+    }
+  };
+
+  // src/utils/filterAllowed.ts
+  function filterAllowed(values, allowed) {
+    return values.map(Number).filter((v) => allowed.includes(v));
+  }
+
+  // src/mct/shared/utils/generateProductsAPIInput.ts
+  var DEFAULT_OPTIONS = {
+    numberOfResults: 1,
+    sortColumn: 1
+  };
+  var generateProductsAPIInput = (answers, options = {}) => {
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const PropertyValue = answers.PropertyValue;
+    const DepositAmount = answers.DepositAmount;
+    let RepaymentValue = answers.RepaymentValue || null;
+    if (!RepaymentValue)
+      RepaymentValue = PropertyValue - DepositAmount;
+    const PropertyType = 1;
+    const MortgageType = answers.ResiBtl === "R" ? 1 : 2;
+    const TermYears = answers.MortgageLength;
+    const SchemePurpose = answers.PurchRemo === "P" ? 1 : 2;
+    const NumberOfResults = opts.numberOfResults ?? 1;
+    const SortColumn = opts.sortColumn ?? 1;
+    const SchemeTypes = (() => {
+      const value = answers.SchemeTypes;
+      if (typeof value === "boolean")
+        return [];
+      return filterAllowed(value, [1, 2]);
+    })();
+    const Features = {};
+    if (answers.HelpToBuy)
+      Features.HelpToBuy = true;
+    if (answers.Offset)
+      Features.Offset = true;
+    if (answers.EarlyRepaymentCharge)
+      Features.EarlyRepaymentCharge = true;
+    if (answers.NewBuild)
+      Features.NewBuild = true;
+    const SapValue = answers.SapValue ? answers.SapValue : null;
+    const input = {
+      PropertyValue,
+      RepaymentValue,
+      PropertyType,
+      MortgageType,
+      InterestOnlyValue: answers.InterestOnlyValue,
+      TermYears,
+      SchemePurpose,
+      SchemePeriods: Array(answers.SchemePeriods),
+      SchemeTypes,
+      NumberOfResults,
+      SortColumn,
+      Features
+    };
+    if (SapValue)
+      input.SapValue = SapValue;
+    return input;
+  };
+
   // src/mct/shared/api/endpoints.ts
   var ENDPOINTS = {
     lcid: "EnquiryHttpTrigger",
@@ -17031,21 +17138,6 @@
     });
   };
 
-  // src/utils/filterAllowed.ts
-  function filterAllowed(values, allowed) {
-    return values.map(Number).filter((v) => allowed.includes(v));
-  }
-
-  // src/utils/formatNumber.ts
-  function formatNumber2(value, options) {
-    const { currency = false, fallback = "" } = options || {};
-    let num = typeof value === "number" ? value : parseFloat(value.replace(/,/g, ""));
-    if (isNaN(num))
-      return fallback;
-    const formatted = num.toLocaleString("en-GB", { maximumFractionDigits: 0 });
-    return currency ? `\xA3${formatted}` : formatted;
-  }
-
   // src/utils/trackGAEvent.ts
   function trackGAEvent(eventName, params = {}) {
     if (typeof window !== "undefined" && typeof window.gtag === "function") {
@@ -17059,6 +17151,58 @@
     if (true)
       console.log("[GA] Event:", eventName, params);
   }
+
+  // src/utils/formatNumber.ts
+  function formatNumber2(value, options) {
+    const { type = "number", decimals, fallback = "" } = options || {};
+    let num = typeof value === "number" ? value : parseFloat(value.replace(/,/g, ""));
+    if (isNaN(num))
+      return fallback;
+    if (type === "currency") {
+      const formatted2 = num.toLocaleString("en-GB", {
+        maximumFractionDigits: decimals ?? 0,
+        minimumFractionDigits: decimals ?? 0
+      });
+      return `\xA3${formatted2}`;
+    }
+    if (type === "percent") {
+      const d = decimals ?? 2;
+      const percentValue = num;
+      const formatted2 = percentValue.toLocaleString("en-GB", { maximumFractionDigits: d, minimumFractionDigits: d });
+      return `${formatted2}%`;
+    }
+    const formatted = num.toLocaleString("en-GB", {
+      maximumFractionDigits: decimals ?? 0,
+      minimumFractionDigits: decimals ?? 0
+    });
+    return formatted;
+  }
+
+  // src/mct/shared/utils/generateSummaryLines.ts
+  var generateSummaryLines = (summaryInfo, answers) => {
+    const productsAPIInput = generateProductsAPIInput(answers);
+    const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
+    const { RepaymentType } = answers;
+    const RepaymentValueText = formatNumber2(RepaymentValue, { type: "currency" });
+    const TermYearsText = `${TermYears} years`;
+    const RepaymentTypeText = RepaymentType === "R" ? "repayment" : RepaymentType === "I" ? "interest only" : "part repayment part interest";
+    const SchemeTypesMap = SchemeTypes.map((type) => type === 1 ? "fixed" : "variable");
+    const SchemePeriodsMap = SchemePeriods === 1 ? "2" : SchemePeriods === 2 ? "3" : SchemePeriods === 3 ? "5" : "5+";
+    const SchemePeriodsText = `${SchemePeriodsMap} years`;
+    const SchemeTypesText = SchemeTypesMap.length === 1 ? `${SchemeTypesMap[0]} rate` : SchemeTypesMap.length > 1 ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate` : null;
+    const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
+    const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
+    const ProductsAndLenders = `We\u2019ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> lenders.`;
+    const DealsAndRates = `We\u2019ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
+    const Summary = `${BorrowOverTerm} with a ${SchemeAndType}`;
+    return {
+      BorrowOverTerm,
+      SchemeAndType,
+      ProductsAndLenders,
+      DealsAndRates,
+      Summary
+    };
+  };
 
   // src/mct/stages/form/Groups.ts
   var BaseGroup = class {
@@ -17231,29 +17375,26 @@
   var OutputGroup = class extends BaseGroup {
     formManager;
     card;
-    productsAPIInput = null;
     loader;
-    products = null;
-    outputData = [];
-    summary;
-    lenders;
+    productsResponse = null;
+    summaryInfo = null;
+    outputs;
     button;
     constructor(component, formManager) {
       super(component, formManager);
       this.formManager = formManager;
-      this.card = queryElement(`[${attr7.element}="output-card"]`);
-      this.loader = queryElement(`[${attr7.element}="output-loader"]`);
-      this.summary = queryElement(`[${attr7.output}="summary"]`);
-      this.lenders = queryElement(`[${attr7.output}="lenders"]`);
-      this.button = queryElement(`[${attr7.element}="get-results"]`);
+      this.card = queryElement(`[${attr7.element}="output-card"]`, this.component);
+      this.loader = queryElement(`[${attr7.element}="output-loader"]`, this.component);
+      this.outputs = queryElements(`[${attr7.output}]`, this.component);
+      this.button = queryElement(`[${attr7.element}="get-results"]`, this.component);
       this.bindEvents();
     }
     bindEvents() {
       this.button.addEventListener("click", () => this.navigateToResults());
     }
-    getComponent() {
-      return this.component;
-    }
+    // public getComponent(): HTMLElement {
+    //   return this.component;
+    // }
     show() {
       this.component.style.removeProperty("display");
       this.isVisible = true;
@@ -17283,97 +17424,56 @@
     async handleProducts() {
       this.showLoader(true);
       this.button.disabled = true;
-      this.products = await this.fetchProducts();
-      if (!this.products)
+      this.productsResponse = await this.fetchProducts();
+      if (!this.productsResponse)
         return;
-      this.outputData = this.buildOutputData();
-      this.updateSummary();
+      this.updateOutputs();
       this.showLoader(false);
       this.button.disabled = false;
     }
     async fetchProducts() {
+      const input = generateProductsAPIInput(this.formManager.getAnswers());
       try {
-        this.productsAPIInput = this.buildProductsInput();
-        const response = await fetchProducts(this.productsAPIInput);
+        const response = await fetchProducts(input);
         return response;
       } catch (error) {
         console.error("Failed to fetch products:", error);
         return null;
       }
     }
-    buildProductsInput() {
-      const answers = this.formManager.getAnswers();
-      const PropertyValue = answers.PropertyValue;
-      const DepositAmount = answers.DepositAmount;
-      let RepaymentValue = answers.RepaymentValue || null;
-      if (!RepaymentValue)
-        RepaymentValue = PropertyValue - DepositAmount;
-      const PropertyType = 1;
-      const MortgageType = answers.ResiBtl === "R" ? 1 : 2;
-      const TermYears = answers.MortgageLength;
-      const SchemePurpose = answers.PurchRemo === "P" ? 1 : 2;
-      const NumberOfResults = 1;
-      const SortColumn = 1;
-      return {
-        PropertyValue,
-        RepaymentValue,
-        PropertyType,
-        MortgageType,
-        InterestOnlyValue: answers.InterestOnlyValue,
-        TermYears,
-        SchemePurpose,
-        SchemePeriods: filterAllowed(answers.SchemePeriods ?? [], [1, 2, 3, 4]),
-        SchemeTypes: filterAllowed(answers.SchemeTypes ?? [], [1, 2]),
-        NumberOfResults,
-        SortColumn
-      };
-    }
-    buildOutputData() {
-      const answers = this.formManager.getAnswers();
-      if (!this.productsAPIInput || !this.products)
-        return [];
-      const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = this.productsAPIInput;
-      const { RepaymentType } = answers;
-      const RepaymentValueText = formatNumber2(RepaymentValue, { currency: true });
-      const TermYearsText = `${TermYears} years`;
-      const RepaymentTypeText = RepaymentType === "R" ? "repayment" : RepaymentType === "I" ? "interest only" : "part repayment part interest";
-      const SchemeTypesMap = SchemeTypes.map((type) => type === 1 ? "fixed" : "variable");
-      const SchemePeriodsMap = SchemePeriods.map(
-        (period) => period === 1 ? "2" : period === 2 ? "3" : period === 3 ? "5" : "5+"
-      );
-      const SchemePeriodsText = SchemePeriodsMap.length === 1 ? `${SchemePeriodsMap[0]} year` : SchemePeriodsMap.length > 1 ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year` : null;
-      const SchemeTypesText = SchemeTypesMap.length === 1 ? `${SchemeTypesMap[0]} rate` : SchemeTypesMap.length > 1 ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate` : null;
-      const summmaryText = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-      const lendersText = `We\u2019ve found <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${this.products.result.SummaryInfo.NumberOfLenders}</span> lenders.`;
-      return [
-        { key: "summary", value: summmaryText },
-        { key: "lenders", value: lendersText }
-      ];
-    }
-    updateSummary() {
-      this.outputData.forEach((data) => {
-        const key = data.key;
-        const value = data.value;
-        if (key === "summary")
-          this.summary.innerHTML = value;
-        if (key === "lenders")
-          this.lenders.innerHTML = value;
+    updateOutputs() {
+      if (!this.summaryInfo)
+        return;
+      const summaryLines = generateSummaryLines(this.summaryInfo, this.formManager.getAnswers());
+      if (!summaryLines)
+        return;
+      this.outputs.forEach((output) => {
+        const key = output.getAttribute(attr7.output);
+        output.innerHTML = summaryLines[key];
       });
     }
     navigateToResults() {
       this.formManager.navigateToNextGroup();
-      this.button.disabled = true;
     }
+  };
+
+  // src/mct/shared/utils/logError.ts
+  var logError = (message, data) => {
+    console.log(message, data || "");
+    return false;
   };
 
   // src/mct/stages/form/Manager.ts
   var FormManager = class {
     component;
+    id;
     profile = null;
     groups = [];
     questions = /* @__PURE__ */ new Set();
+    isInitialised = false;
     constructor(component) {
       this.component = component;
+      this.id = "questions";
     }
     prefill(answers) {
     }
@@ -17387,15 +17487,15 @@
       return this.questions;
     }
     saveAnswersToMCT() {
-      MCTManager.clearAnswers();
+      MCTManager2.clearAnswers();
       [...this.questions].forEach((question) => {
         const value = question.getValue();
         if (value)
-          MCTManager.setAnswer(question.name, value);
+          MCTManager2.setAnswer(question.name, value);
       });
     }
     getAnswers() {
-      return { ...MCTManager.getAnswers() };
+      return { ...MCTManager2.getAnswers() };
     }
     determineProfile() {
       const answers = this.getAnswers();
@@ -17406,7 +17506,7 @@
       return profile ? profile : null;
     }
     reset() {
-      MCTManager.clearAnswers();
+      MCTManager2.clearAnswers();
       this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
     }
   };
@@ -17428,6 +17528,9 @@
       };
     }
     init() {
+      if (this.isInitialised)
+        return;
+      this.isInitialised = true;
       this.showHeader("static");
       this.components.groupElements.forEach((groupEl, index2) => {
         const name = groupEl.getAttribute(attr7.group);
@@ -17465,6 +17568,12 @@
         }
         currentGroup.navigate("prev");
       });
+    }
+    show() {
+      this.component.style.removeProperty("display");
+    }
+    hide() {
+      this.component.style.display = "none";
     }
     prepareWrapper() {
       if (this.groups.length === 0)
@@ -17538,18 +17647,18 @@
     navigateToNextGroup() {
       const activeGroup = this.getActiveGroup();
       if (!activeGroup)
-        return sharedUtils.logError(`Next group: No active group found`);
+        return logError(`Next group: No active group found`);
       if (!this.profile)
-        return sharedUtils.logError(`Next group: No profile found`);
+        return logError(`Next group: No profile found`);
       const { name } = activeGroup;
       if (name === "customer-identifier" && activeGroup instanceof MainGroup) {
         this.initialiseProfileSelect(this.profile.name);
         const profileGroup = this.getGroupByName(this.profile.name);
         if (!profileGroup)
-          return sharedUtils.logError(`Next group: No matching group for profile: ${this.profile.name}`);
+          return logError(`Next group: No matching group for profile: ${this.profile.name}`);
         const profileGroupIndex = this.groups.indexOf(profileGroup);
         if (profileGroupIndex === -1)
-          return sharedUtils.logError(`Next group: No group index for profile: ${this.profile.name}`);
+          return logError(`Next group: No group index for profile: ${this.profile.name}`);
         this.activeGroupIndex = profileGroupIndex;
         this.showHeader("sticky");
         const firstVisibleIndex = profileGroup.getNextVisibleIndex(-1);
@@ -17562,54 +17671,55 @@
       } else if (name !== "output" && activeGroup instanceof MainGroup) {
         const outputGroup = this.getGroupByName("output");
         if (!outputGroup)
-          return sharedUtils.logError(`Next group: No output group found`);
+          return logError(`Next group: No output group found`);
         const outputGroupIndex = this.groups.indexOf(outputGroup);
         if (outputGroupIndex === -1)
-          return sharedUtils.logError(`Next group: No group index for output`);
+          return logError(`Next group: No group index for output`);
         this.activeGroupIndex = outputGroupIndex;
         outputGroup.activate();
       } else if (name === "output" && activeGroup instanceof OutputGroup) {
         console.log("End of form, navigate to results");
-        MCTManager.goToStage("results");
+        console.log(MCTManager2.getAnswers());
+        MCTManager2.goToStage("results");
       }
     }
     navigateToPreviousGroup() {
       const activeGroup = this.getActiveGroup();
       if (!activeGroup)
-        return sharedUtils.logError(`Previous group: No active group found`);
+        return logError(`Previous group: No active group found`);
       if (!this.profile)
-        return sharedUtils.logError(`Previous group: No profile found`);
+        return logError(`Previous group: No profile found`);
       let previousGroup;
       const { name } = activeGroup;
       if (name === "output" && activeGroup instanceof OutputGroup) {
         const profileGroup = this.getGroupByName(this.profile.name);
         if (!profileGroup)
-          return sharedUtils.logError(`Previous group: No matching group for profile: ${this.profile.name}`);
+          return logError(`Previous group: No matching group for profile: ${this.profile.name}`);
         const profileGroupIndex = this.groups.indexOf(profileGroup);
         if (profileGroupIndex === -1)
-          return sharedUtils.logError(`Previous group: No group index for profile: ${this.profile.name}`);
+          return logError(`Previous group: No group index for profile: ${this.profile.name}`);
         this.activeGroupIndex = profileGroupIndex;
         this.showHeader("sticky");
         previousGroup = profileGroup;
       } else if (name !== "customer-identifier" && activeGroup instanceof MainGroup) {
         const identifierGroup = this.getGroupByName("customer-identifier");
         if (!identifierGroup)
-          return sharedUtils.logError(`Previous group: No identifier group found`);
+          return logError(`Previous group: No identifier group found`);
         const identifierGroupIndex = this.groups.indexOf(identifierGroup);
         if (identifierGroupIndex === -1)
-          return sharedUtils.logError(`Previous group: No group index for identifier`);
+          return logError(`Previous group: No group index for identifier`);
         this.activeGroupIndex = identifierGroupIndex;
         this.showHeader("static");
         previousGroup = identifierGroup;
       } else
         return;
       if (!previousGroup)
-        return sharedUtils.logError(`Previous group: No previous group found`);
+        return logError(`Previous group: No previous group found`);
       if (!(previousGroup instanceof MainGroup))
-        return sharedUtils.logError(`Previous group: Previous group is not a main group`);
+        return logError(`Previous group: Previous group is not a main group`);
       const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
       if (lastVisibleIndex < 0)
-        return sharedUtils.logError(`Previous group: No last visible index group for profile: ${this.profile}`);
+        return logError(`Previous group: No last visible index group for profile: ${this.profile}`);
       previousGroup.activeQuestionIndex = lastVisibleIndex;
       previousGroup.activateQuestion(previousGroup.getActiveQuestion());
     }
@@ -17637,7 +17747,7 @@
       this.prepareWrapper();
     }
     reset() {
-      MCTManager.clearAnswers();
+      MCTManager2.clearAnswers();
       this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
     }
   };
@@ -17646,8 +17756,4709 @@
   var initForm = (component, options) => {
     const manager = options.mode === "main" ? new MainFormManager(component) : null;
     if (!manager)
-      return;
-    manager.init();
+      return null;
+    return manager;
+  };
+
+  // src/mct/stages/results/constants.ts
+  var attr9 = {
+    components: "data-mct-results",
+    element: "data-mct-results-element",
+    output: "data-mct-results-output",
+    type: "data-mct-results-output-type"
+  };
+
+  // src/mct/stages/results/Result.ts
+  var Result = class {
+    component = null;
+    wrapper;
+    template;
+    product;
+    outputs = [];
+    button = null;
+    dialogs = [];
+    constructor(wrapper, options) {
+      this.wrapper = wrapper;
+      this.template = options.template.cloneNode(true);
+      this.product = options.product;
+      this.outputs = queryElements(`[${attr9.output}]`, this.template);
+      this.button = queryElement(`[${attr9.element}="template-cta"]`, this.template);
+      this.init();
+    }
+    init() {
+      this.populate();
+      this.bindEvents();
+      this.render();
+    }
+    populate() {
+      this.outputs.forEach((output) => {
+        const outputName = output.getAttribute(attr9.output);
+        const outputType = output.getAttribute(attr9.type);
+        let outputValue = this.product[outputName];
+        switch (outputType) {
+          case "currency":
+            outputValue = formatNumber2(outputValue, { type: "currency" });
+            break;
+          case "boolean":
+            outputValue = outputValue ? true : false;
+            break;
+          default:
+            outputValue = outputValue.toString();
+        }
+        if (output instanceof HTMLImageElement) {
+          output.src = outputValue.toString();
+        } else if (outputType === "boolean") {
+          output.style.display = outputValue ? "block" : "none";
+        } else {
+          output.textContent = outputValue.toString();
+        }
+      });
+    }
+    bindEvents() {
+      this.button?.addEventListener("click", () => {
+        console.log("clicked");
+      });
+    }
+    render() {
+      this.wrapper.appendChild(this.template);
+    }
+    remove() {
+      this.template.remove();
+    }
+  };
+
+  // src/mct/shared/examples/exampleProductsResponse.ts
+  var EXAMPLE_PRODUCTS_RESPONSE = {
+    url: "https://integrationtest.landc.co.uk/productdata/bestbuysMCT",
+    body: '{"PropertyValue":250000,"RepaymentValue":125000,"PropertyType":1,"MortgageType":1,"InterestOnlyValue":0,"TermYears":25,"SchemePurpose":1,"SchemePeriods":[1,2,3,4],"SchemeTypes":[1,2],"NumberOfResults":100,"SortColumn":1}',
+    result: {
+      SummaryInfo: {
+        LowestRate: 2.79,
+        LowestPMT: 579.2,
+        LowestAnnualCost: 7424,
+        NumberOfLenders: 67,
+        NumberOfProducts: 1504
+      },
+      Products: [
+        {
+          ProductId: 635169,
+          LenderId: 20,
+          LenderName: "Marsden",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/marsden.gif",
+          ProductSchemeFriendlyName: "3.70% discount to 31/07/27",
+          Rate: 2.79,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 579.2,
+          FutureValue: 117885.79,
+          FutureMonthlyPayment: 823.37,
+          TotalFees: 998,
+          AnnualCost: 7449.4,
+          ApplicationFee: 0,
+          CompletionFee: 998,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "5% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% until 31/07/27",
+          ExitFee: 150,
+          Legals: "Payable",
+          MinimumMortgageAmount: 3e4,
+          MaximumMortgageAmount: 25e5,
+          LTV: 70,
+          APR: 6.027,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 53,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 2.79% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3579.20 and 276 payments of \xA3823.37. The total amount payable would be \xA3242,148.92 made up of the loan amount plus interest (\xA3116,150.92) and fees (\xA3998.00). The overall cost for comparison is 6.0% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 597886,
+          LenderId: 20,
+          LenderName: "Marsden",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/marsden.gif",
+          ProductSchemeFriendlyName: "3.55% discount to 30/06/27",
+          Rate: 2.94,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 588.87,
+          FutureValue: 118022.52,
+          FutureMonthlyPayment: 824.33,
+          TotalFees: 998,
+          AnnualCost: 7565.44,
+          ApplicationFee: 0,
+          CompletionFee: 998,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "5% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% until 30/06/27",
+          ExitFee: 150,
+          Legals: "Payable",
+          MinimumMortgageAmount: 3e4,
+          MaximumMortgageAmount: 25e5,
+          LTV: 80,
+          APR: 6.046,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 53,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 2.94% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3588.87 and 276 payments of \xA3824.33. The total amount payable would be \xA3242,645.96 made up of the loan amount plus interest (\xA3116,647.96) and fees (\xA3998.00). The overall cost for comparison is 6.0% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 636229,
+          LenderId: 23,
+          LenderName: "Furness",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/furness.gif",
+          ProductSchemeFriendlyName: "3.81% discount for 2 years",
+          Rate: 3,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 592.76,
+          FutureValue: 118076.69,
+          FutureMonthlyPayment: 843.55,
+          TotalFees: 1054,
+          AnnualCost: 7640.12,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 305,
+          OtherFees: 0,
+          Cashback: 250,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% for 2 years",
+          ExitFee: 120,
+          Legals: "Payable",
+          MinimumMortgageAmount: 3e4,
+          MaximumMortgageAmount: 2e6,
+          LTV: 80,
+          APR: 6.281,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 53,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 3.00% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3592.76 and 276 payments of \xA3843.55. The total amount payable would be \xA3248,100.04 made up of the loan amount plus interest (\xA3122,046.04) and fees (\xA31,054.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 619700,
+          LenderId: 23,
+          LenderName: "Furness",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/furness.gif",
+          ProductSchemeFriendlyName: "3.71% discount for 2 years",
+          Rate: 3.04,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 595.37,
+          FutureValue: 118112.63,
+          FutureMonthlyPayment: 843.81,
+          TotalFees: 1054,
+          AnnualCost: 7671.44,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 305,
+          OtherFees: 0,
+          Cashback: 250,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% for 2 years",
+          ExitFee: 120,
+          Legals: "Payable",
+          MinimumMortgageAmount: 3e4,
+          MaximumMortgageAmount: 2e6,
+          LTV: 80,
+          APR: 6.286,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 53,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 3.04% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3595.37 and 276 payments of \xA3843.81. The total amount payable would be \xA3248,234.44 made up of the loan amount plus interest (\xA3122,180.44) and fees (\xA31,054.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 624949,
+          LenderId: 23,
+          LenderName: "Furness",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/furness.gif",
+          ProductSchemeFriendlyName: "3.44% discount for 2 years",
+          Rate: 3.31,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 613.11,
+          FutureValue: 118351.79,
+          FutureMonthlyPayment: 845.52,
+          TotalFees: 749,
+          AnnualCost: 7731.82,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 250,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% for 2 years",
+          ExitFee: 120,
+          Legals: "Payable",
+          MinimumMortgageAmount: 3e4,
+          MaximumMortgageAmount: 2e6,
+          LTV: 90,
+          APR: 6.32,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 53,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 3.31% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3613.11 and 276 payments of \xA3845.52. The total amount payable would be \xA3248,827.16 made up of the loan amount plus interest (\xA3123,078.16) and fees (\xA3749.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 619702,
+          LenderId: 23,
+          LenderName: "Furness",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/furness.gif",
+          ProductSchemeFriendlyName: "3.20% discount for 2 years",
+          Rate: 3.55,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 629.14,
+          FutureValue: 118559.3,
+          FutureMonthlyPayment: 847,
+          TotalFees: -250,
+          AnnualCost: 7424.68,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 250,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% for 2 years",
+          ExitFee: 120,
+          Legals: "Payable",
+          MinimumMortgageAmount: 3e4,
+          MaximumMortgageAmount: 2e6,
+          LTV: 95,
+          APR: 6.3,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 53,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 3.55% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3629.14 and 276 payments of \xA3847.00. The total amount payable would be \xA3248,621.36 made up of the loan amount plus interest (\xA3123,871.36) and fees (-\xA3250.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 648474,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/27",
+          Rate: 3.87,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 650.86,
+          FutureValue: 118828.63,
+          FutureMonthlyPayment: 942.08,
+          TotalFees: 1099,
+          AnnualCost: 8359.82,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 30/09/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.475,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.87% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3650.86 and 276 payments of \xA3942.08. The total amount payable would be \xA3276,733.72 made up of the loan amount plus interest (\xA3150,634.72) and fees (\xA31,099.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643922,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/27",
+          Rate: 3.88,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 651.54,
+          FutureValue: 118836.91,
+          FutureMonthlyPayment: 904.05,
+          TotalFees: 1495,
+          AnnualCost: 8565.98,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "1.5% reducing to 0.75% until 31/07/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 60,
+          APR: 7.067,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.88% and then on a variable rate of 7.49% for the remaining 23 years would require 24 payments of \xA3651.54 and 276 payments of \xA3904.05. The total amount payable would be \xA3266,649.76 made up of the loan amount plus interest (\xA3140,154.76) and fees (\xA31,495.00). The overall cost for comparison is 7.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643934,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/30",
+          Rate: 3.88,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 651.54,
+          FutureValue: 108649.03,
+          FutureMonthlyPayment: 874.6,
+          TotalFees: 1495,
+          AnnualCost: 8117.48,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4.5% reducing to 1% until 31/07/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 60,
+          APR: 6.39,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.88% and then on a variable rate of 7.49% for the remaining 20 years would require 60 payments of \xA3651.54 and 240 payments of \xA3874.60. The total amount payable would be \xA3250,491.40 made up of the loan amount plus interest (\xA3123,996.40) and fees (\xA31,495.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647197,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/27",
+          Rate: 3.89,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 652.23,
+          FutureValue: 118845.18,
+          FutureMonthlyPayment: 849.04,
+          TotalFees: 999,
+          AnnualCost: 8326.26,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 02/08/27",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.392,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.89% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3652.23 and 276 payments of \xA3849.04. The total amount payable would be \xA3250,987.56 made up of the loan amount plus interest (\xA3124,988.56) and fees (\xA3999.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647890,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 3.89,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 652.23,
+          FutureValue: 118845.18,
+          FutureMonthlyPayment: 885.34,
+          TotalFees: 999,
+          AnnualCost: 8326.26,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.821,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.89% and then on a variable rate of 7.24% for the remaining 23 years would require 24 payments of \xA3652.23 and 276 payments of \xA3885.34. The total amount payable would be \xA3261,006.36 made up of the loan amount plus interest (\xA3135,007.36) and fees (\xA3999.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647895,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 5 years",
+          Rate: 3.89,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 652.23,
+          FutureValue: 108668.42,
+          FutureMonthlyPayment: 858.23,
+          TotalFees: 999,
+          AnnualCost: 8026.56,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% for 5 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.193,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.89% and then on a variable rate of 7.24% for the remaining 20 years would require 60 payments of \xA3652.23 and 240 payments of \xA3858.23. The total amount payable would be \xA3246,108.00 made up of the loan amount plus interest (\xA3120,109.00) and fees (\xA3999.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648382,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 3.89,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 652.23,
+          FutureValue: 118845.18,
+          FutureMonthlyPayment: 942.21,
+          TotalFees: 995,
+          AnnualCost: 8324.26,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 30/06/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.478,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.89% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3652.23 and 276 payments of \xA3942.21. The total amount payable would be \xA3276,698.48 made up of the loan amount plus interest (\xA3150,703.48) and fees (\xA3995.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644918,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 3.9,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 652.91,
+          FutureValue: 118853.45,
+          FutureMonthlyPayment: 942.27,
+          TotalFees: 1099,
+          AnnualCost: 8384.42,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e5,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.479,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.90% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3652.91 and 276 payments of \xA3942.27. The total amount payable would be \xA3276,835.36 made up of the loan amount plus interest (\xA3150,736.36) and fees (\xA31,099.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 642522,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 3.91,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 653.6,
+          FutureValue: 118861.71,
+          FutureMonthlyPayment: 848.43,
+          TotalFees: 999,
+          AnnualCost: 8342.7,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 60,
+          APR: 6.408,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.91% and then on a variable rate of 6.74% for the remaining 23 years would require 24 payments of \xA3653.60 and 276 payments of \xA3848.43. The total amount payable would be \xA3250,852.08 made up of the loan amount plus interest (\xA3124,853.08) and fees (\xA3999.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644373,
+          LenderId: 4,
+          LenderName: "Barclays",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/barclays.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 3.92,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 654.29,
+          FutureValue: 118869.95,
+          FutureMonthlyPayment: 830.25,
+          TotalFees: 899,
+          AnnualCost: 8300.98,
+          ApplicationFee: 0,
+          CompletionFee: 899,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% until 30/06/27",
+          ExitFee: 80,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 6.169,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.92% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3654.29 and 276 payments of \xA3830.25. The total amount payable would be \xA3245,750.96 made up of the loan amount plus interest (\xA3119,851.96) and fees (\xA3899.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647221,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/30",
+          Rate: 3.92,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 654.29,
+          FutureValue: 108726.52,
+          FutureMonthlyPayment: 826.71,
+          TotalFees: 999,
+          AnnualCost: 8051.28,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 02/08/30",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 5.866,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.92% and then on a variable rate of 6.75% for the remaining 20 years would require 60 payments of \xA3654.29 and 240 payments of \xA3826.71. The total amount payable would be \xA3238,666.80 made up of the loan amount plus interest (\xA3112,667.80) and fees (\xA3999.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643933,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/30",
+          Rate: 3.93,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 654.97,
+          FutureValue: 108745.86,
+          FutureMonthlyPayment: 875.38,
+          TotalFees: 995,
+          AnnualCost: 8058.64,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4.5% reducing to 1% until 31/07/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 60,
+          APR: 6.377,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.93% and then on a variable rate of 7.49% for the remaining 20 years would require 60 payments of \xA3654.97 and 240 payments of \xA3875.38. The total amount payable would be \xA3250,384.40 made up of the loan amount plus interest (\xA3124,389.40) and fees (\xA3995.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644381,
+          LenderId: 4,
+          LenderName: "Barclays",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/barclays.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/30",
+          Rate: 3.93,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 654.97,
+          FutureValue: 108745.86,
+          FutureMonthlyPayment: 810.13,
+          TotalFees: 899,
+          AnnualCost: 8039.44,
+          ApplicationFee: 0,
+          CompletionFee: 899,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4% until 30/06/30",
+          ExitFee: 80,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 5.69,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.93% and then on a variable rate of 6.49% for the remaining 20 years would require 60 payments of \xA3654.97 and 240 payments of \xA3810.13. The total amount payable would be \xA3234,628.40 made up of the loan amount plus interest (\xA3108,729.40) and fees (\xA3899.00). The overall cost for comparison is 5.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 642535,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 3.93,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 654.97,
+          FutureValue: 108745.86,
+          FutureMonthlyPayment: 826.21,
+          TotalFees: 999,
+          AnnualCost: 8059.44,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 60,
+          APR: 5.862,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.93% and then on a variable rate of 6.74% for the remaining 20 years would require 60 payments of \xA3654.97 and 240 payments of \xA3826.21. The total amount payable would be \xA3238,587.60 made up of the loan amount plus interest (\xA3112,588.60) and fees (\xA3999.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643921,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/27",
+          Rate: 3.93,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 654.97,
+          FutureValue: 118878.2,
+          FutureMonthlyPayment: 904.37,
+          TotalFees: 995,
+          AnnualCost: 8357.14,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "1.5% reducing to 0.75% until 31/07/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 60,
+          APR: 7.045,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.93% and then on a variable rate of 7.49% for the remaining 23 years would require 24 payments of \xA3654.97 and 276 payments of \xA3904.37. The total amount payable would be \xA3266,320.40 made up of the loan amount plus interest (\xA3140,325.40) and fees (\xA3995.00). The overall cost for comparison is 7.0% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648524,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/30",
+          Rate: 3.93,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 654.97,
+          FutureValue: 108745.86,
+          FutureMonthlyPayment: 908.91,
+          TotalFees: 1099,
+          AnnualCost: 8079.44,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 30/09/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 6.721,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 3.93% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3654.97 and 240 payments of \xA3908.91. The total amount payable would be \xA3258,535.60 made up of the loan amount plus interest (\xA3132,436.60) and fees (\xA31,099.00). The overall cost for comparison is 6.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648384,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 3.94,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 655.66,
+          FutureValue: 118886.43,
+          FutureMonthlyPayment: 942.53,
+          TotalFees: 995,
+          AnnualCost: 8365.42,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 30/06/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 7.484,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.94% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3655.66 and 276 payments of \xA3942.53. The total amount payable would be \xA3276,869.12 made up of the loan amount plus interest (\xA3150,874.12) and fees (\xA3995.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647892,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 3 years",
+          Rate: 3.94,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 655.66,
+          FutureValue: 115644.48,
+          FutureMonthlyPayment: 876.9,
+          TotalFees: 999,
+          AnnualCost: 8200.92,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% for 3 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.621,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 3.94% and then on a variable rate of 7.24% for the remaining 22 years would require 36 payments of \xA3655.66 and 264 payments of \xA3876.90. The total amount payable would be \xA3256,104.36 made up of the loan amount plus interest (\xA3130,105.36) and fees (\xA3999.00). The overall cost for comparison is 6.6% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647900,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 3.96,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 657.04,
+          FutureValue: 118902.87,
+          FutureMonthlyPayment: 885.76,
+          TotalFees: 999,
+          AnnualCost: 8383.98,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 6.83,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.96% and then on a variable rate of 7.24% for the remaining 23 years would require 24 payments of \xA3657.04 and 276 payments of \xA3885.76. The total amount payable would be \xA3261,237.72 made up of the loan amount plus interest (\xA3135,238.72) and fees (\xA3999.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645502,
+          LenderId: 2,
+          LenderName: "Coventry",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/coventry.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/10/27",
+          Rate: 3.96,
+          FollowOnRate: "then 7.09% (variable)",
+          PMT: 657.04,
+          FutureValue: 118902.87,
+          FutureMonthlyPayment: 874.57,
+          TotalFees: 999,
+          AnnualCost: 8383.98,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 2% unti 31/10/27",
+          ExitFee: 125,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1,
+          MaximumMortgageAmount: 2e6,
+          LTV: 65,
+          APR: 6.699,
+          FollowOnRateValue: 7.09,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.96% and then on a variable rate of 7.09% for the remaining 23 years would require 24 payments of \xA3657.04 and 276 payments of \xA3874.57. The total amount payable would be \xA3258,149.28 made up of the loan amount plus interest (\xA3132,150.28) and fees (\xA3999.00). The overall cost for comparison is 6.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644635,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/28",
+          Rate: 3.97,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 657.73,
+          FutureValue: 115680.76,
+          FutureMonthlyPayment: 931.85,
+          TotalFees: 1099,
+          AnnualCost: 8259.09,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% until 30/09/28",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.236,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 3.97% and then on a variable rate of 7.99% for the remaining 22 years would require 36 payments of \xA3657.73 and 264 payments of \xA3931.85. The total amount payable would be \xA3270,785.68 made up of the loan amount plus interest (\xA3144,686.68) and fees (\xA31,099.00). The overall cost for comparison is 7.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644376,
+          LenderId: 4,
+          LenderName: "Barclays",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/barclays.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 3.99,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 659.11,
+          FutureValue: 118927.47,
+          FutureMonthlyPayment: 830.65,
+          TotalFees: 899,
+          AnnualCost: 8358.82,
+          ApplicationFee: 0,
+          CompletionFee: 899,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% until 30/06/27",
+          ExitFee: 80,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 1e7,
+          LTV: 75,
+          APR: 6.177,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 3.99% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3659.11 and 276 payments of \xA3830.65. The total amount payable would be \xA3245,977.04 made up of the loan amount plus interest (\xA3120,078.04) and fees (\xA3899.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 638118,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/28",
+          Rate: 3.99,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 659.11,
+          FutureValue: 115704.89,
+          FutureMonthlyPayment: 842.45,
+          TotalFees: 999,
+          AnnualCost: 8242.32,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 02/08/28",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.233,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 3.99% and then on a variable rate of 6.75% for the remaining 22 years would require 36 payments of \xA3659.11 and 264 payments of \xA3842.45. The total amount payable would be \xA3247,133.76 made up of the loan amount plus interest (\xA3121,134.76) and fees (\xA3999.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643925,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/27",
+          Rate: 4.01,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 660.49,
+          FutureValue: 118943.83,
+          FutureMonthlyPayment: 904.86,
+          TotalFees: 1495,
+          AnnualCost: 8673.38,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "1.5% reducing to 0.75% until 31/07/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 75,
+          APR: 7.082,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.01% and then on a variable rate of 7.49% for the remaining 23 years would require 24 payments of \xA3660.49 and 276 payments of \xA3904.86. The total amount payable would be \xA3267,088.12 made up of the loan amount plus interest (\xA3140,593.12) and fees (\xA31,495.00). The overall cost for comparison is 7.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645523,
+          LenderId: 2,
+          LenderName: "Coventry",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/coventry.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/10/28",
+          Rate: 4.01,
+          FollowOnRate: "then 7.09% (variable)",
+          PMT: 660.49,
+          FutureValue: 115728.98,
+          FutureMonthlyPayment: 866.77,
+          TotalFees: 999,
+          AnnualCost: 8258.88,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3.5% reducing to 2% until 31/10/28",
+          ExitFee: 125,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1,
+          MaximumMortgageAmount: 2e6,
+          LTV: 65,
+          APR: 6.512,
+          FollowOnRateValue: 7.09,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.01% and then on a variable rate of 7.09% for the remaining 22 years would require 36 payments of \xA3660.49 and 264 payments of \xA3866.77. The total amount payable would be \xA3253,603.92 made up of the loan amount plus interest (\xA3127,604.92) and fees (\xA3999.00). The overall cost for comparison is 6.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 646159,
+          LenderId: 26,
+          LenderName: "Skipton",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/skipton.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.01,
+          FollowOnRate: "then 6.54% (variable)",
+          PMT: 660.49,
+          FutureValue: 118943.83,
+          FutureMonthlyPayment: 834.4,
+          TotalFees: 1495,
+          AnnualCost: 8673.38,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.25% until 31/08/27",
+          ExitFee: 55,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 2e7,
+          LTV: 60,
+          APR: 6.263,
+          FollowOnRateValue: 6.54,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.01% and then on a variable rate of 6.54% for the remaining 23 years would require 24 payments of \xA3660.49 and 276 payments of \xA3834.40. The total amount payable would be \xA3247,641.16 made up of the loan amount plus interest (\xA3121,146.16) and fees (\xA31,495.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 646196,
+          LenderId: 26,
+          LenderName: "Skipton",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/skipton.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/28",
+          Rate: 4.01,
+          FollowOnRate: "then 6.54% (variable)",
+          PMT: 660.49,
+          FutureValue: 115728.98,
+          FutureMonthlyPayment: 827.87,
+          TotalFees: 1495,
+          AnnualCost: 8424.21,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4% reducing to 1.5% until 31/08/28",
+          ExitFee: 55,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 2e7,
+          LTV: 60,
+          APR: 6.105,
+          FollowOnRateValue: 6.54,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.01% and then on a variable rate of 6.54% for the remaining 22 years would require 36 payments of \xA3660.49 and 264 payments of \xA3827.87. The total amount payable would be \xA3243,830.32 made up of the loan amount plus interest (\xA3117,335.32) and fees (\xA31,495.00). The overall cost for comparison is 6.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648476,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/27",
+          Rate: 4.01,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 660.49,
+          FutureValue: 118943.83,
+          FutureMonthlyPayment: 942.99,
+          TotalFees: 1099,
+          AnnualCost: 8475.38,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 30/09/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 7.493,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.01% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3660.49 and 276 payments of \xA3942.99. The total amount payable would be \xA3277,216.00 made up of the loan amount plus interest (\xA3151,117.00) and fees (\xA31,099.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647200,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/27",
+          Rate: 4.02,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 661.18,
+          FutureValue: 118951.99,
+          FutureMonthlyPayment: 849.8,
+          TotalFees: 999,
+          AnnualCost: 8433.66,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 02/08/27",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 6.43,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.02% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3661.18 and 276 payments of \xA3849.80. The total amount payable would be \xA3251,412.12 made up of the loan amount plus interest (\xA3125,413.12) and fees (\xA3999.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644951,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.03,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 661.87,
+          FutureValue: 108938.36,
+          FutureMonthlyPayment: 910.52,
+          TotalFees: 1099,
+          AnnualCost: 8162.24,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e5,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 6.752,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.03% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3661.87 and 240 payments of \xA3910.52. The total amount payable would be \xA3259,336.00 made up of the loan amount plus interest (\xA3133,237.00) and fees (\xA31,099.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 646208,
+          LenderId: 26,
+          LenderName: "Skipton",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/skipton.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.04,
+          FollowOnRate: "then 6.54% (variable)",
+          PMT: 662.56,
+          FutureValue: 108957.52,
+          FutureMonthlyPayment: 814.92,
+          TotalFees: 2995,
+          AnnualCost: 8549.72,
+          ApplicationFee: 0,
+          CompletionFee: 2995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "6% reducing to 1.75% until 31/08/30",
+          ExitFee: 55,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 2e7,
+          LTV: 60,
+          APR: 5.856,
+          FollowOnRateValue: 6.54,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.04% and then on a variable rate of 6.54% for the remaining 20 years would require 60 payments of \xA3662.56 and 240 payments of \xA3814.92. The total amount payable would be \xA3238,329.40 made up of the loan amount plus interest (\xA3110,334.40) and fees (\xA32,995.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645684,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.04,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 662.56,
+          FutureValue: 118968.3,
+          FutureMonthlyPayment: 849.19,
+          TotalFees: 999,
+          AnnualCost: 8450.22,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 70,
+          APR: 6.424,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.04% and then on a variable rate of 6.74% for the remaining 23 years would require 24 payments of \xA3662.56 and 276 payments of \xA3849.19. The total amount payable would be \xA3251,276.88 made up of the loan amount plus interest (\xA3125,277.88) and fees (\xA3999.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645685,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.04,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 662.56,
+          FutureValue: 118968.3,
+          FutureMonthlyPayment: 849.19,
+          TotalFees: 999,
+          AnnualCost: 8450.22,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 75,
+          APR: 6.424,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.04% and then on a variable rate of 6.74% for the remaining 23 years would require 24 payments of \xA3662.56 and 276 payments of \xA3849.19. The total amount payable would be \xA3251,276.88 made up of the loan amount plus interest (\xA3125,277.88) and fees (\xA3999.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644124,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/30",
+          Rate: 4.04,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 662.56,
+          FutureValue: 108957.52,
+          FutureMonthlyPayment: 910.68,
+          TotalFees: 995,
+          AnnualCost: 8149.72,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 2% until 30/06/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 6.756,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.04% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3662.56 and 240 payments of \xA3910.68. The total amount payable would be \xA3259,311.80 made up of the loan amount plus interest (\xA3133,316.80) and fees (\xA3995.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648518,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/30",
+          Rate: 4.04,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 662.56,
+          FutureValue: 108957.52,
+          FutureMonthlyPayment: 910.68,
+          TotalFees: 100,
+          AnnualCost: 7970.72,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 30/09/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 6.725,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.04% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3662.56 and 240 payments of \xA3910.68. The total amount payable would be \xA3258,416.80 made up of the loan amount plus interest (\xA3133,316.80) and fees (\xA3100.00). The overall cost for comparison is 6.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644119,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/28",
+          Rate: 4.05,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 663.25,
+          FutureValue: 115777.01,
+          FutureMonthlyPayment: 932.63,
+          TotalFees: 1495,
+          AnnualCost: 8457.33,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3.5% reducing to 1.5% until 30/06/28",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.282,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.05% and then on a variable rate of 7.99% for the remaining 22 years would require 36 payments of \xA3663.25 and 264 payments of \xA3932.63. The total amount payable would be \xA3271,586.32 made up of the loan amount plus interest (\xA3145,091.32) and fees (\xA31,495.00). The overall cost for comparison is 7.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 646198,
+          LenderId: 26,
+          LenderName: "Skipton",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/skipton.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/28",
+          Rate: 4.05,
+          FollowOnRate: "then 6.54% (variable)",
+          PMT: 663.25,
+          FutureValue: 115777.01,
+          FutureMonthlyPayment: 828.22,
+          TotalFees: 1495,
+          AnnualCost: 8457.33,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4% reducing to 1.5% until 31/08/28",
+          ExitFee: 55,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 2e7,
+          LTV: 75,
+          APR: 6.112,
+          FollowOnRateValue: 6.54,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.05% and then on a variable rate of 6.54% for the remaining 22 years would require 36 payments of \xA3663.25 and 264 payments of \xA3828.22. The total amount payable would be \xA3244,022.08 made up of the loan amount plus interest (\xA3117,527.08) and fees (\xA31,495.00). The overall cost for comparison is 6.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643924,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/27",
+          Rate: 4.06,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 663.94,
+          FutureValue: 118984.58,
+          FutureMonthlyPayment: 905.18,
+          TotalFees: 995,
+          AnnualCost: 8464.78,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "1.5% reducing to 0.75% until 31/07/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 75,
+          APR: 7.061,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.06% and then on a variable rate of 7.49% for the remaining 23 years would require 24 payments of \xA3663.94 and 276 payments of \xA3905.18. The total amount payable would be \xA3266,759.24 made up of the loan amount plus interest (\xA3140,764.24) and fees (\xA3995.00). The overall cost for comparison is 7.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 641901,
+          LenderId: 65,
+          LenderName: "Yorkshire BS",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/yorkshire.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/27",
+          Rate: 4.06,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 663.94,
+          FutureValue: 118984.58,
+          FutureMonthlyPayment: 905.18,
+          TotalFees: 995,
+          AnnualCost: 8464.78,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 2% until 31/07/27",
+          ExitFee: 90,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25001,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 7.061,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.06% and then on a variable rate of 7.49% for the remaining 23 years would require 24 payments of \xA3663.94 and 276 payments of \xA3905.18. The total amount payable would be \xA3266,759.24 made up of the loan amount plus interest (\xA3140,764.24) and fees (\xA3995.00). The overall cost for comparison is 7.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 641911,
+          LenderId: 65,
+          LenderName: "Yorkshire BS",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/yorkshire.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/27",
+          Rate: 4.07,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 664.64,
+          FutureValue: 118992.71,
+          FutureMonthlyPayment: 905.24,
+          TotalFees: 995,
+          AnnualCost: 8473.18,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 2% until 31/07/27",
+          ExitFee: 90,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25001,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 7.063,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.07% and then on a variable rate of 7.49% for the remaining 23 years would require 24 payments of \xA3664.64 and 276 payments of \xA3905.24. The total amount payable would be \xA3266,792.60 made up of the loan amount plus interest (\xA3140,797.60) and fees (\xA3995.00). The overall cost for comparison is 7.1% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 638631,
+          LenderId: 24,
+          LenderName: "Co-Op",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/coop.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/28",
+          Rate: 4.07,
+          FollowOnRate: "then 7.37% (variable)",
+          PMT: 664.64,
+          FutureValue: 115800.97,
+          FutureMonthlyPayment: 887.46,
+          TotalFees: 749,
+          AnnualCost: 8225.35,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 250,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% pa",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% until 31/08/28",
+          ExitFee: 100,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25001,
+          MaximumMortgageAmount: 2e6,
+          LTV: 60,
+          APR: 6.751,
+          FollowOnRateValue: 7.37,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.07% and then on a variable rate of 7.37% for the remaining 22 years would require 36 payments of \xA3664.64 and 264 payments of \xA3887.46. The total amount payable would be \xA3258,965.48 made up of the loan amount plus interest (\xA3133,216.48) and fees (\xA3749.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647177,
+          LenderId: 37,
+          LenderName: "Leeds",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/leeds.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.07,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 664.64,
+          FutureValue: 118992.71,
+          FutureMonthlyPayment: 943.38,
+          TotalFees: 1499,
+          AnnualCost: 8725.18,
+          ApplicationFee: 0,
+          CompletionFee: 1499,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 31/08/27",
+          ExitFee: 199,
+          Legals: "Payable",
+          MinimumMortgageAmount: 0,
+          MaximumMortgageAmount: 2e6,
+          LTV: 65,
+          APR: 7.531,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.07% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3664.64 and 276 payments of \xA3943.38. The total amount payable would be \xA3277,823.24 made up of the loan amount plus interest (\xA3151,324.24) and fees (\xA31,499.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 639517,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/30",
+          Rate: 4.08,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 665.33,
+          FutureValue: 109034.03,
+          FutureMonthlyPayment: 877.7,
+          TotalFees: 1495,
+          AnnualCost: 8282.96,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4.5% reducing to 1% until 31/07/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 75,
+          APR: 6.451,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.08% and then on a variable rate of 7.49% for the remaining 20 years would require 60 payments of \xA3665.33 and 240 payments of \xA3877.70. The total amount payable would be \xA3252,062.80 made up of the loan amount plus interest (\xA3125,567.80) and fees (\xA31,495.00). The overall cost for comparison is 6.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 640344,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.08,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 665.33,
+          FutureValue: 119000.83,
+          FutureMonthlyPayment: 943.44,
+          TotalFees: 1099,
+          AnnualCost: 8533.46,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e5,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 7.517,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.08% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3665.33 and 276 payments of \xA3943.44. The total amount payable would be \xA3277,456.36 made up of the loan amount plus interest (\xA3151,357.36) and fees (\xA31,099.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 617897,
+          LenderId: 45,
+          LenderName: "First Direct",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/firstdirect.gif",
+          ProductSchemeFriendlyName: "Fixed for 5 years",
+          Rate: 4.09,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 666.02,
+          FutureValue: 109053.12,
+          FutureMonthlyPayment: 828.55,
+          TotalFees: 490,
+          AnnualCost: 8090.24,
+          ApplicationFee: 490,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "Unlimited",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% for 5 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: null,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 5.912,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.09% and then on a variable rate of 6.74% for the remaining 20 years would require 60 payments of \xA3666.02 and 240 payments of \xA3828.55. The total amount payable would be \xA3239,303.20 made up of the loan amount plus interest (\xA3113,813.20) and fees (\xA3490.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645507,
+          LenderId: 2,
+          LenderName: "Coventry",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/coventry.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/10/27",
+          Rate: 4.09,
+          FollowOnRate: "then 7.09% (variable)",
+          PMT: 666.02,
+          FutureValue: 119008.94,
+          FutureMonthlyPayment: 875.35,
+          TotalFees: 999,
+          AnnualCost: 8491.74,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 2% unti 31/10/27",
+          ExitFee: 125,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1,
+          MaximumMortgageAmount: 2e6,
+          LTV: 75,
+          APR: 6.738,
+          FollowOnRateValue: 7.09,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.09% and then on a variable rate of 7.09% for the remaining 23 years would require 24 payments of \xA3666.02 and 276 payments of \xA3875.35. The total amount payable would be \xA3258,580.08 made up of the loan amount plus interest (\xA3132,581.08) and fees (\xA3999.00). The overall cost for comparison is 6.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 641955,
+          LenderId: 65,
+          LenderName: "Yorkshire BS",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/yorkshire.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/28",
+          Rate: 4.1,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 666.72,
+          FutureValue: 115836.81,
+          FutureMonthlyPayment: 896.44,
+          TotalFees: 995,
+          AnnualCost: 8332.31,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% until 31/07/28",
+          ExitFee: 90,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25001,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.854,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.10% and then on a variable rate of 7.49% for the remaining 22 years would require 36 payments of \xA3666.72 and 264 payments of \xA3896.44. The total amount payable would be \xA3261,657.08 made up of the loan amount plus interest (\xA3135,662.08) and fees (\xA3995.00). The overall cost for comparison is 6.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648525,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/30",
+          Rate: 4.11,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 667.41,
+          FutureValue: 109091.25,
+          FutureMonthlyPayment: 911.8,
+          TotalFees: 1099,
+          AnnualCost: 8228.72,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 30/09/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 6.778,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.11% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3667.41 and 240 payments of \xA3911.80. The total amount payable would be \xA3259,975.60 made up of the loan amount plus interest (\xA3133,876.60) and fees (\xA31,099.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647224,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/30",
+          Rate: 4.11,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 667.41,
+          FutureValue: 109091.25,
+          FutureMonthlyPayment: 829.49,
+          TotalFees: 999,
+          AnnualCost: 8208.72,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 02/08/30",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 5.925,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.11% and then on a variable rate of 6.75% for the remaining 20 years would require 60 payments of \xA3667.41 and 240 payments of \xA3829.49. The total amount payable would be \xA3240,121.20 made up of the loan amount plus interest (\xA3114,122.20) and fees (\xA3999.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647905,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 5 years",
+          Rate: 4.11,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 667.41,
+          FutureValue: 109091.25,
+          FutureMonthlyPayment: 861.57,
+          TotalFees: 999,
+          AnnualCost: 8208.72,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% for 5 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 6.262,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.11% and then on a variable rate of 7.24% for the remaining 20 years would require 60 payments of \xA3667.41 and 240 payments of \xA3861.57. The total amount payable would be \xA3247,820.40 made up of the loan amount plus interest (\xA3121,821.40) and fees (\xA3999.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644121,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/28",
+          Rate: 4.12,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 668.11,
+          FutureValue: 115860.65,
+          FutureMonthlyPayment: 933.3,
+          TotalFees: 1495,
+          AnnualCost: 8515.65,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3.5% reducing to 1.5% until 30/06/28",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 7.295,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.12% and then on a variable rate of 7.99% for the remaining 22 years would require 36 payments of \xA3668.11 and 264 payments of \xA3933.30. The total amount payable would be \xA3271,938.16 made up of the loan amount plus interest (\xA3145,443.16) and fees (\xA31,495.00). The overall cost for comparison is 7.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644952,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.12,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 668.11,
+          FutureValue: 109110.29,
+          FutureMonthlyPayment: 911.96,
+          TotalFees: 1099,
+          AnnualCost: 8237.12,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e5,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 6.781,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.12% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3668.11 and 240 payments of \xA3911.96. The total amount payable would be \xA3260,056.00 made up of the loan amount plus interest (\xA3133,957.00) and fees (\xA31,099.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645547,
+          LenderId: 2,
+          LenderName: "Coventry",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/coventry.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/10/30",
+          Rate: 4.13,
+          FollowOnRate: "then 7.09% (variable)",
+          PMT: 668.8,
+          FutureValue: 109129.31,
+          FutureMonthlyPayment: 851.98,
+          TotalFees: 999,
+          AnnualCost: 8225.4,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 2% until 31/10/30",
+          ExitFee: 125,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1,
+          MaximumMortgageAmount: 2e6,
+          LTV: 65,
+          APR: 6.165,
+          FollowOnRateValue: 7.09,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.13% and then on a variable rate of 7.09% for the remaining 20 years would require 60 payments of \xA3668.80 and 240 payments of \xA3851.98. The total amount payable would be \xA3245,602.20 made up of the loan amount plus interest (\xA3119,603.20) and fees (\xA3999.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647222,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/30",
+          Rate: 4.13,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 668.8,
+          FutureValue: 109129.31,
+          FutureMonthlyPayment: 829.78,
+          TotalFees: 0,
+          AnnualCost: 8025.6,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 02/08/30",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 5.89,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.13% and then on a variable rate of 6.75% for the remaining 20 years would require 60 payments of \xA3668.80 and 240 payments of \xA3829.78. The total amount payable would be \xA3239,275.20 made up of the loan amount plus interest (\xA3114,275.20) and fees (\xA30.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645689,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.13,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 668.8,
+          FutureValue: 109129.31,
+          FutureMonthlyPayment: 829.13,
+          TotalFees: 0,
+          AnnualCost: 8025.6,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 60,
+          APR: 5.884,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.13% and then on a variable rate of 6.74% for the remaining 20 years would require 60 payments of \xA3668.80 and 240 payments of \xA3829.13. The total amount payable would be \xA3239,119.20 made up of the loan amount plus interest (\xA3114,119.20) and fees (\xA30.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639516,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/30",
+          Rate: 4.13,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 668.8,
+          FutureValue: 109129.31,
+          FutureMonthlyPayment: 878.47,
+          TotalFees: 995,
+          AnnualCost: 8224.6,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4.5% reducing to 1% until 31/07/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 75,
+          APR: 6.44,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.13% and then on a variable rate of 7.49% for the remaining 20 years would require 60 payments of \xA3668.80 and 240 payments of \xA3878.47. The total amount payable would be \xA3251,955.80 made up of the loan amount plus interest (\xA3125,960.80) and fees (\xA3995.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648469,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/27",
+          Rate: 4.13,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 668.8,
+          FutureValue: 119041.3,
+          FutureMonthlyPayment: 943.76,
+          TotalFees: 100,
+          AnnualCost: 8075.6,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 30/09/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.477,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.13% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3668.80 and 276 payments of \xA3943.76. The total amount payable would be \xA3276,628.96 made up of the loan amount plus interest (\xA3151,528.96) and fees (\xA3100.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648587,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/30",
+          Rate: 4.13,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 668.8,
+          FutureValue: 109129.31,
+          FutureMonthlyPayment: 912.12,
+          TotalFees: 1099,
+          AnnualCost: 8245.4,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 30/09/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 6.784,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.13% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3668.80 and 240 payments of \xA3912.12. The total amount payable would be \xA3260,135.80 made up of the loan amount plus interest (\xA3134,036.80) and fees (\xA31,099.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647902,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 3 years",
+          Rate: 4.14,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 669.5,
+          FutureValue: 115884.44,
+          FutureMonthlyPayment: 878.72,
+          TotalFees: 999,
+          AnnualCost: 8367,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% for 3 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 6.659,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.14% and then on a variable rate of 7.24% for the remaining 22 years would require 36 payments of \xA3669.50 and 264 payments of \xA3878.72. The total amount payable would be \xA3257,083.08 made up of the loan amount plus interest (\xA3131,084.08) and fees (\xA3999.00). The overall cost for comparison is 6.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647896,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 5 years",
+          Rate: 4.14,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 669.5,
+          FutureValue: 109148.32,
+          FutureMonthlyPayment: 862.02,
+          TotalFees: 0,
+          AnnualCost: 8034,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% for 5 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.247,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.14% and then on a variable rate of 7.24% for the remaining 20 years would require 60 payments of \xA3669.50 and 240 payments of \xA3862.02. The total amount payable would be \xA3247,054.80 made up of the loan amount plus interest (\xA3122,054.80) and fees (\xA30.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647893,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 3 years",
+          Rate: 4.14,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 669.5,
+          FutureValue: 115884.44,
+          FutureMonthlyPayment: 878.72,
+          TotalFees: 0,
+          AnnualCost: 8034,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% for 3 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.61,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.14% and then on a variable rate of 7.24% for the remaining 22 years would require 36 payments of \xA3669.50 and 264 payments of \xA3878.72. The total amount payable would be \xA3256,084.08 made up of the loan amount plus interest (\xA3131,084.08) and fees (\xA30.00). The overall cost for comparison is 6.6% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647891,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 4.14,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 669.5,
+          FutureValue: 119049.37,
+          FutureMonthlyPayment: 886.85,
+          TotalFees: 0,
+          AnnualCost: 8034,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.828,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.14% and then on a variable rate of 7.24% for the remaining 23 years would require 24 payments of \xA3669.50 and 276 payments of \xA3886.85. The total amount payable would be \xA3260,838.60 made up of the loan amount plus interest (\xA3135,838.60) and fees (\xA30.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 636828,
+          LenderId: 4,
+          LenderName: "Barclays",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/barclays.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/30",
+          Rate: 4.14,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 669.5,
+          FutureValue: 109148.32,
+          FutureMonthlyPayment: 813.14,
+          TotalFees: 899,
+          AnnualCost: 8213.8,
+          ApplicationFee: 0,
+          CompletionFee: 899,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4% until 30/06/30",
+          ExitFee: 80,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 1e7,
+          LTV: 75,
+          APR: 5.756,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.14% and then on a variable rate of 6.49% for the remaining 20 years would require 60 payments of \xA3669.50 and 240 payments of \xA3813.14. The total amount payable would be \xA3236,222.60 made up of the loan amount plus interest (\xA3110,323.60) and fees (\xA3899.00). The overall cost for comparison is 5.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639834,
+          LenderId: 45,
+          LenderName: "First Direct",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/firstdirect.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 4.14,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 669.5,
+          FutureValue: 119049.37,
+          FutureMonthlyPayment: 849.77,
+          TotalFees: 490,
+          AnnualCost: 8279,
+          ApplicationFee: 490,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "Unlimited",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: null,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 6.415,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.14% and then on a variable rate of 6.74% for the remaining 23 years would require 24 payments of \xA3669.50 and 276 payments of \xA3849.77. The total amount payable would be \xA3251,094.52 made up of the loan amount plus interest (\xA3125,604.52) and fees (\xA3490.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639845,
+          LenderId: 45,
+          LenderName: "First Direct",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/firstdirect.gif",
+          ProductSchemeFriendlyName: "Fixed for 3 years",
+          Rate: 4.14,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 669.5,
+          FutureValue: 115884.44,
+          FutureMonthlyPayment: 843.05,
+          TotalFees: 490,
+          AnnualCost: 8197.33,
+          ApplicationFee: 490,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "Unlimited",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% for 3 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: null,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 6.253,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.14% and then on a variable rate of 6.74% for the remaining 22 years would require 36 payments of \xA3669.50 and 264 payments of \xA3843.05. The total amount payable would be \xA3247,157.20 made up of the loan amount plus interest (\xA3121,667.20) and fees (\xA3490.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645695,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.14,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 669.5,
+          FutureValue: 109148.32,
+          FutureMonthlyPayment: 829.27,
+          TotalFees: 999,
+          AnnualCost: 8233.8,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 70,
+          APR: 5.927,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.14% and then on a variable rate of 6.74% for the remaining 20 years would require 60 payments of \xA3669.50 and 240 payments of \xA3829.27. The total amount payable would be \xA3240,193.80 made up of the loan amount plus interest (\xA3114,194.80) and fees (\xA3999.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645696,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.14,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 669.5,
+          FutureValue: 109148.32,
+          FutureMonthlyPayment: 829.27,
+          TotalFees: 999,
+          AnnualCost: 8233.8,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 75,
+          APR: 5.927,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.14% and then on a variable rate of 6.74% for the remaining 20 years would require 60 payments of \xA3669.50 and 240 payments of \xA3829.27. The total amount payable would be \xA3240,193.80 made up of the loan amount plus interest (\xA3114,194.80) and fees (\xA3999.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644585,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/28",
+          Rate: 4.14,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 669.5,
+          FutureValue: 115884.44,
+          FutureMonthlyPayment: 933.49,
+          TotalFees: 100,
+          AnnualCost: 8067.33,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% until 30/09/28",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.238,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.14% and then on a variable rate of 7.99% for the remaining 22 years would require 36 payments of \xA3669.50 and 264 payments of \xA3933.49. The total amount payable would be \xA3270,643.36 made up of the loan amount plus interest (\xA3145,543.36) and fees (\xA3100.00). The overall cost for comparison is 7.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644947,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.14,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 669.5,
+          FutureValue: 109148.32,
+          FutureMonthlyPayment: 912.28,
+          TotalFees: 100,
+          AnnualCost: 8054,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 31/08/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 6.757,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.14% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3669.50 and 240 payments of \xA3912.28. The total amount payable would be \xA3259,217.20 made up of the loan amount plus interest (\xA3134,117.20) and fees (\xA3100.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644382,
+          LenderId: 4,
+          LenderName: "Barclays",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/barclays.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/30",
+          Rate: 4.15,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 670.19,
+          FutureValue: 109167.32,
+          FutureMonthlyPayment: 813.28,
+          TotalFees: 0,
+          AnnualCost: 8042.28,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4% until 30/06/30",
+          ExitFee: 80,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 5.722,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.15% and then on a variable rate of 6.49% for the remaining 20 years would require 60 payments of \xA3670.19 and 240 payments of \xA3813.28. The total amount payable would be \xA3235,398.60 made up of the loan amount plus interest (\xA3110,398.60) and fees (\xA30.00). The overall cost for comparison is 5.7% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644913,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.16,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 670.89,
+          FutureValue: 119065.48,
+          FutureMonthlyPayment: 943.95,
+          TotalFees: 100,
+          AnnualCost: 8100.68,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.481,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.16% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3670.89 and 276 payments of \xA3943.95. The total amount payable would be \xA3276,731.56 made up of the loan amount plus interest (\xA3151,631.56) and fees (\xA3100.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648504,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/09/28",
+          Rate: 4.16,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 670.89,
+          FutureValue: 115908.19,
+          FutureMonthlyPayment: 933.68,
+          TotalFees: 1099,
+          AnnualCost: 8417.01,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% until 30/09/28",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 7.272,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.16% and then on a variable rate of 7.99% for the remaining 22 years would require 36 payments of \xA3670.89 and 264 payments of \xA3933.68. The total amount payable would be \xA3271,742.56 made up of the loan amount plus interest (\xA3145,643.56) and fees (\xA31,099.00). The overall cost for comparison is 7.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 646157,
+          LenderId: 26,
+          LenderName: "Skipton",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/skipton.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.17,
+          FollowOnRate: "then 6.54% (variable)",
+          PMT: 671.59,
+          FutureValue: 119073.53,
+          FutureMonthlyPayment: 835.31,
+          TotalFees: 495,
+          AnnualCost: 8306.58,
+          ApplicationFee: 0,
+          CompletionFee: 495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.25% until 31/08/27",
+          ExitFee: 55,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 2e7,
+          LTV: 60,
+          APR: 6.244,
+          FollowOnRateValue: 6.54,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.17% and then on a variable rate of 6.54% for the remaining 23 years would require 24 payments of \xA3671.59 and 276 payments of \xA3835.31. The total amount payable would be \xA3247,158.72 made up of the loan amount plus interest (\xA3121,663.72) and fees (\xA3495.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647178,
+          LenderId: 37,
+          LenderName: "Leeds",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/leeds.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.17,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 671.59,
+          FutureValue: 119073.53,
+          FutureMonthlyPayment: 944.02,
+          TotalFees: 999,
+          AnnualCost: 8558.58,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 31/08/27",
+          ExitFee: 199,
+          Legals: "Payable",
+          MinimumMortgageAmount: 0,
+          MaximumMortgageAmount: 2e6,
+          LTV: 65,
+          APR: 7.512,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.17% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3671.59 and 276 payments of \xA3944.02. The total amount payable would be \xA3277,666.68 made up of the loan amount plus interest (\xA3151,667.68) and fees (\xA3999.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 647198,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/27",
+          Rate: 4.17,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 671.59,
+          FutureValue: 119073.53,
+          FutureMonthlyPayment: 850.67,
+          TotalFees: 0,
+          AnnualCost: 8059.08,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 02/08/27",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.407,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.17% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3671.59 and 276 payments of \xA3850.67. The total amount payable would be \xA3250,903.08 made up of the loan amount plus interest (\xA3125,903.08) and fees (\xA30.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639512,
+          LenderId: 5,
+          LenderName: "Natwest",
+          ApplyDirectLink: "Natwest_Resi_Purchase_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/natwest.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/07/30",
+          Rate: 4.17,
+          FollowOnRate: "then 7.49% (variable)",
+          PMT: 671.59,
+          FutureValue: 109205.26,
+          FutureMonthlyPayment: 879.08,
+          TotalFees: 0,
+          AnnualCost: 8059.08,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "20% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "4.5% reducing to 1% until 31/07/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 99999999,
+          LTV: 60,
+          APR: 6.427,
+          FollowOnRateValue: 7.49,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.17% and then on a variable rate of 7.49% for the remaining 20 years would require 60 payments of \xA3671.59 and 240 payments of \xA3879.08. The total amount payable would be \xA3251,274.60 made up of the loan amount plus interest (\xA3126,274.60) and fees (\xA30.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 638119,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/28",
+          Rate: 4.18,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 672.28,
+          FutureValue: 115931.9,
+          FutureMonthlyPayment: 844.1,
+          TotalFees: 0,
+          AnnualCost: 8067.36,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 02/08/28",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 60,
+          APR: 6.228,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.18% and then on a variable rate of 6.75% for the remaining 22 years would require 36 payments of \xA3672.28 and 264 payments of \xA3844.10. The total amount payable would be \xA3247,044.48 made up of the loan amount plus interest (\xA3122,044.48) and fees (\xA30.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 638120,
+          LenderId: 1,
+          LenderName: "Santander",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/santander.gif",
+          ProductSchemeFriendlyName: "Fixed to 02/08/28",
+          Rate: 4.18,
+          FollowOnRate: "then 6.75% (variable)",
+          PMT: 672.28,
+          FutureValue: 115931.9,
+          FutureMonthlyPayment: 844.1,
+          TotalFees: 999,
+          AnnualCost: 8400.36,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 02/08/28",
+          ExitFee: 225,
+          Legals: "Payable",
+          MinimumMortgageAmount: 6e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 75,
+          APR: 6.268,
+          FollowOnRateValue: 6.75,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.18% and then on a variable rate of 6.75% for the remaining 22 years would require 36 payments of \xA3672.28 and 264 payments of \xA3844.10. The total amount payable would be \xA3248,043.48 made up of the loan amount plus interest (\xA3122,044.48) and fees (\xA3999.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 642106,
+          LenderId: 68,
+          LenderName: "Bank of Ireland",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/bankofireland.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.18,
+          FollowOnRate: "then 7.64% (variable)",
+          PMT: 672.28,
+          FutureValue: 119081.57,
+          FutureMonthlyPayment: 917.29,
+          TotalFees: 1195,
+          AnnualCost: 8664.86,
+          ApplicationFee: 0,
+          CompletionFee: 1495,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 300,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% pa",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% until 31/08/27",
+          ExitFee: 195,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e5,
+          MaximumMortgageAmount: 25e5,
+          LTV: 85,
+          APR: 7.235,
+          FollowOnRateValue: 7.64,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.18% and then on a variable rate of 7.64% for the remaining 23 years would require 24 payments of \xA3672.28 and 276 payments of \xA3917.29. The total amount payable would be \xA3270,501.76 made up of the loan amount plus interest (\xA3144,306.76) and fees (\xA31,195.00). The overall cost for comparison is 7.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Broker",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 645528,
+          LenderId: 2,
+          LenderName: "Coventry",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/coventry.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/10/28",
+          Rate: 4.18,
+          FollowOnRate: "then 7.09% (variable)",
+          PMT: 672.28,
+          FutureValue: 115931.9,
+          FutureMonthlyPayment: 868.3,
+          TotalFees: 999,
+          AnnualCost: 8400.36,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3.5% reducing to 2% until 31/10/28",
+          ExitFee: 125,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1,
+          MaximumMortgageAmount: 2e6,
+          LTV: 75,
+          APR: 6.544,
+          FollowOnRateValue: 7.09,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.18% and then on a variable rate of 7.09% for the remaining 22 years would require 36 payments of \xA3672.28 and 264 payments of \xA3868.30. The total amount payable would be \xA3254,432.28 made up of the loan amount plus interest (\xA3128,433.28) and fees (\xA3999.00). The overall cost for comparison is 6.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644374,
+          LenderId: 4,
+          LenderName: "Barclays",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/barclays.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 4.18,
+          FollowOnRate: "then 6.49% (variable)",
+          PMT: 672.28,
+          FutureValue: 119081.57,
+          FutureMonthlyPayment: 831.73,
+          TotalFees: 0,
+          AnnualCost: 8067.36,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% until 30/06/27",
+          ExitFee: 80,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 1e7,
+          LTV: 60,
+          APR: 6.165,
+          FollowOnRateValue: 6.49,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.18% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3672.28 and 276 payments of \xA3831.73. The total amount payable would be \xA3245,692.20 made up of the loan amount plus interest (\xA3120,692.20) and fees (\xA30.00). The overall cost for comparison is 6.2% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 644939,
+          LenderId: 25,
+          LenderName: "Halifax",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/halifax.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/28",
+          Rate: 4.19,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 672.98,
+          FutureValue: 115943.73,
+          FutureMonthlyPayment: 933.97,
+          TotalFees: 1099,
+          AnnualCost: 8442.09,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 100,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 1% until 31/08/28",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e5,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 7.277,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.19% and then on a variable rate of 7.99% for the remaining 22 years would require 36 payments of \xA3672.98 and 264 payments of \xA3933.97. The total amount payable would be \xA3271,894.36 made up of the loan amount plus interest (\xA3145,795.36) and fees (\xA31,099.00). The overall cost for comparison is 7.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 642515,
+          LenderId: 28,
+          LenderName: "HSBC",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/hsbc.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/27",
+          Rate: 4.19,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 850.05,
+          TotalFees: 0,
+          AnnualCost: 8075.76,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% until 31/08/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 1e4,
+          MaximumMortgageAmount: 1e8,
+          LTV: 60,
+          APR: 6.401,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 6.74% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3850.05. The total amount payable would be \xA3250,765.32 made up of the loan amount plus interest (\xA3125,765.32) and fees (\xA30.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 643516,
+          LenderId: 37,
+          LenderName: "Leeds",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/leeds.gif",
+          ProductSchemeFriendlyName: "Fixed to 31/08/30",
+          Rate: 4.19,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 672.98,
+          FutureValue: 109243.14,
+          FutureMonthlyPayment: 913.07,
+          TotalFees: 999,
+          AnnualCost: 8275.56,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 2% until 31/08/30",
+          ExitFee: 199,
+          Legals: "Payable",
+          MinimumMortgageAmount: 0,
+          MaximumMortgageAmount: 2e6,
+          LTV: 75,
+          APR: 6.802,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.19% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3672.98 and 240 payments of \xA3913.07. The total amount payable would be \xA3260,514.60 made up of the loan amount plus interest (\xA3134,515.60) and fees (\xA3999.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Both"
+        },
+        {
+          ProductId: 644126,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/30",
+          Rate: 4.19,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 672.98,
+          FutureValue: 109243.14,
+          FutureMonthlyPayment: 913.07,
+          TotalFees: 995,
+          AnnualCost: 8274.76,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 2% until 30/06/30",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 75,
+          APR: 6.802,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.19% and then on a variable rate of 7.99% for the remaining 20 years would require 60 payments of \xA3672.98 and 240 payments of \xA3913.07. The total amount payable would be \xA3260,510.60 made up of the loan amount plus interest (\xA3134,515.60) and fees (\xA3995.00). The overall cost for comparison is 6.8% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639846,
+          LenderId: 45,
+          LenderName: "First Direct",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/firstdirect.gif",
+          ProductSchemeFriendlyName: "Fixed for 3 years",
+          Rate: 4.19,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 672.98,
+          FutureValue: 115943.73,
+          FutureMonthlyPayment: 843.48,
+          TotalFees: 490,
+          AnnualCost: 8239.09,
+          ApplicationFee: 490,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "Unlimited",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% for 3 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: null,
+          MaximumMortgageAmount: 1e7,
+          LTV: 75,
+          APR: 6.262,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 36,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 3 years at 4.19% and then on a variable rate of 6.74% for the remaining 22 years would require 36 payments of \xA3672.98 and 264 payments of \xA3843.48. The total amount payable would be \xA3247,396.00 made up of the loan amount plus interest (\xA3121,906.00) and fees (\xA3490.00). The overall cost for comparison is 6.3% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639855,
+          LenderId: 45,
+          LenderName: "First Direct",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/firstdirect.gif",
+          ProductSchemeFriendlyName: "Fixed for 5 years",
+          Rate: 4.19,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 672.98,
+          FutureValue: 109243.14,
+          FutureMonthlyPayment: 830,
+          TotalFees: 490,
+          AnnualCost: 8173.76,
+          ApplicationFee: 490,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "Unlimited",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% for 5 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: null,
+          MaximumMortgageAmount: 1e7,
+          LTV: 75,
+          APR: 5.943,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.19% and then on a variable rate of 6.74% for the remaining 20 years would require 60 payments of \xA3672.98 and 240 payments of \xA3830.00. The total amount payable would be \xA3240,068.80 made up of the loan amount plus interest (\xA3114,578.80) and fees (\xA3490.00). The overall cost for comparison is 5.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 639835,
+          LenderId: 45,
+          LenderName: "First Direct",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/firstdirect.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 4.19,
+          FollowOnRate: "then 6.74% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 850.05,
+          TotalFees: 490,
+          AnnualCost: 8320.76,
+          ApplicationFee: 490,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "Unlimited",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "3% reducing to 2% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: null,
+          MaximumMortgageAmount: 1e7,
+          LTV: 75,
+          APR: 6.421,
+          FollowOnRateValue: 6.74,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 6.74% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3850.05. The total amount payable would be \xA3251,255.32 made up of the loan amount plus interest (\xA3125,765.32) and fees (\xA3490.00). The overall cost for comparison is 6.4% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648386,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 4.19,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 944.14,
+          TotalFees: 995,
+          AnnualCost: 8573.26,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 30/06/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 80,
+          APR: 7.515,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3944.14. The total amount payable would be \xA3277,729.16 made up of the loan amount plus interest (\xA3151,734.16) and fees (\xA3995.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648388,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 4.19,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 944.14,
+          TotalFees: 995,
+          AnnualCost: 8573.26,
+          ApplicationFee: 0,
+          CompletionFee: 995,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 30/06/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 85,
+          APR: 7.515,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3944.14. The total amount payable would be \xA3277,729.16 made up of the loan amount plus interest (\xA3151,734.16) and fees (\xA3995.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647910,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 4.19,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 887.15,
+          TotalFees: 999,
+          AnnualCost: 8575.26,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 80,
+          APR: 6.883,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 7.24% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3887.15. The total amount payable would be \xA3262,003.92 made up of the loan amount plus interest (\xA3136,004.92) and fees (\xA3999.00). The overall cost for comparison is 6.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 647920,
+          LenderId: 6,
+          LenderName: "Nationwide",
+          ApplyDirectLink: "Nationwide_ResiBTL_PurRemo_NonFTB",
+          LenderURL: "https://assets.landc.co.uk/lender/nationwide.gif",
+          ProductSchemeFriendlyName: "Fixed for 2 years",
+          Rate: 4.19,
+          FollowOnRate: "then 7.24% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 887.15,
+          TotalFees: 999,
+          AnnualCost: 8575.26,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2% reducing to 1% for 2 years",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 25e3,
+          MaximumMortgageAmount: 5e6,
+          LTV: 85,
+          APR: 6.883,
+          FollowOnRateValue: 7.24,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 7.24% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3887.15. The total amount payable would be \xA3262,003.92 made up of the loan amount plus interest (\xA3136,004.92) and fees (\xA3999.00). The overall cost for comparison is 6.9% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 648383,
+          LenderId: 29,
+          LenderName: "TSB",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/tsb.gif",
+          ProductSchemeFriendlyName: "Fixed to 30/06/27",
+          Rate: 4.19,
+          FollowOnRate: "then 7.99% (variable)",
+          PMT: 672.98,
+          FutureValue: 119089.6,
+          FutureMonthlyPayment: 944.14,
+          TotalFees: 0,
+          AnnualCost: 8075.76,
+          ApplicationFee: 0,
+          CompletionFee: 0,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "2.5% reducing to 1.5% until 30/06/27",
+          ExitFee: 0,
+          Legals: "Payable",
+          MinimumMortgageAmount: 5e3,
+          MaximumMortgageAmount: 75e5,
+          LTV: 60,
+          APR: 7.485,
+          FollowOnRateValue: 7.99,
+          SchemeLength: 24,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 2 years at 4.19% and then on a variable rate of 7.99% for the remaining 23 years would require 24 payments of \xA3672.98 and 276 payments of \xA3944.14. The total amount payable would be \xA3276,734.16 made up of the loan amount plus interest (\xA3151,734.16) and fees (\xA30.00). The overall cost for comparison is 7.5% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Everyone",
+          AvailableFor: "Purchase"
+        },
+        {
+          ProductId: 629161,
+          LenderId: 12,
+          LenderName: "Cumberland",
+          ApplyDirectLink: null,
+          LenderURL: "https://assets.landc.co.uk/lender/cumberland.gif",
+          ProductSchemeFriendlyName: "Fixed to 01/06/30",
+          Rate: 4.21,
+          FollowOnRate: "then 7.64% (variable)",
+          PMT: 674.38,
+          FutureValue: 109280.96,
+          FutureMonthlyPayment: 889.73,
+          TotalFees: 999,
+          AnnualCost: 8292.36,
+          ApplicationFee: 0,
+          CompletionFee: 999,
+          ValuationFee: 0,
+          OtherFees: 0,
+          Cashback: 0,
+          BrokerFee: 0,
+          OverpaymentLimit: "10% p/a",
+          ERC: "Early Repayment Charges apply",
+          ERCText: "5% reducing to 1% until 01/06/30",
+          ExitFee: 125,
+          Legals: "Payable",
+          MinimumMortgageAmount: 2e4,
+          MaximumMortgageAmount: 2e6,
+          LTV: 60,
+          APR: 6.568,
+          FollowOnRateValue: 7.64,
+          SchemeLength: 60,
+          SchemeTypeRefId: 51,
+          IsRemortgage: false,
+          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a fixed rate for 5 years at 4.21% and then on a variable rate of 7.64% for the remaining 20 years would require 60 payments of \xA3674.38 and 240 payments of \xA3889.73. The total amount payable would be \xA3254,997.00 made up of the loan amount plus interest (\xA3128,998.00) and fees (\xA3999.00). The overall cost for comparison is 6.6% APRC representative.",
+          SAP: 1,
+          SharedOwnership: "Not Available",
+          NewBuild: "Also Available for New Build",
+          Offset: false,
+          LtdCompany: "",
+          HMO: false,
+          Channel: "Direct Only",
+          AvailableFor: "Purchase"
+        }
+      ]
+    }
+  };
+
+  // src/mct/shared/examples/exampleAnswers.ts
+  var EXAMPLE_ANSWERS = {
+    PurchRemo: "P",
+    FTB: "N",
+    ResiBtl: "R",
+    ReadinessToBuy: "C",
+    CreditImpaired: "N",
+    PropertyValue: 35e4,
+    DepositAmount: 5e4,
+    RepaymentType: "R",
+    MortgageLength: 25,
+    SchemeTypes: ["1"],
+    SchemePeriods: "1"
+  };
+
+  // src/mct/stages/results/FilterGroup.ts
+  var FilterGroup = class extends InputGroupBase {
+    constructor(el, options) {
+      super(el, options);
+    }
+    init() {
+    }
+  };
+
+  // src/mct/stages/results/Manager.ts
+  var ResultsManager = class {
+    component;
+    id;
+    isInitialised = false;
+    products;
+    summaryInfo;
+    header;
+    outputs = [];
+    filterGroups = [];
+    results = [];
+    resultsList;
+    resultsTemplate;
+    loader;
+    empty;
+    pagination;
+    paginationButton;
+    constructor(component) {
+      this.component = component;
+      this.id = "results";
+      const response = EXAMPLE_PRODUCTS_RESPONSE;
+      this.products = response.result.Products;
+      this.summaryInfo = response.result.SummaryInfo;
+      this.header = queryElement(`[${attr9.components}="header"]`, this.component);
+      this.outputs = queryElements(`[${attr9.output}]`, this.header);
+      this.resultsList = queryElement(`[${attr9.components}="list"]`, this.component);
+      this.resultsTemplate = queryElement(`[${attr9.components}="template"]`, this.component);
+      this.resultsTemplate.remove();
+      this.loader = queryElement(`[${attr9.components}="loader"]`, this.component);
+      this.empty = queryElement(`[${attr9.components}="empty"]`, this.component);
+      this.pagination = queryElement(`[${attr9.components}="pagination"]`, this.component);
+      this.paginationButton = queryElement("button", this.pagination);
+    }
+    init() {
+      if (this.isInitialised)
+        return;
+      this.isInitialised = true;
+      Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
+        MCTManager2.setAnswer(key, value);
+      });
+      this.initFilterGroups();
+      this.initListElements();
+      this.renderOutputs();
+      this.renderFilters();
+      this.handleProductsAPI();
+    }
+    show() {
+      this.component.style.removeProperty("display");
+    }
+    hide() {
+      this.component.style.display = "none";
+    }
+    initFilterGroups() {
+      const filterEls = queryElements(`[${attr9.components}="filter-group"]`, this.component);
+      this.filterGroups = filterEls.map((el) => {
+        return new FilterGroup(el, {
+          onChange: () => this.handleChange(),
+          groupName: "filterGroup"
+        });
+      });
+    }
+    handleChange() {
+      this.filterGroups.forEach((group) => {
+        const value = group.getValue();
+        const name = group.name;
+        if (name && value !== null && value !== void 0)
+          MCTManager2.setAnswer(name, value);
+      });
+      this.handleProductsAPI();
+    }
+    initListElements() {
+      this.loader.style.display = "none";
+      this.empty.style.display = "none";
+      this.pagination.style.display = "none";
+    }
+    renderOutputs() {
+      const summaryLines = generateSummaryLines(this.summaryInfo, MCTManager2.getAnswers());
+      if (!summaryLines)
+        return;
+      this.outputs.forEach((output) => {
+        const key = output.getAttribute(attr9.output);
+        const type = output.getAttribute(attr9.type);
+        if (key === "LTV") {
+          const propertyValue = MCTManager2.getAnswer("PropertyValue");
+          const depositAmount = MCTManager2.getAnswer("DepositAmount");
+          const ltv = (propertyValue - depositAmount) / propertyValue * 100;
+          if (type === "percentage") {
+            if (ltv)
+              output.textContent = formatNumber2(ltv, { type: "percent", decimals: 0 });
+          } else if (type === "progress-bar") {
+            if (ltv)
+              output.style.width = `${ltv}%`;
+          }
+          return;
+        } else if (key === "MortgageAmount") {
+          const propertyValue = MCTManager2.getAnswer("PropertyValue");
+          const depositAmount = MCTManager2.getAnswer("DepositAmount");
+          const mortgageAmount = propertyValue - depositAmount;
+          if (type === "currency") {
+            if (mortgageAmount)
+              output.textContent = formatNumber2(mortgageAmount, { type: "currency" });
+          }
+          return;
+        }
+        if (type === "sentence") {
+          const text = summaryLines[key];
+          if (text)
+            output.innerHTML = text;
+        } else if (type === "currency") {
+          const value = MCTManager2.getAnswer(key);
+          console.log(key, type, value);
+          if (value)
+            output.textContent = formatNumber2(value, { type: "currency" });
+        } else if (type === "percentage") {
+          const value = MCTManager2.getAnswer(key);
+          if (value)
+            output.textContent = formatNumber2(value, { type: "percent" });
+        } else if (type === "progress-bar") {
+          const value = MCTManager2.getAnswer(key);
+          if (value)
+            output.style.width = `${value}%`;
+        }
+      });
+    }
+    renderFilters() {
+      const answers = MCTManager2.getAnswers();
+      this.filterGroups.forEach((filterGroup) => {
+        const prefillValue = answers[filterGroup.name];
+        if (prefillValue)
+          filterGroup.setValue(prefillValue);
+      });
+    }
+    renderResults() {
+      this.results.forEach((result) => result.remove());
+      const numberOfResults = this.products.length;
+      if (numberOfResults === 0) {
+        this.showListUI("empty", true);
+        return;
+      }
+      this.showListUI("empty", false);
+      this.results = this.products.map((product) => {
+        return new Result(this.resultsList, { template: this.resultsTemplate, product });
+      });
+    }
+    async fetchProducts() {
+      const input = generateProductsAPIInput(MCTManager2.getAnswers(), {
+        numberOfResults: 100,
+        // @TODO: Maximum of 100 on the test API?
+        sortColumn: 1
+      });
+      try {
+        const response = await fetchProducts(input);
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        return null;
+      }
+    }
+    async handleProductsAPI() {
+      console.log("handleProductsAPI");
+      this.showListUI("loader", true);
+      const response = await this.fetchProducts();
+      if (!response) {
+        this.showListUI("loader", false);
+        return;
+      }
+      this.products = response.result.Products;
+      this.summaryInfo = response.result.SummaryInfo;
+      const SapValues = this.products.map((product) => product.SAP);
+      console.log(SapValues);
+      console.log(this.products);
+      console.log(this.summaryInfo);
+      this.renderResults();
+      this.renderOutputs();
+      this.showListUI("loader", false);
+    }
+    showListUI(component, show) {
+      const componentEl = component === "loader" ? this.loader : this.empty;
+      show ? componentEl.style.removeProperty("display") : componentEl.style.display = "none";
+      show ? this.resultsList.style.display = "none" : this.resultsList.style.removeProperty("display");
+    }
+    // public async loadAndRenderResults() {
+    //   const request = this.buildProductsRequest();
+    //   console.log(request);
+    //   if (!request) return;
+    //   try {
+    //     // this.products = await fetchProducts(MCTManager.getAnswers());
+    //     console.log('Products API response:', this.products);
+    //     this.renderAllTemplates();
+    //   } catch (error) {
+    //     this.renderError(error);
+    //     // if (this.options.onError) this.options.onError(error);
+    //   }
+    // }
+    // private renderAllTemplates() {
+    //   if (!this.products) return;
+    //   const data: ResultsData[] = [];
+    //   if (this.options.showSummary) {
+    //     data.push({ key: 'summary', value: this.renderSummary() });
+    //   }
+    //   if (this.options.showLenders) {
+    //     data.push({ key: 'lenders', value: this.renderLenders() });
+    //   }
+    //   if (this.options.showDetails) {
+    //     data.push({ key: 'details', value: this.renderDetails() });
+    //   }
+    //   this.setResultsData(data);
+    // }
+    // private renderSummary(): string {
+    //   if (!this.products) return '';
+    //   const req = this.buildProductsRequest();
+    //   if (!req) return '';
+    //   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = req;
+    //   const answers = MCTManager.getAnswers();
+    //   const RepaymentType = answers.RepaymentType;
+    //   const RepaymentValueText = formatNumber(RepaymentValue, { currency: true });
+    //   const TermYearsText = `${TermYears} years`;
+    //   const RepaymentTypeText =
+    //     RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
+    //   const SchemeTypesMap = (SchemeTypes as (1 | 2)[]).map((type) => (type === 1 ? 'fixed' : 'variable'));
+    //   const SchemePeriodsMap = (SchemePeriods as (1 | 2 | 3 | 4)[]).map((period) =>
+    //     period === 1 ? '2' : period === 2 ? '3' : period === 3 ? '5' : '5+'
+    //   );
+    //   const SchemePeriodsText =
+    //     SchemePeriodsMap.length === 1
+    //       ? `${SchemePeriodsMap[0]} year`
+    //       : SchemePeriodsMap.length > 1
+    //         ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year`
+    //         : '';
+    //   const SchemeTypesText =
+    //     SchemeTypesMap.length === 1
+    //       ? `${SchemeTypesMap[0]} rate`
+    //       : SchemeTypesMap.length > 1
+    //         ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
+    //         : '';
+    //   return `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
+    // }
+    // private renderLenders(): string {
+    //   if (!this.products) return '';
+    //   const info = this.products.result.SummaryInfo;
+    //   return `We've found <span class="${classes.highlight}">${info.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${info.NumberOfLenders}</span> lenders.`;
+    // }
+    // private renderDetails(): string {
+    //   if (!this.products) return '';
+    //   const products = this.products.result.Products;
+    //   if (!products || products.length === 0) return '<p>No products found.</p>';
+    //   const rows = products
+    //     .slice(0, this.options.numberOfResults)
+    //     .map(
+    //       (p) =>
+    //         `<tr>
+    //       <td>${p.LenderName}</td>
+    //       <td>${formatNumber(p.Rate, { fallback: '-' })}%</td>
+    //       <td>${formatNumber(p.PMT, { currency: true, fallback: '-' })}</td>
+    //       <td>${formatNumber(p.AnnualCost, { currency: true, fallback: '-' })}</td>
+    //       <td>${formatNumber(p.LTV, { fallback: '-' })}%</td>
+    //     </tr>`
+    //     )
+    //     .join('');
+    //   return `<table class="mct-results-table">
+    //     <thead><tr><th>Lender</th><th>Rate</th><th>Monthly</th><th>Annual Cost</th><th>LTV</th></tr></thead>
+    //     <tbody>${rows}</tbody>
+    //   </table>`;
+    // }
+    // private renderError(error: unknown) {
+    //   this.setResultsData([
+    //     { key: 'summary', value: '<span class="error">Failed to load results.</span>' },
+    //     { key: 'lenders', value: '' },
+    //     { key: 'details', value: '' },
+    //   ]);
+    // }
+    // public setResultsData(data: ResultsData[]) {
+    //   this.resultsData = data;
+    //   this.displayResults();
+    // }
+    // private displayResults() {
+    //   this.resultsData.forEach((data) => {
+    //     const el = this.component.querySelector(`[${attr.output}="${data.key}"]`);
+    //     if (el) {
+    //       el.innerHTML = data.value;
+    //     }
+    //   });
+    // }
+  };
+
+  // src/mct/stages/results/index.ts
+  var initResults = (component) => {
+    const manager = new ResultsManager(component);
+    if (!manager)
+      return null;
+    return manager;
   };
 
   // src/mct/shared/api/generateLCID.ts
@@ -17658,8 +22469,8 @@
       body: JSON.stringify({
         endpoint: "NewEnquiry",
         input: {
-          lcid: MCTManager.getLCID(),
-          icid: MCTManager.getICID(),
+          lcid: MCTManager2.getLCID(),
+          icid: MCTManager2.getICID(),
           partnerId: "",
           partnerName: ""
         }
@@ -17671,7 +22482,7 @@
   };
 
   // src/mct/shared/MCTManager.ts
-  var stages = {};
+  var stageManagers = {};
   var dom = {
     mctComponent: null,
     stages: {}
@@ -17680,10 +22491,12 @@
     lcid: null,
     icid: null,
     currentStageId: null,
-    answers: {}
+    answers: {},
+    summary: null,
+    products: null
   };
   var MCT_ANSWERS_STORAGE_KEY = "mct_data";
-  var MCTManager = {
+  var MCTManager2 = {
     /**
      * @plan
      *
@@ -17694,7 +22507,8 @@
       this.initDOM();
       this.initICID();
       this.initLCID();
-      console.log(dom);
+      this.initStages();
+      this.route();
     },
     initDOM() {
       dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
@@ -17722,12 +22536,25 @@
         console.error("Failed to generate LCID");
       }
     },
-    getComponent() {
+    initStages() {
+      const mainForm = this.getStageDOM("questions");
+      const mainFormManager = initForm(mainForm, {
+        mode: "main",
+        prefill: false
+      });
+      mainFormManager?.hide();
+      const results = this.getStageDOM("results");
+      const resultsManager = initResults(results);
+      resultsManager?.hide();
+      stageManagers["questions"] = mainFormManager;
+      stageManagers["results"] = resultsManager;
+    },
+    getComponentDOM() {
       if (!dom.mctComponent)
         throw new Error("MCT component not initialised");
       return dom.mctComponent;
     },
-    getStage(name) {
+    getStageDOM(name) {
       if (!dom.stages)
         throw new Error("Stages not initialised");
       const stage = dom.stages[name];
@@ -17736,33 +22563,25 @@
       return dom.stages[name];
     },
     route() {
-      const mainQuestions = this.getStage("questions");
-      initForm(mainQuestions, {
-        mode: "main",
-        prefill: false
-      });
-    },
-    registerStage(stage) {
-      stages[stage.id] = stage;
+      this.goToStage("results");
     },
     goToStage(stageId) {
-      if (state.currentStageId && stages[state.currentStageId])
-        stages[state.currentStageId].hide();
+      const nextStage = stageManagers[stageId] ?? null;
+      if (!nextStage)
+        return false;
+      const currentStage = stageManagers[state.currentStageId] ?? null;
+      if (currentStage)
+        currentStage.hide();
       state.currentStageId = stageId;
-      if (stages[stageId]) {
-        stages[stageId].init();
-        stages[stageId].show();
-      }
+      nextStage.show();
+      nextStage.init();
+      return true;
     },
     getPersistedData() {
       const stored = localStorage.getItem(MCT_ANSWERS_STORAGE_KEY);
       if (!stored)
         return {};
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return {};
-      }
+      return JSON.parse(stored);
     },
     setPersistedData(data) {
       localStorage.setItem(MCT_ANSWERS_STORAGE_KEY, JSON.stringify(data));
@@ -17819,6 +22638,18 @@
       state.icid = data.icid ?? null;
       state.answers = data.answers ?? {};
     },
+    setProducts(products) {
+      state.products = products;
+    },
+    getProducts() {
+      return state.products;
+    },
+    setSummary(summary) {
+      state.summary = summary;
+    },
+    getSummary() {
+      return state.summary;
+    },
     getState() {
       return { ...state };
     }
@@ -17826,8 +22657,7 @@
 
   // src/mct/index.ts
   var mct = () => {
-    MCTManager.start();
-    MCTManager.route();
+    MCTManager2.start();
   };
 
   // src/index.ts
