@@ -13,8 +13,8 @@ export const calculators = () => {
 
   if (repaymentValueSlider)
     repaymentValueSlider.setAttribute(`${attr}-output`, 'BorrowingAmountHigher');
-  if (depositAmountSlider) depositAmountSlider.setAttribute(`${attr}}-output`, 'DepositAmount');
-  if (rateSlider) rateSlider.setAttribute(`${attr}}-output`, 'InitialRate');
+  if (depositAmountSlider) depositAmountSlider.setAttribute(`${attr}-output`, 'DepositAmount');
+  if (rateSlider) rateSlider.setAttribute(`${attr}-output`, 'InitialRate');
   // ----- End
 
   const components = queryElements<HTMLDivElement>(`[${attr}]`);
