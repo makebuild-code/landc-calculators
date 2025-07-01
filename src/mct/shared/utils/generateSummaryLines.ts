@@ -23,19 +23,17 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers)
     RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
 
   const SchemeTypesMap = SchemeTypes.map((type) => (type === 1 ? 'fixed' : 'variable'));
-  const SchemePeriodsMap = SchemePeriods === 1 ? '2' : SchemePeriods === 2 ? '3' : SchemePeriods === 3 ? '5' : '5+';
-  // const SchemePeriodsMap = SchemePeriods.map((period) =>
-  //   period === 1 ? '2' : period === 2 ? '3' : period === 3 ? '5' : '5+'
-  // );
+  const SchemePeriodsMap = SchemePeriods.map((period) =>
+    period === 1 || period === '1'
+      ? '2'
+      : period === 2 || period === '2'
+        ? '3'
+        : period === 3 || period === '3'
+          ? '5'
+          : '5+'
+  );
 
   const SchemePeriodsText = `${SchemePeriodsMap} years`;
-
-  // const SchemePeriodsText =
-  //   SchemePeriodsMap.length === 1
-  //     ? `${SchemePeriodsMap[0]} year`
-  //     : SchemePeriodsMap.length > 1
-  //       ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year`
-  //       : null;
 
   const SchemeTypesText =
     SchemeTypesMap.length === 1

@@ -14,6 +14,7 @@ import { FilterGroup } from './FilterGroup';
 import type { InputValue } from '../form/types';
 import { generateProductsAPIInput } from 'src/mct/shared/utils/generateProductsAPIInput';
 import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
+import { simulateEvent } from '@finsweet/ts-utils';
 
 /**
  * @plan
@@ -60,6 +61,17 @@ export class ResultsManager {
   private outputs: HTMLDivElement[] = [];
   private filterGroups: FilterGroup[] = [];
 
+  private appointmentDialogButton: HTMLButtonElement;
+  private appointmentDialog: HTMLDialogElement;
+  private appointmentDialogClose: HTMLButtonElement;
+
+  private getFreeAdvice: HTMLElement;
+  private getFreeAdviceButton: HTMLButtonElement;
+  private getADecision: HTMLElement;
+  private getADecisionButton: HTMLButtonElement;
+  private applyDirect: HTMLElement;
+  private applyDirectLink: HTMLLinkElement;
+
   private results: Result[] = [];
   private resultsList: HTMLElement;
   private resultsTemplate: HTMLElement;
@@ -81,6 +93,26 @@ export class ResultsManager {
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
 
+    this.appointmentDialogButton = queryElement(
+      `[${attr.components}="book-an-appointment"]`,
+      this.header
+    ) as HTMLButtonElement;
+    this.appointmentDialog = queryElement(
+      `[${attr.components}="appointment-dialog"]`,
+      this.component
+    ) as HTMLDialogElement;
+    this.appointmentDialogClose = queryElement(
+      `[${attr.components}="close-appointment-dialog"]`,
+      this.appointmentDialog
+    ) as HTMLButtonElement;
+
+    this.getFreeAdvice = queryElement(`[${attr.components}="get-free-advice"]`, this.appointmentDialog) as HTMLElement;
+    this.getFreeAdviceButton = queryElement('button', this.getFreeAdvice) as HTMLButtonElement;
+    this.getADecision = queryElement(`[${attr.components}="get-a-decision"]`, this.appointmentDialog) as HTMLElement;
+    this.getADecisionButton = queryElement('button', this.getADecision) as HTMLButtonElement;
+    this.applyDirect = queryElement(`[${attr.components}="apply-direct"]`, this.appointmentDialog) as HTMLElement;
+    this.applyDirectLink = queryElement('a', this.applyDirect) as HTMLLinkElement;
+
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
     this.resultsTemplate.remove();
@@ -95,14 +127,15 @@ export class ResultsManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
-    // --- TEMP ---
-    // Answers will be saved from prior stage, just temporary to avoid inputting every time
-    Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-      MCTManager.setAnswer(key as AnswerKey, value);
-    });
-    // --- END OF TEMP ---
+    // // --- TEMP ---
+    // // Answers will be saved from prior stage, just temporary to avoid inputting every time
+    // Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
+    //   MCTManager.setAnswer(key as AnswerKey, value);
+    // });
+    // // --- END OF TEMP ---
 
     this.initFilterGroups();
+    this.initAppointmentDialog();
     this.initListElements();
     this.renderOutputs();
     this.renderFilters();
@@ -138,6 +171,20 @@ export class ResultsManager {
     });
 
     this.handleProductsAPI();
+  }
+
+  private initAppointmentDialog(): void {
+    const answers = MCTManager.getAnswers();
+    const { ReadinessToBuy } = answers;
+
+    const proceedable = ReadinessToBuy === 'C' || ReadinessToBuy === 'D';
+    proceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
+    proceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
+    this.applyDirect.style.display = 'none';
+
+    this.appointmentDialogButton.addEventListener('click', () => this.appointmentDialog.showModal());
+    this.appointmentDialogClose.addEventListener('click', () => this.appointmentDialog.close());
+    this.appointmentDialog.addEventListener('close', () => (this.applyDirect.style.display = 'none'));
   }
 
   private initListElements(): void {
@@ -231,8 +278,25 @@ export class ResultsManager {
 
     this.showListUI('empty', false);
     this.results = this.products.map((product) => {
-      return new Result(this.resultsList, { template: this.resultsTemplate, product });
+      return new Result(this.resultsList, {
+        template: this.resultsTemplate,
+        product,
+        onClick: (product) => this.handleProductCTA(product),
+      });
     });
+  }
+
+  private handleProductCTA(product: Product): void {
+    const { ApplyDirectLink } = product;
+
+    if (ApplyDirectLink) {
+      this.applyDirect.style.removeProperty('display');
+      this.applyDirectLink.href = ApplyDirectLink;
+    } else {
+      this.applyDirect.style.display = 'none';
+    }
+
+    simulateEvent(this.appointmentDialogButton, 'click');
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {

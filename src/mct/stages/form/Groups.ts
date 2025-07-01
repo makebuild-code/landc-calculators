@@ -16,6 +16,7 @@ import { trackGAEvent } from '$utils/trackGAEvent';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { generateSummaryLines, type SummaryLines } from 'src/mct/shared/utils/generateSummaryLines';
 import { generateProductsAPIInput } from 'src/mct/shared/utils/generateProductsAPIInput';
+import { logError } from 'src/mct/shared/utils/logError';
 
 // @description: Base class for all groups
 export abstract class BaseGroup {
@@ -230,7 +231,7 @@ export class OutputGroup extends BaseGroup {
   protected formManager: MainFormManager;
   private card: HTMLElement;
   private loader: HTMLElement;
-  private productsResponse: ProductsResponse | null = null;
+  private response: ProductsResponse | null = null;
   private summaryInfo: SummaryInfo | null = null;
   private outputs: HTMLDivElement[];
   private button: HTMLButtonElement;
@@ -291,8 +292,13 @@ export class OutputGroup extends BaseGroup {
   private async handleProducts(): Promise<void> {
     this.showLoader(true);
     this.button.disabled = true;
-    this.productsResponse = await this.fetchProducts();
-    if (!this.productsResponse) return;
+    this.response = await this.fetchProducts();
+    if (!this.response) {
+      logError('No products response');
+      return;
+    }
+
+    this.summaryInfo = this.response.result.SummaryInfo;
 
     this.updateOutputs();
     this.showLoader(false);

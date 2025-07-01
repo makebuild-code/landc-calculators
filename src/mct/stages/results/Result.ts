@@ -10,6 +10,7 @@ const DEFAULT_OPTIONS = {};
 interface Options {
   template: HTMLElement;
   product: Product;
+  onClick: (product: Product) => void;
 }
 
 export class Result {
@@ -17,6 +18,7 @@ export class Result {
   private wrapper: HTMLElement;
   private template: HTMLElement;
   private product: Product;
+  private onClick: (product: Product) => void;
 
   private outputs: HTMLElement[] = [];
   private button: HTMLButtonElement | null = null;
@@ -26,6 +28,7 @@ export class Result {
     this.wrapper = wrapper;
     this.template = options.template.cloneNode(true) as HTMLElement;
     this.product = options.product;
+    this.onClick = options.onClick;
 
     this.outputs = queryElements(`[${attr.output}]`, this.template) as HTMLElement[];
     this.button = queryElement(`[${attr.element}="template-cta"]`, this.template) as HTMLButtonElement;
@@ -68,7 +71,7 @@ export class Result {
 
   private bindEvents(): void {
     this.button?.addEventListener('click', () => {
-      console.log('clicked');
+      this.onClick(this.product);
     });
   }
 

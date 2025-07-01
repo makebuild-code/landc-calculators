@@ -141,8 +141,8 @@ export const MCTManager = {
      * - once questions are done, init the results
      */
 
-    // this.goToStage('questions');
-    this.goToStage('results');
+    this.goToStage('questions');
+    // this.goToStage('results');
   },
 
   goToStage(stageId: StageID): boolean {
