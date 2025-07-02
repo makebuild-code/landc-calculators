@@ -11,8 +11,7 @@ import type { ResultsManager } from '../stages/results/Manager';
 import { mctAttr } from './constants';
 import type { AnswerKey, Answers, AnswerValue, GoToStageOptions, Product, SummaryInfo } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
-
-import { generateLCID } from './utils/api/calls/generateLCID';
+import { generateLCID } from '$mct/api';
 
 interface Stage {
   id: StageIDENUM;

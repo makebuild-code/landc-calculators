@@ -4,7 +4,7 @@
 2. Split large manager files
    - [x] Explore how this could look
 3. Reorganise shared utils
-   - [ ] Organise in a way that makes sense
+   - [] Organise in a way that makes sense
 4. State management refactoring
    - [ ] Explore dedicated state manager
    - [ ] Separate storage logic

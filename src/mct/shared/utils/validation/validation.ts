@@ -1,4 +1,4 @@
-import { logError } from './common/logError';
+import { logError } from '../common/logError';
 
 /**
  * Validation & Error Utilities

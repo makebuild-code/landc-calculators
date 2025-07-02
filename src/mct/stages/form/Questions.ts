@@ -6,7 +6,7 @@ import { classes } from 'src/mct/shared/constants';
 import { attr } from './constants';
 import type { FormManager } from './Manager_Base';
 import { InputGroupBase, type InputGroupOptions } from 'src/mct/shared/classes/InputGroupBase';
-import { fetchLenders } from 'src/mct/shared/utils/api/calls/fetchLenders';
+import { fetchLenders } from '$mct/api';
 import type { Answers } from '$mct/types';
 
 type QuestionOptions = {

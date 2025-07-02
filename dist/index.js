@@ -16900,10 +16900,126 @@
     return response.json();
   };
 
-  // src/mct/shared/utils/api/calls/fetchLenders.ts
+  // src/mct/shared/utils/common/generateProductsAPIInput.ts
+  var DEFAULT_OPTIONS = {
+    numberOfResults: 1,
+    sortColumn: 1
+  };
+  var generateProductsAPIInput = (answers, options = {}) => {
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+    const PropertyValue = answers.PropertyValue;
+    const DepositAmount = answers.DepositAmount;
+    let RepaymentValue = answers.RepaymentValue || null;
+    if (!RepaymentValue)
+      RepaymentValue = PropertyValue - DepositAmount;
+    const PropertyType = 1;
+    const MortgageType = answers.ResiBtl === "R" ? 1 : 2;
+    const TermYears = answers.MortgageLength;
+    const SchemePurpose = answers.PurchRemo === "P" ? 1 : 2;
+    const NumberOfResults = opts.numberOfResults ?? 1;
+    const SortColumn = opts.sortColumn ?? 1;
+    const SchemeTypes = (() => {
+      const value = answers.SchemeTypes;
+      if (typeof value === "boolean")
+        return [];
+      return filterAllowed(value, [1, 2]);
+    })();
+    const Features = {};
+    if (answers.HelpToBuy)
+      Features.HelpToBuy = true;
+    if (answers.Offset)
+      Features.Offset = true;
+    if (answers.EarlyRepaymentCharge)
+      Features.EarlyRepaymentCharge = true;
+    if (answers.NewBuild)
+      Features.NewBuild = true;
+    const SapValue = answers.SapValue ? answers.SapValue : null;
+    const input = {
+      PropertyValue,
+      RepaymentValue,
+      PropertyType,
+      MortgageType,
+      InterestOnlyValue: answers.InterestOnlyValue,
+      TermYears,
+      SchemePurpose,
+      SchemePeriods: Array(answers.SchemePeriods),
+      SchemeTypes,
+      NumberOfResults,
+      SortColumn,
+      Features
+    };
+    if (SapValue)
+      input.SapValue = SapValue;
+    return input;
+  };
+
+  // src/mct/shared/utils/common/generateSummaryLines.ts
+  var generateSummaryLines = (summaryInfo, answers) => {
+    const productsAPIInput = generateProductsAPIInput(answers);
+    const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
+    const { RepaymentType } = answers;
+    const RepaymentValueText = formatNumber(RepaymentValue, { type: "currency" });
+    const TermYearsText = `${TermYears} years`;
+    const RepaymentTypeText = RepaymentType === "R" ? "repayment" : RepaymentType === "I" ? "interest only" : "part repayment part interest";
+    const SchemeTypesMap = SchemeTypes.map((type) => type === 1 ? "fixed" : "variable");
+    const SchemePeriodsMap = SchemePeriods.map(
+      (period) => period === 1 || period === "1" ? "2" : period === 2 || period === "2" ? "3" : period === 3 || period === "3" ? "5" : "5+"
+    );
+    const SchemePeriodsText = `${SchemePeriodsMap} years`;
+    const SchemeTypesText = SchemeTypesMap.length === 1 ? `${SchemeTypesMap[0]} rate` : SchemeTypesMap.length > 1 ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate` : null;
+    const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
+    const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
+    const ProductsAndLenders = `We\u2019ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> lenders.`;
+    const DealsAndRates = `We\u2019ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
+    const Summary = `${BorrowOverTerm} with a ${SchemeAndType}`;
+    return {
+      BorrowOverTerm,
+      SchemeAndType,
+      ProductsAndLenders,
+      DealsAndRates,
+      Summary
+    };
+  };
+
+  // src/mct/shared/utils/common/logError.ts
+  var logError = (message, data) => {
+    console.log(message, data || "");
+    return false;
+  };
+
+  // src/mct/shared/api/calls/fetchLenders.ts
   var fetchLenders = async () => {
     const data = await fetchData(ENDPOINTS.lenders);
     return data.result.lenders;
+  };
+
+  // src/mct/shared/api/calls/fetchProducts.ts
+  var fetchProducts = async (input) => {
+    return fetchData(ENDPOINTS.products, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input })
+    });
+  };
+
+  // src/mct/shared/api/calls/generateLCID.ts
+  var generateLCID = async () => {
+    const response = await fetchData(ENDPOINTS.lcid, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: "NewEnquiry",
+        input: {
+          lcid: MCTManager.getLCID(),
+          icid: MCTManager.getICID(),
+          partnerId: "",
+          partnerName: ""
+        }
+      })
+    });
+    if (!response?.result?.lcid)
+      throw new Error("Failed to generate LCID");
+    return response.result.lcid;
   };
 
   // src/mct/stages/form/Questions.ts
@@ -17021,102 +17137,6 @@
     if (true)
       console.log("[GA] Event:", eventName, params);
   }
-
-  // src/mct/shared/utils/common/generateProductsAPIInput.ts
-  var DEFAULT_OPTIONS = {
-    numberOfResults: 1,
-    sortColumn: 1
-  };
-  var generateProductsAPIInput = (answers, options = {}) => {
-    const opts = { ...DEFAULT_OPTIONS, ...options };
-    const PropertyValue = answers.PropertyValue;
-    const DepositAmount = answers.DepositAmount;
-    let RepaymentValue = answers.RepaymentValue || null;
-    if (!RepaymentValue)
-      RepaymentValue = PropertyValue - DepositAmount;
-    const PropertyType = 1;
-    const MortgageType = answers.ResiBtl === "R" ? 1 : 2;
-    const TermYears = answers.MortgageLength;
-    const SchemePurpose = answers.PurchRemo === "P" ? 1 : 2;
-    const NumberOfResults = opts.numberOfResults ?? 1;
-    const SortColumn = opts.sortColumn ?? 1;
-    const SchemeTypes = (() => {
-      const value = answers.SchemeTypes;
-      if (typeof value === "boolean")
-        return [];
-      return filterAllowed(value, [1, 2]);
-    })();
-    const Features = {};
-    if (answers.HelpToBuy)
-      Features.HelpToBuy = true;
-    if (answers.Offset)
-      Features.Offset = true;
-    if (answers.EarlyRepaymentCharge)
-      Features.EarlyRepaymentCharge = true;
-    if (answers.NewBuild)
-      Features.NewBuild = true;
-    const SapValue = answers.SapValue ? answers.SapValue : null;
-    const input = {
-      PropertyValue,
-      RepaymentValue,
-      PropertyType,
-      MortgageType,
-      InterestOnlyValue: answers.InterestOnlyValue,
-      TermYears,
-      SchemePurpose,
-      SchemePeriods: Array(answers.SchemePeriods),
-      SchemeTypes,
-      NumberOfResults,
-      SortColumn,
-      Features
-    };
-    if (SapValue)
-      input.SapValue = SapValue;
-    return input;
-  };
-
-  // src/mct/shared/utils/common/generateSummaryLines.ts
-  var generateSummaryLines = (summaryInfo, answers) => {
-    const productsAPIInput = generateProductsAPIInput(answers);
-    const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
-    const { RepaymentType } = answers;
-    const RepaymentValueText = formatNumber(RepaymentValue, { type: "currency" });
-    const TermYearsText = `${TermYears} years`;
-    const RepaymentTypeText = RepaymentType === "R" ? "repayment" : RepaymentType === "I" ? "interest only" : "part repayment part interest";
-    const SchemeTypesMap = SchemeTypes.map((type) => type === 1 ? "fixed" : "variable");
-    const SchemePeriodsMap = SchemePeriods.map(
-      (period) => period === 1 || period === "1" ? "2" : period === 2 || period === "2" ? "3" : period === 3 || period === "3" ? "5" : "5+"
-    );
-    const SchemePeriodsText = `${SchemePeriodsMap} years`;
-    const SchemeTypesText = SchemeTypesMap.length === 1 ? `${SchemeTypesMap[0]} rate` : SchemeTypesMap.length > 1 ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate` : null;
-    const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
-    const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-    const ProductsAndLenders = `We\u2019ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> lenders.`;
-    const DealsAndRates = `We\u2019ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
-    const Summary = `${BorrowOverTerm} with a ${SchemeAndType}`;
-    return {
-      BorrowOverTerm,
-      SchemeAndType,
-      ProductsAndLenders,
-      DealsAndRates,
-      Summary
-    };
-  };
-
-  // src/mct/shared/utils/api/calls/fetchProducts.ts
-  var fetchProducts = async (input) => {
-    return fetchData(ENDPOINTS.products, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input })
-    });
-  };
-
-  // src/mct/shared/utils/common/logError.ts
-  var logError = (message, data) => {
-    console.log(message, data || "");
-    return false;
-  };
 
   // src/mct/stages/form/Groups.ts
   var BaseGroup = class {
@@ -18320,26 +18340,6 @@
     if (!manager)
       return null;
     return manager;
-  };
-
-  // src/mct/shared/utils/api/calls/generateLCID.ts
-  var generateLCID = async () => {
-    const response = await fetchData(ENDPOINTS.lcid, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        endpoint: "NewEnquiry",
-        input: {
-          lcid: MCTManager.getLCID(),
-          icid: MCTManager.getICID(),
-          partnerId: "",
-          partnerName: ""
-        }
-      })
-    });
-    if (!response?.result?.lcid)
-      throw new Error("Failed to generate LCID");
-    return response.result.lcid;
   };
 
   // src/mct/shared/MCTManager.ts

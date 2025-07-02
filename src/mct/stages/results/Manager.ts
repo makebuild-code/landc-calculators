@@ -8,19 +8,17 @@ import type {
   ResultsStageOptions,
   SummaryInfo,
 } from '$mct/types';
-import { OutputTypeENUM } from '$mct/types';
-import { StageIDENUM } from '$mct/types';
-import { MCTManager } from 'src/mct/shared/MCTManager';
-import { formatNumber } from '$utils/formatting/formatNumber';
+import { OutputTypeENUM, StageIDENUM } from '$mct/types';
+import { MCTManager } from '$mct/manager';
+import { formatNumber } from '$utils/formatting';
 import { Result } from './Result';
 import { EXAMPLE_PRODUCTS_RESPONSE } from 'src/mct/shared/examples/exampleProductsResponse';
 import { EXAMPLE_ANSWERS } from 'src/mct/shared/examples/exampleAnswers';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import { generateSummaryLines } from 'src/mct/shared/utils/common/generateSummaryLines';
+import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterGroup } from './FilterGroup';
-import { generateProductsAPIInput } from 'src/mct/shared/utils/common/generateProductsAPIInput';
-import { fetchProducts } from 'src/mct/shared/utils/api/calls/fetchProducts';
+import { fetchProducts } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
 
 /**

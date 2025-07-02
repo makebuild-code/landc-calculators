@@ -1,5 +1,5 @@
 import { ENDPOINTS } from 'src/mct/shared/constants';
-import { fetchData } from '../../common/fetchData';
+import { fetchData } from '$mct/utils';
 import type { Lender, LenderListResponse } from '$mct/types';
 
 /**

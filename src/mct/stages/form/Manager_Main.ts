@@ -2,8 +2,8 @@ import { simulateEvent } from '@finsweet/ts-utils';
 
 import { attr } from './constants';
 import { MainGroup, OutputGroup } from './Groups';
-import { MCTManager } from 'src/mct/shared/MCTManager';
-import { logError } from 'src/mct/shared/utils/common/logError';
+import { MCTManager } from '$mct/manager';
+import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { QuestionsStageOptions } from '$mct/types';

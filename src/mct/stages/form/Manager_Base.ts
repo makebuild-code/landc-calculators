@@ -1,5 +1,5 @@
 import { PROFILES } from 'src/mct/shared/constants';
-import { MCTManager } from 'src/mct/shared/MCTManager';
+import { MCTManager } from '$mct/manager';
 import type { Answers, AnswerValue, Profile, QuestionsStageOptions } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 
