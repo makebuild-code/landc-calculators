@@ -156,27 +156,47 @@ export class HandleInputs {
         ) as string),
         (values.ComparisonRates = [
           {
-            Rate: getInputValue(queryElement('[data-input="CurrentRate"]', this.calculator.component) as Input),
-            Fees: getInputValue(queryElement('[data-input="CurrentFees"]', this.calculator.component) as Input),
-            Type: getInputValue(queryElement('[data-input="CurrentType"]', this.calculator.component) as Input),
+            Rate: getInputValue(
+              queryElement('[data-input="CurrentRate"]', this.calculator.component) as Input
+            ) as string,
+            Fees: getInputValue(
+              queryElement('[data-input="CurrentFees"]', this.calculator.component) as Input
+            ) as string,
+            Type: getInputValue(
+              queryElement('[data-input="CurrentType"]', this.calculator.component) as Input
+            ) as string,
             SchemeLength: getInputValue(
               queryElement('[data-input="CurrentSchemeLength"]', this.calculator.component) as Input
-            ),
-            ERCAmount: getInputValue(queryElement('[data-input="ERCAmount"]', this.calculator.component) as Input),
-            ERCTerm: getInputValue(queryElement('[data-input="ERCTerm"]', this.calculator.component) as Input),
-            ERCAdd: getInputValue(queryElement('[data-input="ERCAdd"]', this.calculator.component) as Input),
-            FollowOn: getInputValue(queryElement('[data-input="CurrentFollowOn"]', this.calculator.component) as Input),
+            ) as string,
+            ERCAmount: getInputValue(
+              queryElement('[data-input="ERCAmount"]', this.calculator.component) as Input
+            ) as string,
+            ERCTerm: getInputValue(
+              queryElement('[data-input="ERCTerm"]', this.calculator.component) as Input
+            ) as string,
+            ERCAdd: getInputValue(queryElement('[data-input="ERCAdd"]', this.calculator.component) as Input) as string,
+            FollowOn: getInputValue(
+              queryElement('[data-input="CurrentFollowOn"]', this.calculator.component) as Input
+            ) as string,
           },
           {
-            Rate: getInputValue(queryElement('[data-input="CompareRate"]', this.calculator.component) as Input),
-            Fees: getInputValue(queryElement('[data-input="CompareFees"]', this.calculator.component) as Input),
-            Type: getInputValue(queryElement('[data-input="CompareType"]', this.calculator.component) as Input),
+            Rate: getInputValue(
+              queryElement('[data-input="CompareRate"]', this.calculator.component) as Input
+            ) as string,
+            Fees: getInputValue(
+              queryElement('[data-input="CompareFees"]', this.calculator.component) as Input
+            ) as string,
+            Type: getInputValue(
+              queryElement('[data-input="CompareType"]', this.calculator.component) as Input
+            ) as string,
             SchemeLength: getInputValue(
               queryElement('[data-input="CompareSchemeLength"]', this.calculator.component) as Input
-            ),
-            FollowOn: getInputValue(queryElement('[data-input="CompareFollowOn"]', this.calculator.component) as Input),
+            ) as string,
+            FollowOn: getInputValue(
+              queryElement('[data-input="CompareFollowOn"]', this.calculator.component) as Input
+            ) as string,
           },
-        ]),
+        ] as any),
         (values.ComparisonTerm = getInputValue(
           queryElement('[data-input="ComparisonTerm"]', this.calculator.component) as Input
         ) as string),

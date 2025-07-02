@@ -1251,25 +1251,45 @@
           queryElement('[data-input="Type"]', this.calculator.component)
         ), values.ComparisonRates = [
           {
-            Rate: getInputValue(queryElement('[data-input="CurrentRate"]', this.calculator.component)),
-            Fees: getInputValue(queryElement('[data-input="CurrentFees"]', this.calculator.component)),
-            Type: getInputValue(queryElement('[data-input="CurrentType"]', this.calculator.component)),
+            Rate: getInputValue(
+              queryElement('[data-input="CurrentRate"]', this.calculator.component)
+            ),
+            Fees: getInputValue(
+              queryElement('[data-input="CurrentFees"]', this.calculator.component)
+            ),
+            Type: getInputValue(
+              queryElement('[data-input="CurrentType"]', this.calculator.component)
+            ),
             SchemeLength: getInputValue(
               queryElement('[data-input="CurrentSchemeLength"]', this.calculator.component)
             ),
-            ERCAmount: getInputValue(queryElement('[data-input="ERCAmount"]', this.calculator.component)),
-            ERCTerm: getInputValue(queryElement('[data-input="ERCTerm"]', this.calculator.component)),
+            ERCAmount: getInputValue(
+              queryElement('[data-input="ERCAmount"]', this.calculator.component)
+            ),
+            ERCTerm: getInputValue(
+              queryElement('[data-input="ERCTerm"]', this.calculator.component)
+            ),
             ERCAdd: getInputValue(queryElement('[data-input="ERCAdd"]', this.calculator.component)),
-            FollowOn: getInputValue(queryElement('[data-input="CurrentFollowOn"]', this.calculator.component))
+            FollowOn: getInputValue(
+              queryElement('[data-input="CurrentFollowOn"]', this.calculator.component)
+            )
           },
           {
-            Rate: getInputValue(queryElement('[data-input="CompareRate"]', this.calculator.component)),
-            Fees: getInputValue(queryElement('[data-input="CompareFees"]', this.calculator.component)),
-            Type: getInputValue(queryElement('[data-input="CompareType"]', this.calculator.component)),
+            Rate: getInputValue(
+              queryElement('[data-input="CompareRate"]', this.calculator.component)
+            ),
+            Fees: getInputValue(
+              queryElement('[data-input="CompareFees"]', this.calculator.component)
+            ),
+            Type: getInputValue(
+              queryElement('[data-input="CompareType"]', this.calculator.component)
+            ),
             SchemeLength: getInputValue(
               queryElement('[data-input="CompareSchemeLength"]', this.calculator.component)
             ),
-            FollowOn: getInputValue(queryElement('[data-input="CompareFollowOn"]', this.calculator.component))
+            FollowOn: getInputValue(
+              queryElement('[data-input="CompareFollowOn"]', this.calculator.component)
+            )
           }
         ], values.ComparisonTerm = getInputValue(
           queryElement('[data-input="ComparisonTerm"]', this.calculator.component)
@@ -15663,7 +15683,7 @@
     chartJS;
     results;
     result;
-    calcElement;
+    calcElement = null;
     resultsId;
     constructor(calculator) {
       this.calculator = calculator;
@@ -16232,8 +16252,8 @@
     mortgageTypeDropdown;
     followOnField;
     isLoading;
-    formattedValues;
-    formattedCostOfDoingNothingValues;
+    formattedValues = {};
+    formattedCostOfDoingNothingValues = {};
     outputHandler;
     constructor(component) {
       this.component = component;
@@ -16501,16 +16521,15 @@
       }
       this.followOnField.value = followOnRate;
     }
-    handleResponse(response) {
-      const costOfRate1 = response.data.CostOfRate1;
-      const costOfRate2 = response.data.CostOfRate2;
-      const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
-      const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
-      if (costOfRate1Element)
-        costOfRate1Element.textContent = `\xA3${costOfRate1}`;
-      if (costOfRate2Element)
-        costOfRate2Element.textContent = `\xA3${costOfRate2}`;
-    }
+    // private handleResponse(response: APIResponse): void {
+    //   const costOfRate2 = response.data.CostOfRate2;
+    //   const costOfRate1 = response.data.CostOfRate1;
+    //   const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
+    //   const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
+    //   if (costOfRate1Element) costOfRate1Element.textContent = `£${costOfRate1}`;
+    //   if (costOfRate2Element) costOfRate2Element.textContent = `£${costOfRate2}`;
+    //   // Additional handling for chart or other response data can be added here
+    // }
     async init() {
       await this.handleSVRRequest();
       this.updateFollowOnField();

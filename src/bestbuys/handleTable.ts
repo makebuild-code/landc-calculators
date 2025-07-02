@@ -308,7 +308,7 @@ export class HandleTable {
 
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
-      clone.setAttribute('data-productId', item.ProductId);
+      clone.setAttribute('data-productId', item.ProductId as string);
 
       const outputs = queryElements(`[${attr}-output]`, clone) as HTMLDivElement[];
       outputs.forEach((output) => {

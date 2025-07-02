@@ -108,7 +108,7 @@ export class HandleInputRepeat {
           if (value) values.push(value.toString());
         });
       } else if (this.type === 'objectArray') {
-        const object = {};
+        const object: Record<string, any> = {};
         inputs.forEach((input) => {
           const calcInput = input.dataset.input;
           const value = getInputValue(input);
@@ -121,6 +121,6 @@ export class HandleInputRepeat {
       }
     });
 
-    return values;
+    return values as InputArray | InputObject;
   }
 }

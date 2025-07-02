@@ -17,8 +17,8 @@ export class CostOfDoingNothingCalculator {
   private mortgageTypeDropdown: HTMLSelectElement;
   private followOnField: HTMLInputElement;
   private isLoading: boolean;
-  private formattedValues: BestBuyInputs;
-  private formattedCostOfDoingNothingValues: CostOfDoingNothingRequest;
+  private formattedValues: BestBuyInputs = {} as BestBuyInputs;
+  private formattedCostOfDoingNothingValues: CostOfDoingNothingRequest = {} as CostOfDoingNothingRequest;
   private outputHandler: HandleCODNOutputs;
 
   constructor(component: HTMLDivElement) {
@@ -176,7 +176,7 @@ export class CostOfDoingNothingCalculator {
         PropertyValue: propertyValue, // min: 1, max: 10000000, step: 500, value: 250000
         LoanAmount: loanAmount, // min: 5000, max: 10000000, step: 1000, value: 125000
         Term: termYears, // min: 1, max: 40, step: 1, value: 25
-        Type: type,
+        Type: type as 'R' | 'I',
         ComparisonRates: [
           {
             Rate: followOnRate, // min: 0.1, max: 15, step: 0.05, value: null | 4.99
@@ -313,18 +313,18 @@ export class CostOfDoingNothingCalculator {
     this.followOnField.value = followOnRate;
   }
 
-  private handleResponse(response: APIResponse): void {
-    const costOfRate1 = response.data.CostOfRate1;
-    const costOfRate2 = response.data.CostOfRate2;
+  // private handleResponse(response: APIResponse): void {
+  //   const costOfRate2 = response.data.CostOfRate2;
+  //   const costOfRate1 = response.data.CostOfRate1;
 
-    const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
-    const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
+  //   const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
+  //   const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
 
-    if (costOfRate1Element) costOfRate1Element.textContent = `£${costOfRate1}`;
-    if (costOfRate2Element) costOfRate2Element.textContent = `£${costOfRate2}`;
+  //   if (costOfRate1Element) costOfRate1Element.textContent = `£${costOfRate1}`;
+  //   if (costOfRate2Element) costOfRate2Element.textContent = `£${costOfRate2}`;
 
-    // Additional handling for chart or other response data can be added here
-  }
+  //   // Additional handling for chart or other response data can be added here
+  // }
 
   private async init(): Promise<void> {
     await this.handleSVRRequest(); // Fetch and populate lender data on initialization

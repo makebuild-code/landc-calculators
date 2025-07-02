@@ -1,4 +1,4 @@
-import Chart from 'chart.js/auto';
+import Chart, { type ChartTypeRegistry } from 'chart.js/auto';
 import type { BasicObject, Result } from 'src/types';
 
 import { isStaging } from '$utils/environment';
@@ -30,7 +30,7 @@ export class HandleOutputs {
   private chartJS?: Chart;
   private results: HTMLDivElement;
   private result?: Result;
-  private calcElement: HTMLElement | null;
+  private calcElement: HTMLElement | null = null;
   private resultsId: string | null;
 
   constructor(calculator: HandleCalculator) {
@@ -162,7 +162,7 @@ export class HandleOutputs {
   private populateOutputs(outputs?: HTMLElement[], data?: BasicObject): void {
     if (!outputs || !data) {
       outputs = this.outputs;
-      data = this.result;
+      data = this.result as BasicObject;
     }
 
     outputs.forEach((output) => {
@@ -228,7 +228,7 @@ export class HandleOutputs {
       this.chartJS.update();
     } else {
       this.chartJS = new Chart(this.chart, {
-        type: this.chart.dataset.calcChartType,
+        type: this.chart.dataset.calcChartType as keyof ChartTypeRegistry,
         data: {
           labels,
           datasets,
