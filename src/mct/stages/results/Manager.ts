@@ -3,13 +3,13 @@ import type {
   AnswerKey,
   AnswerValue,
   InputValue,
-  OutputType,
   Product,
   ProductsResponse,
   ResultsStageOptions,
   SummaryInfo,
-  StageID,
 } from '$mct/types';
+import { OutputTypeENUM } from '$mct/types';
+import { StageIDENUM } from '$mct/types';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { formatNumber } from 'src/utils/formatNumber';
 import { Result } from './Result';
@@ -48,7 +48,7 @@ import { simulateEvent } from '@finsweet/ts-utils';
 
 export class ResultsManager {
   private component: HTMLElement;
-  public id: StageID;
+  public id: StageIDENUM;
   private isInitialised: boolean = false;
 
   private products: Product[];
@@ -81,7 +81,7 @@ export class ResultsManager {
 
   constructor(component: HTMLElement) {
     this.component = component;
-    this.id = 'results';
+    this.id = StageIDENUM.Results;
 
     // Update: get response from fetchProducts API and save to state
     const response = EXAMPLE_PRODUCTS_RESPONSE;
@@ -201,7 +201,7 @@ export class ResultsManager {
 
     this.outputs.forEach((output) => {
       const key = output.getAttribute(attr.output);
-      const type = output.getAttribute(attr.type) as OutputType;
+      const type = output.getAttribute(attr.type) as OutputTypeENUM;
 
       /**
        * IF:

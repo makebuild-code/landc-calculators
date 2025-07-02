@@ -1,4 +1,5 @@
-import type { Profile } from './types';
+import type { Profile } from '$mct/types';
+import { ProfileNameENUM } from '$mct/types';
 
 export const mctAttr = {
   mct: 'data-mct',
@@ -16,7 +17,7 @@ export const parameters = {
 
 export const PROFILES: Profile[] = [
   {
-    name: 'residential-purchase',
+    name: ProfileNameENUM.ResidentialPurchase,
     display: 'Residential Purchase',
     requirements: {
       PurchRemo: 'P',
@@ -25,7 +26,7 @@ export const PROFILES: Profile[] = [
     },
   },
   {
-    name: 'ftb-residential-purchase',
+    name: ProfileNameENUM.FtbResidentialPurchase,
     display: 'First Time Buyer - Purchase',
     requirements: {
       PurchRemo: 'P',
@@ -34,7 +35,7 @@ export const PROFILES: Profile[] = [
     },
   },
   {
-    name: 'btl-purchase',
+    name: ProfileNameENUM.BtlPurchase,
     display: 'Buy to Let - Purchase',
     requirements: {
       PurchRemo: 'P',
@@ -43,7 +44,7 @@ export const PROFILES: Profile[] = [
     },
   },
   {
-    name: 'residential-remortgage',
+    name: ProfileNameENUM.ResidentialRemortgage,
     display: 'Residential - Remortgage',
     requirements: {
       PurchRemo: 'R',
@@ -52,7 +53,7 @@ export const PROFILES: Profile[] = [
     },
   },
   {
-    name: 'btl-remortgage',
+    name: ProfileNameENUM.BtlRemortgage,
     display: 'Buy to Let - Remortgage',
     requirements: {
       PurchRemo: 'R',

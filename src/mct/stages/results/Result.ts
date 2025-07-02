@@ -4,6 +4,7 @@ import { formatNumber } from '$utils/formatNumber';
 
 import { attr } from './constants';
 import type { Product } from '$mct/types';
+import { OutputTypeENUM } from '$mct/types';
 
 interface Options {
   template: HTMLElement;
@@ -45,7 +46,7 @@ export class Result {
       let outputValue = this.product[outputName] ?? 0;
 
       switch (outputType) {
-        case 'currency':
+        case OutputTypeENUM.Currency:
           outputValue = formatNumber(outputValue as number, { type: 'currency' });
           break;
         case 'boolean':

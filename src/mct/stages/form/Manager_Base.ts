@@ -1,13 +1,14 @@
 import { PROFILES } from 'src/mct/shared/constants';
 import { MCTManager } from 'src/mct/shared/MCTManager';
-import type { Answers, AnswerValue, Profile, QuestionsStageOptions, StageID } from '$mct/types';
+import type { Answers, AnswerValue, Profile, QuestionsStageOptions } from '$mct/types';
+import { StageIDENUM } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { Question } from './Questions';
 
 export abstract class FormManager {
   protected component: HTMLElement;
-  public id: StageID;
+  public id: StageIDENUM;
   protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
   protected questions: Set<Question> = new Set();
@@ -15,7 +16,7 @@ export abstract class FormManager {
 
   constructor(component: HTMLElement) {
     this.component = component;
-    this.id = 'questions';
+    this.id = StageIDENUM.Questions;
   }
 
   public abstract init(options?: QuestionsStageOptions): void;

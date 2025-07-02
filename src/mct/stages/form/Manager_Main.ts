@@ -6,7 +6,9 @@ import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from 'src/mct/shared/utils/common/logError';
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
-import type { GroupName, ProfileName, QuestionsStageOptions } from '$mct/types';
+import type { QuestionsStageOptions } from '$mct/types';
+import { GroupNameENUM } from '$mct/types';
+import { ProfileNameENUM, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 
 export class MainFormManager extends FormManager {
@@ -44,10 +46,10 @@ export class MainFormManager extends FormManager {
     this.showHeader('static');
 
     this.components.groupElements.forEach((groupEl, index) => {
-      const name = groupEl.getAttribute(attr.group) as GroupName;
+      const name = groupEl.getAttribute(attr.group) as GroupNameENUM;
       if (!name) return;
 
-      const group = name === 'output' ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
+      const group = name === GroupNameENUM.Output ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
@@ -155,13 +157,13 @@ export class MainFormManager extends FormManager {
     return this.groups[this.activeGroupIndex];
   }
 
-  private getGroupByName(name: GroupName): MainGroup | OutputGroup | undefined {
+  private getGroupByName(name: GroupNameENUM): MainGroup | OutputGroup | undefined {
     return this.groups.find((group) => group.name === name);
   }
 
   public updateGroupVisibility(): void {
     // Always show customer-identifier
-    const identifierGroup = this.getGroupByName('customer-identifier') as MainGroup;
+    const identifierGroup = this.getGroupByName(GroupNameENUM.CustomerIdentifier) as MainGroup;
     identifierGroup.show();
 
     // Get the profile
@@ -172,11 +174,11 @@ export class MainFormManager extends FormManager {
     }
 
     // Show the profile group if it exists
-    const profileGroup = this.getGroupByName(profile.name) as MainGroup;
+    const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
     profileGroup.show();
 
     // Show output group if it exists
-    const outputGroup = this.getGroupByName('output') as OutputGroup;
+    const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
     profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
 
     this.groups
@@ -195,11 +197,11 @@ export class MainFormManager extends FormManager {
     if (!this.profile) return logError(`Next group: No profile found`);
 
     const { name } = activeGroup;
-    if (name === 'customer-identifier' && activeGroup instanceof MainGroup) {
+    if (name === GroupNameENUM.CustomerIdentifier && activeGroup instanceof MainGroup) {
       // progress to profile group from identifier group
       this.initialiseProfileSelect(this.profile.name);
 
-      const profileGroup = this.getGroupByName(this.profile.name) as MainGroup;
+      const profileGroup = this.getGroupByName(this.profile.name as any) as MainGroup;
       if (!profileGroup) return logError(`Next group: No matching group for profile: ${this.profile.name}`);
 
       const profileGroupIndex = this.groups.indexOf(profileGroup);
@@ -215,9 +217,9 @@ export class MainFormManager extends FormManager {
         profileGroup.activateQuestion(firstQuestion);
         profileGroup.handleNextButton(firstQuestion.isValid());
       }
-    } else if (name !== 'output' && activeGroup instanceof MainGroup) {
+    } else if (name !== GroupNameENUM.Output && activeGroup instanceof MainGroup) {
       // progress to the output group from profile group
-      const outputGroup = this.getGroupByName('output') as OutputGroup;
+      const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
       if (!outputGroup) return logError(`Next group: No output group found`);
 
       const outputGroupIndex = this.groups.indexOf(outputGroup);
@@ -225,11 +227,11 @@ export class MainFormManager extends FormManager {
 
       this.activeGroupIndex = outputGroupIndex;
       outputGroup.activate();
-    } else if (name === 'output' && activeGroup instanceof OutputGroup) {
+    } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
       console.log('End of form, navigate to results');
       console.log(MCTManager.getAnswers());
-      MCTManager.goToStage('results');
+      MCTManager.goToStage(StageIDENUM.Results);
     }
   }
 
@@ -242,9 +244,9 @@ export class MainFormManager extends FormManager {
     let previousGroup: MainGroup | OutputGroup | undefined;
 
     const { name } = activeGroup;
-    if (name === 'output' && activeGroup instanceof OutputGroup) {
+    if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // revert to profile group from output group
-      const profileGroup = this.getGroupByName(this.profile.name) as MainGroup;
+      const profileGroup = this.getGroupByName(this.profile.name as any) as MainGroup;
       if (!profileGroup) return logError(`Previous group: No matching group for profile: ${this.profile.name}`);
 
       const profileGroupIndex = this.groups.indexOf(profileGroup);
@@ -253,9 +255,9 @@ export class MainFormManager extends FormManager {
       this.activeGroupIndex = profileGroupIndex;
       this.showHeader('sticky');
       previousGroup = profileGroup;
-    } else if (name !== 'customer-identifier' && activeGroup instanceof MainGroup) {
+    } else if (name !== GroupNameENUM.CustomerIdentifier && activeGroup instanceof MainGroup) {
       // revert to the identifier group from profile group
-      const identifierGroup = this.getGroupByName('customer-identifier') as MainGroup;
+      const identifierGroup = this.getGroupByName(GroupNameENUM.CustomerIdentifier) as MainGroup;
       if (!identifierGroup) return logError(`Previous group: No identifier group found`);
 
       const identifierGroupIndex = this.groups.indexOf(identifierGroup);
@@ -278,7 +280,7 @@ export class MainFormManager extends FormManager {
     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
   }
 
-  private initialiseProfileSelect(value: ProfileName) {
+  private initialiseProfileSelect(value: ProfileNameENUM) {
     const { profileSelect } = this.components;
     if (!profileSelect) return;
 

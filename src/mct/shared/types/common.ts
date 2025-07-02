@@ -6,13 +6,6 @@
  */
 
 // Profile-related types
-export type ProfileName =
-  | 'residential-purchase'
-  | 'ftb-residential-purchase'
-  | 'btl-purchase'
-  | 'residential-remortgage'
-  | 'btl-remortgage';
-
 export enum ProfileNameENUM {
   ResidentialPurchase = 'residential-purchase',
   FtbResidentialPurchase = 'ftb-residential-purchase',
@@ -21,7 +14,6 @@ export enum ProfileNameENUM {
   BtlRemortgage = 'btl-remortgage',
 }
 
-export type GroupName = ProfileName | 'customer-identifier' | 'output';
 export enum GroupNameENUM {
   CustomerIdentifier = 'customer-identifier',
   ResidentialPurchase = 'residential-purchase',
@@ -33,7 +25,7 @@ export enum GroupNameENUM {
 }
 
 export interface Profile {
-  name: ProfileName;
+  name: ProfileNameENUM;
   display: string;
   requirements: {
     [key: string]: string;

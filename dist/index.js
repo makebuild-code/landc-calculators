@@ -16594,7 +16594,7 @@
   };
   var PROFILES = [
     {
-      name: "residential-purchase",
+      name: "residential-purchase" /* ResidentialPurchase */,
       display: "Residential Purchase",
       requirements: {
         PurchRemo: "P",
@@ -16603,7 +16603,7 @@
       }
     },
     {
-      name: "ftb-residential-purchase",
+      name: "ftb-residential-purchase" /* FtbResidentialPurchase */,
       display: "First Time Buyer - Purchase",
       requirements: {
         PurchRemo: "P",
@@ -16612,7 +16612,7 @@
       }
     },
     {
-      name: "btl-purchase",
+      name: "btl-purchase" /* BtlPurchase */,
       display: "Buy to Let - Purchase",
       requirements: {
         PurchRemo: "P",
@@ -16621,7 +16621,7 @@
       }
     },
     {
-      name: "residential-remortgage",
+      name: "residential-remortgage" /* ResidentialRemortgage */,
       display: "Residential - Remortgage",
       requirements: {
         PurchRemo: "R",
@@ -16630,7 +16630,7 @@
       }
     },
     {
-      name: "btl-remortgage",
+      name: "btl-remortgage" /* BtlRemortgage */,
       display: "Buy to Let - Remortgage",
       requirements: {
         PurchRemo: "R",
@@ -17444,7 +17444,7 @@
     isInitialised = false;
     constructor(component) {
       this.component = component;
-      this.id = "questions";
+      this.id = "questions" /* Questions */;
     }
     prefill(answers) {
     }
@@ -17509,7 +17509,7 @@
         const name = groupEl.getAttribute(attr7.group);
         if (!name)
           return;
-        const group = name === "output" ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
+        const group = name === "output" /* Output */ ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
         index2 === 0 ? group.show() : group.hide();
         this.groups.push(group);
       });
@@ -17599,7 +17599,7 @@
       return this.groups.find((group) => group.name === name);
     }
     updateGroupVisibility() {
-      const identifierGroup = this.getGroupByName("customer-identifier");
+      const identifierGroup = this.getGroupByName("customer-identifier" /* CustomerIdentifier */);
       identifierGroup.show();
       const profile = this.determineProfile();
       if (!profile) {
@@ -17608,7 +17608,7 @@
       }
       const profileGroup = this.getGroupByName(profile.name);
       profileGroup.show();
-      const outputGroup = this.getGroupByName("output");
+      const outputGroup = this.getGroupByName("output" /* Output */);
       profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
       this.groups.filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup).forEach((group) => group.hide());
     }
@@ -17624,7 +17624,7 @@
       if (!this.profile)
         return logError(`Next group: No profile found`);
       const { name } = activeGroup;
-      if (name === "customer-identifier" && activeGroup instanceof MainGroup) {
+      if (name === "customer-identifier" /* CustomerIdentifier */ && activeGroup instanceof MainGroup) {
         this.initialiseProfileSelect(this.profile.name);
         const profileGroup = this.getGroupByName(this.profile.name);
         if (!profileGroup)
@@ -17641,8 +17641,8 @@
           profileGroup.activateQuestion(firstQuestion);
           profileGroup.handleNextButton(firstQuestion.isValid());
         }
-      } else if (name !== "output" && activeGroup instanceof MainGroup) {
-        const outputGroup = this.getGroupByName("output");
+      } else if (name !== "output" /* Output */ && activeGroup instanceof MainGroup) {
+        const outputGroup = this.getGroupByName("output" /* Output */);
         if (!outputGroup)
           return logError(`Next group: No output group found`);
         const outputGroupIndex = this.groups.indexOf(outputGroup);
@@ -17650,10 +17650,10 @@
           return logError(`Next group: No group index for output`);
         this.activeGroupIndex = outputGroupIndex;
         outputGroup.activate();
-      } else if (name === "output" && activeGroup instanceof OutputGroup) {
+      } else if (name === "output" /* Output */ && activeGroup instanceof OutputGroup) {
         console.log("End of form, navigate to results");
         console.log(MCTManager.getAnswers());
-        MCTManager.goToStage("results");
+        MCTManager.goToStage("results" /* Results */);
       }
     }
     navigateToPreviousGroup() {
@@ -17664,7 +17664,7 @@
         return logError(`Previous group: No profile found`);
       let previousGroup;
       const { name } = activeGroup;
-      if (name === "output" && activeGroup instanceof OutputGroup) {
+      if (name === "output" /* Output */ && activeGroup instanceof OutputGroup) {
         const profileGroup = this.getGroupByName(this.profile.name);
         if (!profileGroup)
           return logError(`Previous group: No matching group for profile: ${this.profile.name}`);
@@ -17674,8 +17674,8 @@
         this.activeGroupIndex = profileGroupIndex;
         this.showHeader("sticky");
         previousGroup = profileGroup;
-      } else if (name !== "customer-identifier" && activeGroup instanceof MainGroup) {
-        const identifierGroup = this.getGroupByName("customer-identifier");
+      } else if (name !== "customer-identifier" /* CustomerIdentifier */ && activeGroup instanceof MainGroup) {
+        const identifierGroup = this.getGroupByName("customer-identifier" /* CustomerIdentifier */);
         if (!identifierGroup)
           return logError(`Previous group: No identifier group found`);
         const identifierGroupIndex = this.groups.indexOf(identifierGroup);
@@ -17769,7 +17769,7 @@
         const outputType = output.getAttribute(attr8.type);
         let outputValue = this.product[outputName] ?? 0;
         switch (outputType) {
-          case "currency":
+          case "currency" /* Currency */:
             outputValue = formatNumber2(outputValue, { type: "currency" });
             break;
           case "boolean":
@@ -18046,7 +18046,7 @@
     numberOfResults = 0;
     constructor(component) {
       this.component = component;
-      this.id = "results";
+      this.id = "results" /* Results */;
       const response = EXAMPLE_PRODUCTS_RESPONSE;
       this.products = response.result.Products;
       this.summaryInfo = response.result.SummaryInfo;
@@ -18456,17 +18456,17 @@
       }
     },
     initStages() {
-      const mainForm = this.getStageDOM("questions");
+      const mainForm = this.getStageDOM("questions" /* Questions */);
       const mainFormManager = initForm(mainForm, {
         mode: "main",
         prefill: false
       });
       mainFormManager?.hide();
-      const results = this.getStageDOM("results");
+      const results = this.getStageDOM("results" /* Results */);
       const resultsManager = initResults(results);
       resultsManager?.hide();
-      stageManagers["questions"] = mainFormManager;
-      stageManagers["results"] = resultsManager;
+      stageManagers["questions" /* Questions */] = mainFormManager;
+      stageManagers["results" /* Results */] = resultsManager;
     },
     getComponentDOM() {
       if (!dom.mctComponent)
@@ -18482,7 +18482,7 @@
       return dom.stages[name];
     },
     route() {
-      this.goToStage("questions");
+      this.goToStage("questions" /* Questions */);
     },
     goToStage(stageId, options = {}) {
       const nextStage = stageManagers[stageId] ?? null;

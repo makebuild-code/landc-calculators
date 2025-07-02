@@ -14,7 +14,8 @@ import { generateSummaryLines } from 'src/mct/shared/utils/common/generateSummar
 import { fetchProducts } from 'src/mct/shared/utils/api/calls/fetchProducts';
 import { generateProductsAPIInput } from 'src/mct/shared/utils/common/generateProductsAPIInput';
 import { logError } from 'src/mct/shared/utils/common/logError';
-import type { GroupName, ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
+import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
+import { GroupNameENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 
 // @description: Base class for all groups
@@ -22,12 +23,12 @@ export abstract class BaseGroup {
   protected component: HTMLElement;
   protected formManager: FormManager;
   public isVisible: boolean = false;
-  public name: GroupName | null = null;
+  public name: GroupNameENUM | null = null;
 
   constructor(component: HTMLElement, formManager: FormManager) {
     this.component = component;
     this.formManager = formManager;
-    this.name = component.getAttribute(attr.group) as GroupName | null;
+    this.name = component.getAttribute(attr.group) as GroupNameENUM | null;
   }
 
   public getComponent(): HTMLElement {

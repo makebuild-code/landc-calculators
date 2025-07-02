@@ -5,10 +5,9 @@
  * stage options, and stage management.
  */
 
-import type { ProfileName } from './common';
+import { ProfileNameENUM } from './common';
 
 // Stage identifiers
-export type StageID = 'questions' | 'results' | 'calendar';
 export enum StageIDENUM {
   Questions = 'questions',
   Results = 'results',
@@ -17,7 +16,7 @@ export enum StageIDENUM {
 
 // Stage-specific options for goToStage function
 export interface QuestionsStageOptions {
-  profile?: ProfileName;
+  profile?: ProfileNameENUM;
   prefill?: boolean;
 }
 
@@ -39,8 +38,7 @@ export type GoToStageOptions = {
   calendar?: CalendarStageOptions;
 };
 
-// Results-specific types
-export type OutputType = 'sentence' | 'currency' | 'percentage' | 'progress-bar';
+// Output types
 export enum OutputTypeENUM {
   Sentence = 'sentence',
   Currency = 'currency',

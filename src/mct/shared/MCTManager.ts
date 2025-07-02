@@ -9,8 +9,9 @@ import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
 
 import { mctAttr } from './constants';
-import type { AnswerKey, Answers, AnswerValue, GoToStageOptions, Product, SummaryInfo } from './types';
-import { StageIDENUM } from './types/stages';
+import type { AnswerKey, Answers, AnswerValue, GoToStageOptions, Product, SummaryInfo } from '$mct/types';
+import { StageIDENUM } from '$mct/types';
+
 import { generateLCID } from './utils/api/calls/generateLCID';
 
 interface Stage {
@@ -124,7 +125,7 @@ export const MCTManager = {
     return dom.mctComponent;
   },
 
-  getStageDOM(name: StageID) {
+  getStageDOM(name: StageIDENUM) {
     if (!dom.stages) throw new Error('Stages not initialised');
     const stage = dom.stages[name];
     if (!stage) throw new Error(`Stage '${name}' not found`);
@@ -153,17 +154,17 @@ export const MCTManager = {
     //   this.goToStage('questions');
     // }
 
-    this.goToStage('questions');
-    // this.goToStage('results');
+    this.goToStage(StageIDENUM.Questions);
+    // this.goToStage(StageIDENUM.Results);
   },
 
-  goToStage(stageId: StageID, options: GoToStageOptions = {}): boolean {
+  goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
     if (!nextStage) return false;
 
     // hide the current stage
-    const currentStage = stageManagers[state.currentStageId as StageID] ?? null;
+    const currentStage = stageManagers[state.currentStageId as StageIDENUM] ?? null;
     if (currentStage) currentStage.hide();
 
     // update the state, init and show the next stage
