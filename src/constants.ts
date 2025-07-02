@@ -1,4 +1,4 @@
-import { getBaseURLForAPI } from '$utils/getBaseURLForAPI';
+import { getBaseURLForAPI } from '$utils/environment/getBaseURLForAPI';
 
 // Base URL with have the trailing slash
 const baseURLForAPI = getBaseURLForAPI();

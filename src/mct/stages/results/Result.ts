@@ -1,6 +1,6 @@
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { formatNumber } from '$utils/formatNumber';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
+import { formatNumber } from '$utils/formatting/formatNumber';
 
 import { attr } from './constants';
 import type { Product } from '$mct/types';

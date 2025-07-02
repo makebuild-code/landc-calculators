@@ -1,6 +1,6 @@
 import type { Input } from 'src/types';
 
-import { queryElement } from './queryElement';
+import { queryElement } from '$utils/dom';
 
 export function getInputValue(input: Input): string | boolean | undefined {
   let value;

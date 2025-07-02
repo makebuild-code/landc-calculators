@@ -1,19 +1,10 @@
 import type { CostOfDoingNothingRequest } from 'src/calculators/calculators';
 import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse, Input } from 'src/types';
-import { checkInputValidity } from 'src/utils/checkInputValidity';
-import { formatInput } from 'src/utils/formatInput';
-import { getInputValue } from 'src/utils/getInputValue';
-import { queryElement } from 'src/utils/queryElement';
-import { queryElements } from 'src/utils/queryelements';
-import { setError } from 'src/utils/setError';
+import { queryElement, queryElements } from '$utils/dom';
+import { checkInputValidity, formatInput, getInputValue, setError } from '$utils/input';
 
-import type {
-  Inputs as BestBuyInputs,
-  Outputs as BestBuyOutputs,
-  PropertyType,
-  SortColumn,
-} from '../bestbuys/types';
+import type { Inputs as BestBuyInputs, Outputs as BestBuyOutputs, PropertyType, SortColumn } from '../bestbuys/types';
 import { HandleCODNOutputs } from './handleCODNOutputs';
 
 export class CostOfDoingNothingCalculator {
@@ -35,10 +26,7 @@ export class CostOfDoingNothingCalculator {
     this.inputs = queryElements(`[data-input], input, select`, component);
     this.buttons = queryElements(`[data-calc-el="button"]`, component);
     this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component) as HTMLDivElement;
-    this.buttonsLoader = queryElement(
-      `[data-calc-el="button-loader"]`,
-      component
-    ) as HTMLDivElement;
+    this.buttonsLoader = queryElement(`[data-calc-el="button-loader"]`, component) as HTMLDivElement;
     this.currentLenderDropdown = queryElement(`#CurrentLender`, component) as HTMLSelectElement;
     this.mortgageTypeDropdown = queryElement(`#MortgageType`, component) as HTMLSelectElement;
     this.followOnField = queryElement(`#FollowOn`, component) as HTMLInputElement;
@@ -133,14 +121,8 @@ export class CostOfDoingNothingCalculator {
 
   //TODO: Make sure all defaults are correct here
   private getBestBuyInput(): BestBuyInputs {
-    const propertyValueInput = queryElement(
-      `[data-input="PropertyValue"]`,
-      this.component
-    ) as HTMLInputElement;
-    const loanAmountInput = queryElement(
-      `[data-input="LoanAmount"]`,
-      this.component
-    ) as HTMLInputElement;
+    const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component) as HTMLInputElement;
+    const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component) as HTMLInputElement;
     const typeInput = queryElement(`[data-input="Type"]`, this.component) as HTMLSelectElement;
     const termYearsInput = queryElement(`[data-input="Term"]`, this.component) as HTMLInputElement;
 
@@ -175,23 +157,12 @@ export class CostOfDoingNothingCalculator {
     return formattedValues;
   }
 
-  private async getCostOfDoingNothingInput(
-    bestBuyResult: BestBuyOutputs
-  ): Promise<CostOfDoingNothingRequest> {
-    const propertyValueInput = queryElement(
-      `[data-input="PropertyValue"]`,
-      this.component
-    ) as HTMLInputElement;
-    const loanAmountInput = queryElement(
-      `[data-input="LoanAmount"]`,
-      this.component
-    ) as HTMLInputElement;
+  private async getCostOfDoingNothingInput(bestBuyResult: BestBuyOutputs): Promise<CostOfDoingNothingRequest> {
+    const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component) as HTMLInputElement;
+    const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component) as HTMLInputElement;
     const typeInput = queryElement(`[data-input="Type"]`, this.component) as HTMLSelectElement;
     const termYearsInput = queryElement(`[data-input="Term"]`, this.component) as HTMLInputElement;
-    const followOnInput = queryElement(
-      `[data-input="FollowOn"]`,
-      this.component
-    ) as HTMLInputElement;
+    const followOnInput = queryElement(`[data-input="FollowOn"]`, this.component) as HTMLInputElement;
 
     const propertyValue = propertyValueInput ? parseInt(propertyValueInput.value) : 0;
     const loanAmount = loanAmountInput ? parseInt(loanAmountInput.value) : 0;

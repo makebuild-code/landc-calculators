@@ -1,4 +1,4 @@
-import { formatNumber } from '$utils/formatNumber';
+import { formatNumber } from '$utils/formatting/formatNumber';
 import { classes } from '../../constants';
 import type { Answers, SummaryInfo, SummaryLines } from '../../types';
 import { generateProductsAPIInput } from './generateProductsAPIInput';

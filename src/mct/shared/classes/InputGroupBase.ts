@@ -1,5 +1,5 @@
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
 
 import type {
   CheckboxValues,

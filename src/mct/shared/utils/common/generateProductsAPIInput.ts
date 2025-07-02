@@ -1,4 +1,4 @@
-import { filterAllowed } from '$utils/filterAllowed';
+import { filterAllowed } from '$utils/formatting/filterAllowed';
 import type { Answers, CheckboxValues, Features, ProductsOptions, ProductsRequest } from '$mct/types';
 
 const DEFAULT_OPTIONS: ProductsOptions = {

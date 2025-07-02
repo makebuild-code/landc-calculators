@@ -1,10 +1,5 @@
-import { checkInputValidity } from '$utils/checkInputValidity';
-import { formatInput } from '$utils/formatInput';
-import { getInputValue } from '$utils/getInputValue';
-import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { setError } from '$utils/setError';
+import { checkInputValidity, formatInput, getInputValue, setError } from '$utils/input';
+import { handleConditionalVisibility, queryElement, queryElements } from '$utils/dom';
 
 import type { Input, InputType } from '../types';
 import type { CalculatorInputs } from './calculatorConfig';
@@ -161,47 +156,25 @@ export class HandleInputs {
         ) as string),
         (values.ComparisonRates = [
           {
-            Rate: getInputValue(
-              queryElement('[data-input="CurrentRate"]', this.calculator.component) as Input
-            ),
-            Fees: getInputValue(
-              queryElement('[data-input="CurrentFees"]', this.calculator.component) as Input
-            ),
-            Type: getInputValue(
-              queryElement('[data-input="CurrentType"]', this.calculator.component) as Input
-            ),
+            Rate: getInputValue(queryElement('[data-input="CurrentRate"]', this.calculator.component) as Input),
+            Fees: getInputValue(queryElement('[data-input="CurrentFees"]', this.calculator.component) as Input),
+            Type: getInputValue(queryElement('[data-input="CurrentType"]', this.calculator.component) as Input),
             SchemeLength: getInputValue(
               queryElement('[data-input="CurrentSchemeLength"]', this.calculator.component) as Input
             ),
-            ERCAmount: getInputValue(
-              queryElement('[data-input="ERCAmount"]', this.calculator.component) as Input
-            ),
-            ERCTerm: getInputValue(
-              queryElement('[data-input="ERCTerm"]', this.calculator.component) as Input
-            ),
-            ERCAdd: getInputValue(
-              queryElement('[data-input="ERCAdd"]', this.calculator.component) as Input
-            ),
-            FollowOn: getInputValue(
-              queryElement('[data-input="CurrentFollowOn"]', this.calculator.component) as Input
-            ),
+            ERCAmount: getInputValue(queryElement('[data-input="ERCAmount"]', this.calculator.component) as Input),
+            ERCTerm: getInputValue(queryElement('[data-input="ERCTerm"]', this.calculator.component) as Input),
+            ERCAdd: getInputValue(queryElement('[data-input="ERCAdd"]', this.calculator.component) as Input),
+            FollowOn: getInputValue(queryElement('[data-input="CurrentFollowOn"]', this.calculator.component) as Input),
           },
           {
-            Rate: getInputValue(
-              queryElement('[data-input="CompareRate"]', this.calculator.component) as Input
-            ),
-            Fees: getInputValue(
-              queryElement('[data-input="CompareFees"]', this.calculator.component) as Input
-            ),
-            Type: getInputValue(
-              queryElement('[data-input="CompareType"]', this.calculator.component) as Input
-            ),
+            Rate: getInputValue(queryElement('[data-input="CompareRate"]', this.calculator.component) as Input),
+            Fees: getInputValue(queryElement('[data-input="CompareFees"]', this.calculator.component) as Input),
+            Type: getInputValue(queryElement('[data-input="CompareType"]', this.calculator.component) as Input),
             SchemeLength: getInputValue(
               queryElement('[data-input="CompareSchemeLength"]', this.calculator.component) as Input
             ),
-            FollowOn: getInputValue(
-              queryElement('[data-input="CompareFollowOn"]', this.calculator.component) as Input
-            ),
+            FollowOn: getInputValue(queryElement('[data-input="CompareFollowOn"]', this.calculator.component) as Input),
           },
         ]),
         (values.ComparisonTerm = getInputValue(

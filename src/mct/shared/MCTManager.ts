@@ -1,7 +1,7 @@
-import { getFromCookie } from '$utils/getFromCookie';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { setToCookie } from '$utils/setToCookie';
+import { getFromCookie } from '$utils/storage/getFromCookie';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
+import { setToCookie } from '$utils/storage/setToCookie';
 
 import { initForm } from '../stages/form';
 import type { MainFormManager } from '../stages/form/Manager_Main';

@@ -11,12 +11,12 @@ import type {
 import { OutputTypeENUM } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 import { MCTManager } from 'src/mct/shared/MCTManager';
-import { formatNumber } from 'src/utils/formatNumber';
+import { formatNumber } from '$utils/formatting/formatNumber';
 import { Result } from './Result';
 import { EXAMPLE_PRODUCTS_RESPONSE } from 'src/mct/shared/examples/exampleProductsResponse';
 import { EXAMPLE_ANSWERS } from 'src/mct/shared/examples/exampleAnswers';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines } from 'src/mct/shared/utils/common/generateSummaryLines';
 import { FilterGroup } from './FilterGroup';
 import { generateProductsAPIInput } from 'src/mct/shared/utils/common/generateProductsAPIInput';

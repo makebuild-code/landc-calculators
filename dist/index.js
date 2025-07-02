@@ -3,13 +3,13 @@
   // bin/live-reload.js
   new EventSource(`${"http://localhost:3000"}/esbuild`).addEventListener("change", () => location.reload());
 
-  // src/utils/queryelements.ts
+  // src/utils/dom/queryelements.ts
   var queryElements = (query, parent = document) => {
     const elements2 = parent.querySelectorAll(query);
     return elements2.length ? [...elements2] : [];
   };
 
-  // src/utils/getBaseURLForAPI.ts
+  // src/utils/environment/getBaseURLForAPI.ts
   var getBaseURLForAPI = () => {
     const ENDPOINTS2 = {
       prod: "https://www.landc.co.uk/api/",
@@ -39,10 +39,10 @@
     costOfDoingNothing: `${baseURLForAPI}CODNTrigger`
   };
 
-  // src/utils/isStaging.ts
+  // src/utils/environment/isStaging.ts
   var isStaging = !window.location.host.includes("www.landc.co.uk");
 
-  // src/utils/numberToCurrency.ts
+  // src/utils/formatting/numberToCurrency.ts
   var numberToCurrency = (number) => {
     const options = {
       style: "currency",
@@ -55,13 +55,13 @@
     return new Intl.NumberFormat("en-GB", options).format(numberToFormat).replace(regexPattern, "");
   };
 
-  // src/utils/queryElement.ts
+  // src/utils/dom/queryElement.ts
   var queryElement = (query, parent = document) => {
     const element = parent.querySelector(query);
     return element ?? void 0;
   };
 
-  // src/utils/setSearchParameter.ts
+  // src/utils/storage/setSearchParameter.ts
   var setSearchParameter = (element, paramsToAdd) => {
     const url = new URL(element.href);
     const params = new URLSearchParams(url.search);
@@ -225,7 +225,7 @@
     });
   };
 
-  // src/utils/checkInputValidity.ts
+  // src/utils/input/checkInputValidity.ts
   function checkInputValidity(input) {
     let isValid = true, error;
     if (input instanceof HTMLInputElement) {
@@ -264,7 +264,48 @@
     };
   }
 
-  // src/utils/formatInput.ts
+  // src/utils/dom/getWrapper.ts
+  function getWrapper(input) {
+    let child = input, wrapper;
+    while (child) {
+      if (child.parentElement && child.parentElement.classList && child.parentElement.classList.contains("custom-field_component")) {
+        wrapper = child.parentElement;
+        break;
+      } else if (child.parentElement) {
+        child = child.parentElement;
+      } else {
+        break;
+      }
+    }
+    return wrapper;
+  }
+
+  // src/utils/dom/handleConditionalVisibility.ts
+  function handleConditionalVisibility(item, inputs) {
+    const { condition } = item.dataset;
+    if (!condition)
+      return;
+    const parsedCondition = JSON.parse(condition);
+    const input = inputs.find((input2) => input2.dataset.input === parsedCondition.dependsOn);
+    if (!input)
+      return;
+    let conditionsMet = false;
+    switch (parsedCondition.operator) {
+      case "equal":
+        conditionsMet = getInputValue(input) === parsedCondition.value;
+        break;
+      case "notequal":
+        conditionsMet = getInputValue(input) !== parsedCondition.value;
+        break;
+    }
+    item.style.display = conditionsMet ? "block" : "none";
+    const itemInput = queryElement("[data-input]", item);
+    if (itemInput) {
+      itemInput.dataset.conditionsmet = conditionsMet.toString();
+    }
+  }
+
+  // src/utils/input/formatInput.ts
   function formatInput(input) {
     if (input instanceof HTMLInputElement) {
       const { type, value } = input;
@@ -289,7 +330,7 @@
     }
   }
 
-  // src/utils/getInputValue.ts
+  // src/utils/input/getInputValue.ts
   function getInputValue(input) {
     let value;
     if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
@@ -309,23 +350,31 @@
     return value;
   }
 
-  // src/utils/getWrapper.ts
-  function getWrapper(input) {
-    let child = input, wrapper;
-    while (child) {
-      if (child.parentElement && child.parentElement.classList && child.parentElement.classList.contains("custom-field_component")) {
-        wrapper = child.parentElement;
-        break;
-      } else if (child.parentElement) {
-        child = child.parentElement;
-      } else {
-        break;
+  // src/utils/input/handleEnterInInputs.ts
+  var handleEnterInInputs = (input, callback2) => {
+    const runOnEnterWrapper = (event) => {
+      runOnEnter(event);
+    };
+    input.addEventListener("focus", handleFocus, true);
+    input.addEventListener("blur", handleBlur, true);
+    input.addEventListener("input", handleInput, true);
+    function handleFocus() {
+      input.addEventListener("keydown", runOnEnterWrapper);
+    }
+    function handleBlur() {
+      input.removeEventListener("keydown", runOnEnterWrapper);
+    }
+    function handleInput() {
+      input.removeEventListener("keydown", runOnEnterWrapper);
+    }
+    function runOnEnter(event) {
+      if (event.key === "Enter") {
+        callback2();
       }
     }
-    return wrapper;
-  }
+  };
 
-  // src/utils/setError.ts
+  // src/utils/input/setError.ts
   function setError(input, text) {
     const wrapper = getWrapper(input);
     if (!wrapper)
@@ -345,6 +394,77 @@
         message.style.removeProperty("display");
     }
   }
+
+  // src/utils/input/syncSlider.ts
+  function syncSlider(inputId, initialValue) {
+    const input = document.getElementById(inputId);
+    if (!input)
+      return;
+    const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
+    const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
+    const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
+    if (!wrapper || !handle)
+      return;
+    const updateSliderUI = () => {
+      const value = parseFloat(input.value);
+      if (isNaN(value))
+        return;
+      const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
+      const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
+      const clamped = Math.min(Math.max(value, min), max);
+      const percent = (clamped - min) / (max - min) * 100;
+      const trackWidth = wrapper.clientWidth;
+      const pixelOffset = percent / 100 * trackWidth;
+      handle.style.left = `${pixelOffset}px`;
+      fill2.style.width = `${pixelOffset}px`;
+    };
+    updateSliderUI();
+    input.addEventListener("input", updateSliderUI);
+  }
+
+  // src/utils/formatting/filterAllowed.ts
+  function filterAllowed(values, allowed) {
+    return values.map(Number).filter((v) => allowed.includes(v));
+  }
+
+  // src/utils/formatting/formatNumber.ts
+  function formatNumber(value, options) {
+    const { type = "number", decimals, fallback = "" } = options || {};
+    let num = typeof value === "number" ? value : parseFloat(value.replace(/,/g, ""));
+    if (isNaN(num))
+      return fallback;
+    if (type === "currency") {
+      const formatted2 = num.toLocaleString("en-GB", {
+        maximumFractionDigits: decimals ?? 0,
+        minimumFractionDigits: decimals ?? 0
+      });
+      return `\xA3${formatted2}`;
+    }
+    if (type === "percent") {
+      const d = decimals ?? 2;
+      const percentValue = num;
+      const formatted2 = percentValue.toLocaleString("en-GB", { maximumFractionDigits: d, minimumFractionDigits: d });
+      return `${formatted2}%`;
+    }
+    const formatted = num.toLocaleString("en-GB", {
+      maximumFractionDigits: decimals ?? 0,
+      minimumFractionDigits: decimals ?? 0
+    });
+    return formatted;
+  }
+
+  // src/utils/storage/getFromCookie.ts
+  var getFromCookie = (key) => {
+    const cookie = document.cookie.split("; ").find((row) => row.startsWith(`${key}=`));
+    if (cookie)
+      return cookie.split("=")[1];
+    return null;
+  };
+
+  // src/utils/storage/setToCookie.ts
+  var setToCookie = (key, value) => {
+    document.cookie = `${key}=${value}; path=/`;
+  };
 
   // src/bestbuys/handleTable.ts
   var attr2 = "data-bb";
@@ -388,18 +508,9 @@
       this.isLoading = false;
       this.loadMoreWrapper = queryElement(`[${attr2}-el="load-more"]`, component);
       this.loadMore = queryElement("button", this.loadMoreWrapper);
-      this.scaffoldWrapper = queryElement(
-        `[${attr2}-el="scaffold-wrapper"]`,
-        component
-      );
-      this.scaffoldCover = queryElement(
-        `[${attr2}-el="scaffold-cover"]`,
-        this.scaffoldWrapper
-      );
-      this.scaffoldResult = queryElement(
-        `[${attr2}-el="scaffold-result"]`,
-        this.scaffoldWrapper
-      );
+      this.scaffoldWrapper = queryElement(`[${attr2}-el="scaffold-wrapper"]`, component);
+      this.scaffoldCover = queryElement(`[${attr2}-el="scaffold-cover"]`, this.scaffoldWrapper);
+      this.scaffoldResult = queryElement(`[${attr2}-el="scaffold-result"]`, this.scaffoldWrapper);
       this.numberOfResultsShown = 0;
       const url = new URL(window.location.href);
       const params = new URLSearchParams(url.search);
@@ -685,10 +796,7 @@
       if (!productId) {
         component = queryElement(".best-buy_main");
       } else {
-        component = queryElement(
-          `.bb-result_component[data-productId="${productId}"]`,
-          this.resultsList
-        );
+        component = queryElement(`.bb-result_component[data-productId="${productId}"]`, this.resultsList);
         const moreToggle = queryElement(`[${attr2}-el="more-toggle"]`, component);
         if (!moreToggle)
           return;
@@ -715,57 +823,6 @@
       bestbuy.init();
     });
   };
-
-  // src/utils/handleEnterInInputs.ts
-  var handleEnterInInputs = (input, callback2) => {
-    const runOnEnterWrapper = (event) => {
-      runOnEnter(event);
-    };
-    input.addEventListener("focus", handleFocus, true);
-    input.addEventListener("blur", handleBlur, true);
-    input.addEventListener("input", handleInput, true);
-    function handleFocus() {
-      input.addEventListener("keydown", runOnEnterWrapper);
-    }
-    function handleBlur() {
-      input.removeEventListener("keydown", runOnEnterWrapper);
-    }
-    function handleInput() {
-      input.removeEventListener("keydown", runOnEnterWrapper);
-    }
-    function runOnEnter(event) {
-      if (event.key === "Enter") {
-        callback2();
-      }
-    }
-  };
-
-  // src/utils/syncSlider.ts
-  function syncSlider(inputId, initialValue) {
-    const input = document.getElementById(inputId);
-    if (!input)
-      return;
-    const wrapper = document.querySelector(`[fs-rangeslider-calc="${inputId}"]`);
-    const handle = document.querySelector(`[fs-rangeslider-handlename="${inputId}"]`);
-    const fill2 = document.querySelector(`[fs-rangeslider-fillname="${inputId}"]`);
-    if (!wrapper || !handle)
-      return;
-    const updateSliderUI = () => {
-      const value = parseFloat(input.value);
-      if (isNaN(value))
-        return;
-      const min = parseFloat(input.min || handle.getAttribute("aria-valuemin") || "0");
-      const max = parseFloat(input.max || handle.getAttribute("aria-valuemax") || "100");
-      const clamped = Math.min(Math.max(value, min), max);
-      const percent = (clamped - min) / (max - min) * 100;
-      const trackWidth = wrapper.clientWidth;
-      const pixelOffset = percent / 100 * trackWidth;
-      handle.style.left = `${pixelOffset}px`;
-      fill2.style.width = `${pixelOffset}px`;
-    };
-    updateSliderUI();
-    input.addEventListener("input", updateSliderUI);
-  }
 
   // src/calculators/calculatorConfig.ts
   var calculatorConfig = {
@@ -1001,31 +1058,6 @@
     }
   };
 
-  // src/utils/handleConditionalVisibility.ts
-  function handleConditionalVisibility(item, inputs) {
-    const { condition } = item.dataset;
-    if (!condition)
-      return;
-    const parsedCondition = JSON.parse(condition);
-    const input = inputs.find((input2) => input2.dataset.input === parsedCondition.dependsOn);
-    if (!input)
-      return;
-    let conditionsMet = false;
-    switch (parsedCondition.operator) {
-      case "equal":
-        conditionsMet = getInputValue(input) === parsedCondition.value;
-        break;
-      case "notequal":
-        conditionsMet = getInputValue(input) !== parsedCondition.value;
-        break;
-    }
-    item.style.display = conditionsMet ? "block" : "none";
-    const itemInput = queryElement("[data-input]", item);
-    if (itemInput) {
-      itemInput.dataset.conditionsmet = conditionsMet.toString();
-    }
-  }
-
   // src/calculators/handleInputRepeat.ts
   var attr3 = "data-calc";
   var HandleInputRepeat = class {
@@ -1042,20 +1074,14 @@
     constructor(calculator, name) {
       this.calculator = calculator;
       this.name = name;
-      this.template = queryElement(
-        `[${attr3}-input-repeat=${name}]`,
-        calculator.component
-      );
+      this.template = queryElement(`[${attr3}-input-repeat=${name}]`, calculator.component);
       this.templateWrapper = this.template.parentElement;
       this.inputs = queryElements(`[data-input]`, this.template);
       this.clone = this.template.cloneNode(true);
       this.groups = [this.template];
       this.max = Number(this.template.dataset.calcInputRepeatMax);
       this.type = this.inputs.length === 1 ? "stringArray" : "objectArray";
-      this.button = queryElement(
-        `[${attr3}-input-repeat-duplicate="${name}"]`,
-        calculator.component
-      );
+      this.button = queryElement(`[${attr3}-input-repeat-duplicate="${name}"]`, calculator.component);
     }
     init() {
       this.button.addEventListener("click", () => {
@@ -1225,47 +1251,25 @@
           queryElement('[data-input="Type"]', this.calculator.component)
         ), values.ComparisonRates = [
           {
-            Rate: getInputValue(
-              queryElement('[data-input="CurrentRate"]', this.calculator.component)
-            ),
-            Fees: getInputValue(
-              queryElement('[data-input="CurrentFees"]', this.calculator.component)
-            ),
-            Type: getInputValue(
-              queryElement('[data-input="CurrentType"]', this.calculator.component)
-            ),
+            Rate: getInputValue(queryElement('[data-input="CurrentRate"]', this.calculator.component)),
+            Fees: getInputValue(queryElement('[data-input="CurrentFees"]', this.calculator.component)),
+            Type: getInputValue(queryElement('[data-input="CurrentType"]', this.calculator.component)),
             SchemeLength: getInputValue(
               queryElement('[data-input="CurrentSchemeLength"]', this.calculator.component)
             ),
-            ERCAmount: getInputValue(
-              queryElement('[data-input="ERCAmount"]', this.calculator.component)
-            ),
-            ERCTerm: getInputValue(
-              queryElement('[data-input="ERCTerm"]', this.calculator.component)
-            ),
-            ERCAdd: getInputValue(
-              queryElement('[data-input="ERCAdd"]', this.calculator.component)
-            ),
-            FollowOn: getInputValue(
-              queryElement('[data-input="CurrentFollowOn"]', this.calculator.component)
-            )
+            ERCAmount: getInputValue(queryElement('[data-input="ERCAmount"]', this.calculator.component)),
+            ERCTerm: getInputValue(queryElement('[data-input="ERCTerm"]', this.calculator.component)),
+            ERCAdd: getInputValue(queryElement('[data-input="ERCAdd"]', this.calculator.component)),
+            FollowOn: getInputValue(queryElement('[data-input="CurrentFollowOn"]', this.calculator.component))
           },
           {
-            Rate: getInputValue(
-              queryElement('[data-input="CompareRate"]', this.calculator.component)
-            ),
-            Fees: getInputValue(
-              queryElement('[data-input="CompareFees"]', this.calculator.component)
-            ),
-            Type: getInputValue(
-              queryElement('[data-input="CompareType"]', this.calculator.component)
-            ),
+            Rate: getInputValue(queryElement('[data-input="CompareRate"]', this.calculator.component)),
+            Fees: getInputValue(queryElement('[data-input="CompareFees"]', this.calculator.component)),
+            Type: getInputValue(queryElement('[data-input="CompareType"]', this.calculator.component)),
             SchemeLength: getInputValue(
               queryElement('[data-input="CompareSchemeLength"]', this.calculator.component)
             ),
-            FollowOn: getInputValue(
-              queryElement('[data-input="CompareFollowOn"]', this.calculator.component)
-            )
+            FollowOn: getInputValue(queryElement('[data-input="CompareFollowOn"]', this.calculator.component))
           }
         ], values.ComparisonTerm = getInputValue(
           queryElement('[data-input="ComparisonTerm"]', this.calculator.component)
@@ -2562,7 +2566,7 @@
     }
     return formatter;
   }
-  function formatNumber(num, locale, options) {
+  function formatNumber2(num, locale, options) {
     return getNumberFormat(locale, options).format(num);
   }
   var formatters = {
@@ -2591,7 +2595,7 @@
         maximumFractionDigits: numDecimal
       };
       Object.assign(options, this.options.ticks.format);
-      return formatNumber(tickValue, locale, options);
+      return formatNumber2(tickValue, locale, options);
     },
     logarithmic(tickValue, index2, ticks) {
       if (tickValue === 0) {
@@ -6242,7 +6246,7 @@
       const meta = this._cachedMeta;
       const chart = this.chart;
       const labels = chart.data.labels || [];
-      const value = formatNumber(meta._parsed[index2], chart.options.locale);
+      const value = formatNumber2(meta._parsed[index2], chart.options.locale);
       return {
         label: labels[index2] || "",
         value
@@ -6485,7 +6489,7 @@
       const meta = this._cachedMeta;
       const chart = this.chart;
       const labels = chart.data.labels || [];
-      const value = formatNumber(meta._parsed[index2].r, chart.options.locale);
+      const value = formatNumber2(meta._parsed[index2].r, chart.options.locale);
       return {
         label: labels[index2] || "",
         value
@@ -14403,7 +14407,7 @@
       this._valueRange = end - start;
     }
     getLabelForValue(value) {
-      return formatNumber(value, this.chart.options.locale, this.options.ticks.format);
+      return formatNumber2(value, this.chart.options.locale, this.options.ticks.format);
     }
   };
   var LinearScale = class extends LinearScaleBase {
@@ -14580,7 +14584,7 @@
       return ticks;
     }
     getLabelForValue(value) {
-      return value === void 0 ? "0" : formatNumber(value, this.chart.options.locale, this.options.ticks.format);
+      return value === void 0 ? "0" : formatNumber2(value, this.chart.options.locale, this.options.ticks.format);
     }
     configure() {
       const start = this.min;
@@ -15667,10 +15671,7 @@
       this.config = calculator.config.outputs;
       this.all = this.resultsId ? queryElements(`#${this.resultsId} [${attr4}-output]`, document) : queryElements(`[${attr4}-output]`, calculator.component);
       this.repeatTemplates = queryElements(`[${attr4}-output-repeat]`, calculator.component);
-      this.repeatOutputs = queryElements(
-        `[${attr4}-output-repeat] [${attr4}-output]`,
-        calculator.component
-      );
+      this.repeatOutputs = queryElements(`[${attr4}-output-repeat] [${attr4}-output]`, calculator.component);
       this.outputs = this.all.filter((output) => !this.repeatOutputs.includes(output));
       this.repeatClones = {};
       this.chart = queryElement(`[${attr4}-el="chart"]`, calculator.component);
@@ -15938,9 +15939,7 @@
         const resultsId = this.component.getAttribute("data-results");
         const calcName = this.component.getAttribute("data-calc");
         if (resultsId && calcName === "residentialborrowinglimit") {
-          const mortgageCalcComponent = document.querySelector(
-            '[data-calc="mortgagecost"]'
-          );
+          const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]');
           if (mortgageCalcComponent) {
             const mortgageCalc = new _HandleCalculator(mortgageCalcComponent);
             mortgageCalc.submit();
@@ -16041,9 +16040,7 @@
       const borrowValue = values["RepaymentValue"];
       const borrowAmount = parseFloat(typeof borrowValue === "string" ? borrowValue : "0");
       const depositSliderValue = values["DepositAmountSlider"];
-      const depositSliderAmount = parseFloat(
-        typeof depositSliderValue === "string" ? depositSliderValue : "0"
-      );
+      const depositSliderAmount = parseFloat(typeof depositSliderValue === "string" ? depositSliderValue : "0");
       const body = JSON.stringify({ calculator: this.name, input: values });
       const response = await fetch(API_ENDPOINT3, {
         method: "POST",
@@ -16064,11 +16061,7 @@
         }
       }
       if (result.result.TotalOverTerm) {
-        monthlyRepayment = this.calculateMonthlyPayment(
-          borrowAmount,
-          values["TermYears"],
-          values["Rate"]
-        );
+        monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values["TermYears"], values["Rate"]);
         result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
         result.result.DepositAmount = depositSliderAmount;
         result.result.PropertyValue = borrowAmount + depositSliderAmount;
@@ -16134,9 +16127,7 @@
       }
       const result = await response.json();
       if (result.result.data[0].FutureMonthlyPayment) {
-        result.result.data[0].FutureMonthlyPayment = Math.round(
-          result.result.data[0].FutureMonthlyPayment
-        );
+        result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
         result.result.data[0].InitialRate = result.result.data[0].Rate;
         result.result.data[0].TermYears = result.result.data[0].TermYears;
       }
@@ -16204,14 +16195,8 @@
         outputs = this.outputs;
         data = this.result?.result;
       }
-      const savingElement = queryElement(
-        `[${attr6}-output="SavingBlock"]`,
-        this.component
-      );
-      const noSavingElement = queryElement(
-        `[${attr6}-output="NoSavingBlock"]`,
-        this.component
-      );
+      const savingElement = queryElement(`[${attr6}-output="SavingBlock"]`, this.component);
+      const noSavingElement = queryElement(`[${attr6}-output="NoSavingBlock"]`, this.component);
       if (data["CostOfRate1"] < data["CostOfRate2"]) {
         savingElement.style.display = "none";
         noSavingElement.style.display = "block";
@@ -16255,10 +16240,7 @@
       this.inputs = queryElements(`[data-input], input, select`, component);
       this.buttons = queryElements(`[data-calc-el="button"]`, component);
       this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component);
-      this.buttonsLoader = queryElement(
-        `[data-calc-el="button-loader"]`,
-        component
-      );
+      this.buttonsLoader = queryElement(`[data-calc-el="button-loader"]`, component);
       this.currentLenderDropdown = queryElement(`#CurrentLender`, component);
       this.mortgageTypeDropdown = queryElement(`#MortgageType`, component);
       this.followOnField = queryElement(`#FollowOn`, component);
@@ -16341,14 +16323,8 @@
     }
     //TODO: Make sure all defaults are correct here
     getBestBuyInput() {
-      const propertyValueInput = queryElement(
-        `[data-input="PropertyValue"]`,
-        this.component
-      );
-      const loanAmountInput = queryElement(
-        `[data-input="LoanAmount"]`,
-        this.component
-      );
+      const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component);
+      const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component);
       const typeInput = queryElement(`[data-input="Type"]`, this.component);
       const termYearsInput = queryElement(`[data-input="Term"]`, this.component);
       const propertyValue = propertyValueInput ? propertyValueInput.value : "0";
@@ -16379,20 +16355,11 @@
       return formattedValues;
     }
     async getCostOfDoingNothingInput(bestBuyResult) {
-      const propertyValueInput = queryElement(
-        `[data-input="PropertyValue"]`,
-        this.component
-      );
-      const loanAmountInput = queryElement(
-        `[data-input="LoanAmount"]`,
-        this.component
-      );
+      const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component);
+      const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component);
       const typeInput = queryElement(`[data-input="Type"]`, this.component);
       const termYearsInput = queryElement(`[data-input="Term"]`, this.component);
-      const followOnInput = queryElement(
-        `[data-input="FollowOn"]`,
-        this.component
-      );
+      const followOnInput = queryElement(`[data-input="FollowOn"]`, this.component);
       const propertyValue = propertyValueInput ? parseInt(propertyValueInput.value) : 0;
       const loanAmount = loanAmountInput ? parseInt(loanAmountInput.value) : 0;
       const type = typeInput ? typeInput.value : "R";
@@ -16556,19 +16523,6 @@
     if (component) {
       new CostOfDoingNothingCalculator(component);
     }
-  };
-
-  // src/utils/getFromCookie.ts
-  var getFromCookie = (key) => {
-    const cookie = document.cookie.split("; ").find((row) => row.startsWith(`${key}=`));
-    if (cookie)
-      return cookie.split("=")[1];
-    return null;
-  };
-
-  // src/utils/setToCookie.ts
-  var setToCookie = (key, value) => {
-    document.cookie = `${key}=${value}; path=/`;
   };
 
   // src/mct/stages/form/constants.ts
@@ -17035,7 +16989,7 @@
     }
   };
 
-  // src/utils/trackGAEvent.ts
+  // src/utils/analytics/trackGAEvent.ts
   function trackGAEvent(eventName, params = {}) {
     if (typeof window !== "undefined" && typeof window.gtag === "function") {
       window.gtag("event", eventName, params);
@@ -17047,37 +17001,6 @@
     }
     if (true)
       console.log("[GA] Event:", eventName, params);
-  }
-
-  // src/utils/formatNumber.ts
-  function formatNumber2(value, options) {
-    const { type = "number", decimals, fallback = "" } = options || {};
-    let num = typeof value === "number" ? value : parseFloat(value.replace(/,/g, ""));
-    if (isNaN(num))
-      return fallback;
-    if (type === "currency") {
-      const formatted2 = num.toLocaleString("en-GB", {
-        maximumFractionDigits: decimals ?? 0,
-        minimumFractionDigits: decimals ?? 0
-      });
-      return `\xA3${formatted2}`;
-    }
-    if (type === "percent") {
-      const d = decimals ?? 2;
-      const percentValue = num;
-      const formatted2 = percentValue.toLocaleString("en-GB", { maximumFractionDigits: d, minimumFractionDigits: d });
-      return `${formatted2}%`;
-    }
-    const formatted = num.toLocaleString("en-GB", {
-      maximumFractionDigits: decimals ?? 0,
-      minimumFractionDigits: decimals ?? 0
-    });
-    return formatted;
-  }
-
-  // src/utils/filterAllowed.ts
-  function filterAllowed(values, allowed) {
-    return values.map(Number).filter((v) => allowed.includes(v));
   }
 
   // src/mct/shared/utils/common/generateProductsAPIInput.ts
@@ -17138,7 +17061,7 @@
     const productsAPIInput = generateProductsAPIInput(answers);
     const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
     const { RepaymentType } = answers;
-    const RepaymentValueText = formatNumber2(RepaymentValue, { type: "currency" });
+    const RepaymentValueText = formatNumber(RepaymentValue, { type: "currency" });
     const TermYearsText = `${TermYears} years`;
     const RepaymentTypeText = RepaymentType === "R" ? "repayment" : RepaymentType === "I" ? "interest only" : "part repayment part interest";
     const SchemeTypesMap = SchemeTypes.map((type) => type === 1 ? "fixed" : "variable");
@@ -17770,7 +17693,7 @@
         let outputValue = this.product[outputName] ?? 0;
         switch (outputType) {
           case "currency" /* Currency */:
-            outputValue = formatNumber2(outputValue, { type: "currency" });
+            outputValue = formatNumber(outputValue, { type: "currency" });
             break;
           case "boolean":
             outputValue = outputValue ? true : false;
@@ -18145,7 +18068,7 @@
           const ltv = (propertyValue - depositAmount) / propertyValue * 100;
           if (type === "percentage") {
             if (ltv)
-              output.textContent = formatNumber2(ltv, { type: "percent", decimals: 0 });
+              output.textContent = formatNumber(ltv, { type: "percent", decimals: 0 });
           } else if (type === "progress-bar") {
             if (ltv)
               output.style.width = `${ltv}%`;
@@ -18157,7 +18080,7 @@
           const mortgageAmount = propertyValue - depositAmount;
           if (type === "currency") {
             if (mortgageAmount)
-              output.textContent = formatNumber2(mortgageAmount, { type: "currency" });
+              output.textContent = formatNumber(mortgageAmount, { type: "currency" });
           }
           return;
         }
@@ -18168,11 +18091,11 @@
         } else if (type === "currency") {
           const value = MCTManager.getAnswer(key);
           if (value)
-            output.textContent = formatNumber2(value, { type: "currency" });
+            output.textContent = formatNumber(value, { type: "currency" });
         } else if (type === "percentage") {
           const value = MCTManager.getAnswer(key);
           if (value)
-            output.textContent = formatNumber2(value, { type: "percent" });
+            output.textContent = formatNumber(value, { type: "percent" });
         } else if (type === "progress-bar") {
           const value = MCTManager.getAnswer(key);
           if (value)

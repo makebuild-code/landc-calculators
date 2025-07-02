@@ -1,14 +1,13 @@
 import Chart from 'chart.js/auto';
 import type { BasicObject, Result } from 'src/types';
 
-import { handleConditionalVisibility } from '$utils/handleConditionalVisibility';
-import { isStaging } from '$utils/isStaging';
-import { numberToCurrency } from '$utils/numberToCurrency';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
+import { isStaging } from '$utils/environment';
+import { numberToCurrency } from '$utils/formatting';
+import { queryElement, queryElements } from '$utils/dom';
 
 import type { CalculatorOutputs } from './calculatorConfig';
 import type { HandleCalculator } from './handleCalculator';
+import { handleConditionalVisibility } from '$utils/dom';
 
 type Output = HTMLDivElement | HTMLSpanElement;
 
@@ -44,10 +43,7 @@ export class HandleOutputs {
       : queryElements(`[${attr}-output]`, calculator.component);
 
     this.repeatTemplates = queryElements(`[${attr}-output-repeat]`, calculator.component);
-    this.repeatOutputs = queryElements(
-      `[${attr}-output-repeat] [${attr}-output]`,
-      calculator.component
-    );
+    this.repeatOutputs = queryElements(`[${attr}-output-repeat] [${attr}-output]`, calculator.component);
     this.outputs = this.all.filter((output) => !this.repeatOutputs.includes(output));
     this.repeatClones = {};
 

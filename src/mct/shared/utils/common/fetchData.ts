@@ -1,4 +1,4 @@
-import { getBaseURLForAPI } from 'src/utils/getBaseURLForAPI';
+import { getBaseURLForAPI } from '$utils/environment/getBaseURLForAPI';
 
 export const fetchData = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
   const baseURL = getBaseURLForAPI();

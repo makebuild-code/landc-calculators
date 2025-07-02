@@ -1,8 +1,7 @@
 import type { InputArray, InputObject } from 'src/types';
 
-import { getInputValue } from '$utils/getInputValue';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
+import { queryElement, queryElements } from '$utils/dom';
+import { getInputValue } from '$utils/input';
 
 import type { HandleCalculator } from './handleCalculator';
 
@@ -42,10 +41,7 @@ export class HandleInputRepeat {
   constructor(calculator: HandleCalculator, name: string) {
     this.calculator = calculator;
     this.name = name;
-    this.template = queryElement(
-      `[${attr}-input-repeat=${name}]`,
-      calculator.component
-    ) as HTMLDivElement;
+    this.template = queryElement(`[${attr}-input-repeat=${name}]`, calculator.component) as HTMLDivElement;
 
     this.templateWrapper = this.template.parentElement as HTMLDivElement;
     this.inputs = queryElements(`[data-input]`, this.template);
@@ -53,10 +49,7 @@ export class HandleInputRepeat {
     this.groups = [this.template];
     this.max = Number(this.template.dataset.calcInputRepeatMax);
     this.type = this.inputs.length === 1 ? 'stringArray' : 'objectArray';
-    this.button = queryElement(
-      `[${attr}-input-repeat-duplicate="${name}"]`,
-      calculator.component
-    ) as HTMLButtonElement;
+    this.button = queryElement(`[${attr}-input-repeat-duplicate="${name}"]`, calculator.component) as HTMLButtonElement;
   }
 
   init(): void {

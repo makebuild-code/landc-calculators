@@ -2,14 +2,14 @@
  * class for managing a group of questions
  */
 
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
 
 import { attr } from './constants';
 import { Question } from './Questions';
 import type { FormManager } from './Manager_Base';
 import { classes } from 'src/mct/shared/constants';
-import { trackGAEvent } from '$utils/trackGAEvent';
+import { trackGAEvent } from '$utils/analytics/trackGAEvent';
 import { generateSummaryLines } from 'src/mct/shared/utils/common/generateSummaryLines';
 import { fetchProducts } from 'src/mct/shared/utils/api/calls/fetchProducts';
 import { generateProductsAPIInput } from 'src/mct/shared/utils/common/generateProductsAPIInput';
