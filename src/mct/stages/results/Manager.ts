@@ -1,9 +1,9 @@
 import { attr } from './constants';
-import type { OutputType, ResultsOptions } from './types';
+import type { OutputType } from './types';
 import type { Product, ProductsRequest, ProductsResponse, SummaryInfo } from 'src/mct/shared/api/types/fetchProducts';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { formatNumber } from 'src/utils/formatNumber';
-import type { AnswerKey, AnswerValue, StageID } from 'src/mct/shared/types';
+import type { AnswerKey, AnswerValue, StageID, ResultsStageOptions } from 'src/mct/shared/types';
 import { Result } from './Result';
 import { EXAMPLE_PRODUCTS_RESPONSE } from 'src/mct/shared/examples/exampleProductsResponse';
 import { EXAMPLE_ANSWERS } from 'src/mct/shared/examples/exampleAnswers';
@@ -39,16 +39,6 @@ import { simulateEvent } from '@finsweet/ts-utils';
  *    - reset filters
  */
 
-const DEFAULT_OPTIONS: ResultsOptions = {
-  // prefill: false,
-  // autoLoad: true,
-  // numberOfResults: 3,
-  // showSummary: true,
-  // showLenders: true,
-  // showDetails: true,
-  // onError: (err) => console.error(err),
-};
-
 export class ResultsManager {
   private component: HTMLElement;
   public id: StageID;
@@ -80,6 +70,7 @@ export class ResultsManager {
   private empty: HTMLElement;
   private pagination: HTMLElement;
   private paginationButton: HTMLButtonElement;
+  private numberOfResults: number = 0;
 
   constructor(component: HTMLElement) {
     this.component = component;
@@ -123,23 +114,27 @@ export class ResultsManager {
     this.paginationButton = queryElement('button', this.pagination) as HTMLButtonElement;
   }
 
-  public init(): void {
+  public init(options?: ResultsStageOptions): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
-    // // --- TEMP ---
-    // // Answers will be saved from prior stage, just temporary to avoid inputting every time
-    // Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-    //   MCTManager.setAnswer(key as AnswerKey, value);
-    // });
-    // // --- END OF TEMP ---
+    // --- TEMP ---
+    // Answers will be saved from prior stage, just temporary to avoid inputting every time
+    Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
+      MCTManager.setAnswer(key as AnswerKey, value);
+    });
+    // --- END OF TEMP ---
 
     this.initFilterGroups();
     this.initAppointmentDialog();
     this.initListElements();
     this.renderOutputs();
     this.renderFilters();
-    this.handleProductsAPI();
+
+    // // Only auto-load products if explicitly requested or if autoLoad is true
+    // if (options?.autoLoad === true) this.handleProductsAPI();
+
+    this.handlePagination();
   }
 
   public show(): void {
@@ -247,7 +242,6 @@ export class ResultsManager {
         if (text) output.innerHTML = text;
       } else if (type === 'currency') {
         const value = MCTManager.getAnswer(key as AnswerKey) as number;
-        console.log(key, type, value);
         if (value) output.textContent = formatNumber(value, { type: 'currency' });
       } else if (type === 'percentage') {
         const value = MCTManager.getAnswer(key as AnswerKey) as number;
@@ -267,16 +261,16 @@ export class ResultsManager {
     });
   }
 
-  private renderResults(): void {
+  private initiateResults(): void {
     this.results.forEach((result) => result.remove());
+    this.numberOfResults = 0;
+    this.showListUI('pagination', false);
 
-    const numberOfResults = this.products.length;
-    if (numberOfResults === 0) {
+    if (this.products.length === 0) {
       this.showListUI('empty', true);
       return;
     }
 
-    this.showListUI('empty', false);
     this.results = this.products.map((product) => {
       return new Result(this.resultsList, {
         template: this.resultsTemplate,
@@ -284,6 +278,30 @@ export class ResultsManager {
         onClick: (product) => this.handleProductCTA(product),
       });
     });
+
+    this.renderResults(10);
+    this.showListUI('empty', false);
+  }
+
+  private handlePagination(): void {
+    this.paginationButton.addEventListener('click', () => this.renderResults(10));
+  }
+
+  private renderResults(number: number = 10): void {
+    // Calculate the range of results to render
+    const startFromIndex = this.numberOfResults;
+    const endAtIndex = startFromIndex + number - 1;
+
+    // Render the results within the calculated range
+    let renderedCount = 0;
+    this.results.forEach((result, index) => {
+      if (index < startFromIndex || index > endAtIndex) return;
+      result.render();
+      renderedCount++;
+    });
+
+    this.numberOfResults += number;
+    this.showListUI('pagination', this.numberOfResults < this.products.length);
   }
 
   private handleProductCTA(product: Product): void {
@@ -315,8 +333,8 @@ export class ResultsManager {
   }
 
   private async handleProductsAPI() {
-    console.log('handleProductsAPI');
     this.showListUI('loader', true);
+    this.showListUI('pagination', false);
 
     const response = await this.fetchProducts();
     if (!response) {
@@ -327,21 +345,27 @@ export class ResultsManager {
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
 
-    const SapValues = this.products.map((product) => product.SAP);
-    console.log(SapValues);
-
-    console.log(this.products);
-    console.log(this.summaryInfo);
-
-    this.renderResults();
+    this.initiateResults();
     this.renderOutputs();
     this.showListUI('loader', false);
   }
 
-  private showListUI(component: 'loader' | 'empty', show?: boolean): void {
-    const componentEl = component === 'loader' ? this.loader : this.empty;
+  private showListUI(component: 'loader' | 'empty' | 'pagination', show?: boolean): void {
+    const componentEl =
+      component === 'loader'
+        ? this.loader
+        : component === 'empty'
+          ? this.empty
+          : component === 'pagination'
+            ? this.pagination
+            : null;
+    if (!componentEl) return;
+
     show ? componentEl.style.removeProperty('display') : (componentEl.style.display = 'none');
-    show ? (this.resultsList.style.display = 'none') : this.resultsList.style.removeProperty('display');
+
+    // Hide/Show the results list depending on the component being shown
+    const showResultsList = component === 'loader' || component === 'empty' ? !show : show;
+    showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 
   // public async loadAndRenderResults() {

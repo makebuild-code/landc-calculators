@@ -85,13 +85,8 @@ export abstract class InputGroupBase {
   public isValid(): boolean {
     // Check if any of the inputs are invalid using the native validation API
     const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
-    if (hasInvalidInput) {
-      console.log('check validity');
-      return false;
-    }
-
+    if (hasInvalidInput) return false;
     const value = this.getValue();
-    console.log(value);
 
     // Additional type-specific validation
     if (this.type === 'radio') return typeof value === 'string' && value !== '';

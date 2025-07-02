@@ -5,16 +5,26 @@ import { setToCookie } from '$utils/setToCookie';
 
 import { initForm } from '../stages/form';
 import type { FormManager, MainFormManager } from '../stages/form/Manager';
+import type { ProfileName } from '../stages/form/types';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
 import { generateLCID } from './api/generateLCID';
 import type { Product, ProductsResponse, SummaryInfo } from './api/types/fetchProducts';
-import { mctAttr } from './constants';
-import type { AnswerKey, Answers, AnswerValue, StageID } from './types';
+import { mctAttr, parameters } from './constants';
+import type {
+  AnswerKey,
+  Answers,
+  AnswerValue,
+  StageID,
+  GoToStageOptions,
+  QuestionsStageOptions,
+  ResultsStageOptions,
+  CalendarStageOptions,
+} from './types';
 
 interface Stage {
   id: StageID;
-  init: () => void;
+  init: (options?: any) => void;
   show: () => void;
   hide: () => void;
 }
@@ -141,11 +151,22 @@ export const MCTManager = {
      * - once questions are done, init the results
      */
 
-    this.goToStage('questions');
-    // this.goToStage('results');
+    const params = new URLSearchParams(window.location.search);
+    const profile = params.get(parameters.profile) as ProfileName | undefined;
+
+    if (profile) this.goToStage('questions', { questions: { profile } });
+
+    // if (profile === 'residential-purchase') {
+    //   this.goToStage('results');
+    // } else {
+    //   this.goToStage('questions');
+    // }
+
+    // this.goToStage('questions');
+    this.goToStage('results');
   },
 
-  goToStage(stageId: StageID): boolean {
+  goToStage(stageId: StageID, options: GoToStageOptions = {}): boolean {
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
     if (!nextStage) return false;
@@ -157,7 +178,15 @@ export const MCTManager = {
     // update the state, init and show the next stage
     state.currentStageId = stageId;
     nextStage.show();
-    nextStage.init();
+
+    // Pass stage-specific options to the init method
+    const stageOptions = options[stageId];
+    if (stageOptions && typeof nextStage.init === 'function') {
+      nextStage.init(stageOptions);
+    } else {
+      nextStage.init();
+    }
+
     return true;
   },
 

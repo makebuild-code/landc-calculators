@@ -10,6 +10,10 @@ export const classes = {
   highlight: 'mct_highlight',
 };
 
+export const parameters = {
+  profile: 'profile',
+};
+
 export const PROFILES: Profile[] = [
   {
     name: 'residential-purchase',

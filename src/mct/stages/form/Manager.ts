@@ -3,7 +3,7 @@ import { simulateEvent } from '@finsweet/ts-utils';
 import { PROFILES } from '../../shared/constants';
 import { MainGroup, BaseGroup, OutputGroup } from './Groups';
 import type { GroupName, Profile, ProfileName } from './types';
-import type { AnswerKey, Answers, AnswerValue, StageID } from 'src/mct/shared/types';
+import type { AnswerKey, Answers, AnswerValue, StageID, QuestionsStageOptions } from 'src/mct/shared/types';
 import { queryElement } from '$utils/queryElement';
 import { attr } from './constants';
 import { queryElements } from '$utils/queryelements';
@@ -24,7 +24,7 @@ export abstract class FormManager {
     this.id = 'questions';
   }
 
-  public abstract init(): void;
+  public abstract init(options?: QuestionsStageOptions): void;
   public abstract show(): void;
   public abstract hide(): void;
 
@@ -109,7 +109,7 @@ export class MainFormManager extends FormManager {
     };
   }
 
-  public init(): void {
+  public init(options?: QuestionsStageOptions): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
@@ -128,6 +128,17 @@ export class MainFormManager extends FormManager {
 
     const initialGroup = this.getActiveGroup();
     if (initialGroup) initialGroup.show();
+
+    // // Handle profile option if provided
+    // if (options?.profile) {
+    //   this.initialiseProfileSelect(options.profile);
+    // }
+
+    // // Handle prefill option if provided
+    // if (options?.prefill) {
+    //   const answers = this.getAnswers();
+    //   this.prefill(answers);
+    // }
 
     this.component.addEventListener('mct:navigation:update', (event: Event) => {
       const { nextEnabled, prevEnabled } = (event as CustomEvent).detail;

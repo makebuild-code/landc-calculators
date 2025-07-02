@@ -1,5 +1,4 @@
 import type { Product } from 'src/mct/shared/api/types/fetchProducts';
-import type { ResultsOptions } from './types';
 import { queryElement } from '$utils/queryElement';
 import { attr } from './constants';
 import { queryElements } from '$utils/queryelements';
@@ -38,7 +37,6 @@ export class Result {
   private init(): void {
     this.populate();
     this.bindEvents();
-    this.render();
   }
 
   private populate(): void {
