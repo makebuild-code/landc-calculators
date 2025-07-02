@@ -7,16 +7,15 @@ import { queryElements } from '$utils/queryelements';
 
 import { attr } from './constants';
 import { Question } from './Questions';
-import type { MainFormManager, FormManager } from './Manager';
-import type { GroupName } from './types';
+import type { FormManager } from './Manager_Base';
 import { classes } from 'src/mct/shared/constants';
-import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
-import type { ProductsResponse, SummaryInfo } from 'src/mct/shared/api/types/fetchProducts';
 import { trackGAEvent } from '$utils/trackGAEvent';
-import { MCTManager } from 'src/mct/shared/MCTManager';
-import { generateSummaryLines, type SummaryLines } from 'src/mct/shared/utils/generateSummaryLines';
-import { generateProductsAPIInput } from 'src/mct/shared/utils/generateProductsAPIInput';
-import { logError } from 'src/mct/shared/utils/logError';
+import { generateSummaryLines } from 'src/mct/shared/utils/common/generateSummaryLines';
+import { fetchProducts } from 'src/mct/shared/utils/api/calls/fetchProducts';
+import { generateProductsAPIInput } from 'src/mct/shared/utils/common/generateProductsAPIInput';
+import { logError } from 'src/mct/shared/utils/common/logError';
+import type { GroupName, ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
+import type { MainFormManager } from './Manager_Main';
 
 // @description: Base class for all groups
 export abstract class BaseGroup {

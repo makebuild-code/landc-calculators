@@ -1,16 +1,23 @@
-import type { BaseResponse } from './baseResponse';
-
 /**
- * PropertyValue
- * RepaymentValue
- * PropertyType
- * MortgageType
- * TermYears
- * SchemePurpose
- * NumberOfResults
- * SortColumn
+ * API-related types for MCT module
+ *
+ * Contains types related to API requests, responses,
+ * and data structures used in API communication.
  */
 
+export interface BaseResponse<T = Record<string, unknown>> {
+  body: string;
+  result: T;
+  url: string;
+}
+
+// Options for product requests
+export interface ProductsOptions {
+  numberOfResults?: number;
+  sortColumn?: number;
+}
+
+// Features for product requests
 export interface Features {
   HelpToBuy?: boolean;
   Offset?: boolean;
@@ -18,6 +25,7 @@ export interface Features {
   NewBuild?: boolean;
 }
 
+// Product request structure
 export interface ProductsRequest {
   PropertyValue: number;
   RepaymentValue: number;
@@ -38,6 +46,7 @@ export interface ProductsRequest {
   RetentionLenderId?: number;
 }
 
+// Summary information
 export interface SummaryInfo {
   LowestRate: number;
   LowestPMT: number;
@@ -46,6 +55,7 @@ export interface SummaryInfo {
   NumberOfProducts: number;
 }
 
+// Product structure
 export interface Product {
   ProductId: number;
   LenderId: number;
@@ -91,9 +101,28 @@ export interface Product {
   AvailableFor: string;
 }
 
+// API response structures
 export interface ProductsResponseData {
   SummaryInfo: SummaryInfo;
   Products: Product[];
 }
 
 export type ProductsResponse = BaseResponse<ProductsResponseData>;
+
+// Lender-related types
+export interface Lender {
+  MasterLenderId: number;
+  ResidentialLenderId: number;
+  BTLLenderId: number;
+  LenderName: string;
+  LenderImageURL: string | null;
+  LenderKey: string | null;
+}
+
+export interface LenderListResult {
+  lenders: Lender[];
+}
+
+export interface LenderListResponse {
+  result: LenderListResult;
+}

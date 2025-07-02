@@ -4,7 +4,8 @@
     "rootDir": ".",
     "baseUrl": "./",
     "paths": {
-      "$utils/*": ["src/utils/*"]
+      "$utils/*": ["src/utils/*"],
+      "$mct/types": ["src/mct/shared/types/index"]
     },
     "types": ["@finsweet/ts-utils", "node"]
   }

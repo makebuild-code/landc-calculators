@@ -1,5 +1,5 @@
-import { fetchProducts } from '../fetchProducts';
-import type { ProductsRequest } from '../types/fetchProducts';
+import type { ProductsRequest } from '$mct/types';
+import { fetchProducts } from '../calls/fetchProducts';
 
 export const testFetchProducts = async () => {
   const input: ProductsRequest = {

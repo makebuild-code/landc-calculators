@@ -1,85 +1,13 @@
 import { simulateEvent } from '@finsweet/ts-utils';
 
-import { PROFILES } from '../../shared/constants';
-import { MainGroup, BaseGroup, OutputGroup } from './Groups';
-import type { GroupName, Profile, ProfileName } from './types';
-import type { AnswerKey, Answers, AnswerValue, StageID, QuestionsStageOptions } from 'src/mct/shared/types';
-import { queryElement } from '$utils/queryElement';
 import { attr } from './constants';
+import { MainGroup, OutputGroup } from './Groups';
+import { MCTManager } from 'src/mct/shared/MCTManager';
+import { logError } from 'src/mct/shared/utils/common/logError';
+import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
-import type { Question } from './Questions';
-import { MCTManager, type AppState } from 'src/mct/shared/MCTManager';
-import { logError } from 'src/mct/shared/utils/logError';
-
-export abstract class FormManager {
-  protected component: HTMLElement;
-  public id: StageID;
-  protected profile: Profile | null = null;
-  protected groups: (MainGroup | OutputGroup)[] = [];
-  protected questions: Set<Question> = new Set();
-  protected isInitialised: boolean = false;
-
-  constructor(component: HTMLElement) {
-    this.component = component;
-    this.id = 'questions';
-  }
-
-  public abstract init(options?: QuestionsStageOptions): void;
-  public abstract show(): void;
-  public abstract hide(): void;
-
-  protected prefill(answers: Answers) {
-    /**
-     * @todo:
-     * - Loop through the answers
-     * - Find the input(s) that match the answer key
-     * - Set the value of the input(s)
-     * - Evaluate the visibility of the input(s)
-     */
-    // for (const [name, value] of Object.entries(answers)) {}
-    // this.groups.forEach((group) => group.evaluateVisibility());
-  }
-
-  public saveQuestion(question: Question): void {
-    this.questions.add(question);
-  }
-
-  public removeQuestion(question: Question): void {
-    this.questions.delete(question);
-  }
-
-  public getQuestions(): Set<Question> {
-    return this.questions;
-  }
-
-  public saveAnswersToMCT(): void {
-    MCTManager.clearAnswers();
-
-    [...this.questions].forEach((question) => {
-      const value = question.getValue();
-      if (value) MCTManager.setAnswer(question.name, value as AnswerValue);
-    });
-  }
-
-  public getAnswers(): Answers {
-    return { ...MCTManager.getAnswers() };
-  }
-
-  public determineProfile(): Profile | null {
-    const answers = this.getAnswers();
-    const profile: Profile | undefined = PROFILES.find((profile) => {
-      return Object.entries(profile.requirements).every(([key, value]) => answers[key] === value);
-    });
-
-    this.profile = profile ? profile : null;
-    return profile ? profile : null;
-  }
-
-  protected reset(): void {
-    MCTManager.clearAnswers();
-    this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
-  }
-}
+import type { GroupName, ProfileName, QuestionsStageOptions } from '$mct/types';
+import { FormManager } from './Manager_Base';
 
 export class MainFormManager extends FormManager {
   public activeGroupIndex: number = 0;

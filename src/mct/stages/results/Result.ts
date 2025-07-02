@@ -1,10 +1,9 @@
-import type { Product } from 'src/mct/shared/api/types/fetchProducts';
 import { queryElement } from '$utils/queryElement';
-import { attr } from './constants';
 import { queryElements } from '$utils/queryelements';
 import { formatNumber } from '$utils/formatNumber';
 
-const DEFAULT_OPTIONS = {};
+import { attr } from './constants';
+import type { Product } from '$mct/types';
 
 interface Options {
   template: HTMLElement;

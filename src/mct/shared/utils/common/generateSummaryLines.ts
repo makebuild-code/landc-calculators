@@ -1,7 +1,7 @@
-import { classes } from '../constants';
-import type { Answers, SummaryInfo, SummaryLines } from '../types';
-import { generateProductsAPIInput } from './common/generateProductsAPIInput';
 import { formatNumber } from '$utils/formatNumber';
+import { classes } from '../../constants';
+import type { Answers, SummaryInfo, SummaryLines } from '../../types';
+import { generateProductsAPIInput } from './generateProductsAPIInput';
 
 export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers): SummaryLines | null => {
   const productsAPIInput = generateProductsAPIInput(answers);

@@ -1,4 +1,4 @@
-import type { Profile } from '../stages/form/types';
+import type { Profile } from './types';
 
 export const mctAttr = {
   mct: 'data-mct',
@@ -61,3 +61,9 @@ export const PROFILES: Profile[] = [
     },
   },
 ];
+
+export const ENDPOINTS = {
+  lcid: 'EnquiryHttpTrigger',
+  products: 'ProductsMCTHttpTrigger',
+  lenders: 'LendersHttpTrigger',
+};

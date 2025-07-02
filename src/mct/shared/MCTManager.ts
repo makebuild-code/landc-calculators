@@ -4,26 +4,17 @@ import { queryElements } from '$utils/queryelements';
 import { setToCookie } from '$utils/setToCookie';
 
 import { initForm } from '../stages/form';
-import type { FormManager, MainFormManager } from '../stages/form/Manager';
-import type { ProfileName } from '../stages/form/types';
+import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
-import { generateLCID } from './api/generateLCID';
-import type { Product, ProductsResponse, SummaryInfo } from './api/types/fetchProducts';
-import { mctAttr, parameters } from './constants';
-import type {
-  AnswerKey,
-  Answers,
-  AnswerValue,
-  StageID,
-  GoToStageOptions,
-  QuestionsStageOptions,
-  ResultsStageOptions,
-  CalendarStageOptions,
-} from './types';
+
+import { mctAttr } from './constants';
+import type { AnswerKey, Answers, AnswerValue, GoToStageOptions, Product, SummaryInfo } from './types';
+import { StageIDENUM } from './types/stages';
+import { generateLCID } from './utils/api/calls/generateLCID';
 
 interface Stage {
-  id: StageID;
+  id: StageIDENUM;
   init: (options?: any) => void;
   show: () => void;
   hide: () => void;
@@ -33,7 +24,7 @@ const stageManagers: Record<string, Stage> = {};
 
 interface DOM {
   mctComponent: HTMLElement | null;
-  stages: Partial<Record<StageID, HTMLElement>>;
+  stages: Partial<Record<StageIDENUM, HTMLElement>>;
 }
 
 const dom: DOM = {
@@ -89,7 +80,7 @@ export const MCTManager = {
     const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
     stageElements.forEach((stage) => {
       const name = stage.getAttribute(mctAttr.stage);
-      if (name) dom.stages[name as StageID] = stage as HTMLElement;
+      if (name) dom.stages[name as StageIDENUM] = stage as HTMLElement;
     });
 
     return dom;
@@ -113,19 +104,19 @@ export const MCTManager = {
   },
 
   initStages() {
-    const mainForm = this.getStageDOM('questions') as HTMLElement;
+    const mainForm = this.getStageDOM(StageIDENUM.Questions) as HTMLElement;
     const mainFormManager = initForm(mainForm, {
       mode: 'main',
       prefill: false,
     });
     mainFormManager?.hide();
 
-    const results = this.getStageDOM('results') as HTMLElement;
+    const results = this.getStageDOM(StageIDENUM.Results) as HTMLElement;
     const resultsManager = initResults(results);
     resultsManager?.hide();
 
-    stageManagers['questions'] = mainFormManager as MainFormManager;
-    stageManagers['results'] = resultsManager as ResultsManager;
+    stageManagers[StageIDENUM.Questions] = mainFormManager as MainFormManager;
+    stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
   },
 
   getComponentDOM() {
@@ -151,10 +142,10 @@ export const MCTManager = {
      * - once questions are done, init the results
      */
 
-    const params = new URLSearchParams(window.location.search);
-    const profile = params.get(parameters.profile) as ProfileName | undefined;
+    // const params = new URLSearchParams(window.location.search);
+    // const profile = params.get(parameters.profile) as ProfileName | undefined;
 
-    if (profile) this.goToStage('questions', { questions: { profile } });
+    // if (profile) this.goToStage('questions', { questions: { profile } });
 
     // if (profile === 'residential-purchase') {
     //   this.goToStage('results');
@@ -162,8 +153,8 @@ export const MCTManager = {
     //   this.goToStage('questions');
     // }
 
-    // this.goToStage('questions');
-    this.goToStage('results');
+    this.goToStage('questions');
+    // this.goToStage('results');
   },
 
   goToStage(stageId: StageID, options: GoToStageOptions = {}): boolean {

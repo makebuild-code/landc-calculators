@@ -1,19 +1,12 @@
 import { filterAllowed } from '$utils/filterAllowed';
-import type { CheckboxValues } from 'src/mct/stages/form/types';
-import type { Features, ProductsRequest } from '../api/types/fetchProducts';
-import type { Answers } from '../types';
+import type { Answers, CheckboxValues, Features, ProductsOptions, ProductsRequest } from '$mct/types';
 
-export interface Options {
-  numberOfResults?: number;
-  sortColumn?: number;
-}
-
-const DEFAULT_OPTIONS: Options = {
+const DEFAULT_OPTIONS: ProductsOptions = {
   numberOfResults: 1,
   sortColumn: 1,
 };
 
-export const generateProductsAPIInput = (answers: Answers, options: Options = {}): ProductsRequest => {
+export const generateProductsAPIInput = (answers: Answers, options: ProductsOptions = {}): ProductsRequest => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const PropertyValue = answers.PropertyValue as number;
   const DepositAmount = answers.DepositAmount as number;

@@ -1,4 +1,5 @@
-import { InputGroupBase, type InputGroupOptions } from 'src/mct/shared/classes/InputGroupBase';
+import { InputGroupBase } from 'src/mct/shared/classes/InputGroupBase';
+import type { InputGroupOptions } from '$mct/types';
 
 type FilterOptions = {} & InputGroupOptions;
 

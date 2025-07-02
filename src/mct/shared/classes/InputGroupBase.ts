@@ -1,22 +1,17 @@
 import { queryElement } from '$utils/queryElement';
 import { queryElements } from '$utils/queryelements';
 
-import { attr } from '../../stages/form/constants';
 import type {
   CheckboxValues,
+  Input,
+  InputType,
   InputValue,
   NumberValue,
   RadioValue,
+  SelectOption,
   SelectValue,
   TextValue,
-} from '../../stages/form/types';
-
-type Input = HTMLInputElement | HTMLSelectElement;
-type InputType = 'radio' | 'checkbox' | 'text' | 'number' | 'select-one';
-type SelectOption = {
-  value: string;
-  label: string;
-};
+} from '$mct/types';
 
 export type InputGroupOptions = {
   onChange: () => void;
@@ -278,46 +273,6 @@ export abstract class InputGroupBase {
         throw new Error(`Unsupported question type: ${this.type}`);
     }
   }
-
-  // public getValuesObject(): Record<string, InputValue | null> {
-  //   // Get unique input names
-  //   const uniqueNames = [...new Set(this.inputs.map((input) => input.name))];
-
-  //   // If there's only one name, return simple object
-  //   if (uniqueNames.length === 1) {
-  //     const name = uniqueNames[0];
-  //     return { [name]: this.getValue() };
-  //   }
-
-  //   // If there are multiple names, build object with each name-value pair
-  //   const result: Record<string, InputValue | null> = {};
-
-  //   uniqueNames.forEach((name) => {
-  //     // Filter inputs by name and get their values
-  //     const inputsWithName = this.inputs.filter((input) => input.name === name);
-
-  //     if (this.type === 'checkbox') {
-  //       // For checkboxes, get all checked values for this name
-  //       const checkedValues = inputsWithName
-  //         .filter((input) => input instanceof HTMLInputElement && input.checked)
-  //         .map((input) => input.value);
-  //       result[name] = checkedValues;
-  //     } else {
-  //       // For other types, get the first input's value (should be the only one)
-  //       const input = inputsWithName[0];
-  //       if (input) {
-  //         if (this.type === 'number') {
-  //           const value = input.value.trim();
-  //           result[name] = value ? parseFloat(value) : null;
-  //         } else {
-  //           result[name] = input.value || null;
-  //         }
-  //       }
-  //     }
-  //   });
-
-  //   return result;
-  // }
 
   public getLabels(): string[] {
     const checked = this.inputs.filter((input) => {

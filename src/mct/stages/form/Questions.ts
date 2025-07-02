@@ -4,10 +4,10 @@
 
 import { classes } from 'src/mct/shared/constants';
 import { attr } from './constants';
-import type { Answers } from 'src/mct/shared/types';
-import type { FormManager } from './Manager';
-import { fetchLenders } from 'src/mct/shared/api/fetchLenders';
+import type { FormManager } from './Manager_Base';
 import { InputGroupBase, type InputGroupOptions } from 'src/mct/shared/classes/InputGroupBase';
+import { fetchLenders } from 'src/mct/shared/utils/api/calls/fetchLenders';
+import type { Answers } from '$mct/types';
 
 type QuestionOptions = {
   formManager: FormManager;
@@ -26,7 +26,6 @@ export class Question extends InputGroupBase {
   public dependsOn: string | null;
   public dependsOnValue: string | null;
   public isVisible: boolean = false;
-  // public name: string;
 
   public indexInGroup: number;
 
@@ -37,6 +36,8 @@ export class Question extends InputGroupBase {
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
     this.indexInGroup = options.indexInGroup;
+
+    console.log('Question constructor', this);
   }
 
   protected init(): void {

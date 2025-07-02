@@ -1,4 +1,4 @@
-import { generateLCID } from '../generateLCID';
+import { generateLCID } from '../calls/generateLCID';
 
 async function testGenerateLCID() {
   try {

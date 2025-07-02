@@ -1,6 +1,6 @@
-import { MCTManager } from '../MCTManager';
-import { fetchData } from '../utils/fetchData';
-import { ENDPOINTS } from './endpoints';
+import { ENDPOINTS } from 'src/mct/shared/constants';
+import { MCTManager } from '../../../MCTManager';
+import { fetchData } from '../../common/fetchData';
 
 export const generateLCID = async (): Promise<string> => {
   const response = await fetchData<{ result: { lcid: string } }>(ENDPOINTS.lcid, {
