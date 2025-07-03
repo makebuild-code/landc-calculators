@@ -2,7 +2,7 @@ import { simulateEvent } from '@finsweet/ts-utils';
 
 import { attr } from './constants';
 import { MainGroup, OutputGroup } from './Groups';
-import { MCTManager } from '$mct/manager';
+import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
@@ -305,8 +305,8 @@ export class MainFormManager extends FormManager {
     this.prepareWrapper();
   }
 
-  public reset() {
-    MCTManager.clearAnswers();
-    this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
-  }
+  // public reset() {
+  //   MCTManager.clearAnswers();
+  //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
+  // }
 }

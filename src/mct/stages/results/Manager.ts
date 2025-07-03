@@ -1,5 +1,6 @@
 import { attr } from './constants';
 import type {
+  AnswerID,
   AnswerKey,
   AnswerValue,
   InputValue,
@@ -9,16 +10,14 @@ import type {
   SummaryInfo,
 } from '$mct/types';
 import { OutputTypeENUM, StageIDENUM } from '$mct/types';
-import { MCTManager } from '$mct/manager';
+import { MCTManager } from 'src/mct/shared/MCTManager';
 import { formatNumber } from '$utils/formatting';
 import { Result } from './Result';
-import { EXAMPLE_PRODUCTS_RESPONSE } from 'src/mct/shared/examples/exampleProductsResponse';
-import { EXAMPLE_ANSWERS } from 'src/mct/shared/examples/exampleAnswers';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterGroup } from './FilterGroup';
-import { fetchProducts } from '$mct/api';
+import { productsAPI } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
 
 /**
@@ -49,8 +48,8 @@ export class ResultsManager {
   public id: StageIDENUM;
   private isInitialised: boolean = false;
 
-  private products: Product[];
-  private summaryInfo: SummaryInfo;
+  private products: Product[] = [];
+  private summaryInfo: SummaryInfo | null = null;
 
   private header: HTMLDivElement;
   private outputs: HTMLDivElement[] = [];
@@ -80,11 +79,6 @@ export class ResultsManager {
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Results;
-
-    // Update: get response from fetchProducts API and save to state
-    const response = EXAMPLE_PRODUCTS_RESPONSE;
-    this.products = response.result.Products as Product[];
-    this.summaryInfo = response.result.SummaryInfo;
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
@@ -123,18 +117,19 @@ export class ResultsManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
-    // --- TEMP ---
-    // Answers will be saved from prior stage, just temporary to avoid inputting every time
-    Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-      MCTManager.setAnswer(key as AnswerKey, value);
-    });
-    // --- END OF TEMP ---
+    // // --- TEMP ---
+    // // Answers will be saved from prior stage, just temporary to avoid inputting every time
+    // Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
+    //   MCTManager.setAnswer(key as AnswerKey, value);
+    // });
+    // // --- END OF TEMP ---
 
     this.initFilterGroups();
     this.initAppointmentDialog();
     this.initListElements();
     this.renderOutputs();
     this.renderFilters();
+    this.handleProductsAPI();
 
     // // Only auto-load products if explicitly requested or if autoLoad is true
     // if (options?.autoLoad === true) this.handleProductsAPI();
@@ -165,9 +160,16 @@ export class ResultsManager {
     this.filterGroups.forEach((group) => {
       const value = group.getValue();
       const name = group.name;
+      const id = group.id;
 
       // Only set the answer if we have a valid name and value
-      if (name && value !== null && value !== undefined) MCTManager.setAnswer(name as AnswerKey, value as AnswerValue);
+      if (name && value !== null && value !== undefined && id)
+        MCTManager.setAnswer({
+          key: name as AnswerKey,
+          id: id as AnswerID,
+          value: value as AnswerValue,
+          source: 'user',
+        });
     });
 
     this.handleProductsAPI();
@@ -194,6 +196,8 @@ export class ResultsManager {
   }
 
   private renderOutputs(): void {
+    if (!this.summaryInfo) return;
+
     const summaryLines = generateSummaryLines(this.summaryInfo, MCTManager.getAnswers());
     if (!summaryLines) return;
 
@@ -329,7 +333,7 @@ export class ResultsManager {
     });
 
     try {
-      const response = await fetchProducts(input);
+      const response = await productsAPI.search(input);
       return response;
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -372,114 +376,4 @@ export class ResultsManager {
     const showResultsList = component === 'loader' || component === 'empty' ? !show : show;
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
-
-  // public async loadAndRenderResults() {
-  //   const request = this.buildProductsRequest();
-  //   console.log(request);
-  //   if (!request) return;
-  //   try {
-  //     // this.products = await fetchProducts(MCTManager.getAnswers());
-  //     console.log('Products API response:', this.products);
-  //     this.renderAllTemplates();
-  //   } catch (error) {
-  //     this.renderError(error);
-  //     // if (this.options.onError) this.options.onError(error);
-  //   }
-  // }
-
-  // private renderAllTemplates() {
-  //   if (!this.products) return;
-  //   const data: ResultsData[] = [];
-  //   if (this.options.showSummary) {
-  //     data.push({ key: 'summary', value: this.renderSummary() });
-  //   }
-  //   if (this.options.showLenders) {
-  //     data.push({ key: 'lenders', value: this.renderLenders() });
-  //   }
-  //   if (this.options.showDetails) {
-  //     data.push({ key: 'details', value: this.renderDetails() });
-  //   }
-  //   this.setResultsData(data);
-  // }
-
-  // private renderSummary(): string {
-  //   if (!this.products) return '';
-  //   const req = this.buildProductsRequest();
-  //   if (!req) return '';
-  //   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = req;
-  //   const answers = MCTManager.getAnswers();
-  //   const RepaymentType = answers.RepaymentType;
-  //   const RepaymentValueText = formatNumber(RepaymentValue, { currency: true });
-  //   const TermYearsText = `${TermYears} years`;
-  //   const RepaymentTypeText =
-  //     RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
-  //   const SchemeTypesMap = (SchemeTypes as (1 | 2)[]).map((type) => (type === 1 ? 'fixed' : 'variable'));
-  //   const SchemePeriodsMap = (SchemePeriods as (1 | 2 | 3 | 4)[]).map((period) =>
-  //     period === 1 ? '2' : period === 2 ? '3' : period === 3 ? '5' : '5+'
-  //   );
-  //   const SchemePeriodsText =
-  //     SchemePeriodsMap.length === 1
-  //       ? `${SchemePeriodsMap[0]} year`
-  //       : SchemePeriodsMap.length > 1
-  //         ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year`
-  //         : '';
-  //   const SchemeTypesText =
-  //     SchemeTypesMap.length === 1
-  //       ? `${SchemeTypesMap[0]} rate`
-  //       : SchemeTypesMap.length > 1
-  //         ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
-  //         : '';
-  //   return `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-  // }
-
-  // private renderLenders(): string {
-  //   if (!this.products) return '';
-  //   const info = this.products.result.SummaryInfo;
-  //   return `We've found <span class="${classes.highlight}">${info.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${info.NumberOfLenders}</span> lenders.`;
-  // }
-
-  // private renderDetails(): string {
-  //   if (!this.products) return '';
-  //   const products = this.products.result.Products;
-  //   if (!products || products.length === 0) return '<p>No products found.</p>';
-  //   const rows = products
-  //     .slice(0, this.options.numberOfResults)
-  //     .map(
-  //       (p) =>
-  //         `<tr>
-  //       <td>${p.LenderName}</td>
-  //       <td>${formatNumber(p.Rate, { fallback: '-' })}%</td>
-  //       <td>${formatNumber(p.PMT, { currency: true, fallback: '-' })}</td>
-  //       <td>${formatNumber(p.AnnualCost, { currency: true, fallback: '-' })}</td>
-  //       <td>${formatNumber(p.LTV, { fallback: '-' })}%</td>
-  //     </tr>`
-  //     )
-  //     .join('');
-  //   return `<table class="mct-results-table">
-  //     <thead><tr><th>Lender</th><th>Rate</th><th>Monthly</th><th>Annual Cost</th><th>LTV</th></tr></thead>
-  //     <tbody>${rows}</tbody>
-  //   </table>`;
-  // }
-
-  // private renderError(error: unknown) {
-  //   this.setResultsData([
-  //     { key: 'summary', value: '<span class="error">Failed to load results.</span>' },
-  //     { key: 'lenders', value: '' },
-  //     { key: 'details', value: '' },
-  //   ]);
-  // }
-
-  // public setResultsData(data: ResultsData[]) {
-  //   this.resultsData = data;
-  //   this.displayResults();
-  // }
-
-  // private displayResults() {
-  //   this.resultsData.forEach((data) => {
-  //     const el = this.component.querySelector(`[${attr.output}="${data.key}"]`);
-  //     if (el) {
-  //       el.innerHTML = data.value;
-  //     }
-  //   });
-  // }
 }

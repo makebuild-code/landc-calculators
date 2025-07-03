@@ -1,6 +1,6 @@
 import { PROFILES } from 'src/mct/shared/constants';
-import { MCTManager } from '$mct/manager';
-import type { Answers, AnswerValue, Profile, QuestionsStageOptions } from '$mct/types';
+import { MCTManager } from 'src/mct/shared/MCTManager';
+import type { AnswerData, AnswerID, AnswerKey, Answers, AnswerValue, Profile, QuestionsStageOptions } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
@@ -48,12 +48,23 @@ export abstract class FormManager {
   }
 
   public saveAnswersToMCT(): void {
-    MCTManager.clearAnswers();
+    const answerDataArray: AnswerData[] = [];
 
     [...this.questions].forEach((question) => {
       const value = question.getValue();
-      if (value) MCTManager.setAnswer(question.name, value as AnswerValue);
+      if (!value) return;
+
+      answerDataArray.push({
+        id: question.id as AnswerID,
+        key: question.name as AnswerKey,
+        value: value as AnswerValue,
+        source: 'user',
+      });
     });
+
+    console.log('saveAnswersToMCT: ', answerDataArray);
+
+    MCTManager.setAnswers(answerDataArray);
   }
 
   public getAnswers(): Answers {
@@ -70,8 +81,8 @@ export abstract class FormManager {
     return profile ? profile : null;
   }
 
-  protected reset(): void {
-    MCTManager.clearAnswers();
-    this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
-  }
+  // protected reset(): void {
+  //   MCTManager.clearAnswers();
+  //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
+  // }
 }

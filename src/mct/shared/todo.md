@@ -6,11 +6,11 @@
 3. Reorganise shared utils
    - [] Organise in a way that makes sense
 4. State management refactoring
-   - [ ] Explore dedicated state manager
-   - [ ] Separate storage logic
+   - [x] Explore dedicated state manager
+   - [x] Separate storage logic
 5. API layer improvements
-   - [ ] Create API client
-   - [ ] Centralise error handling
+   - [x] Create API client
+   - [x] Centralise error handling
 6. Component architecture improvements
    - [ ] Implement event bus
    - [ ] Create base components

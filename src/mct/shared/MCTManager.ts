@@ -1,7 +1,5 @@
-import { getFromCookie } from '$utils/storage/getFromCookie';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import { setToCookie } from '$utils/storage/setToCookie';
 
 import { initForm } from '../stages/form';
 import type { MainFormManager } from '../stages/form/Manager_Main';
@@ -9,9 +7,10 @@ import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
 
 import { mctAttr } from './constants';
-import type { AnswerKey, Answers, AnswerValue, GoToStageOptions, Product, SummaryInfo } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
-import { generateLCID } from '$mct/api';
+import { StateManager } from './state';
+import type { AnswerData, AnswerKey, Answers, AnswerValue, AppState, GoToStageOptions } from '$mct/types';
+import { lcidAPI } from '$mct/api';
 
 interface Stage {
   id: StageIDENUM;
@@ -32,45 +31,30 @@ const dom: DOM = {
   stages: {},
 };
 
-export interface AppState {
-  lcid: string | null;
-  icid: string | null;
-  currentStageId: string | null;
-  answers: Answers;
-  summary: SummaryInfo | null;
-  products: Product[] | null;
-}
-
-const state: AppState = {
-  lcid: null,
-  icid: null,
-  currentStageId: null,
-  answers: {},
-  summary: null,
-  products: null,
-};
-
-const MCT_ANSWERS_STORAGE_KEY = 'mct_data';
-
-interface MCTData {
-  lcid?: string | null;
-  icid?: string | null;
-  answers?: Answers;
-}
-
+const stateManager = new StateManager();
 export const MCTManager = {
-  /**
-   * @plan
-   *
-   * - generate new LCID
-   * - save to the data and cookies
-   */
   start() {
+    this.initState();
     this.initDOM();
     this.initICID();
     this.initLCID();
     this.initStages();
     this.route();
+  },
+
+  initState() {
+    console.log('🔄 Initializing hybrid MCTManager with new state management...');
+
+    // Subscribe to state changes for debugging
+    stateManager.subscribe((event) => {
+      console.log('🔄 State changed via new manager:', {
+        changes: event.changes,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    stateManager.loadFromPersistence();
+    stateManager.enableAutoPersistence();
   },
 
   initDOM(): DOM {
@@ -87,16 +71,17 @@ export const MCTManager = {
   },
 
   initICID() {
-    const icid = getFromCookie('ICID');
+    const icid = this.getICID();
     this.setICID(icid ?? 'default');
   },
 
   async initLCID() {
-    const currentLCID = getFromCookie('LCID');
-    this.setLCID(currentLCID ?? null);
+    const currentLCID = this.getLCID();
+    const icid = this.getICID();
 
     try {
-      const lcid = await generateLCID();
+      // const lcid = await generateLCID(currentLCID, icid);
+      const lcid = await lcidAPI.generate(currentLCID, icid);
       this.setLCID(lcid);
     } catch {
       console.error('Failed to generate LCID');
@@ -163,11 +148,11 @@ export const MCTManager = {
     if (!nextStage) return false;
 
     // hide the current stage
-    const currentStage = stageManagers[state.currentStageId as StageIDENUM] ?? null;
+    const currentStage = stageManagers[stateManager.getCurrentStage() as StageIDENUM] ?? null;
     if (currentStage) currentStage.hide();
 
     // update the state, init and show the next stage
-    state.currentStageId = stageId;
+    stateManager.setCurrentStage(stageId);
     nextStage.show();
 
     // Pass stage-specific options to the init method
@@ -181,94 +166,85 @@ export const MCTManager = {
     return true;
   },
 
-  getPersistedData(): MCTData {
-    const stored = localStorage.getItem(MCT_ANSWERS_STORAGE_KEY);
-    if (!stored) return {};
-    return JSON.parse(stored);
-  },
-
-  setPersistedData(data: MCTData) {
-    localStorage.setItem(MCT_ANSWERS_STORAGE_KEY, JSON.stringify(data));
-  },
-
   setICID(icid: string) {
-    const data = this.getPersistedData();
-    data.icid = icid;
-    this.setPersistedData(data);
-    state.icid = icid;
-    setToCookie('ICID', icid);
+    stateManager.setICID(icid);
   },
 
   getICID(): string | null {
-    return state.icid;
+    return stateManager.getICID();
   },
 
   setLCID(lcid: string | null) {
-    const data = this.getPersistedData();
-    data.lcid = lcid;
-    this.setPersistedData(data);
-    state.lcid = lcid;
-    setToCookie('LCID', lcid ?? '');
+    stateManager.setLCID(lcid);
   },
 
   getLCID(): string | null {
-    return state.lcid;
+    return stateManager.getLCID();
   },
 
-  setAnswer(key: AnswerKey, value: AnswerValue) {
-    const data = this.getPersistedData();
-    if (!data.answers) data.answers = {};
-    data.answers[key] = value;
-    this.setPersistedData(data);
-    state.answers[key] = value;
+  setAnswer(answerData: AnswerData) {
+    stateManager.setAnswer(answerData);
   },
 
   getAnswer(key: AnswerKey): AnswerValue | null {
-    return state.answers?.[key];
+    return stateManager.getAnswer(key);
+  },
+
+  setAnswers(answerDataArray: AnswerData[]) {
+    stateManager.setAnswers(answerDataArray);
   },
 
   getAnswers(): Answers {
-    return { ...state.answers };
+    return stateManager.getAnswers();
   },
 
-  clearAnswer(key: AnswerKey) {
-    const data = this.getPersistedData();
-    delete data.answers?.[key];
-    this.setPersistedData(data);
-    delete state.answers[key];
-  },
+  // clearAnswer(key: AnswerKey) {
+  //   if (USE_NEW_STATE_MANAGEMENT.answers) {
+  //     // Use new state management
+  //     newStateManager.clearAnswer(key);
+  //     // Keep legacy state in sync
+  //     delete legacyState.answers[key];
+  //   } else {
+  //     // Use legacy approach
+  //     const data = this.getPersistedData();
+  //     delete data.answers?.[key];
+  //     this.setPersistedData(data);
+  //     delete legacyState.answers[key];
+  //   }
+  // },
 
-  clearAnswers() {
-    const data = this.getPersistedData();
-    data.answers = {};
-    this.setPersistedData(data);
-    state.answers = {};
-  },
+  // clearAnswers() {
+  //   if (USE_NEW_STATE_MANAGEMENT.answers) {
+  //     // Use new state management
+  //     newStateManager.clearAnswers();
+  //     // Keep legacy state in sync
+  //     legacyState.answers = {};
+  //   } else {
+  //     // Use legacy approach
+  //     const data = this.getPersistedData();
+  //     data.answers = {};
+  //     this.setPersistedData(data);
+  //     legacyState.answers = {};
+  //   }
+  // },
 
-  initFromStorage() {
-    const data = this.getPersistedData();
-    state.lcid = data.lcid ?? null;
-    state.icid = data.icid ?? null;
-    state.answers = data.answers ?? {};
-  },
+  // setProducts(products: Product[]) {
+  //   stateManager.setProducts(products);
+  // },
 
-  setProducts(products: Product[]) {
-    state.products = products;
-  },
+  // getProducts(): Product[] | null {
+  //   return stateManager.getProducts();
+  // },
 
-  getProducts(): Product[] | null {
-    return state.products;
-  },
+  // setSummary(summary: SummaryInfo) {
+  //   stateManager.setSummary(summary);
+  // },
 
-  setSummary(summary: SummaryInfo) {
-    state.summary = summary;
-  },
-
-  getSummary(): SummaryInfo | null {
-    return state.summary;
-  },
+  // getSummary(): SummaryInfo | null {
+  //   return stateManager.getSummary();
+  // },
 
   getState(): AppState {
-    return { ...state };
+    return stateManager.getState();
   },
 };

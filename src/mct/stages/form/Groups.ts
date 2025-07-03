@@ -11,7 +11,7 @@ import type { FormManager } from './Manager_Base';
 import { classes } from 'src/mct/shared/constants';
 import { trackGAEvent } from '$utils/analytics/trackGAEvent';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
-import { fetchProducts } from '$mct/api';
+import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
@@ -53,16 +53,27 @@ export abstract class QuestionGroup extends BaseGroup {
   public show(): void {
     this.component.style.removeProperty('display');
     this.isVisible = true;
+    console.log('show: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
 
   public hide(): void {
     this.component.style.display = 'none';
     this.isVisible = false;
+    console.log('hide: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
 
   public updateActiveQuestions(): void {
+    /**
+     * Update:
+     * - Don't save answers to MCT here
+     * - This will show the questions that should be visible based on the storage
+     * - Answers will need to be rendered on page load for this to display nicely
+     */
+
+    console.log('function: updateActiveQuestions');
+    console.log('saving answers to MCT');
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
@@ -91,6 +102,7 @@ export class MainGroup extends QuestionGroup {
     this.formManager = formManager;
     this.questions = this.initQuestions();
     this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
+    console.log('init: updateActiveQuestions');
     this.updateActiveQuestions();
   }
 
@@ -117,12 +129,14 @@ export class MainGroup extends QuestionGroup {
 
     const question = this.questions[index];
 
-    console.log(question);
-    console.log(question.isValid());
+    console.log('handleChange: updateActiveQuestions');
+    // this.formManager.saveAnswersToMCT();
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
+
+    console.log('handleChange, sending GA event');
     trackGAEvent('form_interaction', {
       event_category: 'MCTForm',
       event_label: `MCT_${question.name}`,
@@ -252,10 +266,6 @@ export class OutputGroup extends BaseGroup {
     this.button.addEventListener('click', () => this.navigateToResults());
   }
 
-  // public getComponent(): HTMLElement {
-  //   return this.component;
-  // }
-
   public show(): void {
     this.component.style.removeProperty('display');
     this.isVisible = true;
@@ -309,11 +319,9 @@ export class OutputGroup extends BaseGroup {
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput(this.formManager.getAnswers());
     try {
-      const response = await fetchProducts(input);
-      return response;
+      return await productsAPI.search(input);
     } catch (error) {
-      console.error('Failed to fetch products:', error);
-      return null;
+      return logError('Failed to fetch products:', { data: error, returnNull: true }) as null;
     }
   }
 

@@ -7,8 +7,10 @@
       "$utils/*": ["src/utils/*"],
       "$mct/manager": ["src/mct/shared/MCTManager"],
       "$mct/types": ["src/mct/shared/types/index"],
-      "$mct/api": ["src/mct/shared/api/calls/index"],
-      "$mct/utils": ["src/mct/shared/utils/common/index"]
+      "$mct/api": ["src/mct/shared/api/index"],
+      "$mct/utils": ["src/mct/shared/utils/common/index"],
+      "$mct/state": ["src/mct/shared/state/index"],
+      "$mct/state/*": ["src/mct/shared/state/*"]
     },
     "types": ["@finsweet/ts-utils", "node"]
   }

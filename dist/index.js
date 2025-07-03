@@ -16626,6 +16626,7 @@
     type;
     groupName;
     name;
+    id = null;
     constructor(el, options) {
       this.el = el;
       this.onChange = options.onChange;
@@ -16649,6 +16650,7 @@
           label.setAttribute("for", id);
           input.id = id;
           input.name = name;
+          this.id = id;
         });
       } else {
         const label = queryElement("label", this.el);
@@ -16657,6 +16659,7 @@
         label.setAttribute("for", nameAndID);
         input.id = nameAndID;
         input.name = nameAndID;
+        this.id = nameAndID;
       }
     }
     bindEventListeners() {
@@ -16891,15 +16894,6 @@
     }
   };
 
-  // src/mct/shared/utils/common/fetchData.ts
-  var fetchData = async (endpoint, options) => {
-    const baseURL = getBaseURLForAPI();
-    const response = await fetch(`${baseURL}${endpoint}`, options);
-    if (!response.ok)
-      throw new Error("Failed to fetch data");
-    return response.json();
-  };
-
   // src/mct/shared/utils/common/generateProductsAPIInput.ts
   var DEFAULT_OPTIONS = {
     numberOfResults: 1,
@@ -16982,45 +16976,145 @@
   };
 
   // src/mct/shared/utils/common/logError.ts
-  var logError = (message, data) => {
-    console.log(message, data || "");
-    return false;
-  };
+  function logError(message, options = {}) {
+    console.log(message, options.data || "");
+    return options.returnNull ? null : false;
+  }
 
-  // src/mct/shared/api/calls/fetchLenders.ts
-  var fetchLenders = async () => {
-    const data = await fetchData(ENDPOINTS.lenders);
-    return data.result.lenders;
+  // src/mct/shared/api/client/APIClient.ts
+  var APIError = class extends Error {
+    constructor(message, status, endpoint, response) {
+      super(message);
+      this.status = status;
+      this.endpoint = endpoint;
+      this.response = response;
+      this.name = "APIError";
+    }
   };
-
-  // src/mct/shared/api/calls/fetchProducts.ts
-  var fetchProducts = async (input) => {
-    return fetchData(ENDPOINTS.products, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input })
-    });
-  };
-
-  // src/mct/shared/api/calls/generateLCID.ts
-  var generateLCID = async () => {
-    const response = await fetchData(ENDPOINTS.lcid, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        endpoint: "NewEnquiry",
-        input: {
-          lcid: MCTManager.getLCID(),
-          icid: MCTManager.getICID(),
-          partnerId: "",
-          partnerName: ""
+  var APIClient = class {
+    baseURL;
+    defaultHeaders;
+    timeout;
+    retries;
+    retryDelay;
+    constructor(config = {}) {
+      this.baseURL = config.baseURL || getBaseURLForAPI();
+      this.defaultHeaders = {
+        "Content-Type": "application/json",
+        ...config.defaultHeaders
+      };
+      this.timeout = config.timeout || 3e4;
+      this.retries = config.retries || 3;
+      this.retryDelay = config.retryDelay || 1e3;
+    }
+    async request(endpoint, options = {}) {
+      const url = `${this.baseURL}${endpoint}`;
+      const headers = { ...this.defaultHeaders, ...options.headers };
+      const requestOptions = {
+        ...options,
+        headers
+      };
+      let lastError = null;
+      for (let attempt = 0; attempt <= this.retries; attempt++) {
+        try {
+          const response = await this.makeRequest(url, requestOptions);
+          return response;
+        } catch (error) {
+          lastError = error;
+          if (error instanceof APIError && error.status >= 400 && error.status < 500 && error.status !== 429) {
+            throw error;
+          }
+          if (attempt === this.retries) {
+            throw error;
+          }
+          await this.delay(this.retryDelay * Math.pow(2, attempt));
         }
-      })
-    });
-    if (!response?.result?.lcid)
-      throw new Error("Failed to generate LCID");
-    return response.result.lcid;
+      }
+      throw lastError;
+    }
+    async makeRequest(url, options) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch {
+            errorData = await response.text();
+          }
+          throw new APIError(`HTTP ${response.status}: ${response.statusText}`, response.status, url, errorData);
+        }
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof APIError) {
+          throw error;
+        }
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new APIError("Request timeout", 408, url);
+        }
+        throw new APIError(error instanceof Error ? error.message : "Network error", 0, url);
+      }
+    }
+    delay(ms) {
+      return new Promise((resolve2) => setTimeout(resolve2, ms));
+    }
   };
+
+  // src/mct/shared/api/methods/LendersAPI.ts
+  var LendersAPI = class {
+    constructor(client) {
+      this.client = client;
+    }
+    async getAll() {
+      const response = await this.client.request(ENDPOINTS.lenders);
+      return response.result.lenders;
+    }
+  };
+
+  // src/mct/shared/api/methods/ProductsAPI.ts
+  var ProductsAPI = class {
+    constructor(client) {
+      this.client = client;
+    }
+    async search(request) {
+      return this.client.request(ENDPOINTS.products, {
+        method: "POST",
+        body: JSON.stringify({ input: request })
+      });
+    }
+  };
+
+  // src/mct/shared/api/methods/LCIDAPI.ts
+  var LCIDAPI = class {
+    constructor(client) {
+      this.client = client;
+    }
+    async generate(lcid, icid) {
+      const response = await this.client.request(ENDPOINTS.lcid, {
+        method: "POST",
+        body: JSON.stringify({
+          endpoint: "NewEnquiry",
+          input: { lcid, icid }
+        })
+      });
+      if (!response?.result?.lcid)
+        throw new Error("Failed to generate LCID");
+      return response.result.lcid;
+    }
+  };
+
+  // src/mct/shared/api/index.ts
+  var apiClient = new APIClient();
+  var lendersAPI = new LendersAPI(apiClient);
+  var productsAPI = new ProductsAPI(apiClient);
+  var lcidAPI = new LCIDAPI(apiClient);
 
   // src/mct/stages/form/Questions.ts
   var Question = class extends InputGroupBase {
@@ -17037,7 +17131,6 @@
       this.dependsOn = this.el.getAttribute(attr7.dependsOn) || null;
       this.dependsOnValue = this.el.getAttribute(attr7.dependsOnValue) || null;
       this.indexInGroup = options.indexInGroup;
-      console.log("Question constructor", this);
     }
     init() {
       this.handleLenderSelect();
@@ -17046,7 +17139,7 @@
       if (this.name !== "Lender")
         return;
       try {
-        const lenders = await fetchLenders();
+        const lenders = await lendersAPI.getAll();
         const lenderOptions = lenders.map(
           (lender) => ({
             value: lender.MasterLenderId.toString(),
@@ -17162,14 +17255,18 @@
     show() {
       this.component.style.removeProperty("display");
       this.isVisible = true;
+      console.log("show: updateActiveQuestions", this.name);
       this.updateActiveQuestions();
     }
     hide() {
       this.component.style.display = "none";
       this.isVisible = false;
+      console.log("hide: updateActiveQuestions", this.name);
       this.updateActiveQuestions();
     }
     updateActiveQuestions() {
+      console.log("function: updateActiveQuestions");
+      console.log("saving answers to MCT");
       this.formManager.saveAnswersToMCT();
       const currentAnswers = this.formManager.getAnswers();
       this.questions.forEach((question) => {
@@ -17193,6 +17290,7 @@
       this.formManager = formManager;
       this.questions = this.initQuestions();
       this.formManager.components.scroll = queryElement(`[${attr7.components}="scroll"]`);
+      console.log("init: updateActiveQuestions");
       this.updateActiveQuestions();
     }
     initQuestions() {
@@ -17216,12 +17314,12 @@
       if (index2 !== this.activeQuestionIndex)
         throw new Error(`Invalid question index: ${index2}. Expected: ${this.activeQuestionIndex}`);
       const question = this.questions[index2];
-      console.log(question);
-      console.log(question.isValid());
+      console.log("handleChange: updateActiveQuestions");
       this.updateActiveQuestions();
       this.formManager.updateGroupVisibility();
       this.formManager.prepareWrapper();
       this.handleNextButton(question.isValid());
+      console.log("handleChange, sending GA event");
       trackGAEvent("form_interaction", {
         event_category: "MCTForm",
         event_label: `MCT_${question.name}`
@@ -17328,9 +17426,6 @@
     bindEvents() {
       this.button.addEventListener("click", () => this.navigateToResults());
     }
-    // public getComponent(): HTMLElement {
-    //   return this.component;
-    // }
     show() {
       this.component.style.removeProperty("display");
       this.isVisible = true;
@@ -17373,11 +17468,9 @@
     async fetchProducts() {
       const input = generateProductsAPIInput(this.formManager.getAnswers());
       try {
-        const response = await fetchProducts(input);
-        return response;
+        return await productsAPI.search(input);
       } catch (error) {
-        console.error("Failed to fetch products:", error);
-        return null;
+        return logError("Failed to fetch products:", { data: error, returnNull: true });
       }
     }
     updateOutputs() {
@@ -17420,12 +17513,20 @@
       return this.questions;
     }
     saveAnswersToMCT() {
-      MCTManager.clearAnswers();
+      const answerDataArray = [];
       [...this.questions].forEach((question) => {
         const value = question.getValue();
-        if (value)
-          MCTManager.setAnswer(question.name, value);
+        if (!value)
+          return;
+        answerDataArray.push({
+          id: question.id,
+          key: question.name,
+          value,
+          source: "user"
+        });
       });
+      console.log("saveAnswersToMCT: ", answerDataArray);
+      MCTManager.setAnswers(answerDataArray);
     }
     getAnswers() {
       return { ...MCTManager.getAnswers() };
@@ -17438,10 +17539,10 @@
       this.profile = profile ? profile : null;
       return profile ? profile : null;
     }
-    reset() {
-      MCTManager.clearAnswers();
-      this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
-    }
+    // protected reset(): void {
+    //   MCTManager.clearAnswers();
+    //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
+    // }
   };
 
   // src/mct/stages/form/Manager_Main.ts
@@ -17681,10 +17782,10 @@
       }
       this.prepareWrapper();
     }
-    reset() {
-      MCTManager.clearAnswers();
-      this.groups.forEach((group) => group instanceof MainGroup ? group.reset() : null);
-    }
+    // public reset() {
+    //   MCTManager.clearAnswers();
+    //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
+    // }
   };
 
   // src/mct/stages/form/index.ts
@@ -17762,214 +17863,6 @@
     }
   };
 
-  // src/mct/shared/examples/exampleProductsResponse.ts
-  var EXAMPLE_PRODUCTS_RESPONSE = {
-    url: "https://integrationtest.landc.co.uk/productdata/bestbuysMCT",
-    body: '{"PropertyValue":250000,"RepaymentValue":125000,"PropertyType":1,"MortgageType":1,"InterestOnlyValue":0,"TermYears":25,"SchemePurpose":1,"SchemePeriods":[1,2,3,4],"SchemeTypes":[1,2],"NumberOfResults":100,"SortColumn":1}',
-    result: {
-      SummaryInfo: {
-        LowestRate: 2.79,
-        LowestPMT: 579.2,
-        LowestAnnualCost: 7424,
-        NumberOfLenders: 67,
-        NumberOfProducts: 1504
-      },
-      Products: [
-        {
-          ProductId: 635169,
-          LenderId: 20,
-          LenderName: "Marsden",
-          DirectToLender: false,
-          ApplyDirectLink: "",
-          LenderURL: "https://assets.landc.co.uk/lender/marsden.gif",
-          ProductSchemeFriendlyName: "3.70% discount to 31/07/27",
-          Rate: 2.79,
-          FollowOnRate: "then 6.49% (variable)",
-          PMT: 579.2,
-          FutureValue: 117885.79,
-          FutureMonthlyPayment: 823.37,
-          TotalFees: 998,
-          AnnualCost: 7449.4,
-          ApplicationFee: 0,
-          CompletionFee: 998,
-          ValuationFee: 0,
-          OtherFees: 0,
-          Cashback: 0,
-          BrokerFee: 0,
-          OverpaymentLimit: "5% p/a",
-          ERC: "Early Repayment Charges apply",
-          ERCText: "3% reducing to 2% until 31/07/27",
-          ExitFee: 150,
-          Legals: "Payable",
-          MinimumMortgageAmount: 3e4,
-          MaximumMortgageAmount: 25e5,
-          LTV: 70,
-          APR: 6.027,
-          FollowOnRateValue: 6.49,
-          SchemeLength: 24,
-          SchemeTypeRefId: 53,
-          IsRemortgage: false,
-          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 2.79% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3579.20 and 276 payments of \xA3823.37. The total amount payable would be \xA3242,148.92 made up of the loan amount plus interest (\xA3116,150.92) and fees (\xA3998.00). The overall cost for comparison is 6.0% APRC representative.",
-          SAP: 1,
-          SharedOwnership: "Not Available",
-          NewBuild: "Also Available for New Build",
-          Offset: false,
-          LtdCompany: "",
-          HMO: false,
-          Channel: "Everyone",
-          AvailableFor: "Both"
-        },
-        {
-          ProductId: 597886,
-          LenderId: 20,
-          LenderName: "Marsden",
-          DirectToLender: false,
-          ApplyDirectLink: "",
-          LenderURL: "https://assets.landc.co.uk/lender/marsden.gif",
-          ProductSchemeFriendlyName: "3.55% discount to 30/06/27",
-          Rate: 2.94,
-          FollowOnRate: "then 6.49% (variable)",
-          PMT: 588.87,
-          FutureValue: 118022.52,
-          FutureMonthlyPayment: 824.33,
-          TotalFees: 998,
-          AnnualCost: 7565.44,
-          ApplicationFee: 0,
-          CompletionFee: 998,
-          ValuationFee: 0,
-          OtherFees: 0,
-          Cashback: 0,
-          BrokerFee: 0,
-          OverpaymentLimit: "5% p/a",
-          ERC: "Early Repayment Charges apply",
-          ERCText: "3% reducing to 2% until 30/06/27",
-          ExitFee: 150,
-          Legals: "Payable",
-          MinimumMortgageAmount: 3e4,
-          MaximumMortgageAmount: 25e5,
-          LTV: 80,
-          APR: 6.046,
-          FollowOnRateValue: 6.49,
-          SchemeLength: 24,
-          SchemeTypeRefId: 53,
-          IsRemortgage: false,
-          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 2.94% and then on a variable rate of 6.49% for the remaining 23 years would require 24 payments of \xA3588.87 and 276 payments of \xA3824.33. The total amount payable would be \xA3242,645.96 made up of the loan amount plus interest (\xA3116,647.96) and fees (\xA3998.00). The overall cost for comparison is 6.0% APRC representative.",
-          SAP: 1,
-          SharedOwnership: "Not Available",
-          NewBuild: "Also Available for New Build",
-          Offset: false,
-          LtdCompany: "",
-          HMO: false,
-          Channel: "Everyone",
-          AvailableFor: "Both"
-        },
-        {
-          ProductId: 636229,
-          LenderId: 23,
-          LenderName: "Furness",
-          DirectToLender: false,
-          ApplyDirectLink: "",
-          LenderURL: "https://assets.landc.co.uk/lender/furness.gif",
-          ProductSchemeFriendlyName: "3.81% discount for 2 years",
-          Rate: 3,
-          FollowOnRate: "then 6.75% (variable)",
-          PMT: 592.76,
-          FutureValue: 118076.69,
-          FutureMonthlyPayment: 843.55,
-          TotalFees: 1054,
-          AnnualCost: 7640.12,
-          ApplicationFee: 0,
-          CompletionFee: 999,
-          ValuationFee: 305,
-          OtherFees: 0,
-          Cashback: 250,
-          BrokerFee: 0,
-          OverpaymentLimit: "10% p/a",
-          ERC: "Early Repayment Charges apply",
-          ERCText: "2% for 2 years",
-          ExitFee: 120,
-          Legals: "Payable",
-          MinimumMortgageAmount: 3e4,
-          MaximumMortgageAmount: 2e6,
-          LTV: 80,
-          APR: 6.281,
-          FollowOnRateValue: 6.75,
-          SchemeLength: 24,
-          SchemeTypeRefId: 53,
-          IsRemortgage: false,
-          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 3.00% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3592.76 and 276 payments of \xA3843.55. The total amount payable would be \xA3248,100.04 made up of the loan amount plus interest (\xA3122,046.04) and fees (\xA31,054.00). The overall cost for comparison is 6.3% APRC representative.",
-          SAP: 1,
-          SharedOwnership: "Not Available",
-          NewBuild: "Also Available for New Build",
-          Offset: false,
-          LtdCompany: "",
-          HMO: false,
-          Channel: "Everyone",
-          AvailableFor: "Both"
-        },
-        {
-          ProductId: 619700,
-          LenderId: 23,
-          LenderName: "Furness",
-          DirectToLender: false,
-          ApplyDirectLink: "",
-          LenderURL: "https://assets.landc.co.uk/lender/furness.gif",
-          ProductSchemeFriendlyName: "3.71% discount for 2 years",
-          Rate: 3.04,
-          FollowOnRate: "then 6.75% (variable)",
-          PMT: 595.37,
-          FutureValue: 118112.63,
-          FutureMonthlyPayment: 843.81,
-          TotalFees: 1054,
-          AnnualCost: 7671.44,
-          ApplicationFee: 0,
-          CompletionFee: 999,
-          ValuationFee: 305,
-          OtherFees: 0,
-          Cashback: 250,
-          BrokerFee: 0,
-          OverpaymentLimit: "10% p/a",
-          ERC: "Early Repayment Charges apply",
-          ERCText: "2% for 2 years",
-          ExitFee: 120,
-          Legals: "Payable",
-          MinimumMortgageAmount: 3e4,
-          MaximumMortgageAmount: 2e6,
-          LTV: 80,
-          APR: 6.286,
-          FollowOnRateValue: 6.75,
-          SchemeLength: 24,
-          SchemeTypeRefId: 53,
-          IsRemortgage: false,
-          RepresentativeExample: "A mortgage of \xA3125,000.00 payable over 25 years, initially on a variable rate for 2 years at 3.04% and then on a variable rate of 6.75% for the remaining 23 years would require 24 payments of \xA3595.37 and 276 payments of \xA3843.81. The total amount payable would be \xA3248,234.44 made up of the loan amount plus interest (\xA3122,180.44) and fees (\xA31,054.00). The overall cost for comparison is 6.3% APRC representative.",
-          SAP: 1,
-          SharedOwnership: "Not Available",
-          NewBuild: "Also Available for New Build",
-          Offset: false,
-          LtdCompany: "",
-          HMO: false,
-          Channel: "Everyone",
-          AvailableFor: "Both"
-        }
-      ]
-    }
-  };
-
-  // src/mct/shared/examples/exampleAnswers.ts
-  var EXAMPLE_ANSWERS = {
-    PurchRemo: "P",
-    FTB: "N",
-    ResiBtl: "R",
-    ReadinessToBuy: "C",
-    CreditImpaired: "N",
-    PropertyValue: 35e4,
-    DepositAmount: 5e4,
-    RepaymentType: "R",
-    MortgageLength: 25,
-    SchemeTypes: ["1"],
-    SchemePeriods: "1"
-  };
-
   // src/mct/stages/results/FilterGroup.ts
   var FilterGroup = class extends InputGroupBase {
     constructor(el, options) {
@@ -17984,8 +17877,8 @@
     component;
     id;
     isInitialised = false;
-    products;
-    summaryInfo;
+    products = [];
+    summaryInfo = null;
     header;
     outputs = [];
     filterGroups = [];
@@ -18009,9 +17902,6 @@
     constructor(component) {
       this.component = component;
       this.id = "results" /* Results */;
-      const response = EXAMPLE_PRODUCTS_RESPONSE;
-      this.products = response.result.Products;
-      this.summaryInfo = response.result.SummaryInfo;
       this.header = queryElement(`[${attr8.components}="header"]`, this.component);
       this.outputs = queryElements(`[${attr8.output}]`, this.header);
       this.appointmentDialogButton = queryElement(
@@ -18044,14 +17934,12 @@
       if (this.isInitialised)
         return;
       this.isInitialised = true;
-      Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-        MCTManager.setAnswer(key, value);
-      });
       this.initFilterGroups();
       this.initAppointmentDialog();
       this.initListElements();
       this.renderOutputs();
       this.renderFilters();
+      this.handleProductsAPI();
       this.handlePagination();
     }
     show() {
@@ -18073,8 +17961,14 @@
       this.filterGroups.forEach((group) => {
         const value = group.getValue();
         const name = group.name;
-        if (name && value !== null && value !== void 0)
-          MCTManager.setAnswer(name, value);
+        const id = group.id;
+        if (name && value !== null && value !== void 0 && id)
+          MCTManager.setAnswer({
+            key: name,
+            id,
+            value,
+            source: "user"
+          });
       });
       this.handleProductsAPI();
     }
@@ -18095,6 +17989,8 @@
       this.pagination.style.display = "none";
     }
     renderOutputs() {
+      if (!this.summaryInfo)
+        return;
       const summaryLines = generateSummaryLines(this.summaryInfo, MCTManager.getAnswers());
       if (!summaryLines)
         return;
@@ -18201,7 +18097,7 @@
         sortColumn: 1
       });
       try {
-        const response = await fetchProducts(input);
+        const response = await productsAPI.search(input);
         return response;
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -18230,108 +18126,6 @@
       const showResultsList = component === "loader" || component === "empty" ? !show : show;
       showResultsList ? this.resultsList.style.removeProperty("display") : this.resultsList.style.display = "none";
     }
-    // public async loadAndRenderResults() {
-    //   const request = this.buildProductsRequest();
-    //   console.log(request);
-    //   if (!request) return;
-    //   try {
-    //     // this.products = await fetchProducts(MCTManager.getAnswers());
-    //     console.log('Products API response:', this.products);
-    //     this.renderAllTemplates();
-    //   } catch (error) {
-    //     this.renderError(error);
-    //     // if (this.options.onError) this.options.onError(error);
-    //   }
-    // }
-    // private renderAllTemplates() {
-    //   if (!this.products) return;
-    //   const data: ResultsData[] = [];
-    //   if (this.options.showSummary) {
-    //     data.push({ key: 'summary', value: this.renderSummary() });
-    //   }
-    //   if (this.options.showLenders) {
-    //     data.push({ key: 'lenders', value: this.renderLenders() });
-    //   }
-    //   if (this.options.showDetails) {
-    //     data.push({ key: 'details', value: this.renderDetails() });
-    //   }
-    //   this.setResultsData(data);
-    // }
-    // private renderSummary(): string {
-    //   if (!this.products) return '';
-    //   const req = this.buildProductsRequest();
-    //   if (!req) return '';
-    //   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = req;
-    //   const answers = MCTManager.getAnswers();
-    //   const RepaymentType = answers.RepaymentType;
-    //   const RepaymentValueText = formatNumber(RepaymentValue, { currency: true });
-    //   const TermYearsText = `${TermYears} years`;
-    //   const RepaymentTypeText =
-    //     RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
-    //   const SchemeTypesMap = (SchemeTypes as (1 | 2)[]).map((type) => (type === 1 ? 'fixed' : 'variable'));
-    //   const SchemePeriodsMap = (SchemePeriods as (1 | 2 | 3 | 4)[]).map((period) =>
-    //     period === 1 ? '2' : period === 2 ? '3' : period === 3 ? '5' : '5+'
-    //   );
-    //   const SchemePeriodsText =
-    //     SchemePeriodsMap.length === 1
-    //       ? `${SchemePeriodsMap[0]} year`
-    //       : SchemePeriodsMap.length > 1
-    //         ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year`
-    //         : '';
-    //   const SchemeTypesText =
-    //     SchemeTypesMap.length === 1
-    //       ? `${SchemeTypesMap[0]} rate`
-    //       : SchemeTypesMap.length > 1
-    //         ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
-    //         : '';
-    //   return `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-    // }
-    // private renderLenders(): string {
-    //   if (!this.products) return '';
-    //   const info = this.products.result.SummaryInfo;
-    //   return `We've found <span class="${classes.highlight}">${info.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${info.NumberOfLenders}</span> lenders.`;
-    // }
-    // private renderDetails(): string {
-    //   if (!this.products) return '';
-    //   const products = this.products.result.Products;
-    //   if (!products || products.length === 0) return '<p>No products found.</p>';
-    //   const rows = products
-    //     .slice(0, this.options.numberOfResults)
-    //     .map(
-    //       (p) =>
-    //         `<tr>
-    //       <td>${p.LenderName}</td>
-    //       <td>${formatNumber(p.Rate, { fallback: '-' })}%</td>
-    //       <td>${formatNumber(p.PMT, { currency: true, fallback: '-' })}</td>
-    //       <td>${formatNumber(p.AnnualCost, { currency: true, fallback: '-' })}</td>
-    //       <td>${formatNumber(p.LTV, { fallback: '-' })}%</td>
-    //     </tr>`
-    //     )
-    //     .join('');
-    //   return `<table class="mct-results-table">
-    //     <thead><tr><th>Lender</th><th>Rate</th><th>Monthly</th><th>Annual Cost</th><th>LTV</th></tr></thead>
-    //     <tbody>${rows}</tbody>
-    //   </table>`;
-    // }
-    // private renderError(error: unknown) {
-    //   this.setResultsData([
-    //     { key: 'summary', value: '<span class="error">Failed to load results.</span>' },
-    //     { key: 'lenders', value: '' },
-    //     { key: 'details', value: '' },
-    //   ]);
-    // }
-    // public setResultsData(data: ResultsData[]) {
-    //   this.resultsData = data;
-    //   this.displayResults();
-    // }
-    // private displayResults() {
-    //   this.resultsData.forEach((data) => {
-    //     const el = this.component.querySelector(`[${attr.output}="${data.key}"]`);
-    //     if (el) {
-    //       el.innerHTML = data.value;
-    //     }
-    //   });
-    // }
   };
 
   // src/mct/stages/results/index.ts
@@ -18342,34 +18136,436 @@
     return manager;
   };
 
+  // src/mct/shared/state/StorageManager.ts
+  var StorageManager = class {
+    /**
+     * Store data with specified configuration
+     */
+    set(config, data) {
+      try {
+        const shouldSerialize = config.serialize === true;
+        const valueToStore = shouldSerialize ? JSON.stringify(data) : String(data);
+        switch (config.type) {
+          case "localStorage":
+            localStorage.setItem(config.key, valueToStore);
+            break;
+          case "sessionStorage":
+            sessionStorage.setItem(config.key, valueToStore);
+            break;
+          case "cookie":
+            setToCookie(config.key, valueToStore);
+            break;
+        }
+      } catch (error) {
+        console.error(`Failed to store data in ${config.type}:`, error);
+      }
+    }
+    /**
+     * Retrieve data with specified configuration
+     */
+    get(config) {
+      try {
+        let data = null;
+        switch (config.type) {
+          case "localStorage":
+            data = localStorage.getItem(config.key);
+            break;
+          case "sessionStorage":
+            data = sessionStorage.getItem(config.key);
+            break;
+          case "cookie":
+            data = getFromCookie(config.key);
+            break;
+        }
+        if (!data)
+          return null;
+        const shouldDeserialize = config.serialize === true;
+        if (shouldDeserialize)
+          return JSON.parse(data);
+        return data;
+      } catch (error) {
+        console.error(`Failed to retrieve data from ${config.type}:`, error);
+        return null;
+      }
+    }
+    /**
+     * Remove data with specified configuration
+     */
+    remove(config) {
+      try {
+        switch (config.type) {
+          case "localStorage":
+            localStorage.removeItem(config.key);
+            break;
+          case "sessionStorage":
+            sessionStorage.removeItem(config.key);
+            break;
+          case "cookie":
+            document.cookie = `${config.key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            break;
+        }
+      } catch (error) {
+        console.error(`Failed to remove data from ${config.type}:`, error);
+      }
+    }
+    /**
+     * Check if data exists with specified configuration
+     */
+    has(config) {
+      try {
+        switch (config.type) {
+          case "localStorage":
+            return localStorage.getItem(config.key) !== null;
+          case "sessionStorage":
+            return sessionStorage.getItem(config.key) !== null;
+          case "cookie":
+            return getFromCookie(config.key) !== null;
+          default:
+            return false;
+        }
+      } catch (error) {
+        console.error(`Failed to check data existence in ${config.type}:`, error);
+        return false;
+      }
+    }
+    // /**
+    //  * Clear all data for a specific storage type
+    //  */
+    // clear(type: StorageType): void {
+    //   try {
+    //     switch (type) {
+    //       case 'localStorage':
+    //         localStorage.clear();
+    //         break;
+    //       case 'sessionStorage':
+    //         sessionStorage.clear();
+    //         break;
+    //       case 'cookie':
+    //         // Clear all cookies for this domain
+    //         const cookies = document.cookie.split(';');
+    //         cookies.forEach((cookie) => {
+    //           const eqPos = cookie.indexOf('=');
+    //           const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    //           document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    //         });
+    //         break;
+    //     }
+    //   } catch (error) {
+    //     console.error(`Failed to clear ${type}:`, error);
+    //   }
+    // }
+  };
+
+  // src/mct/shared/state/persistence.ts
+  var PERSISTENCE_CONFIG = {
+    lcid: {
+      type: "cookie",
+      key: "LCID",
+      serialize: false
+    },
+    icid: {
+      type: "cookie",
+      key: "ICID",
+      serialize: false
+    },
+    currentStageId: {
+      type: "sessionStorage",
+      key: "mct_current_stage",
+      serialize: false
+    },
+    prefillAnswers: {
+      type: "sessionStorage",
+      key: "mct_prefill_answers",
+      serialize: true
+    },
+    answers: {
+      type: "localStorage",
+      key: "mct_answers",
+      serialize: true
+    }
+    // summary: {
+    //   type: 'sessionStorage',
+    //   key: 'mct_summary',
+    //   serialize: true,
+    // },
+    // products: {
+    //   type: 'sessionStorage',
+    //   key: 'mct_products',
+    //   serialize: true,
+    // },
+  };
+  var StatePersistenceManager = class {
+    storage;
+    constructor(storage) {
+      this.storage = storage;
+    }
+    /**
+     * Save the entire state according to persistence configuration
+     */
+    saveState(state) {
+      Object.entries(PERSISTENCE_CONFIG).forEach(([key, config]) => {
+        const value = state[key];
+        if (value !== null && value !== void 0) {
+          this.storage.set(config, value);
+        }
+      });
+    }
+    /**
+     * Load the entire state according to persistence configuration
+     */
+    loadState() {
+      const loadedState = {};
+      Object.entries(PERSISTENCE_CONFIG).forEach(([key, config]) => {
+        const value = this.storage.get(config);
+        if (value !== null && value !== void 0) {
+          loadedState[key] = value;
+        }
+      });
+      return loadedState;
+    }
+    /**
+     * Save a specific piece of state
+     */
+    saveStateItem(key, value) {
+      const config = PERSISTENCE_CONFIG[key];
+      if (config && value !== null && value !== void 0) {
+        this.storage.set(config, value);
+      }
+    }
+    /**
+     * Load a specific piece of state
+     */
+    loadStateItem(key) {
+      const config = PERSISTENCE_CONFIG[key];
+      if (config) {
+        return this.storage.get(config);
+      }
+      return null;
+    }
+    /**
+     * Clear all persisted state
+     */
+    clearAll() {
+      Object.values(PERSISTENCE_CONFIG).forEach((config) => {
+        this.storage.remove(config);
+      });
+    }
+    /**
+     * Clear a specific piece of persisted state
+     */
+    clearItem(key) {
+      const config = PERSISTENCE_CONFIG[key];
+      if (config) {
+        this.storage.remove(config);
+      }
+    }
+  };
+
+  // src/mct/shared/state/StateManager.ts
+  var defaultState = {
+    lcid: null,
+    icid: null,
+    currentStageId: null,
+    answers: {},
+    prefillAnswers: {}
+  };
+  var StateManager = class {
+    state;
+    subscribers;
+    storage;
+    persistence;
+    constructor(initialState) {
+      this.state = { ...defaultState, ...initialState };
+      this.subscribers = /* @__PURE__ */ new Set();
+      this.storage = new StorageManager();
+      this.persistence = new StatePersistenceManager(this.storage);
+    }
+    /**
+     * Subscribe to state changes
+     * @returns Unsubscribe function
+     */
+    subscribe(callback2) {
+      this.subscribers.add(callback2);
+      return () => {
+        this.subscribers.delete(callback2);
+      };
+    }
+    /**
+     * Update state with new values
+     */
+    setState(updates) {
+      const previousState = { ...this.state };
+      const changes = { ...updates };
+      this.state = { ...this.state, ...updates };
+      const event = {
+        previousState,
+        currentState: this.state,
+        changes
+      };
+      this.subscribers.forEach((callback2) => {
+        try {
+          callback2(event);
+        } catch (error) {
+          console.error("State subscriber error:", error);
+        }
+      });
+    }
+    /**
+     * Get current state (immutable copy)
+     */
+    getState() {
+      return { ...this.state };
+    }
+    /**
+     * Get a specific piece of state
+     */
+    get(key) {
+      return this.state[key];
+    }
+    /**
+     * Set a specific piece of state
+     */
+    set(key, value) {
+      this.setState({ [key]: value });
+    }
+    // Convenience methods for common state operations
+    setLCID(lcid) {
+      console.log("setting lcid", lcid);
+      this.set("lcid", lcid);
+    }
+    getLCID() {
+      return this.get("lcid");
+    }
+    setICID(icid) {
+      this.set("icid", icid);
+    }
+    getICID() {
+      return this.get("icid");
+    }
+    setCurrentStage(stageId) {
+      this.set("currentStageId", stageId);
+    }
+    getCurrentStage() {
+      return this.get("currentStageId");
+    }
+    setAnswer(answerData) {
+      answerData = {
+        ...answerData,
+        source: answerData.source || "user"
+      };
+      const answers = { ...this.state.answers, [answerData.key]: answerData.value };
+      const prefillAnswers = { ...this.state.prefillAnswers, [answerData.id]: answerData.value };
+      this.setState({
+        answers,
+        prefillAnswers
+      });
+    }
+    getAnswer(key) {
+      return this.state.answers[key] || null;
+    }
+    setAnswers(answerDataArray) {
+      const answers = answerDataArray.reduce((acc, answer) => {
+        acc[answer.key] = answer.value;
+        return acc;
+      }, {});
+      const prefillAnswers = answerDataArray.reduce((acc, answer) => {
+        acc[answer.id] = answer.value;
+        return acc;
+      }, {});
+      this.setState({
+        answers,
+        prefillAnswers
+      });
+    }
+    // setAnswers(answers: Answers): void {
+    //   this.set('answers', answers);
+    // }
+    getAnswers() {
+      return { ...this.state.answers };
+    }
+    setPrefillValues(prefillData) {
+      this.set("prefillAnswers", { ...this.state.prefillAnswers, ...prefillData });
+    }
+    getPrefillAnswers() {
+      return { ...this.state.prefillAnswers };
+    }
+    // clearAnswer(key: AnswerKey): void {
+    //   const answers = { ...this.state.answers };
+    //   delete answers[key];
+    //   this.set('answers', answers);
+    // }
+    // clearAnswers(): void {
+    //   this.set('answers', {});
+    // }
+    /**
+     * Reset state to default values
+     */
+    reset() {
+      this.setState(defaultState);
+    }
+    /**
+     * Get storage manager for persistence operations
+     */
+    getStorage() {
+      return this.storage;
+    }
+    /**
+     * Load state from persistence
+     */
+    loadFromPersistence() {
+      const persistedState = this.persistence.loadState();
+      if (Object.keys(persistedState).length > 0) {
+        this.setState(persistedState);
+      }
+    }
+    /**
+     * Save current state to persistence
+     */
+    saveToPersistence() {
+      this.persistence.saveState(this.state);
+    }
+    /**
+     * Clear all persisted state
+     */
+    clearPersistence() {
+      this.persistence.clearAll();
+    }
+    /**
+     * Auto-save state changes to persistence
+     */
+    enableAutoPersistence() {
+      this.subscribe(() => {
+        this.saveToPersistence();
+      });
+    }
+  };
+
   // src/mct/shared/MCTManager.ts
   var stageManagers = {};
   var dom = {
     mctComponent: null,
     stages: {}
   };
-  var state = {
-    lcid: null,
-    icid: null,
-    currentStageId: null,
-    answers: {},
-    summary: null,
-    products: null
-  };
-  var MCT_ANSWERS_STORAGE_KEY = "mct_data";
+  var stateManager = new StateManager();
   var MCTManager = {
-    /**
-     * @plan
-     *
-     * - generate new LCID
-     * - save to the data and cookies
-     */
     start() {
+      this.initState();
       this.initDOM();
       this.initICID();
       this.initLCID();
       this.initStages();
       this.route();
+    },
+    initState() {
+      console.log("\u{1F504} Initializing hybrid MCTManager with new state management...");
+      stateManager.subscribe((event) => {
+        console.log("\u{1F504} State changed via new manager:", {
+          changes: event.changes,
+          timestamp: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      });
+      stateManager.loadFromPersistence();
+      stateManager.enableAutoPersistence();
     },
     initDOM() {
       dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`);
@@ -18384,14 +18580,14 @@
       return dom;
     },
     initICID() {
-      const icid = getFromCookie("ICID");
+      const icid = this.getICID();
       this.setICID(icid ?? "default");
     },
     async initLCID() {
-      const currentLCID = getFromCookie("LCID");
-      this.setLCID(currentLCID ?? null);
+      const currentLCID = this.getLCID();
+      const icid = this.getICID();
       try {
-        const lcid = await generateLCID();
+        const lcid = await lcidAPI.generate(currentLCID, icid);
         this.setLCID(lcid);
       } catch {
         console.error("Failed to generate LCID");
@@ -18430,10 +18626,10 @@
       const nextStage = stageManagers[stageId] ?? null;
       if (!nextStage)
         return false;
-      const currentStage = stageManagers[state.currentStageId] ?? null;
+      const currentStage = stageManagers[stateManager.getCurrentStage()] ?? null;
       if (currentStage)
         currentStage.hide();
-      state.currentStageId = stageId;
+      stateManager.setCurrentStage(stageId);
       nextStage.show();
       const stageOptions = options[stageId];
       if (stageOptions && typeof nextStage.init === "function") {
@@ -18443,81 +18639,72 @@
       }
       return true;
     },
-    getPersistedData() {
-      const stored = localStorage.getItem(MCT_ANSWERS_STORAGE_KEY);
-      if (!stored)
-        return {};
-      return JSON.parse(stored);
-    },
-    setPersistedData(data) {
-      localStorage.setItem(MCT_ANSWERS_STORAGE_KEY, JSON.stringify(data));
-    },
     setICID(icid) {
-      const data = this.getPersistedData();
-      data.icid = icid;
-      this.setPersistedData(data);
-      state.icid = icid;
-      setToCookie("ICID", icid);
+      stateManager.setICID(icid);
     },
     getICID() {
-      return state.icid;
+      return stateManager.getICID();
     },
     setLCID(lcid) {
-      const data = this.getPersistedData();
-      data.lcid = lcid;
-      this.setPersistedData(data);
-      state.lcid = lcid;
-      setToCookie("LCID", lcid ?? "");
+      stateManager.setLCID(lcid);
     },
     getLCID() {
-      return state.lcid;
+      return stateManager.getLCID();
     },
-    setAnswer(key, value) {
-      const data = this.getPersistedData();
-      if (!data.answers)
-        data.answers = {};
-      data.answers[key] = value;
-      this.setPersistedData(data);
-      state.answers[key] = value;
+    setAnswer(answerData) {
+      stateManager.setAnswer(answerData);
     },
     getAnswer(key) {
-      return state.answers?.[key];
+      return stateManager.getAnswer(key);
+    },
+    setAnswers(answerDataArray) {
+      stateManager.setAnswers(answerDataArray);
     },
     getAnswers() {
-      return { ...state.answers };
+      return stateManager.getAnswers();
     },
-    clearAnswer(key) {
-      const data = this.getPersistedData();
-      delete data.answers?.[key];
-      this.setPersistedData(data);
-      delete state.answers[key];
-    },
-    clearAnswers() {
-      const data = this.getPersistedData();
-      data.answers = {};
-      this.setPersistedData(data);
-      state.answers = {};
-    },
-    initFromStorage() {
-      const data = this.getPersistedData();
-      state.lcid = data.lcid ?? null;
-      state.icid = data.icid ?? null;
-      state.answers = data.answers ?? {};
-    },
-    setProducts(products) {
-      state.products = products;
-    },
-    getProducts() {
-      return state.products;
-    },
-    setSummary(summary) {
-      state.summary = summary;
-    },
-    getSummary() {
-      return state.summary;
-    },
+    // clearAnswer(key: AnswerKey) {
+    //   if (USE_NEW_STATE_MANAGEMENT.answers) {
+    //     // Use new state management
+    //     newStateManager.clearAnswer(key);
+    //     // Keep legacy state in sync
+    //     delete legacyState.answers[key];
+    //   } else {
+    //     // Use legacy approach
+    //     const data = this.getPersistedData();
+    //     delete data.answers?.[key];
+    //     this.setPersistedData(data);
+    //     delete legacyState.answers[key];
+    //   }
+    // },
+    // clearAnswers() {
+    //   if (USE_NEW_STATE_MANAGEMENT.answers) {
+    //     // Use new state management
+    //     newStateManager.clearAnswers();
+    //     // Keep legacy state in sync
+    //     legacyState.answers = {};
+    //   } else {
+    //     // Use legacy approach
+    //     const data = this.getPersistedData();
+    //     data.answers = {};
+    //     this.setPersistedData(data);
+    //     legacyState.answers = {};
+    //   }
+    // },
+    // setProducts(products: Product[]) {
+    //   stateManager.setProducts(products);
+    // },
+    // getProducts(): Product[] | null {
+    //   return stateManager.getProducts();
+    // },
+    // setSummary(summary: SummaryInfo) {
+    //   stateManager.setSummary(summary);
+    // },
+    // getSummary(): SummaryInfo | null {
+    //   return stateManager.getSummary();
+    // },
     getState() {
-      return { ...state };
+      return stateManager.getState();
     }
   };
 

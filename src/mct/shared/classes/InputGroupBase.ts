@@ -25,6 +25,7 @@ export abstract class InputGroupBase {
   protected type: InputType;
   public groupName: string;
   public name: string;
+  public id: string | null = null;
 
   constructor(el: HTMLElement, options: InputGroupOptions) {
     this.el = el;
@@ -55,6 +56,7 @@ export abstract class InputGroupBase {
         label.setAttribute('for', id);
         input.id = id;
         input.name = name;
+        this.id = id;
       });
     } else {
       const label = queryElement('label', this.el) as HTMLLabelElement;
@@ -64,6 +66,7 @@ export abstract class InputGroupBase {
       label.setAttribute('for', nameAndID);
       input.id = nameAndID;
       input.name = nameAndID;
+      this.id = nameAndID;
     }
   }
 

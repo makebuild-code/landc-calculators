@@ -6,7 +6,7 @@ import { classes } from 'src/mct/shared/constants';
 import { attr } from './constants';
 import type { FormManager } from './Manager_Base';
 import { InputGroupBase, type InputGroupOptions } from 'src/mct/shared/classes/InputGroupBase';
-import { fetchLenders } from '$mct/api';
+import { lendersAPI } from '$mct/api';
 import type { Answers } from '$mct/types';
 
 type QuestionOptions = {
@@ -36,8 +36,6 @@ export class Question extends InputGroupBase {
     this.dependsOn = this.el.getAttribute(attr.dependsOn) || null;
     this.dependsOnValue = this.el.getAttribute(attr.dependsOnValue) || null;
     this.indexInGroup = options.indexInGroup;
-
-    console.log('Question constructor', this);
   }
 
   protected init(): void {
@@ -48,7 +46,7 @@ export class Question extends InputGroupBase {
     if (this.name !== 'Lender') return;
 
     try {
-      const lenders = await fetchLenders();
+      const lenders = await lendersAPI.getAll();
       const lenderOptions = lenders.map(
         (lender): SelectOption => ({
           value: lender.MasterLenderId.toString(),
