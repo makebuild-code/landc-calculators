@@ -27,6 +27,7 @@ export class MainFormManager extends FormManager {
     groupElements: HTMLElement[];
     hideOnGroup: HTMLElement[];
     showOnGroup: HTMLElement[];
+    loader: HTMLElement;
   };
 
   constructor(component: HTMLElement) {
@@ -43,6 +44,7 @@ export class MainFormManager extends FormManager {
       groupElements: queryElements(`[${attr.group}]`, component) as HTMLElement[],
       hideOnGroup: queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[],
       showOnGroup: queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[],
+      loader: queryElement(`[${attr.components}="loader"]`, component) as HTMLElement,
     };
   }
 
@@ -50,6 +52,7 @@ export class MainFormManager extends FormManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
+    this.showLoader(true);
     this.showHeader('static');
 
     this.components.groupElements.forEach((groupEl, index) => {
@@ -96,14 +99,23 @@ export class MainFormManager extends FormManager {
 
       currentGroup.navigate('prev');
     });
+
+    setTimeout(() => {
+      this.showLoader(false);
+    }, 1000);
   }
 
-  public show(): void {
+  public show(scrollTo: boolean = true): void {
     this.component.style.removeProperty('display');
+    if (scrollTo) this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   public hide(): void {
     this.component.style.display = 'none';
+  }
+
+  private showLoader(show: boolean): void {
+    this.components.loader.style.display = show ? 'flex' : 'none';
   }
 
   public prepareWrapper(): void {

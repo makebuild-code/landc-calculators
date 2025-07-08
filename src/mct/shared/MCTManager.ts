@@ -12,15 +12,26 @@ import { globalEventBus, testComponents, testSimpleComponent } from '$mct/compon
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager } from '$mct/state';
 import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
-import type { AnswerData, AnswerKey, Answers, AnswerValue, AppState, Calculations, GoToStageOptions } from '$mct/types';
+import type {
+  AnswerData,
+  AnswerKey,
+  Answers,
+  AnswerValue,
+  AppState,
+  Calculations,
+  GoToStageOptions,
+  ICID,
+  LCID,
+} from '$mct/types';
 import type { BaseFormManager } from '../stages/form/NEW_Manager_Base';
 
 const attr = DOM_CONFIG.attributes;
 
+let numberOfStagesShown: number = 0;
 interface Stage {
   // id: StageIDENUM;
   init: (options?: any) => void;
-  show: () => void;
+  show: (scrollTo?: boolean) => void;
   hide: () => void;
 }
 
@@ -47,6 +58,7 @@ export const MCTManager = {
     this.initLCID();
     this.initStages();
     this.route();
+    this.removeInitialStyles();
 
     // Setup event bus for testing (optional)
     this.setupEventBusDebug();
@@ -183,8 +195,9 @@ export const MCTManager = {
     } else if (numberOfStages === 1) {
       const onlyStage = Object.values(stageManagers)[0];
       if (onlyStage) {
-        onlyStage.show();
+        onlyStage.show(numberOfStagesShown !== 0);
         onlyStage.init();
+        numberOfStagesShown += 1;
       }
     } else {
       this.goToStage(StageIDENUM.Questions);
@@ -207,7 +220,8 @@ export const MCTManager = {
 
     // update the state, init and show the next stage
     stateManager.setCurrentStage(stageId);
-    nextStage.show();
+    nextStage.show(numberOfStagesShown !== 0);
+    numberOfStagesShown += 1;
 
     // Pass stage-specific options to the init method
     const stageOptions = options[stageId];
@@ -218,6 +232,13 @@ export const MCTManager = {
     }
 
     return true;
+  },
+
+  removeInitialStyles() {
+    const elements = queryElements(`[${attr.initial}]`, this.getComponentDOM());
+    elements.forEach((element) => {
+      element.removeAttribute(attr.initial);
+    });
   },
 
   setICID(icid: string) {

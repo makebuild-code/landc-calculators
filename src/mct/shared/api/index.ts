@@ -1,12 +1,12 @@
 // Create the main API instance
 import { APIClient } from './client';
 import {
-  LendersAPI,
-  ProductsAPI,
-  LCIDAPI,
-  MortgageAppointmentSlotsAPI,
   CreateLeadAndBookingAPI,
+  LCIDAPI,
+  LendersAPI,
   LogUserEventsAPI,
+  MortgageAppointmentSlotsAPI,
+  ProductsAPI,
 } from './methods';
 
 // Create a single API client instance

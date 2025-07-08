@@ -162,8 +162,9 @@ export class ResultsManager {
     this.handleShowIfProceedable();
   }
 
-  public show(): void {
+  public show(scrollTo: boolean = true): void {
     this.component.style.removeProperty('display');
+    if (scrollTo) this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   public hide(): void {
