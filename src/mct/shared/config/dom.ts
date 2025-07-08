@@ -28,6 +28,7 @@ export const DOM_CONFIG = {
       date: 'data-mct-appointment-date',
       element: 'data-mct-appointment-element',
       inputLabel: 'data-mct-appointment-input-label',
+      form: 'data-mct-appointment-form',
     },
   },
   classes: {

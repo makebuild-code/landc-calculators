@@ -155,7 +155,6 @@ export class ResultsManager {
     // // Only auto-load products if explicitly requested or if autoLoad is true
     // if (options?.autoLoad === true) this.handleProductsAPI();
 
-    this.handlePagination();
     this.handleButtons();
     this.handleShowIfProceedable();
   }
@@ -325,14 +324,11 @@ export class ResultsManager {
     this.showListUI('empty', false);
   }
 
-  private handlePagination(): void {
-    this.paginationButton.addEventListener('click', () => this.renderResults(10));
-  }
-
   private handleButtons(): void {
     this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
     this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
     this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
+    this.paginationButton.addEventListener('click', () => this.renderResults(10));
   }
 
   private handleShowIfProceedable(): void {
@@ -377,8 +373,6 @@ export class ResultsManager {
       sortColumn: 1,
     });
 
-    console.log('Input: ', input);
-
     try {
       const response = await productsAPI.search(input);
       return response;
@@ -419,8 +413,8 @@ export class ResultsManager {
 
     show ? componentEl.style.removeProperty('display') : (componentEl.style.display = 'none');
 
-    // Hide/Show the results list depending on the component being shown
-    const showResultsList = component === 'loader' || component === 'empty' ? !show : show;
+    // Hide/Show the results list depending on the component being shown, always show for pagination
+    const showResultsList = component === 'loader' || component === 'empty' ? !show : true;
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 

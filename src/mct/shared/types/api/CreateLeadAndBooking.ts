@@ -76,7 +76,7 @@ export interface EnquiryLead {
 
 export interface Booking {
   source: 'SYSTEM';
-  bookingDate: Date;
+  bookingDate: string; // ISO 8601 format e.g. "2025-05-12T15:15:58.163Z"
   bookingStart: string;
   bookingEnd: string;
   bookingProfile: 'DEFAULT';
