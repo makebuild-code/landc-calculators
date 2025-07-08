@@ -87,7 +87,9 @@ export abstract class QuestionGroup extends BaseGroup {
   }
 
   public isComplete(): boolean {
-    return this.questions.filter((question) => !question.dependsOn).every((question) => question.isValid());
+    return this.questions
+      .filter((question) => !question.getStateValue('dependsOn'))
+      .every((question) => question.isValid());
   }
 
   public reset(): void {
@@ -127,7 +129,7 @@ export class MainGroup extends QuestionGroup {
       question.initialise();
 
       if (index !== 0) question.disable();
-      if (question.dependsOn) question.unrequire();
+      if (question.getStateValue('dependsOn')) question.unrequire();
       return question;
     });
   }

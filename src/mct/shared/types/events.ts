@@ -56,13 +56,13 @@ export interface FormEvents {
     errors: string[];
   };
 
-  // 'form:question:required': {
-  //   questionId: string;
-  // };
+  'form:question:required': {
+    data: AnswerData;
+  };
 
-  // 'form:question:unrequired': {
-  //   questionId: string;
-  // };
+  'form:question:unrequired': {
+    data: AnswerData;
+  };
 
   // Group-related events
   'form:group:changed': {

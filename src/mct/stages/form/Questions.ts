@@ -1,8 +1,8 @@
-import { DOM_CONFIG } from '$mct/config';
-import type { FormManager } from './Manager_Base';
 import { lendersAPI } from '$mct/api';
-import type { Answers, SelectOption } from '$mct/types';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
+import { DOM_CONFIG } from '$mct/config';
+import type { Answers, SelectOption } from '$mct/types';
+import type { FormManager } from './Manager_Base';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -14,52 +14,34 @@ interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
 
 interface QuestionState extends StatefulInputGroupState {
   isVisible: boolean;
-  isRequired: boolean;
-  errorMessage: string;
-  isActive: boolean;
-  isEnabled: boolean;
+  dependsOn: string | null;
+  dependsOnValue: string | null;
 }
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private formManager: FormManager;
   public indexInGroup: number;
-  public dependsOn: string | null;
-  public dependsOnValue: string | null;
 
   constructor(options: QuestionOptions) {
-    super({
-      ...options,
-      extendedInitialState: {
-        // Only provide the Question-specific properties
-        isVisible: false,
-        isRequired: false,
-        errorMessage: '',
-        isActive: false,
-        isEnabled: false,
-      },
-    });
+    super(options);
 
     this.formManager = options.formManager;
     this.onEnter = options.onEnter;
     this.indexInGroup = options.indexInGroup;
-    this.dependsOn = this.getAttribute(attr.dependsOn) || null;
-    this.dependsOnValue = this.getAttribute(attr.dependsOnValue) || null;
-
-    console.log(this.formManager);
   }
 
   protected init(): void {
-    this.log('QuestionComponent: init');
     if (this.isInitialized) return;
-
     this.isInitialized = true;
-
-    // Call the abstract initialization method
-    this.log('QuestionComponent: calling onInit');
     this.onInit();
 
+    const dependsOn = this.getAttribute(attr.dependsOn);
+    const dependsOnValue = this.getAttribute(attr.dependsOnValue);
+    if (dependsOn) this.setStateValue('dependsOn', dependsOn);
+    if (dependsOnValue) this.setStateValue('dependsOnValue', dependsOnValue);
+
     // Call the lender select handler
-    this.handleLenderSelect();
+    if (this.getStateValue('initialName') === 'Lender') this.handleLenderSelect();
 
     this.log('QuestionComponent: init complete');
   }
@@ -68,9 +50,6 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   public testState(): void {
     console.log('QuestionComponent state:', this.getState());
     console.log('QuestionComponent isVisible:', this.getStateValue('isVisible'));
-    console.log('QuestionComponent isRequired:', this.getStateValue('isRequired'));
-    console.log('QuestionComponent isActive:', this.getStateValue('isActive'));
-    console.log('QuestionComponent isEnabled:', this.getStateValue('isEnabled'));
   }
 
   private async handleLenderSelect(): Promise<void> {
@@ -137,13 +116,11 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     // parent group is not visible
     if (!groupIsVisible) return false;
 
-    // question depends on nothing
-    if (!this.dependsOn) return true;
+    const dependsOn = this.getStateValue('dependsOn');
+    const dependsOnValue = this.getStateValue('dependsOnValue');
 
-    // question depends on a prior question being answered, no specific value
-    if (!this.dependsOnValue) return answers[this.dependsOn] !== null;
-
-    // question depends on a prior question being answered, with a specific value
-    return answers[this.dependsOn] === this.dependsOnValue;
+    if (!dependsOn) return true; // question depends on nothing
+    if (!dependsOnValue) return answers[dependsOn] !== null; // question depends on a prior question being answered, no specific value
+    return answers[dependsOn] === dependsOnValue; // question depends on a prior question being answered, with a specific value
   }
 }
