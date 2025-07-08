@@ -1,9 +1,11 @@
 import { classes } from '$mct/config';
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import type { FormManager } from './Manager_Base';
 import { lendersAPI } from '$mct/api';
 import type { Answers, SelectOption } from '$mct/types';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
+
+const attr = DOM_CONFIG.attributes.form;
 
 interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
   formManager: FormManager;

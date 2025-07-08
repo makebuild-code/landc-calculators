@@ -1,4 +1,4 @@
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import type {
   AnswerKey,
   AnswerName,
@@ -22,6 +22,8 @@ import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterGroup } from './FilterGroup';
 import { logUserEventsAPI, productsAPI } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
+
+const attr = DOM_CONFIG.attributes.results;
 
 /**
  * @plan

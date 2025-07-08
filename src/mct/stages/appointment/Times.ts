@@ -2,7 +2,9 @@ import { InputGroupBase } from '$mct/components';
 import { mctAttr } from '$mct/config';
 import type { AppointmentSlot, Input, InputGroupOptions } from '$mct/types';
 import { queryElement } from '$utils/dom';
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
+
+const attr = DOM_CONFIG.attributes.appointment;
 
 type TimeOptions = {
   onEnter: () => void;

@@ -1,5 +1,5 @@
 import type { Profile } from '$mct/types';
-import { FirstTimeBuyerENUM, ProfileNameENUM, PurchRemoENUM, ResiBtlENUM } from '$mct/types';
+import { ProfileNameENUM } from '$mct/types';
 
 export const mctAttr = {
   mct: 'data-mct',

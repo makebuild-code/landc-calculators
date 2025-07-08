@@ -1,15 +1,7 @@
-import { type ResponsiveConfig, type Breakpoint } from '$mct/types';
+import { type Breakpoint } from '$mct/types';
 import { getCurrentBreakpoint } from '$utils/environment/getCurrentBreakpoint';
-
-export interface SliderConfig {
-  numberOfDaysPerView: ResponsiveConfig;
-  numberOfDaysPerMove: ResponsiveConfig;
-}
-
-export const SLIDER_CONFIG: SliderConfig = {
-  numberOfDaysPerView: { desktop: 7, tablet: 5, landscape: 4, portrait: 3 },
-  numberOfDaysPerMove: { desktop: 7, tablet: 5, landscape: 4, portrait: 3 },
-};
+import { COMPONENTS_CONFIG } from '$mct/config';
+const SLIDER_CONFIG = COMPONENTS_CONFIG.slider;
 
 export class ConfigManager {
   private static instance: ConfigManager;

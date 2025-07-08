@@ -1,6 +1,6 @@
 import { simulateEvent } from '@finsweet/ts-utils';
 
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
@@ -10,6 +10,8 @@ import type { Profile, QuestionsStageOptions } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import { ProfileNameENUM, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
+
+const attr = DOM_CONFIG.attributes.form;
 
 export class MainFormManager extends FormManager {
   public activeGroupIndex: number = 0;

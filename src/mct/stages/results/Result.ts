@@ -2,9 +2,11 @@ import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import { formatNumber } from '$utils/formatting/formatNumber';
 
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import type { Product } from '$mct/types';
 import { OutputTypeENUM } from '$mct/types';
+
+const attr = DOM_CONFIG.attributes.results;
 
 interface Options {
   template: HTMLElement;

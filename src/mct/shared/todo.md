@@ -4,7 +4,7 @@
 2. Split large manager files
    - [x] Explore how this could look
 3. Reorganise shared utils
-   - [] Organise in a way that makes sense
+   - [x] Organise in a way that makes sense
 4. State management refactoring
    - [x] Explore dedicated state manager
    - [x] Separate storage logic
@@ -12,10 +12,10 @@
    - [x] Create API client
    - [x] Centralise error handling
 6. Component architecture improvements
-   - [ ] Implement event bus
-   - [ ] Create base components
+   - [x] Implement event bus
+   - [x] Create base components
 7. Constants and configuration
-   - [ ] Centralise configuration in `src/mct/shared/config.ts`
+   - [x] Centralise configuration in `src/mct/shared/config.ts`
 8. Utility function consolidation
    - [ ] Create specialised utils
 9. Testing structure

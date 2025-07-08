@@ -5,7 +5,7 @@
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import { QuestionComponent } from './Questions';
 import type { FormManager } from './Manager_Base';
 import { classes } from '$mct/config';
@@ -16,6 +16,8 @@ import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
+
+const attr = DOM_CONFIG.attributes.form;
 
 // @description: Base class for all groups
 export abstract class BaseGroup {

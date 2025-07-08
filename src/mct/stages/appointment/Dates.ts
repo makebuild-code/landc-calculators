@@ -1,9 +1,11 @@
 import { InputGroupBase } from '$mct/components';
 import type { AppointmentDay, Input, InputGroupOptions } from '$mct/types';
 import { queryElement } from '$utils/dom';
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import { getOrginalDate } from '$utils/formatting';
 import { Slider } from './Slider';
+
+const attr = DOM_CONFIG.attributes.appointment;
 
 type DateOptions = {
   wrapper: HTMLElement;

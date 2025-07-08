@@ -11,12 +11,14 @@ import {
 } from '$mct/types';
 import { queryElement, queryElements } from '$utils/dom';
 import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI } from '$mct/api';
-import { attr } from './constants';
+import { DOM_CONFIG } from '$mct/config';
 import { Dates } from './Dates';
 import { Times } from './Times';
 import { getOrginalDate } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
 import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/types';
+
+const attr = DOM_CONFIG.attributes.appointment;
 
 const PANEL_ENUM = {
   CALENDAR: 'calendar',
