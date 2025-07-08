@@ -398,6 +398,7 @@ export class ResultsManager {
   }
 
   private handleGetFreeAdvice(): void {
+    this.appointmentDialog.close();
     MCTManager.goToStage(StageIDENUM.Appointment);
   }
 
