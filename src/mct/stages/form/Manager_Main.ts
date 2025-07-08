@@ -100,6 +100,7 @@ export class MainFormManager extends FormManager {
 
   public show(): void {
     this.component.style.removeProperty('display');
+    this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   public hide(): void {

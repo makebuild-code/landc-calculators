@@ -118,6 +118,7 @@ export class AppointmentManager {
 
   public show(): void {
     this.component.style.removeProperty('display');
+    this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   public hide(): void {
@@ -192,12 +193,14 @@ export class AppointmentManager {
     this.calendarPanel.style.display = 'none';
     this.formPanel.style.removeProperty('display');
     this.currentPanel = PANEL_ENUM.FORM;
+    this.formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   private showCalendarPanel(): void {
     this.calendarPanel.style.removeProperty('display');
     this.formPanel.style.display = 'none';
     this.currentPanel = PANEL_ENUM.CALENDAR;
+    this.calendarPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   private navigateToResults(): void {
