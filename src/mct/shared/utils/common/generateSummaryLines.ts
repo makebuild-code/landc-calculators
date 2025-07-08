@@ -1,6 +1,7 @@
 import { formatNumber } from '$utils/formatting';
 import { classes } from '$mct/config';
 import {
+  RepaymentTypeENUM,
   SchemePeriodsENUM,
   SchemeTypesENUM,
   type Answers,
@@ -15,12 +16,22 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers)
   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
   const { RepaymentType } = answers;
 
+  // Get repayment and term years text
   const RepaymentValueText = formatNumber(RepaymentValue, { type: 'currency' });
   const TermYearsText = `${TermYears} years`;
-  const RepaymentTypeText =
-    RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
 
+  // Get repayment type text
+  const RepaymentTypeText =
+    RepaymentType === RepaymentTypeENUM.Repayment
+      ? 'repayment'
+      : RepaymentTypeENUM.InterestOnly
+        ? 'interest only'
+        : 'part repayment part interest';
+
+  // Get scheme types text
   const SchemeTypesMap = SchemeTypes.map((type) => (type === SchemeTypesENUM.Fixed ? 'fixed' : 'variable'));
+
+  // Get scheme periods text
   const SchemePeriodsMap = SchemePeriods.map((period) =>
     period === SchemePeriodsENUM.TwoYears
       ? '2'
@@ -45,9 +56,6 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers)
   const ProductsAndLenders = `Great news. We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} mortgage products</span> from <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> different lenders. Click below to see your results.`;
   const DealsAndRates = `We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
   const Summary = `${BorrowOverTerm} with a ${SchemeAndType}`;
-
-  `Great news. We've found 52 mortgage products from 4 different lenders. Click below to see your results.`;
-
   return {
     BorrowOverTerm,
     SchemeAndType,
