@@ -36,9 +36,7 @@ export abstract class InteractiveComponent extends BaseComponent {
    * Bind all event listeners
    * Override in subclasses to add specific event bindings
    */
-  protected bindEvents(): void {
-    // Override in subclasses
-  }
+  protected abstract bindEvents(): void;
 
   /**
    * Add an event listener and track it for cleanup

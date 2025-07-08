@@ -7,67 +7,68 @@ import { queryElements } from '$utils/dom/queryelements';
 
 import { DOM_CONFIG } from '$mct/config';
 import { QuestionComponent } from './Questions';
-import type { FormManager } from './Manager_Base';
 import { trackGAEvent } from '$utils/analytics/trackGAEvent';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { GroupNameENUM } from '$mct/types';
-import type { MainFormManager } from './Manager_Main';
-import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
+import { FormEventNames, GroupNameENUM } from '$mct/types';
+import type { MainFormManager } from './Manager';
+import { StatefulComponent, type StatefulComponentOptions } from '$mct/components';
+import { MCTManager } from '$mct/manager';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
 
-// @description: Base class for all groups
-export abstract class BaseGroup {
-  protected component: HTMLElement;
-  protected formManager: FormManager;
-  public isVisible: boolean = false;
-  public name: GroupNameENUM | null = null;
-
-  constructor(component: HTMLElement, formManager: FormManager) {
-    this.component = component;
-    this.formManager = formManager;
-    this.name = component.getAttribute(attr.group) as GroupNameENUM | null;
-  }
-
-  public getComponent(): HTMLElement {
-    return this.component;
-  }
-
-  protected abstract show(): void;
-  protected abstract hide(): void;
+export interface BaseGroupState {
+  isVisible: boolean;
+  name: GroupNameENUM | null;
 }
+
+export interface BaseGroupOptions extends StatefulComponentOptions<BaseGroupState> {}
+
+// @description: Base class for all groups
+export abstract class BaseGroup extends StatefulComponent {
+  constructor(options: BaseGroupOptions) {
+    super(options);
+
+    const name = this.element.getAttribute(attr.group) as GroupNameENUM | null;
+    this.setStateValue('name', name);
+  }
+}
+
+export interface QuestionGroupState extends BaseGroupState {
+  questions: QuestionComponent[];
+  activeQuestionIndex: number;
+}
+
+export interface QuestionGroupOptions extends BaseGroupOptions {}
 
 // @description: Base class for all question groups
 export abstract class QuestionGroup extends BaseGroup {
-  public questions: QuestionComponent[] = [];
-  public activeQuestionIndex: number = 0;
+  constructor(options: QuestionGroupOptions) {
+    super(options);
 
-  constructor(component: HTMLElement, formManager: FormManager) {
-    super(component, formManager);
+    // this.setStateValue('questions', []);
+    // this.setStateValue('activeQuestionIndex', 0);
   }
 
-  abstract handleChange(index: number): void;
+  // abstract handleChange(index: number): void;
 
-  abstract handleEnter(index: number): void;
+  // abstract handleEnter(index: number): void;
 
-  public show(): void {
-    this.component.style.removeProperty('display');
-    this.isVisible = true;
-    // console.log('show: updateActiveQuestions', this.name);
+  protected show(): void {
+    this.removeStyle(this.element, 'display');
+    this.setStateValue('isVisible', true);
     this.updateActiveQuestions();
   }
 
-  public hide(): void {
-    this.component.style.display = 'none';
-    this.isVisible = false;
-    // console.log('hide: updateActiveQuestions', this.name);
+  protected hide(): void {
+    this.addStyle(this.element, 'display', 'none');
+    this.setStateValue('isVisible', false);
     this.updateActiveQuestions();
   }
 
-  public updateActiveQuestions(): void {
+  protected updateActiveQuestions(): void {
     /**
      * Update:
      * - Don't save answers to MCT here
@@ -75,54 +76,55 @@ export abstract class QuestionGroup extends BaseGroup {
      * - Answers will need to be rendered on page load for this to display nicely
      */
 
-    // console.log('function: updateActiveQuestions');
-    // console.log('saving answers to MCT');
-    this.formManager.saveAnswersToMCT();
-    const currentAnswers = this.formManager.getAnswers();
+    const currentAnswers = MCTManager.getAnswers();
+    const questions = this.getStateValue('questions') as QuestionComponent[];
 
-    this.questions.forEach((question) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
+    questions.forEach((question) => {
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.getStateValue('isVisible'));
       shouldBeVisible ? question.require() : question.unrequire();
     });
   }
 
   public isComplete(): boolean {
-    return this.questions
-      .filter((question) => !question.getStateValue('dependsOn'))
-      .every((question) => question.isValid());
+    const questions = this.getStateValue('questions') as QuestionComponent[];
+    return questions.filter((question) => !question.getStateValue('dependsOn')).every((question) => question.isValid());
   }
 
   public reset(): void {
-    if (this.questions.length === 0) return;
-    this.questions.forEach((question) => question.reset());
+    const questions = this.getStateValue('questions') as QuestionComponent[];
+    if (questions.length === 0) return;
+    questions.forEach((question) => question.reset());
   }
 }
 
 // @description: Class for managing a main group of questions
 export class MainGroup extends QuestionGroup {
-  protected formManager: MainFormManager;
+  constructor(options: QuestionGroupOptions) {
+    super(options);
 
-  constructor(component: HTMLElement, formManager: MainFormManager) {
-    super(component, formManager);
-    this.formManager = formManager;
-    this.questions = this.initQuestions();
-    this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
+    this.setStateValue('questions', this.initQuestions());
+    // this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
     // console.log('init: updateActiveQuestions');
     this.updateActiveQuestions();
   }
 
+  protected bindEvents(): void {
+    /**
+     * 1.
+     */
+
+    this.eventBus.on(FormEventNames.NAVIGATION_UPDATE, (data) => this.handleNavigationUpdate(data));
+  }
+
   private initQuestions(): QuestionComponent[] {
-    const questionEls = queryElements(`[${attr.question}]`, this.component) as HTMLElement[];
+    const questionEls = this.queryElements(`[${attr.question}]`) as HTMLElement[];
     return questionEls.map((element, index) => {
       const question = new QuestionComponent({
         element,
-        debug: true,
-        autoBindEvents: true,
-        formManager: this.formManager,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         indexInGroup: index,
-        groupName: this.name as string,
+        groupName: this.getStateValue('name'),
       });
 
       // Initialize the component
@@ -136,17 +138,17 @@ export class MainGroup extends QuestionGroup {
 
   public handleChange(index: number): void {
     console.log('handleChange', index);
-    if (index !== this.activeQuestionIndex)
-      throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
+    if (index !== this.getStateValue('activeQuestionIndex'))
+      throw new Error(`Invalid question index: ${index}. Expected: ${this.getStateValue('activeQuestionIndex')}`);
     console.log('handleChange: updateActiveQuestions');
 
-    const question = this.questions[index];
+    const question = this.getStateValue('questions')[index];
 
     console.log('handleChange: updateActiveQuestions');
-    this.formManager.saveAnswersToMCT();
+    // this.formManager.saveAnswersToMCT();
     this.updateActiveQuestions();
-    this.formManager.updateGroupVisibility();
-    this.formManager.prepareWrapper();
+    // this.formManager.updateGroupVisibility();
+    // this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
 
     // console.log('handleChange, sending GA event');
@@ -157,8 +159,8 @@ export class MainGroup extends QuestionGroup {
   }
 
   public handleEnter(index: number): void {
-    if (index !== this.activeQuestionIndex)
-      throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
+    if (index !== this.getStateValue('activeQuestionIndex'))
+      throw new Error(`Invalid question index: ${index}. Expected: ${this.getStateValue('activeQuestionIndex')}`);
 
     const current = this.getActiveQuestion();
     if (current.isValid()) {
@@ -169,66 +171,75 @@ export class MainGroup extends QuestionGroup {
   }
 
   public handleNextButton(isValid: boolean) {
-    this.formManager.updateNavigation({ nextEnabled: isValid });
+    this.eventBus.emit(FormEventNames.NAVIGATION_UPDATE, { nextEnabled: isValid });
   }
 
   public getActiveQuestion(): QuestionComponent {
-    return this.questions[this.activeQuestionIndex];
+    return this.getStateValue('questions')[this.getStateValue('activeQuestionIndex')];
   }
 
   public getVisibleQuestions(): QuestionComponent[] {
-    return this.questions.filter((question) => question.getStateValue('isVisible'));
+    const questions = this.getStateValue('questions') as QuestionComponent[];
+    return questions.filter((question) => question.getStateValue('isVisible'));
   }
 
   public getNextVisibleIndex(start: number): number {
+    const questions = this.getStateValue('questions') as QuestionComponent[];
     let index = start + 1;
-    while (index < this.questions.length && !this.questions[index].getStateValue('isVisible')) {
-      index += 1;
-    }
+    while (index < questions.length && !questions[index].getStateValue('isVisible')) index += 1;
     return index;
   }
 
   public getPrevVisibleIndex(start: number): number {
+    const questions = this.getStateValue('questions') as QuestionComponent[];
     let index = start - 1;
-    while (index >= 0 && !this.questions[index].getStateValue('isVisible')) {
-      index -= 1;
-    }
+    while (index >= 0 && !questions[index].getStateValue('isVisible')) index -= 1;
     return index;
   }
 
   public navigate(direction: 'next' | 'prev') {
-    this.formManager.saveAnswersToMCT();
+    // this.formManager.saveAnswersToMCT();
     const activeQuestion = this.getActiveQuestion();
     this.deactivateQuestion(activeQuestion);
 
     if (direction === 'next') {
-      const nextIndex = this.getNextVisibleIndex(this.activeQuestionIndex);
+      const nextIndex = this.getNextVisibleIndex(this.getStateValue('activeQuestionIndex'));
 
       // If there's a next question in this group
-      if (nextIndex < this.questions.length) {
-        this.activeQuestionIndex = nextIndex;
+      if (nextIndex < this.getStateValue('questions').length) {
+        this.setStateValue('activeQuestionIndex', nextIndex);
         const nextQuestion = this.getActiveQuestion();
         this.activateQuestion(nextQuestion);
-        this.formManager.updateNavigation({ prevEnabled: true });
+        // this.formManager.updateNavigation({ prevEnabled: true });
+        this.eventBus.emit(FormEventNames.NAVIGATION_UPDATE, { prevEnabled: true });
       } else {
         // If we're at the end of this group, try the next group
-        this.formManager.navigateToNextGroup();
+        // this.formManager.navigateToNextGroup();
+        this.eventBus.emit(FormEventNames.GROUP_COMPLETE, { groupName: this.getStateValue('name') });
       }
     } else {
-      const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
+      const prevIndex = this.getPrevVisibleIndex(this.getStateValue('activeQuestionIndex'));
 
       // If there's a previous question in this group
       if (prevIndex >= 0) {
-        this.activeQuestionIndex = prevIndex;
+        this.setStateValue('activeQuestionIndex', prevIndex);
         const prevItem = this.getActiveQuestion();
         this.activateQuestion(prevItem);
-        this.formManager.updateNavigation({
-          prevEnabled: !(this.formManager.activeGroupIndex === 0 && prevIndex === 0),
+        // this.formManager.updateNavigation({
+        //   prevEnabled: !(this.formManager.activeGroupIndex === 0 && prevIndex === 0),
+        // });
+
+        this.eventBus.emit(FormEventNames.NAVIGATION_UPDATE, {
+          prevEnabled: !(this.getStateValue('activeGroupIndex') === 0 && prevIndex === 0),
         });
       } else {
         // If we're at the start of this group, try the previous group
         const prevGroup = this.formManager.getPreviousGroupInSequence();
         if (prevGroup) this.formManager.navigateToPreviousGroup();
+
+        this.eventBus.emit(FormEventNames.GOTOPREVGROUP, {
+          prevEnabled: !(this.getStateValue('activeGroupIndex') === 0 && prevIndex === 0),
+        });
       }
     }
   }
@@ -329,12 +340,7 @@ export class OutputGroup extends BaseGroup {
 
     this.updateOutputs();
     this.showLoader(false);
-
-    if (this.response.result.Products.length === 0) {
-      this.button.disabled = true;
-    } else {
-      this.button.disabled = false;
-    }
+    this.button.disabled = false;
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {

@@ -1,5 +1,6 @@
 import { globalEventBus } from '../events/globalEventBus';
-import type { EventHandler } from '../events/EventBus';
+import type { TypedEventHandler } from '../events/EventBus';
+import type { EventName, AllEvents } from '$mct/types';
 
 export interface ComponentOptions {
   element: HTMLElement;
@@ -103,7 +104,7 @@ export abstract class BaseComponent {
   /**
    * Emit an event through the event bus
    */
-  protected emit<T = any>(event: string, payload?: T): void {
+  protected emit<T extends EventName>(event: T, payload: AllEvents[T]): void {
     if (this.isDestroyed) return;
 
     this.eventBus.emit(event, payload);
@@ -113,7 +114,7 @@ export abstract class BaseComponent {
    * Subscribe to an event
    * @returns Unsubscribe function
    */
-  protected on<T = any>(event: string, handler: EventHandler<T>): () => void {
+  protected on<T extends EventName>(event: T, handler: TypedEventHandler<T>): () => void {
     return this.eventBus.on(event, handler);
   }
 
@@ -229,5 +230,19 @@ export abstract class BaseComponent {
    */
   protected removeStyle(element: HTMLElement, style: string): void {
     element.style.removeProperty(style);
+  }
+
+  /**
+   * Show an element
+   */
+  protected show(element: HTMLElement = this.element): void {
+    this.removeStyle(element, 'display');
+  }
+
+  /**
+   * Hide an element
+   */
+  protected hide(element: HTMLElement = this.element): void {
+    this.addStyle(element, 'display', 'none');
   }
 }

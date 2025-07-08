@@ -1,6 +1,7 @@
 import type { StorageConfig } from '$mct/state';
 import type { AppState } from './state';
 import type { Profile, ResponsiveConfig } from './common';
+import type { SapValueENUM } from './api/Products';
 
 export interface CONFIG_API {
   baseURL: string;
@@ -41,6 +42,11 @@ export interface CONFIG_ENVIRONMENT {
   environment: ENVIRONMENT;
 }
 
+export interface CONFIG_FILTERS {
+  NewBuild: boolean;
+  SapValue: SapValueENUM;
+}
+
 export interface MCTConfig {
   api: CONFIG_API;
 
@@ -53,4 +59,6 @@ export interface MCTConfig {
   profiles: CONFIG_PROFILES;
 
   environment: CONFIG_ENVIRONMENT;
+
+  filters: CONFIG_FILTERS;
 }

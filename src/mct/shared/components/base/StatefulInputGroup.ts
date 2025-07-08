@@ -1,14 +1,16 @@
 import { StatefulComponent, type StatefulComponentOptions } from './StatefulComponent';
-import type {
-  CheckboxValues,
-  Input,
-  InputType,
-  InputValue,
-  NumberValue,
-  RadioValue,
-  SelectOption,
-  SelectValue,
-  TextValue,
+import {
+  FormEventNames,
+  type AllEvents,
+  type CheckboxValues,
+  type Input,
+  type InputType,
+  type InputValue,
+  type NumberValue,
+  type RadioValue,
+  type SelectOption,
+  type SelectValue,
+  type TextValue,
 } from '$mct/types';
 
 export interface StatefulInputGroupState {
@@ -23,11 +25,11 @@ export interface StatefulInputGroupState {
 
 export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = StatefulInputGroupState>
   extends Omit<StatefulComponentOptions<T>, 'initialState'> {
+  extendedInitialState?: Partial<T>; // Additional state properties for extending classes
+  initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
   onChange: () => void;
   onEnter: () => void;
   groupName: string;
-  extendedInitialState?: Partial<T>; // Additional state properties for extending classes
-  initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
 }
 
 export abstract class StatefulInputGroup<
@@ -70,7 +72,6 @@ export abstract class StatefulInputGroup<
   }
 
   protected onInit(): void {
-    this.log('StatefulInputGroup: onInit');
     // Initialise inputs and detect type
     this.inputs = this.queryElements('input, select') as Input[];
     const type = this.detectType();
@@ -88,9 +89,6 @@ export abstract class StatefulInputGroup<
 
     // Mark as initialised
     this.setStateValue('isInitialised', true);
-
-    // // Call abstract init method
-    // this.init();
   }
 
   // protected abstract init(): void;
@@ -153,7 +151,7 @@ export abstract class StatefulInputGroup<
     this.onChange();
 
     // Emit change event
-    this.emit('input:changed', {
+    this.emit(FormEventNames.INPUT_CHANGED, {
       value,
       isValid,
       type: this.getStateValue('type'),
@@ -179,7 +177,7 @@ export abstract class StatefulInputGroup<
     if (!isValid) return;
     this.onEnter();
 
-    this.emit('input:on-enter', {
+    this.emit(FormEventNames.INPUT_ON_ENTER, {
       value,
       isValid,
       type: this.getStateValue('type'),

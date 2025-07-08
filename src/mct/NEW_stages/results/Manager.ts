@@ -1,4 +1,4 @@
-import { DOM_CONFIG, FILTERS_CONFIG, MCT_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import type {
   AnswerKey,
   AnswerName,
@@ -149,7 +149,6 @@ export class ResultsManager {
     this.initListElements();
     this.renderOutputs();
     this.renderFilters();
-    this.saveFilterValues();
     this.handleProductsAPI();
 
     // // Only auto-load products if explicitly requested or if autoLoad is true
@@ -178,7 +177,7 @@ export class ResultsManager {
     });
   }
 
-  private saveFilterValues(): void {
+  public handleChange(): void {
     // Get all filter group values and merge them into MCTManager answers
     this.filterGroups.forEach((group) => {
       const value = group.getValue();
@@ -194,10 +193,7 @@ export class ResultsManager {
           source: 'user',
         });
     });
-  }
 
-  public handleChange(): void {
-    this.saveFilterValues();
     this.handleProductsAPI();
   }
 
@@ -293,13 +289,9 @@ export class ResultsManager {
 
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
-    const filters = FILTERS_CONFIG;
     this.filterGroups.forEach((filterGroup) => {
-      const answer = answers[filterGroup.initialName];
-      const config = filters[filterGroup.initialName as keyof typeof filters];
-
-      if (answer) filterGroup.setValue(answer as InputValue);
-      else if (config) filterGroup.setValue(config as InputValue);
+      const prefillValue = answers[filterGroup.initialName];
+      if (prefillValue) filterGroup.setValue(prefillValue as InputValue);
     });
   }
 
@@ -376,8 +368,6 @@ export class ResultsManager {
       numberOfResults: 100, // @TODO: Maximum of 100 on the test API?
       sortColumn: 1,
     });
-
-    console.log('Input: ', input);
 
     try {
       const response = await productsAPI.search(input);

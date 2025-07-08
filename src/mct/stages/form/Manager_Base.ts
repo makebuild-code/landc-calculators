@@ -53,9 +53,9 @@ export abstract class FormManager {
     this.questions.delete(question);
   }
 
-  public getQuestions(): Set<QuestionComponent> {
-    return this.questions;
-  }
+  // public getQuestions(): Set<QuestionComponent> {
+  //   return this.questions;
+  // }
 
   public saveAnswersToMCT(): void {
     const answerDataArray: AnswerData[] = [];
@@ -90,9 +90,4 @@ export abstract class FormManager {
     this.profile = profile ? profile : null;
     return profile ? profile : null;
   }
-
-  // protected reset(): void {
-  //   MCTManager.clearAnswers();
-  //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
-  // }
 }
