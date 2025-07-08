@@ -56,13 +56,13 @@ export interface FormEvents {
     errors: string[];
   };
 
-  'form:question:required': {
-    questionId: string;
-  };
+  // 'form:question:required': {
+  //   questionId: string;
+  // };
 
-  'form:question:unrequired': {
-    questionId: string;
-  };
+  // 'form:question:unrequired': {
+  //   questionId: string;
+  // };
 
   // Group-related events
   'form:group:changed': {
@@ -87,12 +87,12 @@ export interface FormEvents {
 
   'form:navigation:next': {
     fromGroup: string;
-    toGroup: string;
+    // toGroup: string;
   };
 
   'form:navigation:prev': {
     fromGroup: string;
-    toGroup: string;
+    // toGroup: string;
   };
 
   // Answer-related events
@@ -160,6 +160,8 @@ export type EventPayload<T extends EventName> = AllEvents[T];
 // Event categories for easier filtering
 export const EVENT_CATEGORIES = {
   FORM: 'form:',
+  RESULTS: 'results:',
+  APPOINTMENT: 'appointment:',
   STATE: 'state:',
   API: 'api:',
 } as const;
