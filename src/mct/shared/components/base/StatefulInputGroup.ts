@@ -134,7 +134,11 @@ export abstract class StatefulInputGroup<
     this.addEventListener({
       element: this.element,
       event: 'keydown',
-      handler: (event: Event) => this.handleEnter(event),
+      handler: (event: Event) => {
+        const ke = event as KeyboardEvent;
+        if (ke.key !== 'Enter') return;
+        this.onEnter();
+      },
     });
   }
 
