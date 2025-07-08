@@ -59,6 +59,8 @@ export class ResultsManager {
   private outputs: HTMLDivElement[] = [];
   private filterGroups: FilterGroup[] = [];
 
+  private showIfProceedable: HTMLElement[];
+
   private appointmentDialogButton: HTMLButtonElement;
   private appointmentDialog: HTMLDialogElement;
   private appointmentDialogClose: HTMLButtonElement;
@@ -87,6 +89,8 @@ export class ResultsManager {
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
+
+    this.showIfProceedable = queryElements(`[${attr.showIfProceedable}]`, this.component) as HTMLElement[];
 
     this.appointmentDialogButton = queryElement(
       `[${attr.components}="book-an-appointment"]`,
@@ -150,6 +154,7 @@ export class ResultsManager {
 
     this.handlePagination();
     this.handleButtons();
+    this.handleShowIfProceedable();
   }
 
   public show(): void {
@@ -318,6 +323,16 @@ export class ResultsManager {
     this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
     this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
     this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
+  }
+
+  private handleShowIfProceedable(): void {
+    const calculations = MCTManager.getCalculations();
+    const { isProceedable } = calculations;
+    this.showIfProceedable.forEach((element) => {
+      const showIfProceedable = element.getAttribute(attr.showIfProceedable) === 'true';
+
+      isProceedable && showIfProceedable ? element.style.removeProperty('display') : (element.style.display = 'none');
+    });
   }
 
   private renderResults(number: number = 10): void {

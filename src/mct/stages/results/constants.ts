@@ -3,4 +3,5 @@ export const attr = {
   element: 'data-mct-results-element',
   output: 'data-mct-results-output',
   type: 'data-mct-results-output-type',
+  showIfProceedable: 'data-mct-results-show-if-proceedable',
 };
