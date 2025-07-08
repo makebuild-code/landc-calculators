@@ -43,8 +43,10 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers)
   const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
   const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
   const ProductsAndLenders = `We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> lenders.`;
-  const DealsAndRates = `We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
+  const DealsAndRates = `Great news. We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} mortgage products</span> from <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> different lenders. Click below to see your results.`;
   const Summary = `${BorrowOverTerm} with a ${SchemeAndType}`;
+
+  `Great news. We've found 52 mortgage products from 4 different lenders. Click below to see your results.`;
 
   return {
     BorrowOverTerm,
