@@ -1,4 +1,4 @@
-import { DOM_CONFIG, FILTERS_CONFIG, MCT_CONFIG } from '$mct/config';
+import { DOM_CONFIG, FILTERS_CONFIG } from '$mct/config';
 import type {
   AnswerKey,
   AnswerName,
