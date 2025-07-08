@@ -240,14 +240,6 @@ export class MainFormManager extends FormManager {
       MCTManager.goToStage(StageIDENUM.Results);
     }
 
-    this.components.hideOnGroup.forEach((element) => {
-      element.style.display = 'none';
-    });
-
-    this.components.showOnGroup.forEach((element) => {
-      element.style.display = 'block';
-    });
-
     this.handleShowHideOnGroup();
   }
 
