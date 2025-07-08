@@ -116,9 +116,9 @@ export class AppointmentManager {
     this.handleDays(true, tomorrow);
   }
 
-  public show(): void {
+  public show(scrollTo: boolean = true): void {
     this.component.style.removeProperty('display');
-    this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (scrollTo) this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   public hide(): void {

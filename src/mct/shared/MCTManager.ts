@@ -27,10 +27,11 @@ import type { BaseFormManager } from '../stages/form/NEW_Manager_Base';
 
 const attr = DOM_CONFIG.attributes;
 
+let numberOfStagesShown: number = 0;
 interface Stage {
   // id: StageIDENUM;
   init: (options?: any) => void;
-  show: () => void;
+  show: (scrollTo?: boolean) => void;
   hide: () => void;
 }
 
@@ -193,8 +194,9 @@ export const MCTManager = {
     } else if (numberOfStages === 1) {
       const onlyStage = Object.values(stageManagers)[0];
       if (onlyStage) {
-        onlyStage.show();
+        onlyStage.show(numberOfStagesShown !== 0);
         onlyStage.init();
+        numberOfStagesShown += 1;
       }
     } else {
       this.goToStage(StageIDENUM.Questions);
@@ -217,7 +219,8 @@ export const MCTManager = {
 
     // update the state, init and show the next stage
     stateManager.setCurrentStage(stageId);
-    nextStage.show();
+    nextStage.show(numberOfStagesShown !== 0);
+    numberOfStagesShown += 1;
 
     // Pass stage-specific options to the init method
     const stageOptions = options[stageId];
