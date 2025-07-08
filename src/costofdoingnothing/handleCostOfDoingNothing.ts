@@ -144,6 +144,7 @@ export class CostOfDoingNothingCalculator {
       SchemeTypes: ['1'],
       NumberOfResults: '1',
       Features: {
+        // @ts-ignore
         Erc: true,
         Offset: false,
         NewBuild: false,
@@ -170,6 +171,7 @@ export class CostOfDoingNothingCalculator {
     const termYears = termYearsInput ? parseInt(termYearsInput.value) : 0;
     const followOnRate = followOnInput ? parseFloat(followOnInput.value) : 0;
 
+    // @ts-ignore
     const formattedCostOfDoingNothingValues: CostOfDoingNothingRequest = {
       calculator: 'comparerates',
       input: {

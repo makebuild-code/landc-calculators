@@ -1,6 +1,13 @@
-import { formatNumber } from '$utils/formatting/formatNumber';
-import { classes } from '../../constants';
-import type { Answers, SummaryInfo, SummaryLines } from '../../types';
+import { formatNumber } from '$utils/formatting';
+import { classes } from '$mct/config';
+import {
+  SchemePeriodsENUM,
+  SchemeTypesENUM,
+  type Answers,
+  type CheckboxList,
+  type SummaryInfo,
+  type SummaryLines,
+} from '$mct/types';
 import { generateProductsAPIInput } from './generateProductsAPIInput';
 
 export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers): SummaryLines | null => {
@@ -13,13 +20,13 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers)
   const RepaymentTypeText =
     RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
 
-  const SchemeTypesMap = SchemeTypes.map((type) => (type === 1 ? 'fixed' : 'variable'));
+  const SchemeTypesMap = SchemeTypes.map((type) => (type === SchemeTypesENUM.Fixed ? 'fixed' : 'variable'));
   const SchemePeriodsMap = SchemePeriods.map((period) =>
-    period === 1 || period === '1'
+    period === SchemePeriodsENUM.TwoYears
       ? '2'
-      : period === 2 || period === '2'
+      : period === SchemePeriodsENUM.ThreeYears
         ? '3'
-        : period === 3 || period === '3'
+        : period === SchemePeriodsENUM.FiveYears
           ? '5'
           : '5+'
   );

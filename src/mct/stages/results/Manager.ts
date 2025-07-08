@@ -1,9 +1,12 @@
 import { attr } from './constants';
 import type {
-  AnswerID,
   AnswerKey,
+  AnswerName,
   AnswerValue,
+  ICID,
   InputValue,
+  LCID,
+  LogUserEventResponse,
   Product,
   ProductsResponse,
   ResultsStageOptions,
@@ -17,7 +20,7 @@ import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterGroup } from './FilterGroup';
-import { productsAPI } from '$mct/api';
+import { logUserEventsAPI, productsAPI } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
 
 /**
@@ -49,6 +52,7 @@ export class ResultsManager {
   private isInitialised: boolean = false;
 
   private products: Product[] = [];
+  private product: Product | null = null;
   private summaryInfo: SummaryInfo | null = null;
 
   private header: HTMLDivElement;
@@ -65,6 +69,7 @@ export class ResultsManager {
   private getADecisionButton: HTMLButtonElement;
   private applyDirect: HTMLElement;
   private applyDirectLink: HTMLLinkElement;
+  private applyDirectDialog: HTMLDialogElement;
 
   private results: Result[] = [];
   private resultsList: HTMLElement;
@@ -102,6 +107,10 @@ export class ResultsManager {
     this.getADecisionButton = queryElement('button', this.getADecision) as HTMLButtonElement;
     this.applyDirect = queryElement(`[${attr.components}="apply-direct"]`, this.appointmentDialog) as HTMLElement;
     this.applyDirectLink = queryElement('a', this.applyDirect) as HTMLLinkElement;
+    this.applyDirectDialog = queryElement(
+      `[${attr.components}="apply-direct-redirect"]`,
+      this.component
+    ) as HTMLDialogElement;
 
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
@@ -117,12 +126,17 @@ export class ResultsManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
-    // // --- TEMP ---
-    // // Answers will be saved from prior stage, just temporary to avoid inputting every time
-    // Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-    //   MCTManager.setAnswer(key as AnswerKey, value);
-    // });
-    // // --- END OF TEMP ---
+    // if (options?.exampleData) {
+    //   // Answers will be saved from prior stage, just temporary to avoid inputting every time
+    //   Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
+    //     MCTManager.setAnswer({
+    //       key: key as AnswerKey,
+    //       name: key as AnswerName,
+    //       value: value as AnswerValue,
+    //       source: 'user',
+    //     });
+    //   });
+    // }
 
     this.initFilterGroups();
     this.initAppointmentDialog();
@@ -135,6 +149,7 @@ export class ResultsManager {
     // if (options?.autoLoad === true) this.handleProductsAPI();
 
     this.handlePagination();
+    this.handleButtons();
   }
 
   public show(): void {
@@ -146,8 +161,8 @@ export class ResultsManager {
   }
 
   private initFilterGroups(): void {
-    const filterEls = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
-    this.filterGroups = filterEls.map((el) => {
+    const filterGroups = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
+    this.filterGroups = filterGroups.map((el) => {
       return new FilterGroup(el, {
         onChange: () => this.handleChange(),
         groupName: 'filterGroup',
@@ -159,14 +174,14 @@ export class ResultsManager {
     // Get all filter group values and merge them into MCTManager answers
     this.filterGroups.forEach((group) => {
       const value = group.getValue();
-      const name = group.name;
-      const id = group.id;
+      const key = group.initialName;
+      const name = group.finalName;
 
-      // Only set the answer if we have a valid name and value
-      if (name && value !== null && value !== undefined && id)
+      // Only set the answer if we have a valid key, value and name
+      if (key && value !== null && value !== undefined && name)
         MCTManager.setAnswer({
-          key: name as AnswerKey,
-          id: id as AnswerID,
+          key: key as AnswerKey,
+          name: name as AnswerName,
           value: value as AnswerValue,
           source: 'user',
         });
@@ -176,16 +191,19 @@ export class ResultsManager {
   }
 
   private initAppointmentDialog(): void {
-    const answers = MCTManager.getAnswers();
-    const { ReadinessToBuy } = answers;
+    const calculations = MCTManager.getCalculations();
+    const { isProceedable } = calculations;
 
-    const proceedable = ReadinessToBuy === 'C' || ReadinessToBuy === 'D';
-    proceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
-    proceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
+    isProceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
+    isProceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
     this.applyDirect.style.display = 'none';
 
     this.appointmentDialogButton.addEventListener('click', () => this.appointmentDialog.showModal());
-    this.appointmentDialogClose.addEventListener('click', () => this.appointmentDialog.close());
+    this.appointmentDialogClose.addEventListener('click', () => {
+      MCTManager.setMortgageId(null);
+      this.product = null;
+      this.appointmentDialog.close();
+    });
     this.appointmentDialog.addEventListener('close', () => (this.applyDirect.style.display = 'none'));
   }
 
@@ -265,7 +283,7 @@ export class ResultsManager {
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
     this.filterGroups.forEach((filterGroup) => {
-      const prefillValue = answers[filterGroup.name];
+      const prefillValue = answers[filterGroup.initialName];
       if (prefillValue) filterGroup.setValue(prefillValue as InputValue);
     });
   }
@@ -296,6 +314,12 @@ export class ResultsManager {
     this.paginationButton.addEventListener('click', () => this.renderResults(10));
   }
 
+  private handleButtons(): void {
+    this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
+    this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
+    this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
+  }
+
   private renderResults(number: number = 10): void {
     // Calculate the range of results to render
     const startFromIndex = this.numberOfResults;
@@ -314,15 +338,11 @@ export class ResultsManager {
   }
 
   private handleProductCTA(product: Product): void {
+    MCTManager.setMortgageId(product.ProductId);
+    this.product = product;
     const { ApplyDirectLink } = product;
 
-    if (ApplyDirectLink) {
-      this.applyDirect.style.removeProperty('display');
-      this.applyDirectLink.href = ApplyDirectLink;
-    } else {
-      this.applyDirect.style.display = 'none';
-    }
-
+    ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
     simulateEvent(this.appointmentDialogButton, 'click');
   }
 
@@ -376,4 +396,74 @@ export class ResultsManager {
     const showResultsList = component === 'loader' || component === 'empty' ? !show : show;
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
+
+  private handleGetFreeAdvice(): void {
+    MCTManager.goToStage(StageIDENUM.Appointment);
+  }
+
+  private handleGetADecision(): void {
+    window.location.href = 'https://www.landc.co.uk/online/mortgage-finder';
+  }
+
+  private async handleApplyDirect(): Promise<void> {
+    try {
+      // Wait for the log user events API call to complete
+      await this.handleLogUserEvents();
+
+      const lender = this.product?.LenderName;
+      const title = queryElement(
+        `[${attr.components}="apply-direct-redirect-title"]`,
+        this.applyDirectDialog
+      ) as HTMLHeadingElement;
+      title.textContent = `We're connecting you to ${lender}`;
+      this.applyDirectDialog.showModal();
+
+      setTimeout(() => {
+        window.location.href = this.product?.ApplyDirectLink || '';
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to log user events before redirect:', error);
+      // Optionally, you could still redirect even if logging fails
+      // Or handle the error differently based on your requirements
+    }
+  }
+
+  private async handleLogUserEvents(): Promise<LogUserEventResponse | null> {
+    const input = {
+      LCID: MCTManager.getLCID() as LCID,
+      ICID: MCTManager.getICID() as ICID,
+      Event: 'ApplyDirect',
+      CreatedBy: 'MCT' as const,
+    };
+    const response = await logUserEventsAPI.logEvent(input);
+    return response;
+  }
+
+  /**
+   * @plan for buttons
+   *
+   * If proceedable:
+   * [X] show 'Get free advice' button
+   * [X] hide 'Get a decision' button
+   * [X] hide 'Apply direct' link by default
+   *
+   * Dialog open:
+   * [X] save mortgage ID to state
+   *
+   * Dialog close:
+   * [X] clear mortgage ID from state
+   *
+   * 'Get free advice' button:
+   * [] do something with the mortgage ID?
+   * [X] go to appointment stage
+   *
+   * 'Get a decision' button:
+   * [] make sure LCID is saved to state
+   * [X] send user to OEF
+   *
+   * 'Apply direct' link:
+   * [x] send user data to LogUserEvents API
+   * [x] show loading modal (3 seconds?)
+   * [x] redirect to ApplyDirectLink
+   */
 }

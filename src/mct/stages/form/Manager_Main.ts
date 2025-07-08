@@ -123,7 +123,7 @@ export class MainFormManager extends FormManager {
 
   private getFirstEl(): HTMLElement | null {
     const group = this.groups[0];
-    if (group instanceof MainGroup) return group.questions[0].el;
+    if (group instanceof MainGroup) return group.questions[0].getElement();
     if (group instanceof OutputGroup) return group.getComponent();
     return null;
   }
@@ -134,7 +134,7 @@ export class MainFormManager extends FormManager {
       // Find the last visible question
       const visibleQuestions = group.getVisibleQuestions();
       if (visibleQuestions.length === 0) return undefined;
-      return visibleQuestions.at(-1)?.el;
+      return visibleQuestions.at(-1)?.getElement();
     }
     if (group instanceof OutputGroup) return group.getComponent();
     return undefined;
@@ -229,8 +229,8 @@ export class MainFormManager extends FormManager {
       outputGroup.activate();
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      console.log('End of form, navigate to results');
-      console.log(MCTManager.getAnswers());
+      // console.log('End of form, navigate to results');
+      // console.log(MCTManager.getAnswers());
       MCTManager.goToStage(StageIDENUM.Results);
     }
   }

@@ -6,11 +6,16 @@ import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
 
-import { mctAttr } from './constants';
+import { mctAttr } from '$mct/config';
 import { StageIDENUM } from '$mct/types';
 import { StateManager } from './state';
-import type { AnswerData, AnswerKey, Answers, AnswerValue, AppState, GoToStageOptions } from '$mct/types';
+import { CalculationManager } from './state/CalculationManager';
+import type { AnswerData, AnswerKey, Answers, AnswerValue, AppState, Calculations, GoToStageOptions } from '$mct/types';
 import { lcidAPI } from '$mct/api';
+import { globalEventBus } from './components/events/globalEventBus';
+import { testComponents, testSimpleComponent } from '$mct/components';
+import { initAppointment } from '../stages/appointment';
+import type { AppointmentManager } from '../stages/appointment/Manager';
 
 interface Stage {
   id: StageIDENUM;
@@ -32,6 +37,8 @@ const dom: DOM = {
 };
 
 const stateManager = new StateManager();
+let calculationManager: CalculationManager;
+
 export const MCTManager = {
   start() {
     this.initState();
@@ -40,10 +47,16 @@ export const MCTManager = {
     this.initLCID();
     this.initStages();
     this.route();
+
+    // Setup event bus for testing (optional)
+    this.setupEventBusDebug();
   },
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
+
+    // Initialize calculation manager
+    calculationManager = new CalculationManager(stateManager);
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
@@ -89,19 +102,29 @@ export const MCTManager = {
   },
 
   initStages() {
-    const mainForm = this.getStageDOM(StageIDENUM.Questions) as HTMLElement;
-    const mainFormManager = initForm(mainForm, {
-      mode: 'main',
-      prefill: false,
-    });
-    mainFormManager?.hide();
+    const mainForm = this.getStageDOM(StageIDENUM.Questions);
+    if (mainForm) {
+      const mainFormManager = initForm(mainForm, {
+        mode: 'main',
+        prefill: false,
+      });
+      mainFormManager?.hide();
+      stageManagers[StageIDENUM.Questions] = mainFormManager as MainFormManager;
+    }
 
-    const results = this.getStageDOM(StageIDENUM.Results) as HTMLElement;
-    const resultsManager = initResults(results);
-    resultsManager?.hide();
+    const results = this.getStageDOM(StageIDENUM.Results);
+    if (results) {
+      const resultsManager = initResults(results);
+      resultsManager?.hide();
+      stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
+    }
 
-    stageManagers[StageIDENUM.Questions] = mainFormManager as MainFormManager;
-    stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
+    const appointment = this.getStageDOM(StageIDENUM.Appointment);
+    if (appointment) {
+      const appointmentManager = initAppointment(appointment);
+      appointmentManager?.hide();
+      stageManagers[StageIDENUM.Appointment] = appointmentManager as AppointmentManager;
+    }
   },
 
   getComponentDOM() {
@@ -109,10 +132,7 @@ export const MCTManager = {
     return dom.mctComponent;
   },
 
-  getStageDOM(name: StageIDENUM) {
-    if (!dom.stages) throw new Error('Stages not initialised');
-    const stage = dom.stages[name];
-    if (!stage) throw new Error(`Stage '${name}' not found`);
+  getStageDOM(name: StageIDENUM): HTMLElement | undefined {
     return dom.stages[name];
   },
 
@@ -138,7 +158,20 @@ export const MCTManager = {
     //   this.goToStage('questions');
     // }
 
-    this.goToStage(StageIDENUM.Questions);
+    const numberOfStages = Object.keys(stageManagers).length;
+    if (numberOfStages === 0) {
+      console.error('🔄 No stage managers initialised');
+      return;
+    } else if (numberOfStages === 1) {
+      const onlyStage = Object.values(stageManagers)[0];
+      if (onlyStage) {
+        onlyStage.show();
+        onlyStage.init();
+      }
+    } else {
+      this.goToStage(StageIDENUM.Questions);
+    }
+
     // this.goToStage(StageIDENUM.Results);
   },
 
@@ -198,6 +231,22 @@ export const MCTManager = {
     return stateManager.getAnswers();
   },
 
+  setCalculations(calculations: Calculations) {
+    stateManager.setCalculations(calculations);
+  },
+
+  getCalculations(): Calculations {
+    return stateManager.getCalculations();
+  },
+
+  setMortgageId(mortgageId: number | null) {
+    stateManager.set('mortgageId', mortgageId);
+  },
+
+  getMortgageId(): number | null {
+    return stateManager.get('mortgageId');
+  },
+
   // clearAnswer(key: AnswerKey) {
   //   if (USE_NEW_STATE_MANAGEMENT.answers) {
   //     // Use new state management
@@ -246,5 +295,35 @@ export const MCTManager = {
 
   getState(): AppState {
     return stateManager.getState();
+  },
+
+  getCalculationManager(): CalculationManager {
+    return calculationManager;
+  },
+
+  setupEventBusDebug() {
+    if (typeof window === 'undefined') return;
+
+    // Make event bus available globally for testing
+    (window as any).globalEventBus = globalEventBus;
+
+    // Add some test event listeners
+    globalEventBus.on('form:question:changed', (payload) => {
+      console.log('📡 MCT Event: Question changed', payload);
+    });
+
+    globalEventBus.on('form:navigation:update', (payload) => {
+      console.log('📡 MCT Event: Navigation updated', payload);
+    });
+
+    // Make component testing available
+    (window as any).testComponents = testComponents;
+    (window as any).testSimpleComponent = testSimpleComponent;
+
+    console.log('🔧 Event Bus & Component Debug Tools Available!');
+    console.log('- globalEventBus - Access the global event bus');
+    console.log('- globalEventBus.emit("form:question:changed", {...}) - Test events');
+    console.log('- testSimpleComponent() - Test simple component (recommended first)');
+    console.log('- testComponents() - Test full component system');
   },
 };

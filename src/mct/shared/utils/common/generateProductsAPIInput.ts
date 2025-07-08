@@ -1,56 +1,67 @@
-import { filterAllowed } from '$utils/formatting/filterAllowed';
-import type { Answers, CheckboxValues, Features, ProductsOptions, ProductsRequest } from '$mct/types';
-
-const DEFAULT_OPTIONS: ProductsOptions = {
-  numberOfResults: 1,
-  sortColumn: 1,
-};
+import { MCTManager } from '$mct/manager';
+import {
+  MortgageTypeENUM,
+  PropertyTypeENUM,
+  SchemePeriodsENUM,
+  SchemePurposeENUM,
+  SchemeTypesENUM,
+  SortColumnENUM,
+  type Answers,
+  type CheckboxList,
+  type Features,
+  type ProductsOptions,
+  type ProductsRequest,
+} from '$mct/types';
 
 export const generateProductsAPIInput = (answers: Answers, options: ProductsOptions = {}): ProductsRequest => {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  const PropertyValue = answers.PropertyValue as number;
-  const DepositAmount = answers.DepositAmount as number;
-  let RepaymentValue = (answers.RepaymentValue as number) || null;
+  // Handle all values coming from the answers
+  const { PropertyValue, DepositAmount } = answers as { PropertyValue: number; DepositAmount: number };
+  const RepaymentValue = (answers.RepaymentValue as number) ?? PropertyValue - DepositAmount;
 
-  if (!RepaymentValue) RepaymentValue = PropertyValue - DepositAmount;
-
-  const PropertyType = 1; // property type not a question
-  const MortgageType = answers.ResiBtl === 'R' ? 1 : 2;
+  const PropertyType =
+    PropertyTypeENUM[answers.PropertyType as keyof typeof PropertyTypeENUM] ?? PropertyTypeENUM.House;
+  const MortgageType = MortgageTypeENUM[answers.ResiBtl as keyof typeof MortgageTypeENUM];
+  const InterestOnlyValue = (answers.InterestOnlyValue as number) ?? 0;
   const TermYears = answers.MortgageLength as number;
-  const SchemePurpose = answers.PurchRemo === 'P' ? 1 : 2;
-  const NumberOfResults = opts.numberOfResults ?? 1;
-  const SortColumn = (opts.sortColumn ?? 1) as 1 | 2 | 3 | 4 | 5 | 6;
+  const SchemePurpose = SchemePurposeENUM[answers.PurchRemo as keyof typeof SchemePurposeENUM];
 
-  const SchemeTypes = (() => {
-    const value = answers.SchemeTypes as CheckboxValues;
-    if (typeof value === 'boolean') return [];
-    return filterAllowed(value, [1, 2] as const);
-  })();
+  const SchemePeriodsValue = answers.SchemePeriods;
+  const SchemePeriods = [SchemePeriodsENUM[SchemePeriodsValue as keyof typeof SchemePeriodsENUM]];
 
+  const SchemeTypesValue = answers.SchemeTypes as CheckboxList;
+  const SchemeTypes = SchemeTypesValue.map((type) => SchemeTypesENUM[type as keyof typeof SchemeTypesENUM]);
+
+  // Handle all values coming from the options
+  const NumberOfResults = options.numberOfResults ?? 1;
+  const SortColumn = options.sortColumn ?? SortColumnENUM.Rate;
+  const SapValue = options.SapValue ?? 1; // Green = 81 or higher
   const Features: Features = {};
-  if (answers.HelpToBuy) Features.HelpToBuy = true;
-  if (answers.Offset) Features.Offset = true;
-  if (answers.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = true;
-  if (answers.NewBuild) Features.NewBuild = true;
-
-  const SapValue = answers.SapValue ? answers.SapValue : null;
+  if (options.HelpToBuy) Features.HelpToBuy = true;
+  if (options.Offset) Features.Offset = true;
+  if (options.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = true;
+  if (options.NewBuild) Features.NewBuild = true;
 
   const input: ProductsRequest = {
     PropertyValue,
     RepaymentValue,
     PropertyType,
     MortgageType,
-    InterestOnlyValue: answers.InterestOnlyValue as number,
+    InterestOnlyValue,
     TermYears,
     SchemePurpose,
-    SchemePeriods: Array(answers.SchemePeriods) as (1 | 2 | 3 | 4)[] | ('1' | '2' | '3' | '4')[],
+    SchemePeriods,
     SchemeTypes,
     NumberOfResults,
     SortColumn,
     Features,
+    SapValue,
   };
 
-  if (SapValue) input.SapValue = SapValue as number;
+  MCTManager.setCalculations({
+    RepaymentValue,
+    InterestOnlyValue,
+    SapValue,
+  });
 
   return input;
 };

@@ -6,8 +6,9 @@
  */
 
 // Re-export all types from domain-specific files
-export * from './stages';
 export * from './api';
-export * from './state';
-export * from './dom';
 export * from './common';
+export * from './dom';
+export * from './events';
+export * from './stages';
+export * from './state';

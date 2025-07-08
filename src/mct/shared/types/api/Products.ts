@@ -1,20 +1,14 @@
-/**
- * API-related types for MCT module
- *
- * Contains types related to API requests, responses,
- * and data structures used in API communication.
- */
-
-export interface BaseResponse<T = Record<string, unknown>> {
-  body: string;
-  result: T;
-  url: string;
-}
+import type { BaseResponse, LenderNames } from './base';
 
 // Options for product requests
 export interface ProductsOptions {
   numberOfResults?: number;
-  sortColumn?: number;
+  sortColumn?: SortColumnENUM;
+  HelpToBuy?: boolean;
+  Offset?: boolean;
+  EarlyRepaymentCharge?: boolean;
+  NewBuild?: boolean;
+  SapValue?: number;
 }
 
 // Features for product requests
@@ -25,23 +19,59 @@ export interface Features {
   NewBuild?: boolean;
 }
 
+export enum PropertyTypeENUM {
+  House = 1,
+  Flat = 2,
+}
+
+export enum MortgageTypeENUM {
+  Residential = 1,
+  Btl = 2,
+}
+
+export enum SchemePurposeENUM {
+  Purchase = 1,
+  Remortgage = 2,
+}
+
+export enum SchemePeriodsENUM {
+  TwoYears = 1,
+  ThreeYears = 2,
+  FiveYears = 3,
+  FivePlusYears = 4,
+}
+
+export enum SchemeTypesENUM {
+  Fixed = 1,
+  Variable = 2,
+}
+
+export enum SortColumnENUM {
+  Rate = 1,
+  AverageAnnualCost = 2,
+  MaxLTV = 3,
+  MonthlyPayment = 4,
+  Lender = 5,
+  Fees = 6,
+}
+
 // Product request structure
 export interface ProductsRequest {
   PropertyValue: number;
   RepaymentValue: number;
-  PropertyType: 1 | 2; // 1 = house, 2 = flat
-  MortgageType: 1 | 2; // 1 = residential, 2 = buy to let
+  PropertyType: PropertyTypeENUM;
+  MortgageType: MortgageTypeENUM;
   InterestOnlyValue?: number;
   TermYears: number;
-  SchemePurpose: 1 | 2; // 1 = purchase, 2 = remortgage
-  SchemePeriods: (1 | 2 | 3 | 4)[] | ('1' | '2' | '3' | '4')[]; // 1 = 2 years, 2 = 3 years, 3 = 5 years, 4 = 5+ years
-  SchemeTypes: (1 | 2)[] | ('1' | '2')[]; // 1 = fixed, 2 = variable
+  SchemePurpose: SchemePurposeENUM;
+  SchemePeriods: SchemePeriodsENUM[];
+  SchemeTypes: SchemeTypesENUM[];
   NumberOfResults: number;
   Features?: Features;
-  SortColumn: 1 | 2 | 3 | 4 | 5 | 6; // 1 = rate, 2 = average annual cost, 3 = max ltv, 4 = monthly payment, 5 = lender, 6 = fees
+  SortColumn: SortColumnENUM;
   UseStaticApr?: boolean;
   SapValue?: number;
-  Lenders?: string; // csv string of master lender ids to filter by Else empty OR null to bring back all lenders
+  Lenders?: LenderNames;
   IncludeRetention?: boolean;
   RetentionLenderId?: number;
 }
@@ -108,21 +138,3 @@ export interface ProductsResponseData {
 }
 
 export type ProductsResponse = BaseResponse<ProductsResponseData>;
-
-// Lender-related types
-export interface Lender {
-  MasterLenderId: number;
-  ResidentialLenderId: number;
-  BTLLenderId: number;
-  LenderName: string;
-  LenderImageURL: string | null;
-  LenderKey: string | null;
-}
-
-export interface LenderListResult {
-  lenders: Lender[];
-}
-
-export interface LenderListResponse {
-  result: LenderListResult;
-}

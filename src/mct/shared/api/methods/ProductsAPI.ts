@@ -1,5 +1,5 @@
 import { APIClient } from '../client/APIClient';
-import { ENDPOINTS } from '../../constants';
+import { ENDPOINTS } from '$mct/config';
 import type { ProductsRequest, ProductsResponse } from '$mct/types';
 
 export class ProductsAPI {

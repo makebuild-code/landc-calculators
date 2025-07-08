@@ -1,6 +1,6 @@
 # website middle layer - Create Lead and Booking http endpoint
 
-Last Updated Date : 09/05/2025
+Last Updated Date : 26/06/2025
 Created Date : 09/05/2025
 
 ## Contents
@@ -86,7 +86,6 @@ CreateLead:
 		"PropertyValue" : INT,
 		"DepositAmount": INT,
 		"LTV": INT,
-		"MortgageType": CHAR,
 		"Source": CHAR,
 		"SourceId": INT,
 		"CreditImpaired": CHAR,
@@ -137,21 +136,20 @@ Create Lead and Booking
       "Email": "Email",
       "Mobile": "Mobile",
       "PurchasePrice": 250000,
-      "RepaymentType": "P", // What does "P" mean? Assuming Part repayment part interest. "R" for repayment, "I" for interest-only
-      "OfferAccepted": "Y", // Will be "Y" if ReadinessToBuy is "D"?
+      "RepaymentType": "Repayment", // Accepted Values: "Repayment" / "Interest Only" / "Both"
+      "OfferAccepted": "Y", // Will be "Y" if ReadinessToBuy = A
       "MortgageLength": 25,
       "MaximumBudget": 250000,
-      "BuyerType": "BuyerType", // What is buyer type? What are the options?
+      "BuyerType": "BuyerType", // Accepted Values: 'Buy-to-let purchase' / 'Buy-to-let remortgage' / 'Downsizer' / 'First Time Buyer' / 'Investor' / 'Mover' / 'Residential purchase' / 'Residential remortgage' / Second Stepper'
       "ResiBtl": "R",
       "Lender": "Lender",
-      "ReadinessToBuy": "A", // Assuming options are A, B, C or D? Going from A being least ready and D being offer accepted?
+      "ReadinessToBuy": "A", // Accepted Values: 'R' = Just Researching / 'V' = Viewing Properties / 'M' = Made an Offer / 'A' = Offer Accepted
       "PurchRemo": "P",
       "PropertyValue": 250000,
       "DepositAmount": 80000,
-      "LTV": "99", // What is LTV?
-      "MortgageType": "M", // What is MortgageType in this API? In the Products API it is 1 for residential, 2 for buy-to-let. What are the options here?
-      "Source": "S", // What should we be putting for the source?
-      "SourceId": 77, // Do we need to add this too?
+      "LTV": "99", // Loan To Value - So on 100K property, if you borrow 50K your LTV is 50%
+      "Source": "S", // Source is wherever they have come from i.e. "Compare The Market / Used Us Before / Andrew Grant"
+      "SourceId": 77, // SourceID is internal to us, we may need a further discussion around this
       "CreditImpaired": "N", // "Y" or "N"
       "IsEmailMarketingPermitted": true,
       "IsPhoneMarketingPermitted": true,

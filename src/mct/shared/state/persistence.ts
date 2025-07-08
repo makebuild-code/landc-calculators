@@ -30,16 +30,16 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     key: 'mct_answers',
     serialize: true,
   },
-  // summary: {
-  //   type: 'sessionStorage',
-  //   key: 'mct_summary',
-  //   serialize: true,
-  // },
-  // products: {
-  //   type: 'sessionStorage',
-  //   key: 'mct_products',
-  //   serialize: true,
-  // },
+  calculations: {
+    type: 'localStorage',
+    key: 'mct_calculations',
+    serialize: true,
+  },
+  mortgageId: {
+    type: 'sessionStorage',
+    key: 'mct_mortgage_id',
+    serialize: false,
+  },
 };
 
 /**

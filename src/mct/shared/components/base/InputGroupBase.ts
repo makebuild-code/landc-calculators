@@ -24,8 +24,10 @@ export abstract class InputGroupBase {
   protected inputs: Input[] = [];
   protected type: InputType;
   public groupName: string;
-  public name: string;
-  public id: string | null = null;
+  public initialName: string;
+  // public initialName: string;
+  public finalName!: string;
+  // public id: string | null = null;
 
   constructor(el: HTMLElement, options: InputGroupOptions) {
     this.el = el;
@@ -33,7 +35,7 @@ export abstract class InputGroupBase {
     this.groupName = options.groupName;
     this.inputs = queryElements('input, select', this.el) as Input[];
     this.type = this.detectType();
-    this.name = this.inputs.find((input) => !!input.name)?.name as string;
+    this.initialName = this.inputs.find((input) => !!input.name)?.name as string;
 
     this.baseInit();
   }
@@ -47,26 +49,26 @@ export abstract class InputGroupBase {
   protected abstract init(): void;
 
   protected formatInputNamesAndIDs(): void {
+    this.finalName = `${this.groupName}-${this.initialName}`;
+
     if (this.type === 'radio' || this.type === 'checkbox') {
       this.inputs.forEach((input) => {
         const label = queryElement('label', input.parentElement as HTMLElement) as HTMLLabelElement;
-        const id = `${this.groupName}-${input.name}-${input.value}`;
-        const name = `${this.groupName}-${input.name}`;
+        const name = this.finalName;
+        const id = `${this.finalName}-${input.value}`;
 
         label.setAttribute('for', id);
         input.id = id;
         input.name = name;
-        this.id = id;
       });
     } else {
       const label = queryElement('label', this.el) as HTMLLabelElement;
       const input = this.inputs[0];
-      const nameAndID = `${this.groupName}-${input.name}`;
+      const nameAndID = this.finalName;
 
       label.setAttribute('for', nameAndID);
-      input.id = nameAndID;
       input.name = nameAndID;
-      this.id = nameAndID;
+      input.id = nameAndID;
     }
   }
 

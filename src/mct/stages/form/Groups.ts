@@ -6,15 +6,16 @@ import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 
 import { attr } from './constants';
-import { Question } from './Questions';
+import { QuestionComponent } from './Questions';
 import type { FormManager } from './Manager_Base';
-import { classes } from 'src/mct/shared/constants';
+import { classes } from '$mct/config';
 import { trackGAEvent } from '$utils/analytics/trackGAEvent';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
+import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
 
 // @description: Base class for all groups
 export abstract class BaseGroup {
@@ -39,7 +40,7 @@ export abstract class BaseGroup {
 
 // @description: Base class for all question groups
 export abstract class QuestionGroup extends BaseGroup {
-  public questions: Question[] = [];
+  public questions: QuestionComponent[] = [];
   public activeQuestionIndex: number = 0;
 
   constructor(component: HTMLElement, formManager: FormManager) {
@@ -53,14 +54,14 @@ export abstract class QuestionGroup extends BaseGroup {
   public show(): void {
     this.component.style.removeProperty('display');
     this.isVisible = true;
-    console.log('show: updateActiveQuestions', this.name);
+    // console.log('show: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
 
   public hide(): void {
     this.component.style.display = 'none';
     this.isVisible = false;
-    console.log('hide: updateActiveQuestions', this.name);
+    // console.log('hide: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
 
@@ -72,8 +73,8 @@ export abstract class QuestionGroup extends BaseGroup {
      * - Answers will need to be rendered on page load for this to display nicely
      */
 
-    console.log('function: updateActiveQuestions');
-    console.log('saving answers to MCT');
+    // console.log('function: updateActiveQuestions');
+    // console.log('saving answers to MCT');
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
@@ -102,20 +103,26 @@ export class MainGroup extends QuestionGroup {
     this.formManager = formManager;
     this.questions = this.initQuestions();
     this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
-    console.log('init: updateActiveQuestions');
+    // console.log('init: updateActiveQuestions');
     this.updateActiveQuestions();
   }
 
-  private initQuestions(): Question[] {
+  private initQuestions(): QuestionComponent[] {
     const questionEls = queryElements(`[${attr.question}]`, this.component) as HTMLElement[];
-    return questionEls.map((el, index) => {
-      const question = new Question(el, {
+    return questionEls.map((element, index) => {
+      const question = new QuestionComponent({
+        element,
+        debug: true,
+        autoBindEvents: true,
         formManager: this.formManager,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         indexInGroup: index,
         groupName: this.name as string,
       });
+
+      // Initialize the component
+      question.initialise();
 
       if (index !== 0) question.disable();
       if (question.dependsOn) question.unrequire();
@@ -124,22 +131,24 @@ export class MainGroup extends QuestionGroup {
   }
 
   public handleChange(index: number): void {
+    console.log('handleChange', index);
     if (index !== this.activeQuestionIndex)
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
+    console.log('handleChange: updateActiveQuestions');
 
     const question = this.questions[index];
 
     console.log('handleChange: updateActiveQuestions');
-    // this.formManager.saveAnswersToMCT();
+    this.formManager.saveAnswersToMCT();
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
 
-    console.log('handleChange, sending GA event');
+    // console.log('handleChange, sending GA event');
     trackGAEvent('form_interaction', {
       event_category: 'MCTForm',
-      event_label: `MCT_${question.name}`,
+      event_label: `MCT_${question.getStateValue('finalName')}`,
     });
   }
 
@@ -159,17 +168,17 @@ export class MainGroup extends QuestionGroup {
     this.formManager.updateNavigation({ nextEnabled: isValid });
   }
 
-  public getActiveQuestion(): Question {
+  public getActiveQuestion(): QuestionComponent {
     return this.questions[this.activeQuestionIndex];
   }
 
-  public getVisibleQuestions(): Question[] {
-    return this.questions.filter((question) => question.isVisible);
+  public getVisibleQuestions(): QuestionComponent[] {
+    return this.questions.filter((question) => question.getStateValue('isVisible'));
   }
 
   public getNextVisibleIndex(start: number): number {
     let index = start + 1;
-    while (index < this.questions.length && !this.questions[index].isVisible) {
+    while (index < this.questions.length && !this.questions[index].getStateValue('isVisible')) {
       index += 1;
     }
     return index;
@@ -177,7 +186,7 @@ export class MainGroup extends QuestionGroup {
 
   public getPrevVisibleIndex(start: number): number {
     let index = start - 1;
-    while (index >= 0 && !this.questions[index].isVisible) {
+    while (index >= 0 && !this.questions[index].getStateValue('isVisible')) {
       index -= 1;
     }
     return index;
@@ -220,7 +229,7 @@ export class MainGroup extends QuestionGroup {
     }
   }
 
-  public activateQuestion(question: Question): void {
+  public activateQuestion(question: QuestionComponent): void {
     question.enable();
     question.focus();
     question.toggleActive(true);
@@ -228,14 +237,17 @@ export class MainGroup extends QuestionGroup {
     this.handleNextButton(question.isValid());
   }
 
-  private deactivateQuestion(question: Question): void {
+  private deactivateQuestion(question: QuestionComponent): void {
     question.disable();
     question.toggleActive(false);
   }
 
-  private scrollToQuestion(item: Question): void {
+  private scrollToQuestion(item: QuestionComponent): void {
     this.formManager.components.scroll.scrollTo({
-      top: item.el.offsetTop - this.formManager.components.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
+      top:
+        item.getElement().offsetTop -
+        this.formManager.components.scroll.offsetHeight / 2 +
+        item.getElement().offsetHeight / 2,
       behavior: 'smooth',
     });
   }

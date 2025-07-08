@@ -5,6 +5,11 @@
  * or are general-purpose types.
  */
 
+export type Breakpoint = 'desktop' | 'tablet' | 'landscape' | 'portrait';
+export type ResponsiveConfig = {
+  [T in Breakpoint]: number;
+};
+
 // Profile-related types
 export enum ProfileNameENUM {
   ResidentialPurchase = 'residential-purchase',
@@ -12,6 +17,15 @@ export enum ProfileNameENUM {
   BtlPurchase = 'btl-purchase',
   ResidentialRemortgage = 'residential-remortgage',
   BtlRemortgage = 'btl-remortgage',
+}
+
+// LandC BuyerTypes
+export enum BuyerTypeENUM {
+  ResidentialPurchase = 'Residential purchase',
+  FtbResidentialPurchase = 'First Time Buyer',
+  BtlPurchase = 'Buy-to-let purchase',
+  ResidentialRemortgage = 'Residential remortgage',
+  BtlRemortgage = 'Buy-to-let remortgage',
 }
 
 export enum GroupNameENUM {

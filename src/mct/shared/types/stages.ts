@@ -11,7 +11,7 @@ import { ProfileNameENUM } from './common';
 export enum StageIDENUM {
   Questions = 'questions',
   Results = 'results',
-  Calendar = 'calendar',
+  Appointment = 'appointment',
 }
 
 // Stage-specific options for goToStage function
@@ -21,6 +21,7 @@ export interface QuestionsStageOptions {
 }
 
 export interface ResultsStageOptions {
+  exampleData?: boolean;
   autoLoad?: boolean;
   numberOfResults?: number;
   showSummary?: boolean;
@@ -28,14 +29,14 @@ export interface ResultsStageOptions {
   showDetails?: boolean;
 }
 
-export interface CalendarStageOptions {
+export interface AppointmentStageOptions {
   // Add calendar-specific options here when needed
 }
 
 export type GoToStageOptions = {
   questions?: QuestionsStageOptions;
   results?: ResultsStageOptions;
-  calendar?: CalendarStageOptions;
+  appointment?: AppointmentStageOptions;
 };
 
 // Output types

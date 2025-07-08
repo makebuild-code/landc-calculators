@@ -5,12 +5,10 @@ import type {
   AnswerKey,
   AnswerValue,
   Answers,
-  Product,
-  SummaryInfo,
-  AnswerID,
   AnswerData,
   PrefillAnswers,
   StageIDENUM,
+  Calculations,
 } from '$mct/types';
 
 export interface StateChangeEvent {
@@ -27,6 +25,8 @@ const defaultState: AppState = {
   currentStageId: null,
   answers: {},
   prefillAnswers: {},
+  calculations: {},
+  mortgageId: null,
 };
 
 export class StateManager {
@@ -133,15 +133,9 @@ export class StateManager {
     };
 
     const answers = { ...this.state.answers, [answerData.key]: answerData.value };
-    const prefillAnswers = { ...this.state.prefillAnswers, [answerData.id]: answerData.value };
+    const prefillAnswers = { ...this.state.prefillAnswers, [answerData.name]: answerData.value };
 
-    // this.set('answers', answers);
-    // this.set('prefillAnswers', prefillAnswers);
-
-    this.setState({
-      answers,
-      prefillAnswers,
-    });
+    this.setState({ answers, prefillAnswers });
   }
 
   getAnswer(key: AnswerKey): AnswerValue | null {
@@ -155,19 +149,12 @@ export class StateManager {
     }, {} as Answers);
 
     const prefillAnswers = answerDataArray.reduce((acc, answer) => {
-      acc[answer.id] = answer.value;
+      acc[answer.name] = answer.value;
       return acc;
     }, {} as PrefillAnswers);
 
-    this.setState({
-      answers,
-      prefillAnswers,
-    });
+    this.setState({ answers, prefillAnswers });
   }
-
-  // setAnswers(answers: Answers): void {
-  //   this.set('answers', answers);
-  // }
 
   getAnswers(): Answers {
     return { ...this.state.answers };
@@ -179,6 +166,14 @@ export class StateManager {
 
   getPrefillAnswers(): PrefillAnswers {
     return { ...this.state.prefillAnswers };
+  }
+
+  setCalculations(calculations: Calculations): void {
+    this.set('calculations', { ...this.state.calculations, ...calculations });
+  }
+
+  getCalculations(): Calculations {
+    return { ...this.state.calculations };
   }
 
   // clearAnswer(key: AnswerKey): void {

@@ -1,17 +1,25 @@
-import { PROFILES } from 'src/mct/shared/constants';
-import { MCTManager } from 'src/mct/shared/MCTManager';
-import type { AnswerData, AnswerID, AnswerKey, Answers, AnswerValue, Profile, QuestionsStageOptions } from '$mct/types';
+import { PROFILES } from '$mct/config';
+import { MCTManager } from '$mct/manager';
+import type {
+  AnswerData,
+  AnswerKey,
+  AnswerName,
+  Answers,
+  AnswerValue,
+  Profile,
+  QuestionsStageOptions,
+} from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
-import type { Question } from './Questions';
+import type { QuestionComponent } from './Questions';
 
 export abstract class FormManager {
   protected component: HTMLElement;
   public id: StageIDENUM;
   protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
-  protected questions: Set<Question> = new Set();
+  protected questions: Set<QuestionComponent> = new Set();
   protected isInitialised: boolean = false;
 
   constructor(component: HTMLElement) {
@@ -35,15 +43,15 @@ export abstract class FormManager {
     // this.groups.forEach((group) => group.evaluateVisibility());
   }
 
-  public saveQuestion(question: Question): void {
+  public saveQuestion(question: QuestionComponent): void {
     this.questions.add(question);
   }
 
-  public removeQuestion(question: Question): void {
+  public removeQuestion(question: QuestionComponent): void {
     this.questions.delete(question);
   }
 
-  public getQuestions(): Set<Question> {
+  public getQuestions(): Set<QuestionComponent> {
     return this.questions;
   }
 
@@ -55,14 +63,14 @@ export abstract class FormManager {
       if (!value) return;
 
       answerDataArray.push({
-        id: question.id as AnswerID,
-        key: question.name as AnswerKey,
+        key: question.getStateValue('initialName') as AnswerKey,
+        name: question.getStateValue('finalName') as AnswerName,
         value: value as AnswerValue,
         source: 'user',
       });
     });
 
-    console.log('saveAnswersToMCT: ', answerDataArray);
+    // console.log('saveAnswersToMCT: ', answerDataArray);
 
     MCTManager.setAnswers(answerDataArray);
   }

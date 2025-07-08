@@ -46,10 +46,13 @@ test('should notify subscribers of state changes', () => {
 });
 
 test('should handle answer operations correctly', () => {
-  stateManager.setAnswer('test-key', 'test-value');
+  stateManager.setAnswer({
+    id: 'test-id',
+    key: 'test-key',
+    value: 'test-value',
+  });
   expect(stateManager.getAnswer('test-key')).toBe('test-value');
 
-  stateManager.clearAnswer('test-key');
   expect(stateManager.getAnswer('test-key')).toBeNull();
 });
 

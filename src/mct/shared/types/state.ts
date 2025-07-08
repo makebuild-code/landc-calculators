@@ -5,18 +5,19 @@
  * and data persistence.
  */
 
-import type { Product, SummaryInfo } from './api';
+import type { Product, ProductsRequest, SummaryInfo } from './api';
 
 // Answer-related types
-export type AnswerID = string;
-export type AnswerKey = string;
-export type AnswerValue = string | number | (string | number)[] | null;
-export type Answers = Record<AnswerKey, AnswerValue>;
-export type PrefillAnswers = Record<AnswerID, AnswerValue>;
+export type AnswerKey = string; // Name of the question group
+export type AnswerName = string; // Name of the answer input
+export type AnswerValue = string | number | (string | number)[] | null; // Value of the answer input
+export type Answers = Record<AnswerKey, AnswerValue>; // All answers
+export type PrefillAnswers = Record<AnswerName, AnswerValue>; // Answers that are prefilled
+export type Calculations = Record<string, string | number | boolean>; // All calculations
 
 export interface AnswerData {
   key: AnswerKey;
-  id: AnswerID;
+  name: AnswerName;
   value: AnswerValue;
   source?: 'user' | 'prefill' | 'param';
 }
@@ -28,8 +29,8 @@ export interface AppState {
   currentStageId: string | null;
   answers: Answers;
   prefillAnswers: PrefillAnswers;
-  // summary: SummaryInfo | null;
-  // products: Product[] | null;
+  calculations: Calculations;
+  mortgageId: number | null;
 }
 
 // Storage-related types

@@ -11,6 +11,9 @@ importers:
       '@finsweet/ts-utils':
         specifier: ^0.40.0
         version: 0.40.0
+      '@splidejs/splide':
+        specifier: ^4.1.4
+        version: 4.1.4
       chart.js:
         specifier: ^4.4.2
         version: 4.4.2
@@ -357,6 +360,9 @@ packages:
     resolution: {integrity: sha512-Gq9rmS54mjBL/7/MvBaNOBwbfnh7beHvS6oS4srqXFcQHpQCV1+c8JXWE8VLPyRDhgS3H8x8A7hztqI9VnwrAQ==}
     engines: {node: '>=16'}
     hasBin: true
+
+  '@splidejs/splide@4.1.4':
+    resolution: {integrity: sha512-5I30evTJcAJQXt6vJ26g2xEkG+l1nXcpEw4xpKh0/FWQ8ozmAeTbtniVtVmz2sH1Es3vgfC4SS8B2X4o5JMptA==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -1982,6 +1988,8 @@ snapshots:
   '@playwright/test@1.42.1':
     dependencies:
       playwright: 1.42.1
+
+  '@splidejs/splide@4.1.4': {}
 
   '@types/json-schema@7.0.15': {}
 
