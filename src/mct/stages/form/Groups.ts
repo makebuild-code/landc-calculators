@@ -8,7 +8,6 @@ import { queryElements } from '$utils/dom/queryelements';
 import { DOM_CONFIG } from '$mct/config';
 import { QuestionComponent } from './Questions';
 import type { FormManager } from './Manager_Base';
-import { classes } from '$mct/config';
 import { trackGAEvent } from '$utils/analytics/trackGAEvent';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
@@ -18,6 +17,7 @@ import type { MainFormManager } from './Manager_Main';
 import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
 
 const attr = DOM_CONFIG.attributes.form;
+const classes = DOM_CONFIG.classes;
 
 // @description: Base class for all groups
 export abstract class BaseGroup {

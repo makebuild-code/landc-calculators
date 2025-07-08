@@ -1,4 +1,4 @@
-import { PROFILES } from '$mct/config';
+import { PROFILES_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import type {
   AnswerData,
@@ -13,6 +13,8 @@ import { StageIDENUM } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
+
+const PROFILES = PROFILES_CONFIG.profiles;
 
 export abstract class FormManager {
   protected component: HTMLElement;

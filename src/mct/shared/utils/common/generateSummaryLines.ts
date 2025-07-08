@@ -1,5 +1,5 @@
 import { formatNumber } from '$utils/formatting';
-import { classes } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import {
   RepaymentTypeENUM,
   SchemePeriodsENUM,
@@ -10,6 +10,8 @@ import {
   type SummaryLines,
 } from '$mct/types';
 import { generateProductsAPIInput } from './generateProductsAPIInput';
+
+const classes = DOM_CONFIG.classes;
 
 export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers): SummaryLines | null => {
   const productsAPIInput = generateProductsAPIInput(answers);

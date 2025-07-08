@@ -1,5 +1,5 @@
+import { API_CONFIG } from '$mct/config';
 import { getBaseURLForAPI } from '$utils/environment/getBaseURLForAPI';
-import { logError } from '$mct/utils';
 
 export interface RequestOptions extends RequestInit {
   timeout?: number;
@@ -35,14 +35,14 @@ export class APIClient {
   private retryDelay: number;
 
   constructor(config: APIClientConfig = {}) {
-    this.baseURL = config.baseURL || getBaseURLForAPI();
+    this.baseURL = config.baseURL || API_CONFIG.baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       ...config.defaultHeaders,
     };
-    this.timeout = config.timeout || 30000;
-    this.retries = config.retries || 3;
-    this.retryDelay = config.retryDelay || 1000;
+    this.timeout = config.timeout || API_CONFIG.timeout;
+    this.retries = config.retries || API_CONFIG.retries;
+    this.retryDelay = config.retryDelay || API_CONFIG.retryDelay;
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {

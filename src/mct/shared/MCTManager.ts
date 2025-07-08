@@ -6,7 +6,7 @@ import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
 
-import { mctAttr } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import { StageIDENUM } from '$mct/types';
 import { StateManager } from './state';
 import { CalculationManager } from './state/CalculationManager';
@@ -16,6 +16,8 @@ import { globalEventBus } from './components/events/globalEventBus';
 import { testComponents, testSimpleComponent } from '$mct/components';
 import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
+
+const attr = DOM_CONFIG.attributes;
 
 interface Stage {
   id: StageIDENUM;
@@ -71,12 +73,12 @@ export const MCTManager = {
   },
 
   initDOM(): DOM {
-    dom.mctComponent = queryElement(`[${mctAttr.mct}="component"]`) as HTMLElement;
+    dom.mctComponent = queryElement(`[${attr.component}="component"]`) as HTMLElement;
     if (!dom.mctComponent) throw new Error('MCT component not found');
 
-    const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
+    const stageElements = queryElements(`[${attr.stage}]`, dom.mctComponent);
     stageElements.forEach((stage) => {
-      const name = stage.getAttribute(mctAttr.stage);
+      const name = stage.getAttribute(attr.stage);
       if (name) dom.stages[name as StageIDENUM] = stage as HTMLElement;
     });
 

@@ -1,9 +1,9 @@
 import { InputGroupBase } from '$mct/components';
-import { mctAttr } from '$mct/config';
 import type { AppointmentSlot, Input, InputGroupOptions } from '$mct/types';
 import { queryElement } from '$utils/dom';
 import { DOM_CONFIG } from '$mct/config';
 
+const mctAttr = DOM_CONFIG.attributes.component;
 const attr = DOM_CONFIG.attributes.appointment;
 
 type TimeOptions = {
@@ -20,7 +20,7 @@ export class Times extends InputGroupBase {
     this.onEnter = options.onEnter;
 
     this.list = queryElement(`[${attr.components}="times-list"]`, this.el) as HTMLElement;
-    const slot = queryElement(`[${mctAttr.mct}="pill"]`, this.list) as HTMLElement;
+    const slot = queryElement(`[${mctAttr}="pill"]`, this.list) as HTMLElement;
     this.template = slot.cloneNode(true) as HTMLElement;
     this.template.remove();
   }

@@ -17,14 +17,9 @@ export const MCT_CONFIG: MCTConfig = {
 };
 
 // Export individual configs for specific use cases
-export * from './constants';
 export * from './api';
 export * from './storage';
 export * from './dom';
 export * from './components';
 export * from './profiles';
 export * from './environment';
-
-// // Legacy exports for backward compatibility
-// export { PROFILES_CONFIG as PROFILES } from './profiles';
-// export { API_CONFIG as ENDPOINTS } from './api';

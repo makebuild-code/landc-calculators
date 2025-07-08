@@ -1,6 +1,6 @@
 export const DOM_CONFIG = {
   attributes: {
-    mct: 'data-mct',
+    component: 'data-mct',
     stage: 'data-mct-stage',
     form: {
       components: 'data-mct-questions',

@@ -16,7 +16,7 @@ export interface CONFIG_STORAGE {
 
 export interface CONFIG_DOM {
   attributes: {
-    mct: string;
+    component: string;
     stage: string;
     form: Record<string, string>;
     results: Record<string, string>;
