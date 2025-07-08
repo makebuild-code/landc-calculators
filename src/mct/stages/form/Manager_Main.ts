@@ -6,7 +6,7 @@ import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { QuestionsStageOptions } from '$mct/types';
+import type { Profile, QuestionsStageOptions } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import { ProfileNameENUM, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
@@ -16,7 +16,8 @@ export class MainFormManager extends FormManager {
   public components: {
     header: HTMLElement;
     stickyHeader: HTMLElement;
-    profileSelect: HTMLSelectElement;
+    identifier: HTMLElement;
+    // profileSelect: HTMLSelectElement;
     wrapper: HTMLElement;
     scroll: HTMLElement;
     nextButton: HTMLButtonElement;
@@ -32,7 +33,8 @@ export class MainFormManager extends FormManager {
     this.components = {
       header: queryElement(`[${attr.components}="header"]`, component) as HTMLElement,
       stickyHeader: queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement,
-      profileSelect: queryElement(`[${attr.components}="profile-select"]`, component) as HTMLSelectElement,
+      identifier: queryElement(`[${attr.components}="identifier"]`, component) as HTMLElement,
+      // profileSelect: queryElement(`[${attr.components}="profile-select"]`, component) as HTMLSelectElement,
       wrapper: queryElement(`[${attr.components}="wrapper"]`, component) as HTMLElement,
       scroll: queryElement(`[${attr.components}="scroll"]`, component) as HTMLElement,
       nextButton: queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement,
@@ -65,10 +67,8 @@ export class MainFormManager extends FormManager {
     const initialGroup = this.getActiveGroup();
     if (initialGroup) initialGroup.show();
 
-    // // Handle profile option if provided
-    // if (options?.profile) {
-    //   this.initialiseProfileSelect(options.profile);
-    // }
+    // Handle profile option if provided
+    this.handleIdentifier();
 
     // // Handle prefill option if provided
     // if (options?.prefill) {
@@ -205,7 +205,7 @@ export class MainFormManager extends FormManager {
     const { name } = activeGroup;
     if (name === GroupNameENUM.CustomerIdentifier && activeGroup instanceof MainGroup) {
       // progress to profile group from identifier group
-      this.initialiseProfileSelect(this.profile.name);
+      this.handleIdentifier(this.profile);
 
       const profileGroup = this.getGroupByName(this.profile.name as any) as MainGroup;
       if (!profileGroup) return logError(`Next group: No matching group for profile: ${this.profile.name}`);
@@ -330,15 +330,14 @@ export class MainFormManager extends FormManager {
     this.handleShowHideOnGroup();
   }
 
-  private initialiseProfileSelect(value: ProfileNameENUM) {
-    const { profileSelect } = this.components;
-    if (!profileSelect) return;
-
-    profileSelect.value = value;
-    simulateEvent(profileSelect, 'change');
-
-    if (!this.optionRemoved) profileSelect.remove(0);
-    this.optionRemoved = true;
+  private handleIdentifier(profile?: Profile) {
+    console.log('handleIdentifier', profile);
+    if (!profile) {
+      this.components.identifier.style.display = 'none';
+    } else {
+      this.components.identifier.textContent = profile.display;
+      this.components.identifier.style.removeProperty('display');
+    }
   }
 
   private showHeader(type: 'static' | 'sticky') {
