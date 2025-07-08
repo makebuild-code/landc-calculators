@@ -59,9 +59,6 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     // Call the lender select handler
     this.handleLenderSelect();
 
-    // Set up Question-specific event handlers
-    this.setupQuestionEventListeners();
-
     this.log('QuestionComponent: init complete');
   }
 
@@ -90,28 +87,6 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     } catch (error) {
       console.error('Failed to fetch lenders:', error);
     }
-  }
-
-  protected setupQuestionEventListeners(): void {
-    this.inputs.forEach((input) => {
-      console.log('setupQuestionEventListeners', input);
-      if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
-        // input.addEventListener('input', () => this.onChange());
-        input.addEventListener('input', () => this.handleChange());
-      } else {
-        // input.addEventListener('change', () => this.onChange());
-        input.addEventListener('change', () => this.handleChange());
-      }
-      input.addEventListener('keydown', (event: Event) => {
-        const ke = event as KeyboardEvent;
-        if (ke.key !== 'Enter') return;
-        if (this.isValid()) {
-          this.onEnter();
-        } else {
-          this.onChange();
-        }
-      });
-    });
   }
 
   public updateVisualState(isValid: boolean): void {
