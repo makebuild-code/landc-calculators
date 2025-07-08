@@ -2,33 +2,32 @@
  * class for managing a group of questions
  */
 
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
 
 import { attr } from './constants';
-import { Question } from './Questions';
-import type { MainFormManager, FormManager } from './Manager';
-import type { GroupName } from './types';
-import { classes } from 'src/mct/shared/constants';
-import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
-import type { ProductsResponse, SummaryInfo } from 'src/mct/shared/api/types/fetchProducts';
-import { trackGAEvent } from '$utils/trackGAEvent';
-import { MCTManager } from 'src/mct/shared/MCTManager';
-import { generateSummaryLines, type SummaryLines } from 'src/mct/shared/utils/generateSummaryLines';
-import { generateProductsAPIInput } from 'src/mct/shared/utils/generateProductsAPIInput';
-import { logError } from 'src/mct/shared/utils/logError';
+import { QuestionComponent } from './Questions';
+import type { FormManager } from './Manager_Base';
+import { classes } from '$mct/config';
+import { trackGAEvent } from '$utils/analytics/trackGAEvent';
+import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
+import { productsAPI } from '$mct/api';
+import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
+import { GroupNameENUM } from '$mct/types';
+import type { MainFormManager } from './Manager_Main';
+import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
 
 // @description: Base class for all groups
 export abstract class BaseGroup {
   protected component: HTMLElement;
   protected formManager: FormManager;
   public isVisible: boolean = false;
-  public name: GroupName | null = null;
+  public name: GroupNameENUM | null = null;
 
   constructor(component: HTMLElement, formManager: FormManager) {
     this.component = component;
     this.formManager = formManager;
-    this.name = component.getAttribute(attr.group) as GroupName | null;
+    this.name = component.getAttribute(attr.group) as GroupNameENUM | null;
   }
 
   public getComponent(): HTMLElement {
@@ -41,7 +40,7 @@ export abstract class BaseGroup {
 
 // @description: Base class for all question groups
 export abstract class QuestionGroup extends BaseGroup {
-  public questions: Question[] = [];
+  public questions: QuestionComponent[] = [];
   public activeQuestionIndex: number = 0;
 
   constructor(component: HTMLElement, formManager: FormManager) {
@@ -55,16 +54,27 @@ export abstract class QuestionGroup extends BaseGroup {
   public show(): void {
     this.component.style.removeProperty('display');
     this.isVisible = true;
+    // console.log('show: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
 
   public hide(): void {
     this.component.style.display = 'none';
     this.isVisible = false;
+    // console.log('hide: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
 
   public updateActiveQuestions(): void {
+    /**
+     * Update:
+     * - Don't save answers to MCT here
+     * - This will show the questions that should be visible based on the storage
+     * - Answers will need to be rendered on page load for this to display nicely
+     */
+
+    // console.log('function: updateActiveQuestions');
+    // console.log('saving answers to MCT');
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
@@ -93,19 +103,26 @@ export class MainGroup extends QuestionGroup {
     this.formManager = formManager;
     this.questions = this.initQuestions();
     this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
+    // console.log('init: updateActiveQuestions');
     this.updateActiveQuestions();
   }
 
-  private initQuestions(): Question[] {
+  private initQuestions(): QuestionComponent[] {
     const questionEls = queryElements(`[${attr.question}]`, this.component) as HTMLElement[];
-    return questionEls.map((el, index) => {
-      const question = new Question(el, {
+    return questionEls.map((element, index) => {
+      const question = new QuestionComponent({
+        element,
+        debug: true,
+        autoBindEvents: true,
         formManager: this.formManager,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         indexInGroup: index,
         groupName: this.name as string,
       });
+
+      // Initialize the component
+      question.initialise();
 
       if (index !== 0) question.disable();
       if (question.dependsOn) question.unrequire();
@@ -114,17 +131,24 @@ export class MainGroup extends QuestionGroup {
   }
 
   public handleChange(index: number): void {
+    console.log('handleChange', index);
     if (index !== this.activeQuestionIndex)
       throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
+    console.log('handleChange: updateActiveQuestions');
 
     const question = this.questions[index];
+
+    console.log('handleChange: updateActiveQuestions');
+    this.formManager.saveAnswersToMCT();
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
+
+    // console.log('handleChange, sending GA event');
     trackGAEvent('form_interaction', {
       event_category: 'MCTForm',
-      event_label: `MCT_${question.name}`,
+      event_label: `MCT_${question.getStateValue('finalName')}`,
     });
   }
 
@@ -144,17 +168,17 @@ export class MainGroup extends QuestionGroup {
     this.formManager.updateNavigation({ nextEnabled: isValid });
   }
 
-  public getActiveQuestion(): Question {
+  public getActiveQuestion(): QuestionComponent {
     return this.questions[this.activeQuestionIndex];
   }
 
-  public getVisibleQuestions(): Question[] {
-    return this.questions.filter((question) => question.isVisible);
+  public getVisibleQuestions(): QuestionComponent[] {
+    return this.questions.filter((question) => question.getStateValue('isVisible'));
   }
 
   public getNextVisibleIndex(start: number): number {
     let index = start + 1;
-    while (index < this.questions.length && !this.questions[index].isVisible) {
+    while (index < this.questions.length && !this.questions[index].getStateValue('isVisible')) {
       index += 1;
     }
     return index;
@@ -162,7 +186,7 @@ export class MainGroup extends QuestionGroup {
 
   public getPrevVisibleIndex(start: number): number {
     let index = start - 1;
-    while (index >= 0 && !this.questions[index].isVisible) {
+    while (index >= 0 && !this.questions[index].getStateValue('isVisible')) {
       index -= 1;
     }
     return index;
@@ -205,7 +229,7 @@ export class MainGroup extends QuestionGroup {
     }
   }
 
-  public activateQuestion(question: Question): void {
+  public activateQuestion(question: QuestionComponent): void {
     question.enable();
     question.focus();
     question.toggleActive(true);
@@ -213,14 +237,17 @@ export class MainGroup extends QuestionGroup {
     this.handleNextButton(question.isValid());
   }
 
-  private deactivateQuestion(question: Question): void {
+  private deactivateQuestion(question: QuestionComponent): void {
     question.disable();
     question.toggleActive(false);
   }
 
-  private scrollToQuestion(item: Question): void {
+  private scrollToQuestion(item: QuestionComponent): void {
     this.formManager.components.scroll.scrollTo({
-      top: item.el.offsetTop - this.formManager.components.scroll.offsetHeight / 2 + item.el.offsetHeight / 2,
+      top:
+        item.getElement().offsetTop -
+        this.formManager.components.scroll.offsetHeight / 2 +
+        item.getElement().offsetHeight / 2,
       behavior: 'smooth',
     });
   }
@@ -250,10 +277,6 @@ export class OutputGroup extends BaseGroup {
   private bindEvents(): void {
     this.button.addEventListener('click', () => this.navigateToResults());
   }
-
-  // public getComponent(): HTMLElement {
-  //   return this.component;
-  // }
 
   public show(): void {
     this.component.style.removeProperty('display');
@@ -308,11 +331,9 @@ export class OutputGroup extends BaseGroup {
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput(this.formManager.getAnswers());
     try {
-      const response = await fetchProducts(input);
-      return response;
+      return await productsAPI.search(input);
     } catch (error) {
-      console.error('Failed to fetch products:', error);
-      return null;
+      return logError('Failed to fetch products:', { data: error, returnNull: true }) as null;
     }
   }
 

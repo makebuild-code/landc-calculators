@@ -4,7 +4,16 @@
     "rootDir": ".",
     "baseUrl": "./",
     "paths": {
-      "$utils/*": ["src/utils/*"]
+      "$utils/*": ["src/utils/*"],
+      "$mct/api": ["src/mct/shared/api/index"],
+      "$mct/components": ["src/mct/shared/components/index"],
+      "$mct/config": ["src/mct/shared/config/index"],
+      "$mct/examples": ["src/mct/shared/examples/index"],
+      "$mct/state": ["src/mct/shared/state/index"],
+      "$mct/state/*": ["src/mct/shared/state/*"],
+      "$mct/types": ["src/mct/shared/types/index"],
+      "$mct/manager": ["src/mct/shared/MCTManager"],
+      "$mct/utils": ["src/mct/shared/utils/common/index"]
     },
     "types": ["@finsweet/ts-utils", "node"]
   }

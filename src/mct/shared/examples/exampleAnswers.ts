@@ -1,4 +1,6 @@
-export const EXAMPLE_ANSWERS = {
+import type { Answers } from '$mct/types';
+
+export const EXAMPLE_ANSWERS: Answers = {
   PurchRemo: 'P',
   FTB: 'N',
   ResiBtl: 'R',

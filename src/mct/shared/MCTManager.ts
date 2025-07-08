@@ -1,20 +1,25 @@
-import { getFromCookie } from '$utils/getFromCookie';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { setToCookie } from '$utils/setToCookie';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
 
 import { initForm } from '../stages/form';
-import type { FormManager, MainFormManager } from '../stages/form/Manager';
+import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
-import { generateLCID } from './api/generateLCID';
-import type { Product, ProductsResponse, SummaryInfo } from './api/types/fetchProducts';
-import { mctAttr } from './constants';
-import type { AnswerKey, Answers, AnswerValue, StageID } from './types';
+
+import { mctAttr } from '$mct/config';
+import { StageIDENUM } from '$mct/types';
+import { StateManager } from './state';
+import { CalculationManager } from './state/CalculationManager';
+import type { AnswerData, AnswerKey, Answers, AnswerValue, AppState, Calculations, GoToStageOptions } from '$mct/types';
+import { lcidAPI } from '$mct/api';
+import { globalEventBus } from './components/events/globalEventBus';
+import { testComponents, testSimpleComponent } from '$mct/components';
+import { initAppointment } from '../stages/appointment';
+import type { AppointmentManager } from '../stages/appointment/Manager';
 
 interface Stage {
-  id: StageID;
-  init: () => void;
+  id: StageIDENUM;
+  init: (options?: any) => void;
   show: () => void;
   hide: () => void;
 }
@@ -23,7 +28,7 @@ const stageManagers: Record<string, Stage> = {};
 
 interface DOM {
   mctComponent: HTMLElement | null;
-  stages: Partial<Record<StageID, HTMLElement>>;
+  stages: Partial<Record<StageIDENUM, HTMLElement>>;
 }
 
 const dom: DOM = {
@@ -31,45 +36,38 @@ const dom: DOM = {
   stages: {},
 };
 
-export interface AppState {
-  lcid: string | null;
-  icid: string | null;
-  currentStageId: string | null;
-  answers: Answers;
-  summary: SummaryInfo | null;
-  products: Product[] | null;
-}
-
-const state: AppState = {
-  lcid: null,
-  icid: null,
-  currentStageId: null,
-  answers: {},
-  summary: null,
-  products: null,
-};
-
-const MCT_ANSWERS_STORAGE_KEY = 'mct_data';
-
-interface MCTData {
-  lcid?: string | null;
-  icid?: string | null;
-  answers?: Answers;
-}
+const stateManager = new StateManager();
+let calculationManager: CalculationManager;
 
 export const MCTManager = {
-  /**
-   * @plan
-   *
-   * - generate new LCID
-   * - save to the data and cookies
-   */
   start() {
+    this.initState();
     this.initDOM();
     this.initICID();
     this.initLCID();
     this.initStages();
     this.route();
+
+    // Setup event bus for testing (optional)
+    this.setupEventBusDebug();
+  },
+
+  initState() {
+    console.log('🔄 Initializing hybrid MCTManager with new state management...');
+
+    // Initialize calculation manager
+    calculationManager = new CalculationManager(stateManager);
+
+    // Subscribe to state changes for debugging
+    stateManager.subscribe((event) => {
+      console.log('🔄 State changed via new manager:', {
+        changes: event.changes,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    stateManager.loadFromPersistence();
+    stateManager.enableAutoPersistence();
   },
 
   initDOM(): DOM {
@@ -79,23 +77,24 @@ export const MCTManager = {
     const stageElements = queryElements(`[${mctAttr.stage}]`, dom.mctComponent);
     stageElements.forEach((stage) => {
       const name = stage.getAttribute(mctAttr.stage);
-      if (name) dom.stages[name as StageID] = stage as HTMLElement;
+      if (name) dom.stages[name as StageIDENUM] = stage as HTMLElement;
     });
 
     return dom;
   },
 
   initICID() {
-    const icid = getFromCookie('ICID');
+    const icid = this.getICID();
     this.setICID(icid ?? 'default');
   },
 
   async initLCID() {
-    const currentLCID = getFromCookie('LCID');
-    this.setLCID(currentLCID ?? null);
+    const currentLCID = this.getLCID();
+    const icid = this.getICID();
 
     try {
-      const lcid = await generateLCID();
+      // const lcid = await generateLCID(currentLCID, icid);
+      const lcid = await lcidAPI.generate(currentLCID, icid);
       this.setLCID(lcid);
     } catch {
       console.error('Failed to generate LCID');
@@ -103,19 +102,29 @@ export const MCTManager = {
   },
 
   initStages() {
-    const mainForm = this.getStageDOM('questions') as HTMLElement;
-    const mainFormManager = initForm(mainForm, {
-      mode: 'main',
-      prefill: false,
-    });
-    mainFormManager?.hide();
+    const mainForm = this.getStageDOM(StageIDENUM.Questions);
+    if (mainForm) {
+      const mainFormManager = initForm(mainForm, {
+        mode: 'main',
+        prefill: false,
+      });
+      mainFormManager?.hide();
+      stageManagers[StageIDENUM.Questions] = mainFormManager as MainFormManager;
+    }
 
-    const results = this.getStageDOM('results') as HTMLElement;
-    const resultsManager = initResults(results);
-    resultsManager?.hide();
+    const results = this.getStageDOM(StageIDENUM.Results);
+    if (results) {
+      const resultsManager = initResults(results);
+      resultsManager?.hide();
+      stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
+    }
 
-    stageManagers['questions'] = mainFormManager as MainFormManager;
-    stageManagers['results'] = resultsManager as ResultsManager;
+    const appointment = this.getStageDOM(StageIDENUM.Appointment);
+    if (appointment) {
+      const appointmentManager = initAppointment(appointment);
+      appointmentManager?.hide();
+      stageManagers[StageIDENUM.Appointment] = appointmentManager as AppointmentManager;
+    }
   },
 
   getComponentDOM() {
@@ -123,10 +132,7 @@ export const MCTManager = {
     return dom.mctComponent;
   },
 
-  getStageDOM(name: StageID) {
-    if (!dom.stages) throw new Error('Stages not initialised');
-    const stage = dom.stages[name];
-    if (!stage) throw new Error(`Stage '${name}' not found`);
+  getStageDOM(name: StageIDENUM): HTMLElement | undefined {
     return dom.stages[name];
   },
 
@@ -141,114 +147,183 @@ export const MCTManager = {
      * - once questions are done, init the results
      */
 
-    this.goToStage('questions');
-    // this.goToStage('results');
+    // const params = new URLSearchParams(window.location.search);
+    // const profile = params.get(parameters.profile) as ProfileName | undefined;
+
+    // if (profile) this.goToStage('questions', { questions: { profile } });
+
+    // if (profile === 'residential-purchase') {
+    //   this.goToStage('results');
+    // } else {
+    //   this.goToStage('questions');
+    // }
+
+    const numberOfStages = Object.keys(stageManagers).length;
+    if (numberOfStages === 0) {
+      console.error('🔄 No stage managers initialised');
+      return;
+    } else if (numberOfStages === 1) {
+      const onlyStage = Object.values(stageManagers)[0];
+      if (onlyStage) {
+        onlyStage.show();
+        onlyStage.init();
+      }
+    } else {
+      this.goToStage(StageIDENUM.Questions);
+    }
+
+    // this.goToStage(StageIDENUM.Results);
   },
 
-  goToStage(stageId: StageID): boolean {
+  goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
     if (!nextStage) return false;
 
     // hide the current stage
-    const currentStage = stageManagers[state.currentStageId as StageID] ?? null;
+    const currentStage = stageManagers[stateManager.getCurrentStage() as StageIDENUM] ?? null;
     if (currentStage) currentStage.hide();
 
     // update the state, init and show the next stage
-    state.currentStageId = stageId;
+    stateManager.setCurrentStage(stageId);
     nextStage.show();
-    nextStage.init();
+
+    // Pass stage-specific options to the init method
+    const stageOptions = options[stageId];
+    if (stageOptions && typeof nextStage.init === 'function') {
+      nextStage.init(stageOptions);
+    } else {
+      nextStage.init();
+    }
+
     return true;
   },
 
-  getPersistedData(): MCTData {
-    const stored = localStorage.getItem(MCT_ANSWERS_STORAGE_KEY);
-    if (!stored) return {};
-    return JSON.parse(stored);
-  },
-
-  setPersistedData(data: MCTData) {
-    localStorage.setItem(MCT_ANSWERS_STORAGE_KEY, JSON.stringify(data));
-  },
-
   setICID(icid: string) {
-    const data = this.getPersistedData();
-    data.icid = icid;
-    this.setPersistedData(data);
-    state.icid = icid;
-    setToCookie('ICID', icid);
+    stateManager.setICID(icid);
   },
 
   getICID(): string | null {
-    return state.icid;
+    return stateManager.getICID();
   },
 
   setLCID(lcid: string | null) {
-    const data = this.getPersistedData();
-    data.lcid = lcid;
-    this.setPersistedData(data);
-    state.lcid = lcid;
-    setToCookie('LCID', lcid ?? '');
+    stateManager.setLCID(lcid);
   },
 
   getLCID(): string | null {
-    return state.lcid;
+    return stateManager.getLCID();
   },
 
-  setAnswer(key: AnswerKey, value: AnswerValue) {
-    const data = this.getPersistedData();
-    if (!data.answers) data.answers = {};
-    data.answers[key] = value;
-    this.setPersistedData(data);
-    state.answers[key] = value;
+  setAnswer(answerData: AnswerData) {
+    stateManager.setAnswer(answerData);
   },
 
   getAnswer(key: AnswerKey): AnswerValue | null {
-    return state.answers?.[key];
+    return stateManager.getAnswer(key);
+  },
+
+  setAnswers(answerDataArray: AnswerData[]) {
+    stateManager.setAnswers(answerDataArray);
   },
 
   getAnswers(): Answers {
-    return { ...state.answers };
+    return stateManager.getAnswers();
   },
 
-  clearAnswer(key: AnswerKey) {
-    const data = this.getPersistedData();
-    delete data.answers?.[key];
-    this.setPersistedData(data);
-    delete state.answers[key];
+  setCalculations(calculations: Calculations) {
+    stateManager.setCalculations(calculations);
   },
 
-  clearAnswers() {
-    const data = this.getPersistedData();
-    data.answers = {};
-    this.setPersistedData(data);
-    state.answers = {};
+  getCalculations(): Calculations {
+    return stateManager.getCalculations();
   },
 
-  initFromStorage() {
-    const data = this.getPersistedData();
-    state.lcid = data.lcid ?? null;
-    state.icid = data.icid ?? null;
-    state.answers = data.answers ?? {};
+  setMortgageId(mortgageId: number | null) {
+    stateManager.set('mortgageId', mortgageId);
   },
 
-  setProducts(products: Product[]) {
-    state.products = products;
+  getMortgageId(): number | null {
+    return stateManager.get('mortgageId');
   },
 
-  getProducts(): Product[] | null {
-    return state.products;
-  },
+  // clearAnswer(key: AnswerKey) {
+  //   if (USE_NEW_STATE_MANAGEMENT.answers) {
+  //     // Use new state management
+  //     newStateManager.clearAnswer(key);
+  //     // Keep legacy state in sync
+  //     delete legacyState.answers[key];
+  //   } else {
+  //     // Use legacy approach
+  //     const data = this.getPersistedData();
+  //     delete data.answers?.[key];
+  //     this.setPersistedData(data);
+  //     delete legacyState.answers[key];
+  //   }
+  // },
 
-  setSummary(summary: SummaryInfo) {
-    state.summary = summary;
-  },
+  // clearAnswers() {
+  //   if (USE_NEW_STATE_MANAGEMENT.answers) {
+  //     // Use new state management
+  //     newStateManager.clearAnswers();
+  //     // Keep legacy state in sync
+  //     legacyState.answers = {};
+  //   } else {
+  //     // Use legacy approach
+  //     const data = this.getPersistedData();
+  //     data.answers = {};
+  //     this.setPersistedData(data);
+  //     legacyState.answers = {};
+  //   }
+  // },
 
-  getSummary(): SummaryInfo | null {
-    return state.summary;
-  },
+  // setProducts(products: Product[]) {
+  //   stateManager.setProducts(products);
+  // },
+
+  // getProducts(): Product[] | null {
+  //   return stateManager.getProducts();
+  // },
+
+  // setSummary(summary: SummaryInfo) {
+  //   stateManager.setSummary(summary);
+  // },
+
+  // getSummary(): SummaryInfo | null {
+  //   return stateManager.getSummary();
+  // },
 
   getState(): AppState {
-    return { ...state };
+    return stateManager.getState();
+  },
+
+  getCalculationManager(): CalculationManager {
+    return calculationManager;
+  },
+
+  setupEventBusDebug() {
+    if (typeof window === 'undefined') return;
+
+    // Make event bus available globally for testing
+    (window as any).globalEventBus = globalEventBus;
+
+    // Add some test event listeners
+    globalEventBus.on('form:question:changed', (payload) => {
+      console.log('📡 MCT Event: Question changed', payload);
+    });
+
+    globalEventBus.on('form:navigation:update', (payload) => {
+      console.log('📡 MCT Event: Navigation updated', payload);
+    });
+
+    // Make component testing available
+    (window as any).testComponents = testComponents;
+    (window as any).testSimpleComponent = testSimpleComponent;
+
+    console.log('🔧 Event Bus & Component Debug Tools Available!');
+    console.log('- globalEventBus - Access the global event bus');
+    console.log('- globalEventBus.emit("form:question:changed", {...}) - Test events');
+    console.log('- testSimpleComponent() - Test simple component (recommended first)');
+    console.log('- testComponents() - Test full component system');
   },
 };

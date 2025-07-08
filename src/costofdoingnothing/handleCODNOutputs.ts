@@ -1,7 +1,7 @@
 import type { APIResponse } from 'src/types';
-import { numberToCurrency } from 'src/utils/numberToCurrency';
-import { queryElement } from 'src/utils/queryElement';
-import { queryElements } from 'src/utils/queryelements';
+import { numberToCurrency } from '$utils/formatting/numberToCurrency';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
 
 type Output = HTMLDivElement | HTMLSpanElement;
 type BasicObject = { [key: string]: any };
@@ -42,14 +42,8 @@ export class HandleCODNOutputs {
       data = this.result?.result;
     }
 
-    const savingElement = queryElement(
-      `[${attr}-output="SavingBlock"]`,
-      this.component
-    ) as HTMLDivElement;
-    const noSavingElement = queryElement(
-      `[${attr}-output="NoSavingBlock"]`,
-      this.component
-    ) as HTMLDivElement;
+    const savingElement = queryElement(`[${attr}-output="SavingBlock"]`, this.component) as HTMLDivElement;
+    const noSavingElement = queryElement(`[${attr}-output="NoSavingBlock"]`, this.component) as HTMLDivElement;
 
     // Check if the current rate is less than the new rate and show text if so
     if (data['CostOfRate1'] < data['CostOfRate2']) {

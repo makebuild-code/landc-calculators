@@ -1,6 +1,6 @@
 # website middle layer - products mct http endpoint
 
-Last Updated Date : 29/04/2025
+Last Updated Date : 26/06/2025
 
 Created Date : 29/04/2025
 
@@ -55,7 +55,7 @@ e.g. `/productdata/bestbuysMCT`
     "input": {
         "PropertyValue": INT,
         "RepaymentValue": INT,
-        "PropertyType": PropertyType // Enum - INT - valid values - house (1) or flat (2), --- Should we default to house for the products call given we don't have a relevant question?
+        "PropertyType": PropertyType // Enum - INT - valid values - house (1) or flat (2), --- Default to House if you do not have a value for this
         "MortgageType": MortgageType // Enum - INT - valid values - Residential (1) or Buy to Let (2),
         "InterestOnlyValue": INT,
         "TermYears": INT,

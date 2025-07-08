@@ -1,19 +1,26 @@
 import { attr } from './constants';
-import type { OutputType, ResultsOptions } from './types';
-import type { Product, ProductsRequest, ProductsResponse, SummaryInfo } from 'src/mct/shared/api/types/fetchProducts';
+import type {
+  AnswerKey,
+  AnswerName,
+  AnswerValue,
+  ICID,
+  InputValue,
+  LCID,
+  LogUserEventResponse,
+  Product,
+  ProductsResponse,
+  ResultsStageOptions,
+  SummaryInfo,
+} from '$mct/types';
+import { OutputTypeENUM, StageIDENUM } from '$mct/types';
 import { MCTManager } from 'src/mct/shared/MCTManager';
-import { formatNumber } from 'src/utils/formatNumber';
-import type { AnswerKey, AnswerValue, StageID } from 'src/mct/shared/types';
+import { formatNumber } from '$utils/formatting';
 import { Result } from './Result';
-import { EXAMPLE_PRODUCTS_RESPONSE } from 'src/mct/shared/examples/exampleProductsResponse';
-import { EXAMPLE_ANSWERS } from 'src/mct/shared/examples/exampleAnswers';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { generateSummaryLines } from 'src/mct/shared/utils/generateSummaryLines';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
+import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterGroup } from './FilterGroup';
-import type { InputValue } from '../form/types';
-import { generateProductsAPIInput } from 'src/mct/shared/utils/generateProductsAPIInput';
-import { fetchProducts } from 'src/mct/shared/api/fetchProducts';
+import { logUserEventsAPI, productsAPI } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
 
 /**
@@ -39,23 +46,14 @@ import { simulateEvent } from '@finsweet/ts-utils';
  *    - reset filters
  */
 
-const DEFAULT_OPTIONS: ResultsOptions = {
-  // prefill: false,
-  // autoLoad: true,
-  // numberOfResults: 3,
-  // showSummary: true,
-  // showLenders: true,
-  // showDetails: true,
-  // onError: (err) => console.error(err),
-};
-
 export class ResultsManager {
   private component: HTMLElement;
-  public id: StageID;
+  public id: StageIDENUM;
   private isInitialised: boolean = false;
 
-  private products: Product[];
-  private summaryInfo: SummaryInfo;
+  private products: Product[] = [];
+  private product: Product | null = null;
+  private summaryInfo: SummaryInfo | null = null;
 
   private header: HTMLDivElement;
   private outputs: HTMLDivElement[] = [];
@@ -71,6 +69,7 @@ export class ResultsManager {
   private getADecisionButton: HTMLButtonElement;
   private applyDirect: HTMLElement;
   private applyDirectLink: HTMLLinkElement;
+  private applyDirectDialog: HTMLDialogElement;
 
   private results: Result[] = [];
   private resultsList: HTMLElement;
@@ -80,15 +79,11 @@ export class ResultsManager {
   private empty: HTMLElement;
   private pagination: HTMLElement;
   private paginationButton: HTMLButtonElement;
+  private numberOfResults: number = 0;
 
   constructor(component: HTMLElement) {
     this.component = component;
-    this.id = 'results';
-
-    // Update: get response from fetchProducts API and save to state
-    const response = EXAMPLE_PRODUCTS_RESPONSE;
-    this.products = response.result.Products as Product[];
-    this.summaryInfo = response.result.SummaryInfo;
+    this.id = StageIDENUM.Results;
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
@@ -112,6 +107,10 @@ export class ResultsManager {
     this.getADecisionButton = queryElement('button', this.getADecision) as HTMLButtonElement;
     this.applyDirect = queryElement(`[${attr.components}="apply-direct"]`, this.appointmentDialog) as HTMLElement;
     this.applyDirectLink = queryElement('a', this.applyDirect) as HTMLLinkElement;
+    this.applyDirectDialog = queryElement(
+      `[${attr.components}="apply-direct-redirect"]`,
+      this.component
+    ) as HTMLDialogElement;
 
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
@@ -123,16 +122,21 @@ export class ResultsManager {
     this.paginationButton = queryElement('button', this.pagination) as HTMLButtonElement;
   }
 
-  public init(): void {
+  public init(options?: ResultsStageOptions): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
-    // // --- TEMP ---
-    // // Answers will be saved from prior stage, just temporary to avoid inputting every time
-    // Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-    //   MCTManager.setAnswer(key as AnswerKey, value);
-    // });
-    // // --- END OF TEMP ---
+    // if (options?.exampleData) {
+    //   // Answers will be saved from prior stage, just temporary to avoid inputting every time
+    //   Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
+    //     MCTManager.setAnswer({
+    //       key: key as AnswerKey,
+    //       name: key as AnswerName,
+    //       value: value as AnswerValue,
+    //       source: 'user',
+    //     });
+    //   });
+    // }
 
     this.initFilterGroups();
     this.initAppointmentDialog();
@@ -140,6 +144,12 @@ export class ResultsManager {
     this.renderOutputs();
     this.renderFilters();
     this.handleProductsAPI();
+
+    // // Only auto-load products if explicitly requested or if autoLoad is true
+    // if (options?.autoLoad === true) this.handleProductsAPI();
+
+    this.handlePagination();
+    this.handleButtons();
   }
 
   public show(): void {
@@ -151,8 +161,8 @@ export class ResultsManager {
   }
 
   private initFilterGroups(): void {
-    const filterEls = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
-    this.filterGroups = filterEls.map((el) => {
+    const filterGroups = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
+    this.filterGroups = filterGroups.map((el) => {
       return new FilterGroup(el, {
         onChange: () => this.handleChange(),
         groupName: 'filterGroup',
@@ -164,26 +174,36 @@ export class ResultsManager {
     // Get all filter group values and merge them into MCTManager answers
     this.filterGroups.forEach((group) => {
       const value = group.getValue();
-      const name = group.name;
+      const key = group.initialName;
+      const name = group.finalName;
 
-      // Only set the answer if we have a valid name and value
-      if (name && value !== null && value !== undefined) MCTManager.setAnswer(name as AnswerKey, value as AnswerValue);
+      // Only set the answer if we have a valid key, value and name
+      if (key && value !== null && value !== undefined && name)
+        MCTManager.setAnswer({
+          key: key as AnswerKey,
+          name: name as AnswerName,
+          value: value as AnswerValue,
+          source: 'user',
+        });
     });
 
     this.handleProductsAPI();
   }
 
   private initAppointmentDialog(): void {
-    const answers = MCTManager.getAnswers();
-    const { ReadinessToBuy } = answers;
+    const calculations = MCTManager.getCalculations();
+    const { isProceedable } = calculations;
 
-    const proceedable = ReadinessToBuy === 'C' || ReadinessToBuy === 'D';
-    proceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
-    proceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
+    isProceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
+    isProceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
     this.applyDirect.style.display = 'none';
 
     this.appointmentDialogButton.addEventListener('click', () => this.appointmentDialog.showModal());
-    this.appointmentDialogClose.addEventListener('click', () => this.appointmentDialog.close());
+    this.appointmentDialogClose.addEventListener('click', () => {
+      MCTManager.setMortgageId(null);
+      this.product = null;
+      this.appointmentDialog.close();
+    });
     this.appointmentDialog.addEventListener('close', () => (this.applyDirect.style.display = 'none'));
   }
 
@@ -194,12 +214,14 @@ export class ResultsManager {
   }
 
   private renderOutputs(): void {
+    if (!this.summaryInfo) return;
+
     const summaryLines = generateSummaryLines(this.summaryInfo, MCTManager.getAnswers());
     if (!summaryLines) return;
 
     this.outputs.forEach((output) => {
       const key = output.getAttribute(attr.output);
-      const type = output.getAttribute(attr.type) as OutputType;
+      const type = output.getAttribute(attr.type) as OutputTypeENUM;
 
       /**
        * IF:
@@ -247,7 +269,6 @@ export class ResultsManager {
         if (text) output.innerHTML = text;
       } else if (type === 'currency') {
         const value = MCTManager.getAnswer(key as AnswerKey) as number;
-        console.log(key, type, value);
         if (value) output.textContent = formatNumber(value, { type: 'currency' });
       } else if (type === 'percentage') {
         const value = MCTManager.getAnswer(key as AnswerKey) as number;
@@ -262,21 +283,21 @@ export class ResultsManager {
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
     this.filterGroups.forEach((filterGroup) => {
-      const prefillValue = answers[filterGroup.name];
+      const prefillValue = answers[filterGroup.initialName];
       if (prefillValue) filterGroup.setValue(prefillValue as InputValue);
     });
   }
 
-  private renderResults(): void {
+  private initiateResults(): void {
     this.results.forEach((result) => result.remove());
+    this.numberOfResults = 0;
+    this.showListUI('pagination', false);
 
-    const numberOfResults = this.products.length;
-    if (numberOfResults === 0) {
+    if (this.products.length === 0) {
       this.showListUI('empty', true);
       return;
     }
 
-    this.showListUI('empty', false);
     this.results = this.products.map((product) => {
       return new Result(this.resultsList, {
         template: this.resultsTemplate,
@@ -284,18 +305,44 @@ export class ResultsManager {
         onClick: (product) => this.handleProductCTA(product),
       });
     });
+
+    this.renderResults(10);
+    this.showListUI('empty', false);
+  }
+
+  private handlePagination(): void {
+    this.paginationButton.addEventListener('click', () => this.renderResults(10));
+  }
+
+  private handleButtons(): void {
+    this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
+    this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
+    this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
+  }
+
+  private renderResults(number: number = 10): void {
+    // Calculate the range of results to render
+    const startFromIndex = this.numberOfResults;
+    const endAtIndex = startFromIndex + number - 1;
+
+    // Render the results within the calculated range
+    let renderedCount = 0;
+    this.results.forEach((result, index) => {
+      if (index < startFromIndex || index > endAtIndex) return;
+      result.render();
+      renderedCount++;
+    });
+
+    this.numberOfResults += number;
+    this.showListUI('pagination', this.numberOfResults < this.products.length);
   }
 
   private handleProductCTA(product: Product): void {
+    MCTManager.setMortgageId(product.ProductId);
+    this.product = product;
     const { ApplyDirectLink } = product;
 
-    if (ApplyDirectLink) {
-      this.applyDirect.style.removeProperty('display');
-      this.applyDirectLink.href = ApplyDirectLink;
-    } else {
-      this.applyDirect.style.display = 'none';
-    }
-
+    ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
     simulateEvent(this.appointmentDialogButton, 'click');
   }
 
@@ -306,7 +353,7 @@ export class ResultsManager {
     });
 
     try {
-      const response = await fetchProducts(input);
+      const response = await productsAPI.search(input);
       return response;
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -315,8 +362,8 @@ export class ResultsManager {
   }
 
   private async handleProductsAPI() {
-    console.log('handleProductsAPI');
     this.showListUI('loader', true);
+    this.showListUI('pagination', false);
 
     const response = await this.fetchProducts();
     if (!response) {
@@ -327,130 +374,96 @@ export class ResultsManager {
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
 
-    const SapValues = this.products.map((product) => product.SAP);
-    console.log(SapValues);
-
-    console.log(this.products);
-    console.log(this.summaryInfo);
-
-    this.renderResults();
+    this.initiateResults();
     this.renderOutputs();
     this.showListUI('loader', false);
   }
 
-  private showListUI(component: 'loader' | 'empty', show?: boolean): void {
-    const componentEl = component === 'loader' ? this.loader : this.empty;
+  private showListUI(component: 'loader' | 'empty' | 'pagination', show?: boolean): void {
+    const componentEl =
+      component === 'loader'
+        ? this.loader
+        : component === 'empty'
+          ? this.empty
+          : component === 'pagination'
+            ? this.pagination
+            : null;
+    if (!componentEl) return;
+
     show ? componentEl.style.removeProperty('display') : (componentEl.style.display = 'none');
-    show ? (this.resultsList.style.display = 'none') : this.resultsList.style.removeProperty('display');
+
+    // Hide/Show the results list depending on the component being shown
+    const showResultsList = component === 'loader' || component === 'empty' ? !show : show;
+    showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 
-  // public async loadAndRenderResults() {
-  //   const request = this.buildProductsRequest();
-  //   console.log(request);
-  //   if (!request) return;
-  //   try {
-  //     // this.products = await fetchProducts(MCTManager.getAnswers());
-  //     console.log('Products API response:', this.products);
-  //     this.renderAllTemplates();
-  //   } catch (error) {
-  //     this.renderError(error);
-  //     // if (this.options.onError) this.options.onError(error);
-  //   }
-  // }
+  private handleGetFreeAdvice(): void {
+    MCTManager.goToStage(StageIDENUM.Appointment);
+  }
 
-  // private renderAllTemplates() {
-  //   if (!this.products) return;
-  //   const data: ResultsData[] = [];
-  //   if (this.options.showSummary) {
-  //     data.push({ key: 'summary', value: this.renderSummary() });
-  //   }
-  //   if (this.options.showLenders) {
-  //     data.push({ key: 'lenders', value: this.renderLenders() });
-  //   }
-  //   if (this.options.showDetails) {
-  //     data.push({ key: 'details', value: this.renderDetails() });
-  //   }
-  //   this.setResultsData(data);
-  // }
+  private handleGetADecision(): void {
+    window.location.href = 'https://www.landc.co.uk/online/mortgage-finder';
+  }
 
-  // private renderSummary(): string {
-  //   if (!this.products) return '';
-  //   const req = this.buildProductsRequest();
-  //   if (!req) return '';
-  //   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = req;
-  //   const answers = MCTManager.getAnswers();
-  //   const RepaymentType = answers.RepaymentType;
-  //   const RepaymentValueText = formatNumber(RepaymentValue, { currency: true });
-  //   const TermYearsText = `${TermYears} years`;
-  //   const RepaymentTypeText =
-  //     RepaymentType === 'R' ? 'repayment' : RepaymentType === 'I' ? 'interest only' : 'part repayment part interest';
-  //   const SchemeTypesMap = (SchemeTypes as (1 | 2)[]).map((type) => (type === 1 ? 'fixed' : 'variable'));
-  //   const SchemePeriodsMap = (SchemePeriods as (1 | 2 | 3 | 4)[]).map((period) =>
-  //     period === 1 ? '2' : period === 2 ? '3' : period === 3 ? '5' : '5+'
-  //   );
-  //   const SchemePeriodsText =
-  //     SchemePeriodsMap.length === 1
-  //       ? `${SchemePeriodsMap[0]} year`
-  //       : SchemePeriodsMap.length > 1
-  //         ? `${SchemePeriodsMap[0]}-${SchemePeriodsMap[SchemePeriodsMap.length - 1]} year`
-  //         : '';
-  //   const SchemeTypesText =
-  //     SchemeTypesMap.length === 1
-  //       ? `${SchemeTypesMap[0]} rate`
-  //       : SchemeTypesMap.length > 1
-  //         ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
-  //         : '';
-  //   return `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span> with a <span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-  // }
+  private async handleApplyDirect(): Promise<void> {
+    try {
+      // Wait for the log user events API call to complete
+      await this.handleLogUserEvents();
 
-  // private renderLenders(): string {
-  //   if (!this.products) return '';
-  //   const info = this.products.result.SummaryInfo;
-  //   return `We've found <span class="${classes.highlight}">${info.NumberOfProducts}</span> products for you across <span class="${classes.highlight}">${info.NumberOfLenders}</span> lenders.`;
-  // }
+      const lender = this.product?.LenderName;
+      const title = queryElement(
+        `[${attr.components}="apply-direct-redirect-title"]`,
+        this.applyDirectDialog
+      ) as HTMLHeadingElement;
+      title.textContent = `We're connecting you to ${lender}`;
+      this.applyDirectDialog.showModal();
 
-  // private renderDetails(): string {
-  //   if (!this.products) return '';
-  //   const products = this.products.result.Products;
-  //   if (!products || products.length === 0) return '<p>No products found.</p>';
-  //   const rows = products
-  //     .slice(0, this.options.numberOfResults)
-  //     .map(
-  //       (p) =>
-  //         `<tr>
-  //       <td>${p.LenderName}</td>
-  //       <td>${formatNumber(p.Rate, { fallback: '-' })}%</td>
-  //       <td>${formatNumber(p.PMT, { currency: true, fallback: '-' })}</td>
-  //       <td>${formatNumber(p.AnnualCost, { currency: true, fallback: '-' })}</td>
-  //       <td>${formatNumber(p.LTV, { fallback: '-' })}%</td>
-  //     </tr>`
-  //     )
-  //     .join('');
-  //   return `<table class="mct-results-table">
-  //     <thead><tr><th>Lender</th><th>Rate</th><th>Monthly</th><th>Annual Cost</th><th>LTV</th></tr></thead>
-  //     <tbody>${rows}</tbody>
-  //   </table>`;
-  // }
+      setTimeout(() => {
+        window.location.href = this.product?.ApplyDirectLink || '';
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to log user events before redirect:', error);
+      // Optionally, you could still redirect even if logging fails
+      // Or handle the error differently based on your requirements
+    }
+  }
 
-  // private renderError(error: unknown) {
-  //   this.setResultsData([
-  //     { key: 'summary', value: '<span class="error">Failed to load results.</span>' },
-  //     { key: 'lenders', value: '' },
-  //     { key: 'details', value: '' },
-  //   ]);
-  // }
+  private async handleLogUserEvents(): Promise<LogUserEventResponse | null> {
+    const input = {
+      LCID: MCTManager.getLCID() as LCID,
+      ICID: MCTManager.getICID() as ICID,
+      Event: 'ApplyDirect',
+      CreatedBy: 'MCT' as const,
+    };
+    const response = await logUserEventsAPI.logEvent(input);
+    return response;
+  }
 
-  // public setResultsData(data: ResultsData[]) {
-  //   this.resultsData = data;
-  //   this.displayResults();
-  // }
-
-  // private displayResults() {
-  //   this.resultsData.forEach((data) => {
-  //     const el = this.component.querySelector(`[${attr.output}="${data.key}"]`);
-  //     if (el) {
-  //       el.innerHTML = data.value;
-  //     }
-  //   });
-  // }
+  /**
+   * @plan for buttons
+   *
+   * If proceedable:
+   * [X] show 'Get free advice' button
+   * [X] hide 'Get a decision' button
+   * [X] hide 'Apply direct' link by default
+   *
+   * Dialog open:
+   * [X] save mortgage ID to state
+   *
+   * Dialog close:
+   * [X] clear mortgage ID from state
+   *
+   * 'Get free advice' button:
+   * [] do something with the mortgage ID?
+   * [X] go to appointment stage
+   *
+   * 'Get a decision' button:
+   * [] make sure LCID is saved to state
+   * [X] send user to OEF
+   *
+   * 'Apply direct' link:
+   * [x] send user data to LogUserEvents API
+   * [x] show loading modal (3 seconds?)
+   * [x] redirect to ApplyDirectLink
+   */
 }

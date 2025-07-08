@@ -1,19 +1,10 @@
 import type { CostOfDoingNothingRequest } from 'src/calculators/calculators';
 import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse, Input } from 'src/types';
-import { checkInputValidity } from 'src/utils/checkInputValidity';
-import { formatInput } from 'src/utils/formatInput';
-import { getInputValue } from 'src/utils/getInputValue';
-import { queryElement } from 'src/utils/queryElement';
-import { queryElements } from 'src/utils/queryelements';
-import { setError } from 'src/utils/setError';
+import { queryElement, queryElements } from '$utils/dom';
+import { checkInputValidity, formatInput, getInputValue, setError } from '$utils/input';
 
-import type {
-  Inputs as BestBuyInputs,
-  Outputs as BestBuyOutputs,
-  PropertyType,
-  SortColumn,
-} from '../bestbuys/types';
+import type { Inputs as BestBuyInputs, Outputs as BestBuyOutputs, PropertyType, SortColumn } from '../bestbuys/types';
 import { HandleCODNOutputs } from './handleCODNOutputs';
 
 export class CostOfDoingNothingCalculator {
@@ -26,8 +17,8 @@ export class CostOfDoingNothingCalculator {
   private mortgageTypeDropdown: HTMLSelectElement;
   private followOnField: HTMLInputElement;
   private isLoading: boolean;
-  private formattedValues: BestBuyInputs;
-  private formattedCostOfDoingNothingValues: CostOfDoingNothingRequest;
+  private formattedValues: BestBuyInputs = {} as BestBuyInputs;
+  private formattedCostOfDoingNothingValues: CostOfDoingNothingRequest = {} as CostOfDoingNothingRequest;
   private outputHandler: HandleCODNOutputs;
 
   constructor(component: HTMLDivElement) {
@@ -35,10 +26,7 @@ export class CostOfDoingNothingCalculator {
     this.inputs = queryElements(`[data-input], input, select`, component);
     this.buttons = queryElements(`[data-calc-el="button"]`, component);
     this.buttonsText = queryElement(`[data-calc-el="button-text"]`, component) as HTMLDivElement;
-    this.buttonsLoader = queryElement(
-      `[data-calc-el="button-loader"]`,
-      component
-    ) as HTMLDivElement;
+    this.buttonsLoader = queryElement(`[data-calc-el="button-loader"]`, component) as HTMLDivElement;
     this.currentLenderDropdown = queryElement(`#CurrentLender`, component) as HTMLSelectElement;
     this.mortgageTypeDropdown = queryElement(`#MortgageType`, component) as HTMLSelectElement;
     this.followOnField = queryElement(`#FollowOn`, component) as HTMLInputElement;
@@ -133,14 +121,8 @@ export class CostOfDoingNothingCalculator {
 
   //TODO: Make sure all defaults are correct here
   private getBestBuyInput(): BestBuyInputs {
-    const propertyValueInput = queryElement(
-      `[data-input="PropertyValue"]`,
-      this.component
-    ) as HTMLInputElement;
-    const loanAmountInput = queryElement(
-      `[data-input="LoanAmount"]`,
-      this.component
-    ) as HTMLInputElement;
+    const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component) as HTMLInputElement;
+    const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component) as HTMLInputElement;
     const typeInput = queryElement(`[data-input="Type"]`, this.component) as HTMLSelectElement;
     const termYearsInput = queryElement(`[data-input="Term"]`, this.component) as HTMLInputElement;
 
@@ -162,6 +144,7 @@ export class CostOfDoingNothingCalculator {
       SchemeTypes: ['1'],
       NumberOfResults: '1',
       Features: {
+        // @ts-ignore
         Erc: true,
         Offset: false,
         NewBuild: false,
@@ -175,23 +158,12 @@ export class CostOfDoingNothingCalculator {
     return formattedValues;
   }
 
-  private async getCostOfDoingNothingInput(
-    bestBuyResult: BestBuyOutputs
-  ): Promise<CostOfDoingNothingRequest> {
-    const propertyValueInput = queryElement(
-      `[data-input="PropertyValue"]`,
-      this.component
-    ) as HTMLInputElement;
-    const loanAmountInput = queryElement(
-      `[data-input="LoanAmount"]`,
-      this.component
-    ) as HTMLInputElement;
+  private async getCostOfDoingNothingInput(bestBuyResult: BestBuyOutputs): Promise<CostOfDoingNothingRequest> {
+    const propertyValueInput = queryElement(`[data-input="PropertyValue"]`, this.component) as HTMLInputElement;
+    const loanAmountInput = queryElement(`[data-input="LoanAmount"]`, this.component) as HTMLInputElement;
     const typeInput = queryElement(`[data-input="Type"]`, this.component) as HTMLSelectElement;
     const termYearsInput = queryElement(`[data-input="Term"]`, this.component) as HTMLInputElement;
-    const followOnInput = queryElement(
-      `[data-input="FollowOn"]`,
-      this.component
-    ) as HTMLInputElement;
+    const followOnInput = queryElement(`[data-input="FollowOn"]`, this.component) as HTMLInputElement;
 
     const propertyValue = propertyValueInput ? parseInt(propertyValueInput.value) : 0;
     const loanAmount = loanAmountInput ? parseInt(loanAmountInput.value) : 0;
@@ -199,13 +171,14 @@ export class CostOfDoingNothingCalculator {
     const termYears = termYearsInput ? parseInt(termYearsInput.value) : 0;
     const followOnRate = followOnInput ? parseFloat(followOnInput.value) : 0;
 
+    // @ts-ignore
     const formattedCostOfDoingNothingValues: CostOfDoingNothingRequest = {
       calculator: 'comparerates',
       input: {
         PropertyValue: propertyValue, // min: 1, max: 10000000, step: 500, value: 250000
         LoanAmount: loanAmount, // min: 5000, max: 10000000, step: 1000, value: 125000
         Term: termYears, // min: 1, max: 40, step: 1, value: 25
-        Type: type,
+        Type: type as 'R' | 'I',
         ComparisonRates: [
           {
             Rate: followOnRate, // min: 0.1, max: 15, step: 0.05, value: null | 4.99
@@ -342,18 +315,18 @@ export class CostOfDoingNothingCalculator {
     this.followOnField.value = followOnRate;
   }
 
-  private handleResponse(response: APIResponse): void {
-    const costOfRate1 = response.data.CostOfRate1;
-    const costOfRate2 = response.data.CostOfRate2;
+  // private handleResponse(response: APIResponse): void {
+  //   const costOfRate2 = response.data.CostOfRate2;
+  //   const costOfRate1 = response.data.CostOfRate1;
 
-    const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
-    const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
+  //   const costOfRate1Element = queryElement(`[data-calc-output="CostOfRate1"]`, this.component);
+  //   const costOfRate2Element = queryElement(`[data-calc-output="CostOfRate2"]`, this.component);
 
-    if (costOfRate1Element) costOfRate1Element.textContent = `£${costOfRate1}`;
-    if (costOfRate2Element) costOfRate2Element.textContent = `£${costOfRate2}`;
+  //   if (costOfRate1Element) costOfRate1Element.textContent = `£${costOfRate1}`;
+  //   if (costOfRate2Element) costOfRate2Element.textContent = `£${costOfRate2}`;
 
-    // Additional handling for chart or other response data can be added here
-  }
+  //   // Additional handling for chart or other response data can be added here
+  // }
 
   private async init(): Promise<void> {
     await this.handleSVRRequest(); // Fetch and populate lender data on initialization

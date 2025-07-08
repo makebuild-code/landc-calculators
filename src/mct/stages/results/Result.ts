@@ -1,11 +1,10 @@
-import type { Product } from 'src/mct/shared/api/types/fetchProducts';
-import type { ResultsOptions } from './types';
-import { queryElement } from '$utils/queryElement';
-import { attr } from './constants';
-import { queryElements } from '$utils/queryelements';
-import { formatNumber } from '$utils/formatNumber';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
+import { formatNumber } from '$utils/formatting/formatNumber';
 
-const DEFAULT_OPTIONS = {};
+import { attr } from './constants';
+import type { Product } from '$mct/types';
+import { OutputTypeENUM } from '$mct/types';
 
 interface Options {
   template: HTMLElement;
@@ -38,7 +37,6 @@ export class Result {
   private init(): void {
     this.populate();
     this.bindEvents();
-    this.render();
   }
 
   private populate(): void {
@@ -48,7 +46,7 @@ export class Result {
       let outputValue = this.product[outputName] ?? 0;
 
       switch (outputType) {
-        case 'currency':
+        case OutputTypeENUM.Currency:
           outputValue = formatNumber(outputValue as number, { type: 'currency' });
           break;
         case 'boolean':
