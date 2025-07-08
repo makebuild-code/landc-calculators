@@ -11,4 +11,6 @@ export const attr = {
   element: 'data-mct-questions-element',
   output: 'data-mct-questions-output',
   type: 'data-mct-questions-outputs-type',
+  hideOnGroup: 'data-mct-questions-hide-on-group',
+  showOnGroup: 'data-mct-questions-show-on-group',
 };

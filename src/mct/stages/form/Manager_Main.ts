@@ -22,6 +22,8 @@ export class MainFormManager extends FormManager {
     nextButton: HTMLButtonElement;
     prevButton: HTMLButtonElement;
     groupElements: HTMLElement[];
+    hideOnGroup: HTMLElement[];
+    showOnGroup: HTMLElement[];
   };
   private optionRemoved: boolean = false;
 
@@ -36,6 +38,8 @@ export class MainFormManager extends FormManager {
       nextButton: queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement,
       prevButton: queryElement(`[${attr.components}="previous"]`, component) as HTMLButtonElement,
       groupElements: queryElements(`[${attr.group}]`, component) as HTMLElement[],
+      hideOnGroup: queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[],
+      showOnGroup: queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[],
     };
   }
 
@@ -53,6 +57,8 @@ export class MainFormManager extends FormManager {
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
+
+    this.handleShowHideOnGroup();
 
     this.prepareWrapper();
 
@@ -233,6 +239,48 @@ export class MainFormManager extends FormManager {
       // console.log(MCTManager.getAnswers());
       MCTManager.goToStage(StageIDENUM.Results);
     }
+
+    this.components.hideOnGroup.forEach((element) => {
+      element.style.display = 'none';
+    });
+
+    this.components.showOnGroup.forEach((element) => {
+      element.style.display = 'block';
+    });
+
+    this.handleShowHideOnGroup();
+  }
+
+  private handleShowHideOnGroup(): void {
+    console.log('handleShowHideOnGroup');
+    const activeGroup = this.getActiveGroup();
+    console.log(activeGroup);
+    if (!activeGroup) return;
+
+    const { name } = activeGroup;
+    console.log(name);
+
+    // hide elements that are in the hideOnGroup array
+    this.components.hideOnGroup.forEach((element) => {
+      const group = element.getAttribute(attr.hideOnGroup);
+
+      if (group === name) {
+        element.style.display = 'none';
+      } else {
+        element.style.removeProperty('display');
+      }
+    });
+
+    // show elements that are in the showOnGroup array
+    this.components.showOnGroup.forEach((element) => {
+      const group = element.getAttribute(attr.showOnGroup);
+
+      if (group === name) {
+        element.style.removeProperty('display');
+      } else {
+        element.style.display = 'none';
+      }
+    });
   }
 
   public navigateToPreviousGroup() {
@@ -266,7 +314,7 @@ export class MainFormManager extends FormManager {
       this.activeGroupIndex = identifierGroupIndex;
       this.showHeader('static');
       previousGroup = identifierGroup;
-    } else return; // start of form, do nothing
+    } else return this.handleShowHideOnGroup();
 
     if (!previousGroup) return logError(`Previous group: No previous group found`);
     if (!(previousGroup instanceof MainGroup)) return logError(`Previous group: Previous group is not a main group`);
@@ -278,6 +326,8 @@ export class MainFormManager extends FormManager {
 
     previousGroup.activeQuestionIndex = lastVisibleIndex;
     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
+
+    this.handleShowHideOnGroup();
   }
 
   private initialiseProfileSelect(value: ProfileNameENUM) {
