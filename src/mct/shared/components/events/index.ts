@@ -1,1 +1,2 @@
-export { EventBus, type EventPayload, type EventHandler, type AnyEventHandler } from './EventBus';
+export * from './EventBus';
+export * from './globalEventBus';

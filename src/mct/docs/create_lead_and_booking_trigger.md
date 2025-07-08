@@ -44,7 +44,7 @@ Auth token / IP white list
 
 Calls internal endpoints:
 
-`/Enquiry/ByLcidAndIcid`  
+`/Enquiry/ByLcidAndIcid`
 `/Enquiry/CreateLead`
 `/Booking/Link/Token`
 `/Booking/Book`

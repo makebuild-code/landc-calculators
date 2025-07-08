@@ -1,4 +1,4 @@
-import { DOM_CONFIG, FILTERS_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import type {
   AnswerKey,
   AnswerName,
@@ -56,7 +56,6 @@ export class ResultsManager {
   private products: Product[] = [];
   private product: Product | null = null;
   private summaryInfo: SummaryInfo | null = null;
-  private updateAnswersButton: HTMLButtonElement;
 
   private header: HTMLDivElement;
   private outputs: HTMLDivElement[] = [];
@@ -92,7 +91,6 @@ export class ResultsManager {
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
-    this.updateAnswersButton = queryElement(`[${attr.components}="update-answers"]`, this.header) as HTMLButtonElement;
 
     this.showIfProceedable = queryElements(`[${attr.showIfProceedable}]`, this.component) as HTMLElement[];
 
@@ -146,18 +144,17 @@ export class ResultsManager {
     //   });
     // }
 
-    this.handleUpdateAnswers();
     this.initFilterGroups();
     this.initAppointmentDialog();
     this.initListElements();
     this.renderOutputs();
     this.renderFilters();
-    this.saveFilterValues();
     this.handleProductsAPI();
 
     // // Only auto-load products if explicitly requested or if autoLoad is true
     // if (options?.autoLoad === true) this.handleProductsAPI();
 
+    this.handlePagination();
     this.handleButtons();
     this.handleShowIfProceedable();
   }
@@ -170,12 +167,6 @@ export class ResultsManager {
     this.component.style.display = 'none';
   }
 
-  private handleUpdateAnswers(): void {
-    this.updateAnswersButton.addEventListener('click', () => {
-      MCTManager.goToStage(StageIDENUM.Questions);
-    });
-  }
-
   private initFilterGroups(): void {
     const filterGroups = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
     this.filterGroups = filterGroups.map((el) => {
@@ -186,7 +177,7 @@ export class ResultsManager {
     });
   }
 
-  private saveFilterValues(): void {
+  public handleChange(): void {
     // Get all filter group values and merge them into MCTManager answers
     this.filterGroups.forEach((group) => {
       const value = group.getValue();
@@ -202,10 +193,7 @@ export class ResultsManager {
           source: 'user',
         });
     });
-  }
 
-  public handleChange(): void {
-    this.saveFilterValues();
     this.handleProductsAPI();
   }
 
@@ -301,13 +289,9 @@ export class ResultsManager {
 
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
-    const filters = FILTERS_CONFIG;
     this.filterGroups.forEach((filterGroup) => {
-      const answer = answers[filterGroup.initialName];
-      const config = filters[filterGroup.initialName as keyof typeof filters];
-
-      if (answer) filterGroup.setValue(answer as InputValue);
-      else if (config) filterGroup.setValue(config as InputValue);
+      const prefillValue = answers[filterGroup.initialName];
+      if (prefillValue) filterGroup.setValue(prefillValue as InputValue);
     });
   }
 
@@ -333,11 +317,14 @@ export class ResultsManager {
     this.showListUI('empty', false);
   }
 
+  private handlePagination(): void {
+    this.paginationButton.addEventListener('click', () => this.renderResults(10));
+  }
+
   private handleButtons(): void {
     this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
     this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
     this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
-    this.paginationButton.addEventListener('click', () => this.renderResults(10));
   }
 
   private handleShowIfProceedable(): void {
@@ -422,8 +409,8 @@ export class ResultsManager {
 
     show ? componentEl.style.removeProperty('display') : (componentEl.style.display = 'none');
 
-    // Hide/Show the results list depending on the component being shown, always show for pagination
-    const showResultsList = component === 'loader' || component === 'empty' ? !show : true;
+    // Hide/Show the results list depending on the component being shown
+    const showResultsList = component === 'loader' || component === 'empty' ? !show : show;
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 

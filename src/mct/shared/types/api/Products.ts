@@ -55,6 +55,11 @@ export enum SortColumnENUM {
   Fees = 6,
 }
 
+export enum SapValueENUM {
+  Yes = 81,
+  No = 80,
+}
+
 // Product request structure
 export interface ProductsRequest {
   PropertyValue: number;

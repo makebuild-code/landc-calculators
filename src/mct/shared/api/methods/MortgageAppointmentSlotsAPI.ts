@@ -1,5 +1,5 @@
 import { APIClient } from '../client/APIClient';
-import { ENDPOINTS } from '$mct/config';
+import { API_CONFIG } from '$mct/config';
 import type { MortgageAppointmentSlotsResponse } from '$mct/types';
 
 export class MortgageAppointmentSlotsAPI {
@@ -12,7 +12,7 @@ export class MortgageAppointmentSlotsAPI {
     });
 
     return this.client.request<MortgageAppointmentSlotsResponse>(
-      `${ENDPOINTS.mortgageAppointmentSlots}?${params.toString()}`,
+      `${API_CONFIG.endpoints.mortgageAppointmentSlots}?${params.toString()}`,
       {
         method: 'GET',
       }

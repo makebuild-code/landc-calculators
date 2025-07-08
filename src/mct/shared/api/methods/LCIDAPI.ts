@@ -1,12 +1,12 @@
 import { APIClient } from '../client/APIClient';
-import { ENDPOINTS } from '$mct/config';
+import { API_CONFIG } from '$mct/config';
 import type { ICID, LCID } from '$mct/types';
 
 export class LCIDAPI {
   constructor(private client: APIClient) {}
 
   async generate(lcid: LCID | null, icid: ICID | null): Promise<LCID> {
-    const response = await this.client.request<{ result: { lcid: LCID } }>(ENDPOINTS.lcid, {
+    const response = await this.client.request<{ result: { lcid: LCID } }>(API_CONFIG.endpoints.lcid, {
       method: 'POST',
       body: JSON.stringify({
         endpoint: 'NewEnquiry',

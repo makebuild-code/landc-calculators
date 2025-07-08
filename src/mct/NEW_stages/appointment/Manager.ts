@@ -51,9 +51,6 @@ export class AppointmentManager {
   private formPanel: HTMLElement;
   private tag: HTMLElement;
   private form: HTMLFormElement;
-  private formSuccess: HTMLElement;
-  private tryAgainDialog: HTMLDialogElement;
-  private tryAgainButton: HTMLButtonElement;
 
   // Appointment slots data
   private appointmentDays: AppointmentDay[] = [];
@@ -93,12 +90,6 @@ export class AppointmentManager {
     this.formPanel = queryElement(`[${attr.panel}="${PANEL_ENUM.FORM}"]`, this.component) as HTMLElement;
     this.tag = queryElement(`[${attr.components}="tag"]`, this.formPanel) as HTMLElement;
     this.form = queryElement(`form`, this.formPanel) as HTMLFormElement;
-    this.formSuccess = queryElement(`[${attr.form}="success"]`, this.formPanel) as HTMLElement;
-    this.tryAgainDialog = queryElement(`[${attr.components}="try-again"]`, this.formPanel) as HTMLDialogElement;
-    this.tryAgainButton = queryElement(
-      `[${attr.components}="try-again-button"]`,
-      this.tryAgainDialog
-    ) as HTMLButtonElement;
   }
 
   public init(options?: AppointmentStageOptions): void {
@@ -107,7 +98,6 @@ export class AppointmentManager {
     this.setLoadingState(true);
     this.timesGroup.style.display = 'none';
     this.formPanel.style.display = 'none';
-    this.formSuccess.style.display = 'none';
     this.bindEvents();
 
     // Load initial dates
@@ -126,11 +116,10 @@ export class AppointmentManager {
 
   private bindEvents(): void {
     this.bookButton.addEventListener('click', () => this.navigate('next'));
+
     this.backButtons.forEach((button) => {
       button.addEventListener('click', () => this.handleBackButtons(button));
     });
-
-    this.form.addEventListener('submit', (event) => this.onFormSubmit(event));
   }
 
   private showLoader(show: boolean): void {
@@ -158,7 +147,9 @@ export class AppointmentManager {
   private navigateNext(): void {
     switch (this.currentPanel) {
       case PANEL_ENUM.CALENDAR:
-        if (this.canProceedToForm()) this.showFormPanel();
+        if (this.canProceedToForm()) {
+          this.showFormPanel();
+        }
         break;
       case PANEL_ENUM.FORM:
         this.handleFormSubmission();
@@ -202,7 +193,7 @@ export class AppointmentManager {
 
   private navigateToResults(): void {
     console.log('Back to results');
-    MCTManager.goToStage(StageIDENUM.Results);
+    // TODO: Implement navigation back to results stage
   }
 
   private async handleDays(isInit: boolean, startDate?: Date): Promise<void> {
@@ -360,15 +351,6 @@ export class AppointmentManager {
 
   /**
    * Handle form submission by collecting form data and state data, then calling the API
-   * @param event - The event object
-   */
-  private onFormSubmit(event: Event): void {
-    event.preventDefault();
-    this.handleFormSubmission();
-  }
-
-  /**
-   * Handle form submission by collecting form data and state data, then calling the API
    */
   private async handleFormSubmission(): Promise<void> {
     try {
@@ -403,39 +385,55 @@ export class AppointmentManager {
         return;
       }
 
+      //   {
+      //     "PurchRemo": "Purchase",
+      //     "FTB": "No",
+      //     "ResiBtl": "Residential",
+      //     "ReadinessToBuy": "MadeAnOffer",
+      //     "CreditImpaired": "No",
+      //     "PropertyValue": 350000,
+      //     "DepositAmount": 30000,
+      //     "RepaymentType": "Repayment",
+      //     "MortgageLength": 30,
+      //     "SchemeTypes": [
+      //         "Fixed"
+      //     ],
+      //     "SchemePeriods": "TwoYears"
+      // }
+
       // Create the API request with default values for required fields
       const request: CreateLeadAndBookingRequest = {
         enquiry: {
           // EnquiryId: 0, // Default value - should be provided by the system
-          //   PartnerId: 1, // Default value - should be configurable
+          PartnerId: 1, // Default value - should be configurable
           icid: stateData.icid as ICID,
           lcid: stateData.lcid as LCID,
-          //   FirstName: formData.FirstName,
-          //   Surname: formData.Surname,
-          //   Email: formData.Email,
-          //   Mobile: formData.Mobile,
-          //   PurchasePrice: stateData.PropertyValue,
-          //   RepaymentType: stateData.RepaymentType,
-          //   OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
-          //   MortgageLength: stateData.MortgageLength,
-          //   //   MaximumBudget: stateData.MaximumBudget,
-          //   //   BuyerType: stateData.BuyerType,
-          //   ResiBtl: stateData.ResiBtl,
-          //   Lender: stateData.Lender,
-          //   ReadinessToBuy: stateData.ReadinessToBuy,
-          //   PurchRemo: stateData.PurchRemo,
-          //   PropertyValue: stateData.PropertyValue,
-          //   DepositAmount: stateData.DepositAmount,
-          //   LTV: calculations.LTV as number,
-          //   // MortgageType: stateData.MortgageType,
-          //   // Source: stateData.Source,
-          //   //   SourceId: stateData.SourceId,
-          //   CreditImpaired: stateData.CreditImpaired,
-          //   IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted,
-          //   IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted,
-          //   IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted,
-          //   IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
-          //   IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
+          FirstName: formData.FirstName,
+          Surname: formData.Surname,
+          Email: formData.Email,
+          Mobile: formData.Mobile,
+          PurchasePrice: stateData.PropertyValue,
+          RepaymentType: stateData.RepaymentType,
+          OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
+          MortgageLength: stateData.MortgageLength,
+          //   MaximumBudget: stateData.MaximumBudget,
+          //   BuyerType: stateData.BuyerType,
+          ResiBtl: stateData.ResiBtl,
+          Lender: stateData.Lender,
+          ReadinessToBuy: stateData.ReadinessToBuy,
+          PurchRemo: stateData.PurchRemo,
+          PropertyValue: stateData.PropertyValue,
+          DepositAmount: stateData.DepositAmount,
+          LTV: calculations.LTV as number,
+          // MortgageType: stateData.MortgageType,
+          // Source: stateData.Source,
+          //   SourceId: stateData.SourceId,
+          CreditImpaired: stateData.CreditImpaired,
+          IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted,
+          IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted,
+          IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted,
+          IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
+          IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
         },
         booking: appointmentData,
       };
@@ -448,21 +446,10 @@ export class AppointmentManager {
       console.log('Booking response:', response);
 
       if (response.error) {
-        if (response.error.includes('409')) {
-          this.tryAgainDialog.showModal();
-          this.tryAgainButton.addEventListener('click', () => {
-            this.tryAgainDialog.close();
-            this.showCalendarPanel();
-          });
-        } else {
-          console.error('Booking failed:', response.error);
-        }
-
+        console.error('Booking failed:', response.error);
+        // Handle error - could show a user-friendly message
         return;
       }
-
-      this.form.style.display = 'none';
-      this.formSuccess.style.removeProperty('display');
 
       //   // Handle success - could redirect to the URL or show success message
       //   if (response.url) {
@@ -522,7 +509,6 @@ export class AppointmentManager {
       // Map state and answers to API fields
       const stateData: Partial<EnquiryLead> = {
         icid: state.icid || '',
-        lcid: state.lcid || '',
         PurchasePrice: this.getNumericAnswer(answers, 'PropertyValue'),
         RepaymentType:
           RepaymentTypeENUM[this.getStringAnswer(answers, 'RepaymentType') as keyof typeof RepaymentTypeENUM],
@@ -564,20 +550,14 @@ export class AppointmentManager {
         return null;
       }
 
-      // Parse the time (format is "HH:MM:SS-HH:MM:SS" or "HH:MM-HH:MM")
+      // Parse the time (format is "HH:MM-HH:MM")
       const timeParts = time.split('-');
-      // Ensure bookingStart and bookingEnd are in "HH:MM" format
-      const formatToHHMM = (t: string) => {
-        // Accepts "HH:MM:SS" or "HH:MM"
-        const parts = t.split(':');
-        return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : t;
-      };
-      const startTime = formatToHHMM(timeParts[0]); // e.g., "09:00"
-      const endTime = formatToHHMM(timeParts[1]); // e.g., "10:00"
+      const startTime = timeParts[0]; // e.g., "09:00"
+      const endTime = timeParts[1]; // e.g., "10:00"
 
       const booking: Booking = {
         source: 'SYSTEM', // unsure
-        bookingDate: new Date(date).toISOString(),
+        bookingDate: new Date(date),
         bookingStart: startTime,
         bookingEnd: endTime,
         bookingProfile: 'DEFAULT', // unsure

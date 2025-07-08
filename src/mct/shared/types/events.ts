@@ -1,4 +1,5 @@
-import type { AnswerData, AppState } from '$mct/types';
+import type { AnswerData, AppState, StageIDENUM } from '$mct/types';
+import type { QuestionComponent } from 'src/mct/stages/form/Questions';
 
 /**
  * Event listener tracking interface
@@ -37,113 +38,159 @@ export interface TrackedEventListener {
   options?: AddEventListenerOptions;
 }
 
+export enum MCTEventNames {
+  STAGE_GO_TO = 'mct:stage:goTo',
+}
+
+export enum FormEventNames {
+  QUESTION_CHANGED = 'form:question:changed',
+  QUESTION_VALIDATED = 'form:question:validated',
+  QUESTION_REQUIRED = 'form:question:required',
+  QUESTION_UNREQUIRED = 'form:question:unrequired',
+  INPUT_CHANGED = 'input:changed',
+  INPUT_ON_ENTER = 'input:on-enter',
+  GROUP_CHANGED = 'form:group:changed',
+  GROUP_SHOWN = 'form:group:shown',
+  GROUP_HIDDEN = 'form:group:hidden',
+  NAVIGATION_UPDATE = 'form:navigation:update',
+  NAVIGATION_NEXT = 'form:navigation:next',
+  NAVIGATION_PREV = 'form:navigation:prev',
+  ANSWERS_SAVED = 'form:answers:saved',
+  ANSWERS_LOADED = 'form:answers:loaded',
+  INITIALIZED = 'form:initialized',
+  COMPLETED = 'form:completed',
+}
+
+export enum StateEventNames {
+  CHANGED = 'state:changed',
+  LOADED = 'state:loaded',
+  SAVED = 'state:saved',
+}
+
+export enum APIEventNames {
+  REQUEST_START = 'api:request:start',
+  REQUEST_SUCCESS = 'api:request:success',
+  REQUEST_ERROR = 'api:request:error',
+}
+
 /**
  * Typed event definitions for the MCT application
  * This provides type safety for event payloads
  */
+
+export interface MCTEvents {
+  [MCTEventNames.STAGE_GO_TO]: {
+    stageId: StageIDENUM;
+  };
+}
+
 export interface FormEvents {
   // Question-related events
-  'form:question:changed': {
-    questionId: string;
-    value: any;
-    isValid: boolean;
-    groupName: string;
+  [FormEventNames.QUESTION_CHANGED]: {
+    question: QuestionComponent;
   };
 
-  'form:question:validated': {
-    questionId: string;
-    isValid: boolean;
-    errors: string[];
+  [FormEventNames.QUESTION_VALIDATED]: {
+    question: QuestionComponent;
   };
 
-  'form:question:required': {
-    questionId: string;
+  [FormEventNames.QUESTION_REQUIRED]: {
+    question: QuestionComponent;
   };
 
-  'form:question:unrequired': {
-    questionId: string;
+  [FormEventNames.QUESTION_UNREQUIRED]: {
+    question: QuestionComponent;
   };
+
+  // // Input-related events
+  // [FormEventNames.INPUT_CHANGED]: {
+  //   question: QuestionComponent;
+  // };
+
+  // [FormEventNames.INPUT_ON_ENTER]: {
+  //   question: QuestionComponent;
+  // };
 
   // Group-related events
-  'form:group:changed': {
+  [FormEventNames.GROUP_CHANGED]: {
     groupId: string;
     activeQuestionIndex: number;
     totalQuestions: number;
   };
 
-  'form:group:shown': {
+  [FormEventNames.GROUP_SHOWN]: {
     groupId: string;
   };
 
-  'form:group:hidden': {
+  [FormEventNames.GROUP_HIDDEN]: {
     groupId: string;
   };
 
   // Navigation events
-  'form:navigation:update': {
-    nextEnabled: boolean;
-    prevEnabled: boolean;
+  [FormEventNames.NAVIGATION_UPDATE]: {
+    nextEnabled?: boolean;
+    prevEnabled?: boolean;
   };
 
-  'form:navigation:next': {
+  [FormEventNames.NAVIGATION_NEXT]: {
     fromGroup: string;
-    toGroup: string;
+    // toGroup: string;
   };
 
-  'form:navigation:prev': {
+  [FormEventNames.NAVIGATION_PREV]: {
     fromGroup: string;
-    toGroup: string;
+    // toGroup: string;
   };
 
   // Answer-related events
-  'form:answers:saved': {
+  [FormEventNames.ANSWERS_SAVED]: {
     answers: AnswerData[];
   };
 
-  'form:answers:loaded': {
+  [FormEventNames.ANSWERS_LOADED]: {
     answers: AnswerData[];
   };
 
   // Form lifecycle events
-  'form:initialized': {
+  [FormEventNames.INITIALIZED]: {
     totalGroups: number;
     totalQuestions: number;
   };
 
-  'form:completed': {
+  [FormEventNames.COMPLETED]: {
     totalAnswers: number;
   };
 }
 
 export interface StateEvents {
-  'state:changed': {
+  [StateEventNames.CHANGED]: {
     changes: Partial<AppState>;
     previousState: AppState;
     currentState: AppState;
   };
 
-  'state:loaded': {
+  [StateEventNames.LOADED]: {
     state: AppState;
   };
 
-  'state:saved': {
+  [StateEventNames.SAVED]: {
     state: AppState;
   };
 }
 
 export interface APIEvents {
-  'api:request:start': {
+  [APIEventNames.REQUEST_START]: {
     endpoint: string;
     method: string;
   };
 
-  'api:request:success': {
+  [APIEventNames.REQUEST_SUCCESS]: {
     endpoint: string;
     method: string;
     response: any;
   };
 
-  'api:request:error': {
+  [APIEventNames.REQUEST_ERROR]: {
     endpoint: string;
     method: string;
     error: Error;
@@ -151,7 +198,7 @@ export interface APIEvents {
 }
 
 // Combine all event types
-export interface AllEvents extends FormEvents, StateEvents, APIEvents {}
+export interface AllEvents extends MCTEvents, FormEvents, StateEvents, APIEvents {}
 
 // Type helpers
 export type EventName = keyof AllEvents;
@@ -159,7 +206,10 @@ export type EventPayload<T extends EventName> = AllEvents[T];
 
 // Event categories for easier filtering
 export const EVENT_CATEGORIES = {
+  MCT: 'mct:',
   FORM: 'form:',
+  RESULTS: 'results:',
+  APPOINTMENT: 'appointment:',
   STATE: 'state:',
   API: 'api:',
 } as const;

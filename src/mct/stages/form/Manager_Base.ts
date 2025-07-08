@@ -1,4 +1,4 @@
-import { PROFILES } from '$mct/config';
+import { PROFILES_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import type {
   AnswerData,
@@ -13,6 +13,8 @@ import { StageIDENUM } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
+
+const PROFILES = PROFILES_CONFIG.profiles;
 
 export abstract class FormManager {
   protected component: HTMLElement;
@@ -51,9 +53,9 @@ export abstract class FormManager {
     this.questions.delete(question);
   }
 
-  public getQuestions(): Set<QuestionComponent> {
-    return this.questions;
-  }
+  // public getQuestions(): Set<QuestionComponent> {
+  //   return this.questions;
+  // }
 
   public saveAnswersToMCT(): void {
     const answerDataArray: AnswerData[] = [];
@@ -88,9 +90,4 @@ export abstract class FormManager {
     this.profile = profile ? profile : null;
     return profile ? profile : null;
   }
-
-  // protected reset(): void {
-  //   MCTManager.clearAnswers();
-  //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
-  // }
 }

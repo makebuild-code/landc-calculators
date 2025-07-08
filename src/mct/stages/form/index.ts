@@ -1,3 +1,4 @@
+import { StageIDENUM } from '$mct/types';
 import type { FormOptions } from '../../shared/types/common';
 import { MainFormManager } from './Manager_Main';
 

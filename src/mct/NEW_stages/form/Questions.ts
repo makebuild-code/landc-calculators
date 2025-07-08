@@ -2,13 +2,12 @@ import { lendersAPI } from '$mct/api';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { FormEventNames, type Answers, type AnswerValue, type SelectOption } from '$mct/types';
-import type { FormManager } from './Manager_Base';
+import type { BaseFormManager } from './Base';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
 
 interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
-  formManager: FormManager;
   indexInGroup: number;
 }
 
@@ -19,13 +18,11 @@ interface QuestionState extends StatefulInputGroupState {
 }
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
-  private formManager: FormManager;
   public indexInGroup: number;
 
   constructor(options: QuestionOptions) {
     super(options);
 
-    this.formManager = options.formManager;
     this.onEnter = options.onEnter;
     this.indexInGroup = options.indexInGroup;
   }
@@ -94,14 +91,12 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   public require(): void {
     this.eventBus.emit(FormEventNames.QUESTION_REQUIRED, { question: this });
-    this.formManager.saveQuestion(this);
     this.show();
     this.setStateValue('isVisible', true);
   }
 
   public unrequire(): void {
     this.eventBus.emit(FormEventNames.QUESTION_UNREQUIRED, { question: this });
-    this.formManager.removeQuestion(this);
     this.hide();
     this.setStateValue('isVisible', false);
   }

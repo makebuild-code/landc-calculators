@@ -1,7 +1,9 @@
+import { FILTERS_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import {
   MortgageTypeENUM,
   PropertyTypeENUM,
+  SapValueENUM,
   SchemePeriodsENUM,
   SchemePurposeENUM,
   SchemeTypesENUM,
@@ -12,6 +14,7 @@ import {
   type ProductsOptions,
   type ProductsRequest,
 } from '$mct/types';
+import { getEnumKey } from './getEnumKey';
 
 export const generateProductsAPIInput = (answers: Answers, options: ProductsOptions = {}): ProductsRequest => {
   // Handle all values coming from the answers
@@ -31,15 +34,39 @@ export const generateProductsAPIInput = (answers: Answers, options: ProductsOpti
   const SchemeTypesValue = answers.SchemeTypes as CheckboxList;
   const SchemeTypes = SchemeTypesValue.map((type) => SchemeTypesENUM[type as keyof typeof SchemeTypesENUM]);
 
+  console.log('answers.NewBuild: ', answers.NewBuild);
+  console.log('options.NewBuild: ', options.NewBuild);
+  console.log('answers.SapValue: ', answers.SapValue);
+  console.log('options.SapValue: ', options.SapValue);
+
+  const NewBuild =
+    answers.NewBuild === 'true'
+      ? true
+      : answers.NewBuild === 'false'
+        ? false
+        : options.NewBuild
+          ? options.NewBuild
+          : FILTERS_CONFIG.NewBuild === 'true'
+            ? true
+            : false;
+
+  const SapValue = answers.SapValue
+    ? SapValueENUM[answers.SapValue as keyof typeof SapValueENUM]
+    : options.SapValue
+      ? options.SapValue
+      : FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
+        ? SapValueENUM.No
+        : SapValueENUM.Yes;
+
   // Handle all values coming from the options
   const NumberOfResults = options.numberOfResults ?? 1;
   const SortColumn = options.sortColumn ?? SortColumnENUM.Rate;
-  const SapValue = options.SapValue ?? 1; // Green = 81 or higher
+
   const Features: Features = {};
   if (options.HelpToBuy) Features.HelpToBuy = true;
   if (options.Offset) Features.Offset = true;
   if (options.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = true;
-  if (options.NewBuild) Features.NewBuild = true;
+  if (NewBuild !== undefined) Features.NewBuild = NewBuild;
 
   const input: ProductsRequest = {
     PropertyValue,
@@ -60,7 +87,7 @@ export const generateProductsAPIInput = (answers: Answers, options: ProductsOpti
   MCTManager.setCalculations({
     RepaymentValue,
     InterestOnlyValue,
-    SapValue,
+    // SapValue,
   });
 
   return input;

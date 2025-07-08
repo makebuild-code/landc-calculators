@@ -4,7 +4,7 @@ import { formatNumber } from '$utils/formatting/formatNumber';
 
 import { DOM_CONFIG } from '$mct/config';
 import type { Product } from '$mct/types';
-import { OutputTypeENUM, SapValueENUM } from '$mct/types';
+import { OutputTypeENUM } from '$mct/types';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -56,12 +56,6 @@ export class Result {
           break;
         default:
           outputValue = outputValue.toString();
-      }
-
-      if (outputName === 'SAP') {
-        outputValue = Number(outputValue) >= SapValueENUM.Yes ? true : false;
-      } else if (outputName === 'NewBuild') {
-        outputValue = !!outputValue;
       }
 
       if (output instanceof HTMLImageElement) {

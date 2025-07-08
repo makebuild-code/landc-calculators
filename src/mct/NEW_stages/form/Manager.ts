@@ -1,25 +1,23 @@
-import { simulateEvent } from '@finsweet/ts-utils';
-
 import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
-import { queryElement } from '$utils/dom/queryElement';
-import { queryElements } from '$utils/dom/queryelements';
-import type { Profile, QuestionsStageOptions } from '$mct/types';
-import { GroupNameENUM } from '$mct/types';
+import type { Profile } from '$mct/types';
+import { FormEventNames, GroupNameENUM } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
-import { FormManager } from './Manager_Base';
+import { BaseFormManager, type BaseFormManagerOptions, type BaseFormManagerState } from './Base';
 
 const attr = DOM_CONFIG.attributes.form;
 
-export class MainFormManager extends FormManager {
-  public activeGroupIndex: number = 0;
+export interface MainFormManagerOptions extends BaseFormManagerOptions {}
+
+export interface MainFormManagerState extends BaseFormManagerState {}
+
+export class MainFormManager extends BaseFormManager {
   public components: {
     header: HTMLElement;
     stickyHeader: HTMLElement;
     identifier: HTMLElement;
-    // profileSelect: HTMLSelectElement;
     wrapper: HTMLElement;
     scroll: HTMLElement;
     nextButton: HTMLButtonElement;
@@ -29,26 +27,27 @@ export class MainFormManager extends FormManager {
     showOnGroup: HTMLElement[];
   };
 
-  constructor(component: HTMLElement) {
-    super(component);
+  constructor(options: MainFormManagerOptions) {
+    super(options);
+
     this.components = {
-      header: queryElement(`[${attr.components}="header"]`, component) as HTMLElement,
-      stickyHeader: queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement,
-      identifier: queryElement(`[${attr.components}="identifier"]`, component) as HTMLElement,
-      // profileSelect: queryElement(`[${attr.components}="profile-select"]`, component) as HTMLSelectElement,
-      wrapper: queryElement(`[${attr.components}="wrapper"]`, component) as HTMLElement,
-      scroll: queryElement(`[${attr.components}="scroll"]`, component) as HTMLElement,
-      nextButton: queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement,
-      prevButton: queryElement(`[${attr.components}="previous"]`, component) as HTMLButtonElement,
-      groupElements: queryElements(`[${attr.group}]`, component) as HTMLElement[],
-      hideOnGroup: queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[],
-      showOnGroup: queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[],
+      header: this.queryElement(`[${attr.components}="header"]`) as HTMLElement,
+      stickyHeader: this.queryElement(`[${attr.components}="sticky-header"]`) as HTMLElement,
+      identifier: this.queryElement(`[${attr.components}="identifier"]`) as HTMLElement,
+      wrapper: this.queryElement(`[${attr.components}="wrapper"]`) as HTMLElement,
+      scroll: this.queryElement(`[${attr.components}="scroll"]`) as HTMLElement,
+      nextButton: this.queryElement(`[${attr.components}="next"]`) as HTMLButtonElement,
+      prevButton: this.queryElement(`[${attr.components}="previous"]`) as HTMLButtonElement,
+      groupElements: this.queryElements(`[${attr.group}]`) as HTMLElement[],
+      hideOnGroup: this.queryElements(`[${attr.hideOnGroup}]`) as HTMLElement[],
+      showOnGroup: this.queryElements(`[${attr.showOnGroup}]`) as HTMLElement[],
     };
   }
 
-  public init(): void {
-    if (this.isInitialised) return;
-    this.isInitialised = true;
+  protected init(): void {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+    this.onInit();
 
     this.showHeader('static');
 
@@ -58,7 +57,10 @@ export class MainFormManager extends FormManager {
 
       const group = name === GroupNameENUM.Output ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
       index === 0 ? group.show() : group.hide();
-      this.groups.push(group);
+
+      const groups = this.getStateValue('groups');
+      groups.push(group);
+      this.setStateValue('groups', groups);
     });
 
     this.handleShowHideOnGroup();
@@ -71,8 +73,8 @@ export class MainFormManager extends FormManager {
     // Handle profile option if provided
     this.handleIdentifier();
 
-    this.component.addEventListener('mct:navigation:update', (event: Event) => {
-      const { nextEnabled, prevEnabled } = (event as CustomEvent).detail;
+    this.eventBus.on(FormEventNames.NAVIGATION_UPDATE, (payload) => {
+      const { nextEnabled, prevEnabled } = payload;
       if (typeof nextEnabled === 'boolean') this.components.nextButton.disabled = !nextEnabled;
       if (typeof prevEnabled === 'boolean') this.components.prevButton.disabled = !prevEnabled;
     });
@@ -98,16 +100,8 @@ export class MainFormManager extends FormManager {
     });
   }
 
-  public show(): void {
-    this.component.style.removeProperty('display');
-  }
-
-  public hide(): void {
-    this.component.style.display = 'none';
-  }
-
   public prepareWrapper(): void {
-    if (this.groups.length === 0) return;
+    if (this.getStateValue('groups').length === 0) return;
 
     const firstItem = this.getFirstEl();
     const lastItem = this.getLastEl();
@@ -123,14 +117,14 @@ export class MainFormManager extends FormManager {
   }
 
   private getFirstEl(): HTMLElement | null {
-    const group = this.groups[0];
+    const group = this.getStateValue('groups')[0];
     if (group instanceof MainGroup) return group.questions[0].getElement();
     if (group instanceof OutputGroup) return group.getComponent();
     return null;
   }
 
   private getLastEl(): HTMLElement | undefined {
-    const group = this.groups.at(this.activeGroupIndex);
+    const group = this.getStateValue('groups').at(this.getStateValue('activeGroupIndex'));
     if (group instanceof MainGroup) {
       // Find the last visible question
       const visibleQuestions = group.getVisibleQuestions();
@@ -142,12 +136,7 @@ export class MainFormManager extends FormManager {
   }
 
   public updateNavigation(options: { nextEnabled?: boolean; prevEnabled?: boolean } = {}): void {
-    this.component.dispatchEvent(
-      new CustomEvent('mct:navigation:update', {
-        detail: options,
-        bubbles: false,
-      })
-    );
+    this.eventBus.emit(FormEventNames.NAVIGATION_UPDATE, options);
   }
 
   public handleInputChange(isValid: boolean) {
@@ -155,11 +144,11 @@ export class MainFormManager extends FormManager {
   }
 
   private getActiveGroup(): MainGroup | OutputGroup | undefined {
-    return this.groups[this.activeGroupIndex];
+    return this.getStateValue('groups')[this.getStateValue('activeGroupIndex')];
   }
 
   private getGroupByName(name: GroupNameENUM): MainGroup | OutputGroup | undefined {
-    return this.groups.find((group) => group.name === name);
+    return this.getStateValue('groups').find((group) => group.name === name);
   }
 
   public updateGroupVisibility(): void {
@@ -170,7 +159,9 @@ export class MainFormManager extends FormManager {
     // Get the profile
     const profile = this.determineProfile();
     if (!profile) {
-      this.groups.filter((group) => group !== identifierGroup).forEach((group) => group.hide());
+      this.getStateValue('groups')
+        .filter((group) => group !== identifierGroup)
+        .forEach((group) => group.hide());
       return;
     }
 
@@ -182,33 +173,34 @@ export class MainFormManager extends FormManager {
     const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
     profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
 
-    this.groups
+    this.getStateValue('groups')
       .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)
       .forEach((group) => group.hide());
   }
 
   public getPreviousGroupInSequence(): MainGroup | OutputGroup | undefined {
-    if (this.activeGroupIndex <= 0) return undefined;
-    return this.groups[0];
+    if (this.getStateValue('activeGroupIndex') <= 0) return undefined;
+    return this.getStateValue('groups')[0];
   }
 
   public navigateToNextGroup() {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup) return logError(`Next group: No active group found`);
-    if (!this.profile) return logError(`Next group: No profile found`);
+    const profile = this.getStateValue('profile');
+    if (!profile) return logError(`Next group: No profile found`);
 
     const { name } = activeGroup;
     if (name === GroupNameENUM.CustomerIdentifier && activeGroup instanceof MainGroup) {
       // progress to profile group from identifier group
-      this.handleIdentifier(this.profile);
+      this.handleIdentifier(profile);
 
-      const profileGroup = this.getGroupByName(this.profile.name as any) as MainGroup;
-      if (!profileGroup) return logError(`Next group: No matching group for profile: ${this.profile.name}`);
+      const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
+      if (!profileGroup) return logError(`Next group: No matching group for profile: ${profile.name}`);
 
-      const profileGroupIndex = this.groups.indexOf(profileGroup);
-      if (profileGroupIndex === -1) return logError(`Next group: No group index for profile: ${this.profile.name}`);
+      const profileGroupIndex = this.getStateValue('groups').indexOf(profileGroup);
+      if (profileGroupIndex === -1) return logError(`Next group: No group index for profile: ${profile.name}`);
 
-      this.activeGroupIndex = profileGroupIndex;
+      this.setStateValue('activeGroupIndex', profileGroupIndex);
       this.showHeader('sticky');
 
       const firstVisibleIndex = profileGroup.getNextVisibleIndex(-1);
@@ -223,15 +215,13 @@ export class MainFormManager extends FormManager {
       const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
       if (!outputGroup) return logError(`Next group: No output group found`);
 
-      const outputGroupIndex = this.groups.indexOf(outputGroup);
+      const outputGroupIndex = this.getStateValue('groups').indexOf(outputGroup);
       if (outputGroupIndex === -1) return logError(`Next group: No group index for output`);
 
-      this.activeGroupIndex = outputGroupIndex;
+      this.setStateValue('activeGroupIndex', outputGroupIndex);
       outputGroup.activate();
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
-      // end of form, determine next step
-      // console.log('End of form, navigate to results');
-      // console.log(MCTManager.getAnswers());
+      // End of form, navigate to results
       MCTManager.goToStage(StageIDENUM.Results);
     }
 
@@ -273,7 +263,8 @@ export class MainFormManager extends FormManager {
   public navigateToPreviousGroup() {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup) return logError(`Previous group: No active group found`);
-    if (!this.profile) return logError(`Previous group: No profile found`);
+    const profile = this.getStateValue('profile');
+    if (!profile) return logError(`Previous group: No profile found`);
 
     // save previous group to determine which group to navigate to
     let previousGroup: MainGroup | OutputGroup | undefined;
@@ -281,13 +272,13 @@ export class MainFormManager extends FormManager {
     const { name } = activeGroup;
     if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // revert to profile group from output group
-      const profileGroup = this.getGroupByName(this.profile.name as any) as MainGroup;
-      if (!profileGroup) return logError(`Previous group: No matching group for profile: ${this.profile.name}`);
+      const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
+      if (!profileGroup) return logError(`Previous group: No matching group for profile: ${profile.name}`);
 
-      const profileGroupIndex = this.groups.indexOf(profileGroup);
-      if (profileGroupIndex === -1) return logError(`Previous group: No group index for profile: ${this.profile.name}`);
+      const profileGroupIndex = this.getStateValue('groups').indexOf(profileGroup);
+      if (profileGroupIndex === -1) return logError(`Previous group: No group index for profile: ${profile.name}`);
 
-      this.activeGroupIndex = profileGroupIndex;
+      this.setStateValue('activeGroupIndex', profileGroupIndex);
       this.showHeader('sticky');
       previousGroup = profileGroup;
     } else if (name !== GroupNameENUM.CustomerIdentifier && activeGroup instanceof MainGroup) {
@@ -295,10 +286,10 @@ export class MainFormManager extends FormManager {
       const identifierGroup = this.getGroupByName(GroupNameENUM.CustomerIdentifier) as MainGroup;
       if (!identifierGroup) return logError(`Previous group: No identifier group found`);
 
-      const identifierGroupIndex = this.groups.indexOf(identifierGroup);
+      const identifierGroupIndex = this.getStateValue('groups').indexOf(identifierGroup);
       if (identifierGroupIndex === -1) return logError(`Previous group: No group index for identifier`);
 
-      this.activeGroupIndex = identifierGroupIndex;
+      this.setStateValue('activeGroupIndex', identifierGroupIndex);
       this.showHeader('static');
       previousGroup = identifierGroup;
     } else return this.handleShowHideOnGroup();
@@ -308,8 +299,7 @@ export class MainFormManager extends FormManager {
 
     // get the last visible question in the identifier group and activate it
     const lastVisibleIndex = previousGroup.getPrevVisibleIndex(previousGroup.questions.length);
-    if (lastVisibleIndex < 0)
-      return logError(`Previous group: No last visible index group for profile: ${this.profile}`);
+    if (lastVisibleIndex < 0) return logError(`Previous group: No last visible index group for profile: ${profile}`);
 
     previousGroup.activeQuestionIndex = lastVisibleIndex;
     previousGroup.activateQuestion(previousGroup.getActiveQuestion());
@@ -340,9 +330,4 @@ export class MainFormManager extends FormManager {
 
     this.prepareWrapper();
   }
-
-  // public reset() {
-  //   MCTManager.clearAnswers();
-  //   this.groups.forEach((group) => (group instanceof MainGroup ? group.reset() : null));
-  // }
 }
