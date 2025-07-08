@@ -56,6 +56,7 @@ export class ResultsManager {
   private products: Product[] = [];
   private product: Product | null = null;
   private summaryInfo: SummaryInfo | null = null;
+  private updateAnswersButton: HTMLButtonElement;
 
   private header: HTMLDivElement;
   private outputs: HTMLDivElement[] = [];
@@ -91,6 +92,7 @@ export class ResultsManager {
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
+    this.updateAnswersButton = queryElement(`[${attr.components}="update-answers"]`, this.header) as HTMLButtonElement;
 
     this.showIfProceedable = queryElements(`[${attr.showIfProceedable}]`, this.component) as HTMLElement[];
 
@@ -144,6 +146,7 @@ export class ResultsManager {
     //   });
     // }
 
+    this.handleUpdateAnswers();
     this.initFilterGroups();
     this.initAppointmentDialog();
     this.initListElements();
@@ -165,6 +168,12 @@ export class ResultsManager {
 
   public hide(): void {
     this.component.style.display = 'none';
+  }
+
+  private handleUpdateAnswers(): void {
+    this.updateAnswersButton.addEventListener('click', () => {
+      MCTManager.goToStage(StageIDENUM.Questions);
+    });
   }
 
   private initFilterGroups(): void {

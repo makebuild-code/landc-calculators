@@ -202,7 +202,7 @@ export class AppointmentManager {
 
   private navigateToResults(): void {
     console.log('Back to results');
-    // TODO: Implement navigation back to results stage
+    MCTManager.goToStage(StageIDENUM.Results);
   }
 
   private async handleDays(isInit: boolean, startDate?: Date): Promise<void> {
