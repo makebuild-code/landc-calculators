@@ -12,7 +12,17 @@ import { globalEventBus, testComponents, testSimpleComponent } from '$mct/compon
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager } from '$mct/state';
 import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
-import type { AnswerData, AnswerKey, Answers, AnswerValue, AppState, Calculations, GoToStageOptions } from '$mct/types';
+import type {
+  AnswerData,
+  AnswerKey,
+  Answers,
+  AnswerValue,
+  AppState,
+  Calculations,
+  GoToStageOptions,
+  ICID,
+  LCID,
+} from '$mct/types';
 import type { BaseFormManager } from '../stages/form/NEW_Manager_Base';
 
 const attr = DOM_CONFIG.attributes;

@@ -8,7 +8,14 @@ export interface CONFIG_API {
   timeout: number;
   retries: number;
   retryDelay: number;
-  endpoints: Record<string, string>;
+  endpoints: {
+    lcid: 'EnquiryHttpTrigger';
+    products: 'ProductsMCTHttpTrigger';
+    lenders: 'LendersHttpTrigger';
+    mortgageAppointmentSlots: 'GetMortgageAppointmentSlotsTrigger';
+    createLeadAndBooking: 'CreateLeadAndBookingHttpTrigger';
+    logUserEvents: 'LogEventHttpTrigger';
+  };
 }
 
 export interface CONFIG_STORAGE {
