@@ -1,4 +1,4 @@
-import type { AppointmentStageOptions, AppointmentDay, ICID, LCID } from '$mct/types';
+import type { AppointmentStageOptions, AppointmentDay, ICID, LCID, InputValue } from '$mct/types';
 import {
   BuyerTypeENUM,
   CreditImpairedENUM,
@@ -11,12 +11,15 @@ import {
 } from '$mct/types';
 import { queryElement, queryElements } from '$utils/dom';
 import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI } from '$mct/api';
-import { DOM_CONFIG } from '$mct/config';
+import { DOM_CONFIG, MCT_CONFIG } from '$mct/config';
 import { Dates } from './Dates';
 import { Times } from './Times';
 import { getOrginalDate } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
 import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/types';
+import type { StatefulInputGroup } from '$mct/components';
+import { InputGroup } from './Form';
+import type { Input } from 'src/types';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -51,6 +54,7 @@ export class AppointmentManager {
   private formPanel: HTMLElement;
   private tag: HTMLElement;
   private form: HTMLFormElement;
+  private formInputGroups: InputGroup[] = [];
   private formSuccess: HTMLElement;
   private tryAgainDialog: HTMLDialogElement;
   private tryAgainButton: HTMLButtonElement;
@@ -105,10 +109,31 @@ export class AppointmentManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
     this.setLoadingState(true);
+
     this.timesGroup.style.display = 'none';
     this.formPanel.style.display = 'none';
     this.formSuccess.style.display = 'none';
+
     this.bindEvents();
+
+    const inputGroups = queryElements(
+      `[${MCT_CONFIG.dom.attributes.component}="input-group"]`,
+      this.formPanel
+    ) as HTMLElement[];
+
+    this.formInputGroups = inputGroups.map((input) => {
+      const inputGroup = new InputGroup({
+        element: input,
+        groupName: 'appointment',
+        onChange: () => {},
+        onEnter: () => {},
+      });
+
+      inputGroup.initialise();
+      return inputGroup;
+    });
+
+    console.log('formInputGroups', this.formInputGroups);
 
     // Load initial dates
     const tomorrow = new Date(this.today);
@@ -409,36 +434,36 @@ export class AppointmentManager {
       // Create the API request with default values for required fields
       const request: CreateLeadAndBookingRequest = {
         enquiry: {
-          // EnquiryId: 0, // Default value - should be provided by the system
+          //   EnquiryId: 0, // Default value - should be provided by the system
           //   PartnerId: 1, // Default value - should be configurable
           icid: stateData.icid as ICID,
           lcid: stateData.lcid as LCID,
-          //   FirstName: formData.FirstName,
-          //   Surname: formData.Surname,
-          //   Email: formData.Email,
-          //   Mobile: formData.Mobile,
-          //   PurchasePrice: stateData.PropertyValue,
-          //   RepaymentType: stateData.RepaymentType,
+          FirstName: formData.FirstName as string,
+          Surname: formData.Surname as string,
+          Email: formData.Email as string,
+          Mobile: formData.Mobile as string,
+          PurchasePrice: stateData.PropertyValue as number,
+          RepaymentType: stateData.RepaymentType as RepaymentTypeENUM,
           //   OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
-          //   MortgageLength: stateData.MortgageLength,
-          //   //   MaximumBudget: stateData.MaximumBudget,
-          //   //   BuyerType: stateData.BuyerType,
-          //   ResiBtl: stateData.ResiBtl,
+          MortgageLength: stateData.MortgageLength as number,
+          //   MaximumBudget: stateData.MaximumBudget,
+          //   BuyerType: stateData.BuyerType,
+          ResiBtl: stateData.ResiBtl as ResiBtlENUM,
           //   Lender: stateData.Lender,
           //   ReadinessToBuy: stateData.ReadinessToBuy,
           //   PurchRemo: stateData.PurchRemo,
-          //   PropertyValue: stateData.PropertyValue,
-          //   DepositAmount: stateData.DepositAmount,
+          PropertyValue: stateData.PropertyValue as number,
+          DepositAmount: stateData.DepositAmount as number,
           //   LTV: calculations.LTV as number,
-          //   // MortgageType: stateData.MortgageType,
-          //   // Source: stateData.Source,
-          //   //   SourceId: stateData.SourceId,
+          // MortgageType: stateData.MortgageType,
+          // Source: stateData.Source,
+          //   SourceId: stateData.SourceId,
           //   CreditImpaired: stateData.CreditImpaired,
-          //   IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted,
-          //   IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted,
-          //   IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted,
-          //   IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
-          //   IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
+          IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
+          IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
+          IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
+          IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
+          IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
         },
         booking: appointmentData,
       };
@@ -484,27 +509,34 @@ export class AppointmentManager {
    */
   private getFormData(): Partial<EnquiryLead> | null {
     try {
-      const formInputs = queryElements('input, select, textarea', this.form) as HTMLInputElement[];
-      const formData: Record<string, any> = {};
+      //   const formInputs = queryElements('input, select, textarea', this.form) as HTMLInputElement[];
+      //   const formData: Record<string, any> = {};
 
-      formInputs.forEach((input) => {
-        console.log('input', input.name, input.value);
-        if (input.name && input.value) {
-          formData[input.name] = input.value;
-        }
+      //   formInputs.forEach((input) => {
+      //     console.log('input', input.name, input.value);
+      //     if (input.name && input.value) {
+      //       formData[input.name] = input.value;
+      //     }
+      //   });
+
+      const formData: Record<string, any> = {};
+      this.formInputGroups.forEach((group) => {
+        formData[group.getStateValue('initialName')] = group.getValue() as InputValue;
       });
+
+      console.log('formData', formData);
 
       // Map form fields to API fields
       const mappedData: Partial<EnquiryLead> = {
-        FirstName: formData.FirstName || formData.firstName,
-        Surname: formData.Surname || formData.surname,
-        Email: formData.Email || formData.email,
-        Mobile: formData.Mobile || formData.mobile,
-        IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted || false,
-        IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted || false,
-        IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted || false,
-        IsPostMarketingPermitted: formData.IsPostMarketingPermitted || false,
-        IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted || false,
+        FirstName: formData.FirstName,
+        Surname: formData.Surname,
+        Email: formData.Email,
+        Mobile: formData.Mobile,
+        IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted,
+        IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted,
+        IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted,
+        IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
+        IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
       };
 
       return mappedData;

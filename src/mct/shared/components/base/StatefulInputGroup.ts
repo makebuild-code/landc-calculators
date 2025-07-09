@@ -223,6 +223,8 @@ export abstract class StatefulInputGroup<
     if (input.type === 'text') return 'text';
     if (input.type === 'number') return 'number';
     if (input.type === 'select-one') return 'select-one';
+    if (input.type === 'email') return 'text';
+    if (input.type === 'tel') return 'text';
     throw new Error(`Unsupported input type: ${input.type}`);
   }
 

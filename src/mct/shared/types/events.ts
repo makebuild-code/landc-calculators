@@ -52,6 +52,9 @@ export enum FormEventNames {
   GROUP_CHANGED = 'form:group:changed',
   GROUP_SHOWN = 'form:group:shown',
   GROUP_HIDDEN = 'form:group:hidden',
+  GROUP_INITIALIZED = 'form:group:initialized',
+  GROUP_COMPLETED = 'form:group:completed',
+  GROUP_READY = 'form:group:ready',
   NAVIGATION_UPDATE = 'form:navigation:update',
   NAVIGATION_NEXT = 'form:navigation:next',
   NAVIGATION_PREV = 'form:navigation:prev',
@@ -59,6 +62,8 @@ export enum FormEventNames {
   ANSWERS_LOADED = 'form:answers:loaded',
   INITIALIZED = 'form:initialized',
   COMPLETED = 'form:completed',
+  HEADER_UPDATE = 'form:header:update',
+  RESULTS_READY = 'form:results:ready',
 }
 
 export enum StateEventNames {
@@ -126,6 +131,21 @@ export interface FormEvents {
     groupId: string;
   };
 
+  [FormEventNames.GROUP_INITIALIZED]: {
+    groupId: string;
+    questionCount: number;
+  };
+
+  [FormEventNames.GROUP_COMPLETED]: {
+    groupId: string;
+    answers: AnswerData[];
+  };
+
+  [FormEventNames.GROUP_READY]: {
+    groupId: string;
+    canProceed: boolean;
+  };
+
   // Navigation events
   [FormEventNames.NAVIGATION_UPDATE]: {
     nextEnabled?: boolean;
@@ -159,6 +179,16 @@ export interface FormEvents {
 
   [FormEventNames.COMPLETED]: {
     totalAnswers: number;
+  };
+
+  [FormEventNames.HEADER_UPDATE]: {
+    headerData: Record<string, any>;
+    source: string;
+  };
+
+  [FormEventNames.RESULTS_READY]: {
+    answers: AnswerData[];
+    canShowResults: boolean;
   };
 }
 
