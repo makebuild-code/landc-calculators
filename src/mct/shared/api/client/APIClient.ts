@@ -21,6 +21,12 @@ export interface APIErrorResponse {
   detail: string;
 }
 
+export interface APIErrorItem {
+  field?: string;
+  message?: string;
+  code?: string;
+}
+
 export class APIError extends Error {
   constructor(
     message: string,
@@ -115,6 +121,9 @@ export class APIClient {
           if (errorData && typeof errorData === 'object' && errorData.error) {
             errorDetails = errorData.error as APIErrorResponse;
 
+            // Log the complete error object for debugging
+            console.error('❌ Complete API Error Object:', errorData);
+
             // Log the structured error details
             console.error('❌ API Error Response:', {
               title: errorDetails.title,
@@ -122,6 +131,19 @@ export class APIClient {
               detail: errorDetails.detail,
               url: url,
             });
+
+            // Check for additional errors array
+            if (errorData.errors && Array.isArray(errorData.errors)) {
+              console.error('❌ API Validation Errors:', {
+                count: errorData.errors.length,
+                errors: errorData.errors.map((err: APIErrorItem) => ({
+                  field: err.field || 'unknown',
+                  message: err.message || 'No message',
+                  code: err.code || 'unknown',
+                })),
+                url: url,
+              });
+            }
           } else {
             // Fallback for non-structured error responses
             console.error('❌ API Error Response:', {

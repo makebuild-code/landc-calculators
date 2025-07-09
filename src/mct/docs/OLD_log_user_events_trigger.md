@@ -1,6 +1,6 @@
 # website middle layer - User Event Tracker http endpoint
 
-Last Updated Date : 28/05/2025
+Last Updated Date : 28/04/2025
 Created Date : 24/02/2025
 
 ## Contents
@@ -53,9 +53,9 @@ Calls internal endpoint:
 {
 	"LCID": GUID,
 	"ICID": STRING,
-	"FormValues": DICTIONARY<STRING,STRING>
-	"EventName": STRING,
-	"EventValue": STRING,
+	"Event": STRING,
+	"FieldName": STRING,
+	"FieldValue": STRING,
 	"CreatedBy": STRING
 }
 ```
@@ -69,12 +69,7 @@ Click event for wizard step
 	"input": {
 		"LCID": "2ABC4D8D-689E-4F28-A5A8-00A4F2BA4AC2",
 		"ICID": "MCT0102",
-		"FormValues":{
-			"DepositAmount": "1000",
-			"PropertyValue": "50000"
-		},
-		"EventName": "User filled in mortgage amount",
-		"EventValue": "",
+		"Event": "User filled in mortgage amount",
 		"FieldName": "DepositAmount",
 		"FieldValue" "1000",
 		"CreatedBy": "MCT"
@@ -89,12 +84,9 @@ Click event for user going 'direct to lender' from product results:
   "input": {
     "LCID": "2ABC4D8D-689E-4F28-A5A8-00A4F2BA4AC2",
     "ICID": "MCT0102",
-    "FormValues": {
-      "DepositAmount": "1000",
-      "PropertyValue": "50000"
-    },
-    "EventName": "Direct_To_Lender",
-    "EventValue": "Nationwide",
+    "Event": "User went direct to lender",
+    "FieldName": "LenderName",
+    "FieldValue": "First Direct",
     "CreatedBy": "MCT"
   }
 }
@@ -107,12 +99,9 @@ Click event for user going 'direct to broker' from product results:
   "input": {
     "LCID": "2ABC4D8D-689E-4F28-A5A8-00A4F2BA4AC2",
     "ICID": "MCT0102",
-    "FormValues": {
-      "DepositAmount": "1000",
-      "PropertyValue": "50000"
-    },
-    "EventName": "Direct_To_Broker",
-    "EventValue": "",
+    "Event": "User went direct to broker",
+    "FieldName": null,
+    "FieldValue": null,
     "CreatedBy": "MCT"
   }
 }
@@ -149,7 +138,7 @@ Click event for user going 'direct to broker' from product results:
     "detail": "Check the errors field for details",
     "instance": "POST /Enquiry/LogEvent",
     "errors": {
-      "Event": ["Event Name must be set"]
+      "Event": ["Event type must be set"]
     }
   }
 }

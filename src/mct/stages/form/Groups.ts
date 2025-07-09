@@ -162,6 +162,7 @@ export class MainGroup extends QuestionGroup {
 
     const current = this.getActiveQuestion();
     if (current.isValid()) {
+      this.formManager.logUserFilledInEvent(current.getStateValue('initialName'));
       this.navigate('next');
     } else {
       current.updateVisualState(false);
