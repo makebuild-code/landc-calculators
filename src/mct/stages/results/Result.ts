@@ -27,6 +27,7 @@ export class Result {
   constructor(wrapper: HTMLElement, options: Options) {
     this.wrapper = wrapper;
     this.template = options.template.cloneNode(true) as HTMLElement;
+    this.template.removeAttribute(DOM_CONFIG.attributes.initial);
     this.product = options.product;
     this.onClick = options.onClick;
 

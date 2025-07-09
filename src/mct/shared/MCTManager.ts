@@ -236,6 +236,7 @@ export const MCTManager = {
 
   removeInitialStyles() {
     const elements = queryElements(`[${attr.initial}]`, this.getComponentDOM());
+    console.log('🔄 Removing initial styles', elements);
     elements.forEach((element) => {
       element.removeAttribute(attr.initial);
     });
