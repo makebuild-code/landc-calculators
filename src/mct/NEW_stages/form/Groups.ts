@@ -344,7 +344,7 @@ export class OutputGroup extends BaseGroup {
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
-    const input = generateProductsAPIInput(this.formManager.getAnswers());
+    const input = generateProductsAPIInput();
     try {
       return await productsAPI.search(input);
     } catch (error) {

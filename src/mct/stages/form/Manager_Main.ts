@@ -80,11 +80,14 @@ export class MainFormManager extends FormManager {
     });
 
     this.components.nextButton.addEventListener('click', () => {
+      console.log('nextButton clicked');
       const currentGroup = this.getActiveGroup();
       if (!currentGroup || currentGroup instanceof OutputGroup) return;
 
       const currentItem = currentGroup.getActiveQuestion();
       if (!currentItem.isValid()) return;
+
+      this.logUserFilledInEvent(currentItem.getStateValue('initialName'));
 
       currentGroup.navigate('next');
     });

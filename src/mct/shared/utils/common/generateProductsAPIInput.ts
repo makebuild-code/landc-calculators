@@ -8,7 +8,6 @@ import {
   SchemePurposeENUM,
   SchemeTypesENUM,
   SortColumnENUM,
-  type Answers,
   type CheckboxList,
   type Features,
   type ProductsOptions,
@@ -16,7 +15,10 @@ import {
 } from '$mct/types';
 import { getEnumKey } from './getEnumKey';
 
-export const generateProductsAPIInput = (answers: Answers, options: ProductsOptions = {}): ProductsRequest => {
+export const generateProductsAPIInput = (options: ProductsOptions = {}): ProductsRequest => {
+  const answers = MCTManager.getAnswers();
+  const calculations = MCTManager.getCalculations();
+
   // Handle all values coming from the answers
   const { PropertyValue, DepositAmount } = answers as { PropertyValue: number; DepositAmount: number };
   const RepaymentValue = (answers.RepaymentValue as number) ?? PropertyValue - DepositAmount;
@@ -58,6 +60,8 @@ export const generateProductsAPIInput = (answers: Answers, options: ProductsOpti
         ? SapValueENUM.No
         : SapValueENUM.Yes;
 
+  const IncludeRetention = (calculations.IncludeRetention as boolean) ?? false;
+
   // Handle all values coming from the options
   const NumberOfResults = options.numberOfResults ?? 1;
   const SortColumn = options.sortColumn ?? SortColumnENUM.Rate;
@@ -82,13 +86,10 @@ export const generateProductsAPIInput = (answers: Answers, options: ProductsOpti
     SortColumn,
     Features,
     SapValue,
+    IncludeRetention,
   };
 
-  MCTManager.setCalculations({
-    RepaymentValue,
-    InterestOnlyValue,
-    // SapValue,
-  });
+  MCTManager.setCalculations({ RepaymentValue, InterestOnlyValue });
 
   return input;
 };

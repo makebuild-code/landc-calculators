@@ -25,7 +25,7 @@ const defaultState: AppState = {
   currentStageId: null,
   answers: {},
   prefillAnswers: {},
-  calculations: {},
+  calculations: {} as Calculations,
   mortgageId: null,
 };
 
@@ -168,7 +168,7 @@ export class StateManager {
     return { ...this.state.prefillAnswers };
   }
 
-  setCalculations(calculations: Calculations): void {
+  setCalculations(calculations: Partial<Calculations>): void {
     this.set('calculations', { ...this.state.calculations, ...calculations });
   }
 

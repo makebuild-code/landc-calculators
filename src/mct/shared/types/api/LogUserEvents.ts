@@ -1,13 +1,21 @@
+import type { AnswerKey, AnswerValue } from '../state';
 import type { ICID, LCID } from './base';
 
-export interface LogUserEventRequest {
+export interface LogUserEventDefault {
   LCID: LCID;
   ICID: ICID;
-  Event: string;
-  FieldName?: string | null;
-  FieldValue?: string | null;
+  FormValues: Record<AnswerKey, AnswerValue>;
   CreatedBy: 'MCT';
 }
+
+export interface LogUserEventCustom {
+  EventName: string;
+  EventValue: string;
+  FieldName: AnswerKey;
+  FieldValue: AnswerValue;
+}
+
+export interface LogUserEventRequest extends LogUserEventDefault, LogUserEventCustom {}
 
 export interface LogUserEventResponse {
   url: string;

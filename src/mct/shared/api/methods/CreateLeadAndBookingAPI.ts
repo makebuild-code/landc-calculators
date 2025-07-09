@@ -6,10 +6,12 @@ export class CreateLeadAndBookingAPI {
   constructor(private client: APIClient) {}
 
   async createLeadAndBooking(request: CreateLeadAndBookingRequest): Promise<CreateLeadAndBookingResponse> {
-    console.log('CreateLeadAndBookingRequest: ', { input: request });
+    const input = { input: request };
+    console.log('CreateLeadAndBooking Request: ', input);
+    console.log('CreateLeadAndBooking Endpoint: ', API_CONFIG.endpoints.createLeadAndBooking);
     return this.client.request<CreateLeadAndBookingResponse>(API_CONFIG.endpoints.createLeadAndBooking, {
       method: 'POST',
-      body: JSON.stringify({ input: request }),
+      body: JSON.stringify(input),
     });
   }
 }

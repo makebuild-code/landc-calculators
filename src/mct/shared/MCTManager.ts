@@ -7,7 +7,7 @@ import type { ResultsManager } from '../stages/results/Manager';
 import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
 
-import { lcidAPI } from '$mct/api';
+import { lcidAPI, logUserEventsAPI } from '$mct/api';
 import { globalEventBus, testComponents, testSimpleComponent } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager } from '$mct/state';
@@ -18,10 +18,14 @@ import type {
   Answers,
   AnswerValue,
   AppState,
+  CalculationKey,
   Calculations,
+  CalculationValue,
   GoToStageOptions,
   ICID,
   LCID,
+  LogUserEventCustom,
+  LogUserEventRequest,
 } from '$mct/types';
 import type { BaseFormManager } from '../stages/form/NEW_Manager_Base';
 
@@ -274,7 +278,11 @@ export const MCTManager = {
     return stateManager.getAnswers();
   },
 
-  setCalculations(calculations: Calculations) {
+  setCalculation(key: CalculationKey, value: CalculationValue) {
+    calculationManager.setCalculation(key, value);
+  },
+
+  setCalculations(calculations: Partial<Calculations>) {
     stateManager.setCalculations(calculations);
   },
 
@@ -288,6 +296,23 @@ export const MCTManager = {
 
   getMortgageId(): number | null {
     return stateManager.get('mortgageId');
+  },
+
+  async logUserEvent(event: LogUserEventCustom): Promise<void> {
+    const payload: LogUserEventRequest = {
+      ...event,
+      LCID: this.getLCID() as LCID,
+      ICID: this.getICID() as ICID,
+      FormValues: this.getAnswers(),
+      CreatedBy: 'MCT',
+    };
+
+    try {
+      const response = await logUserEventsAPI.logEvent(payload);
+      console.log('response', response);
+    } catch (error) {
+      console.error('error', error);
+    }
   },
 
   // clearAnswer(key: AnswerKey) {

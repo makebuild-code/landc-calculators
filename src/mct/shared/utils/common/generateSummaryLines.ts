@@ -14,7 +14,7 @@ import { generateProductsAPIInput } from './generateProductsAPIInput';
 const classes = DOM_CONFIG.classes;
 
 export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers): SummaryLines | null => {
-  const productsAPIInput = generateProductsAPIInput(answers);
+  const productsAPIInput = generateProductsAPIInput();
   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
   const { RepaymentType } = answers;
 

@@ -162,6 +162,7 @@ export class MainGroup extends QuestionGroup {
 
     const current = this.getActiveQuestion();
     if (current.isValid()) {
+      this.formManager.logUserFilledInEvent(current.getStateValue('initialName'));
       this.navigate('next');
     } else {
       current.updateVisualState(false);
@@ -338,7 +339,7 @@ export class OutputGroup extends BaseGroup {
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
-    const input = generateProductsAPIInput(this.formManager.getAnswers());
+    const input = generateProductsAPIInput();
     try {
       return await productsAPI.search(input);
     } catch (error) {

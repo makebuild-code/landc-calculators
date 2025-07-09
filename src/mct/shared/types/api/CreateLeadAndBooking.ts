@@ -47,31 +47,31 @@ export interface EnquiryLead {
   lcid: LCID;
   icid: ICID;
   PartnerId?: PartnerId;
-  FirstName?: string;
-  Surname?: string;
-  Email?: string;
-  Mobile?: string;
-  PurchasePrice?: number;
-  RepaymentType?: RepaymentTypeENUM;
+  FirstName: string;
+  Surname: string;
+  Email: string;
+  Mobile: string;
+  PurchasePrice: number;
+  RepaymentType: RepaymentTypeENUM;
   OfferAccepted?: OfferAcceptedENUM;
-  MortgageLength?: number;
+  MortgageLength: number;
   MaximumBudget?: number;
   BuyerType?: BuyerTypeENUM;
-  ResiBtl?: ResiBtlENUM;
+  ResiBtl: ResiBtlENUM;
   Lender?: LenderName;
   ReadinessToBuy?: ReadinessToBuyENUM;
   PurchRemo?: PurchRemoENUM;
-  PropertyValue?: number;
-  DepositAmount?: number;
+  PropertyValue: number;
+  DepositAmount: number;
   LTV?: number;
   Source?: Source;
   SourceId?: SourceID;
   CreditImpaired?: CreditImpairedENUM;
-  IsEmailMarketingPermitted?: boolean;
-  IsPhoneMarketingPermitted?: boolean;
-  IsSMSMarketingPermitted?: boolean;
-  IsPostMarketingPermitted?: boolean;
-  IsSocialMessageMarketingPermitted?: boolean;
+  IsEmailMarketingPermitted: boolean;
+  IsPhoneMarketingPermitted: boolean;
+  IsSMSMarketingPermitted: boolean;
+  IsPostMarketingPermitted: boolean;
+  IsSocialMessageMarketingPermitted: boolean;
 }
 
 export interface Booking {
