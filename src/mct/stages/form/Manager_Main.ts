@@ -17,7 +17,7 @@ export class MainFormManager extends FormManager {
   public activeGroupIndex: number = 0;
   public components: {
     header: HTMLElement;
-    stickyHeader: HTMLElement;
+    secondHeader: HTMLElement;
     identifier: HTMLElement;
     // profileSelect: HTMLSelectElement;
     wrapper: HTMLElement;
@@ -34,9 +34,8 @@ export class MainFormManager extends FormManager {
     super(component);
     this.components = {
       header: queryElement(`[${attr.components}="header"]`, component) as HTMLElement,
-      stickyHeader: queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement,
+      secondHeader: queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement,
       identifier: queryElement(`[${attr.components}="identifier"]`, component) as HTMLElement,
-      // profileSelect: queryElement(`[${attr.components}="profile-select"]`, component) as HTMLSelectElement,
       wrapper: queryElement(`[${attr.components}="wrapper"]`, component) as HTMLElement,
       scroll: queryElement(`[${attr.components}="scroll"]`, component) as HTMLElement,
       nextButton: queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement,
@@ -66,10 +65,10 @@ export class MainFormManager extends FormManager {
 
     this.handleShowHideOnGroup();
 
-    this.prepareWrapper();
+    // this.prepareWrapper();
 
-    const initialGroup = this.getActiveGroup();
-    if (initialGroup) initialGroup.show();
+    // const initialGroup = this.getActiveGroup();
+    // if (initialGroup) initialGroup.show();
 
     // Handle profile option if provided
     this.handleIdentifier();
@@ -100,9 +99,14 @@ export class MainFormManager extends FormManager {
       currentGroup.navigate('prev');
     });
 
-    setTimeout(() => {
-      this.showLoader(false);
-    }, 1000);
+    this.onMount();
+    this.prepareWrapper();
+    this.showLoader(false);
+
+    // setTimeout(() => {
+    //   this.showLoader(false);
+    //   this.prepareWrapper();
+    // }, 1000);
   }
 
   public show(scrollTo: boolean = true): void {
@@ -340,7 +344,7 @@ export class MainFormManager extends FormManager {
   }
 
   private showHeader(type: 'static' | 'sticky') {
-    const { header, stickyHeader } = this.components;
+    const { header, secondHeader: stickyHeader } = this.components;
     if (!header || !stickyHeader) return;
     if (type === 'static') {
       header.style.removeProperty('display');

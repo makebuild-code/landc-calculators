@@ -10,6 +10,7 @@ import type {
   QuestionsStageOptions,
 } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
+import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeInitialStyles';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
@@ -32,6 +33,10 @@ export abstract class FormManager {
   public abstract init(options?: QuestionsStageOptions): void;
   public abstract show(): void;
   public abstract hide(): void;
+
+  protected onMount(): void {
+    removeInitialStyles(this.component);
+  }
 
   protected prefill(answers: Answers) {
     /**
