@@ -15,12 +15,19 @@ export interface APIClientConfig {
   retryDelay?: number;
 }
 
+export interface APIErrorResponse {
+  title: string;
+  status: number;
+  detail: string;
+}
+
 export class APIError extends Error {
   constructor(
     message: string,
     public status: number,
     public endpoint: string,
-    public response?: any
+    public response?: any,
+    public errorDetails?: APIErrorResponse
   ) {
     super(message);
     this.name = 'APIError';
@@ -99,16 +106,57 @@ export class APIClient {
 
       if (!response.ok) {
         let errorData;
+        let errorDetails: APIErrorResponse | undefined;
+
         try {
           errorData = await response.json();
+
+          // Check if the response has the expected error structure
+          if (errorData && typeof errorData === 'object' && errorData.error) {
+            errorDetails = errorData.error as APIErrorResponse;
+
+            // Log the structured error details
+            console.error('❌ API Error Response:', {
+              title: errorDetails.title,
+              status: errorDetails.status,
+              detail: errorDetails.detail,
+              url: url,
+            });
+          } else {
+            // Fallback for non-structured error responses
+            console.error('❌ API Error Response:', {
+              status: response.status,
+              statusText: response.statusText,
+              data: errorData,
+              url: url,
+            });
+          }
         } catch {
           errorData = await response.text();
+          console.error('❌ API Error Response (text):', {
+            status: response.status,
+            statusText: response.statusText,
+            data: errorData,
+            url: url,
+          });
         }
 
-        throw new APIError(`HTTP ${response.status}: ${response.statusText}`, response.status, url, errorData);
+        const errorMessage = errorDetails
+          ? `${errorDetails.title}: ${errorDetails.detail}`
+          : `HTTP ${response.status}: ${response.statusText}`;
+
+        throw new APIError(errorMessage, response.status, url, errorData, errorDetails);
       }
 
-      return response.json();
+      // Log successful responses for debugging
+      const responseData = await response.json();
+      console.log('✅ API Success Response:', {
+        status: response.status,
+        url: url,
+        data: responseData,
+      });
+
+      return responseData;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -117,9 +165,14 @@ export class APIClient {
       }
 
       if (error instanceof Error && error.name === 'AbortError') {
+        console.error('⏰ Request timeout:', { url });
         throw new APIError('Request timeout', 408, url);
       }
 
+      console.error('🌐 Network error:', {
+        url,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       throw new APIError(error instanceof Error ? error.message : 'Network error', 0, url);
     }
   }
