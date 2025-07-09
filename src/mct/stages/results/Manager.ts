@@ -72,9 +72,9 @@ export class ResultsManager {
   private getFreeAdviceButton: HTMLButtonElement;
   private getADecision: HTMLElement;
   private getADecisionButton: HTMLButtonElement;
-  private applyDirect: HTMLElement;
-  private applyDirectLink: HTMLLinkElement;
-  private applyDirectDialog: HTMLDialogElement;
+  private applyDirect: HTMLElement | null;
+  private applyDirectLink: HTMLLinkElement | undefined;
+  private applyDirectDialog: HTMLDialogElement | undefined;
 
   private results: Result[] = [];
   private resultsList: HTMLElement;
@@ -113,12 +113,16 @@ export class ResultsManager {
     this.getFreeAdviceButton = queryElement('button', this.getFreeAdvice) as HTMLButtonElement;
     this.getADecision = queryElement(`[${attr.components}="get-a-decision"]`, this.appointmentDialog) as HTMLElement;
     this.getADecisionButton = queryElement('button', this.getADecision) as HTMLButtonElement;
-    this.applyDirect = queryElement(`[${attr.components}="apply-direct"]`, this.appointmentDialog) as HTMLElement;
-    this.applyDirectLink = queryElement('a', this.applyDirect) as HTMLLinkElement;
-    this.applyDirectDialog = queryElement(
-      `[${attr.components}="apply-direct-redirect"]`,
-      this.component
-    ) as HTMLDialogElement;
+    this.applyDirect = queryElement(
+      `[${attr.components}="apply-direct"]`,
+      this.appointmentDialog
+    ) as HTMLElement | null;
+    if (this.applyDirect) this.applyDirectLink = queryElement('a', this.applyDirect) as HTMLLinkElement;
+    if (this.applyDirect)
+      this.applyDirectDialog = queryElement(
+        `[${attr.components}="apply-direct-redirect"]`,
+        this.component
+      ) as HTMLDialogElement;
 
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
@@ -216,7 +220,7 @@ export class ResultsManager {
 
     isProceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
     isProceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
-    this.applyDirect.style.display = 'none';
+    if (this.applyDirect) this.applyDirect.style.display = 'none';
 
     this.appointmentDialogButton.addEventListener('click', () => this.appointmentDialog.showModal());
     this.appointmentDialogClose.addEventListener('click', () => {
@@ -224,7 +228,9 @@ export class ResultsManager {
       this.product = null;
       this.appointmentDialog.close();
     });
-    this.appointmentDialog.addEventListener('close', () => (this.applyDirect.style.display = 'none'));
+    this.appointmentDialog.addEventListener('close', () => {
+      if (this.applyDirect) this.applyDirect.style.display = 'none';
+    });
   }
 
   private initListElements(): void {
@@ -337,17 +343,19 @@ export class ResultsManager {
   private handleButtons(): void {
     this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
     this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
-    this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
+    if (this.applyDirectLink) this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
     this.paginationButton.addEventListener('click', () => this.renderResults(10));
   }
 
   private handleShowIfProceedable(): void {
     const calculations = MCTManager.getCalculations();
     const { isProceedable } = calculations;
+
     this.showIfProceedable.forEach((element) => {
       const showIfProceedable = element.getAttribute(attr.showIfProceedable) === 'true';
-
-      isProceedable && showIfProceedable ? element.style.removeProperty('display') : (element.style.display = 'none');
+      if ((isProceedable && showIfProceedable) || (!isProceedable && !showIfProceedable))
+        element.style.removeProperty('display');
+      else element.style.display = 'none';
     });
   }
 
@@ -373,12 +381,13 @@ export class ResultsManager {
     this.product = product;
     const { ApplyDirectLink } = product;
 
-    ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
+    if (this.applyDirect)
+      ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
     simulateEvent(this.appointmentDialogButton, 'click');
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
-    const input = generateProductsAPIInput(MCTManager.getAnswers(), {
+    const input = generateProductsAPIInput({
       numberOfResults: 100, // @TODO: Maximum of 100 on the test API?
       sortColumn: 1,
     });
@@ -438,6 +447,7 @@ export class ResultsManager {
   }
 
   private async handleApplyDirect(): Promise<void> {
+    if (!this.applyDirect) return;
     try {
       // Wait for the log user events API call to complete
       await this.handleLogUserEvents();
@@ -448,7 +458,7 @@ export class ResultsManager {
         this.applyDirectDialog
       ) as HTMLHeadingElement;
       title.textContent = `We're connecting you to ${lender}`;
-      this.applyDirectDialog.showModal();
+      this.applyDirectDialog?.showModal();
 
       setTimeout(() => {
         window.location.href = this.product?.ApplyDirectLink || '';

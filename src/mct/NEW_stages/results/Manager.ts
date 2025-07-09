@@ -364,7 +364,7 @@ export class ResultsManager {
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
-    const input = generateProductsAPIInput(MCTManager.getAnswers(), {
+    const input = generateProductsAPIInput({
       numberOfResults: 100, // @TODO: Maximum of 100 on the test API?
       sortColumn: 1,
     });

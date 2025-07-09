@@ -18,7 +18,9 @@ import type {
   Answers,
   AnswerValue,
   AppState,
+  CalculationKey,
   Calculations,
+  CalculationValue,
   GoToStageOptions,
   ICID,
   LCID,
@@ -274,7 +276,11 @@ export const MCTManager = {
     return stateManager.getAnswers();
   },
 
-  setCalculations(calculations: Calculations) {
+  setCalculation(key: CalculationKey, value: CalculationValue) {
+    calculationManager.setCalculation(key, value);
+  },
+
+  setCalculations(calculations: Partial<Calculations>) {
     stateManager.setCalculations(calculations);
   },
 
