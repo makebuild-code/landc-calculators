@@ -6,6 +6,7 @@ import type {
   ICID,
   InputValue,
   LCID,
+  LogUserEventCustom,
   LogUserEventResponse,
   Product,
   ProductsResponse,
@@ -450,7 +451,7 @@ export class ResultsManager {
     if (!this.applyDirect) return;
     try {
       // Wait for the log user events API call to complete
-      await this.handleLogUserEvents();
+      await this.handleLogUserEvents(true, this.product?.LenderName);
 
       const lender = this.product?.LenderName;
       const title = queryElement(
@@ -470,15 +471,16 @@ export class ResultsManager {
     }
   }
 
-  private async handleLogUserEvents(): Promise<LogUserEventResponse | null> {
-    const input = {
-      LCID: MCTManager.getLCID() as LCID,
-      ICID: MCTManager.getICID() as ICID,
-      Event: 'ApplyDirect',
-      CreatedBy: 'MCT' as const,
+  private handleLogUserEvents(applyDirect: boolean, lender: string = ''): void {
+    const eventName = applyDirect ? 'Direct_To_Lender' : 'Get_Free_Advice';
+    const payload: LogUserEventCustom = {
+      EventName: eventName,
+      EventValue: lender,
+      FieldName: eventName,
+      FieldValue: lender,
     };
-    const response = await logUserEventsAPI.logEvent(input);
-    return response;
+
+    MCTManager.logUserEvent(payload);
   }
 
   /**
