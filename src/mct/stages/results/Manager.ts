@@ -73,7 +73,7 @@ export class ResultsManager {
   private getFreeAdvice: HTMLElement;
   private getFreeAdviceButton: HTMLButtonElement;
   private getADecision: HTMLElement;
-  private getADecisionButton: HTMLButtonElement;
+  private getADecisionButtons: HTMLButtonElement[];
   private applyDirect: HTMLElement | null;
   private applyDirectLink: HTMLLinkElement | undefined;
   private applyDirectDialog: HTMLDialogElement | undefined;
@@ -114,7 +114,10 @@ export class ResultsManager {
     this.getFreeAdvice = queryElement(`[${attr.components}="get-free-advice"]`, this.appointmentDialog) as HTMLElement;
     this.getFreeAdviceButton = queryElement('button', this.getFreeAdvice) as HTMLButtonElement;
     this.getADecision = queryElement(`[${attr.components}="get-a-decision"]`, this.appointmentDialog) as HTMLElement;
-    this.getADecisionButton = queryElement('button', this.getADecision) as HTMLButtonElement;
+    this.getADecisionButtons = [
+      queryElement('button', this.getADecision) as HTMLButtonElement,
+      queryElement(`[${attr.components}="get-a-decision-button"]`, this.header) as HTMLButtonElement,
+    ];
     this.applyDirect = queryElement(
       `[${attr.components}="apply-direct"]`,
       this.appointmentDialog
@@ -169,6 +172,7 @@ export class ResultsManager {
   }
 
   public show(scrollTo: boolean = true): void {
+    this.handleShowIfProceedable();
     this.component.style.removeProperty('display');
     if (scrollTo) this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -344,7 +348,7 @@ export class ResultsManager {
 
   private handleButtons(): void {
     this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
-    this.getADecisionButton.addEventListener('click', () => this.handleGetADecision());
+    this.getADecisionButtons.forEach((button) => button.addEventListener('click', () => this.handleGetADecision()));
     if (this.applyDirectLink) this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
     this.paginationButton.addEventListener('click', () => this.renderResults(10));
   }
