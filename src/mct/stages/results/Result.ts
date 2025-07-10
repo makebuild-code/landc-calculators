@@ -5,6 +5,7 @@ import { formatNumber } from '$utils/formatting/formatNumber';
 import { DOM_CONFIG } from '$mct/config';
 import type { Product } from '$mct/types';
 import { OutputTypeENUM, SapValueENUM } from '$mct/types';
+import { dialogs } from 'src/components/dialogs';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -22,7 +23,6 @@ export class Result {
 
   private outputs: HTMLElement[] = [];
   private button: HTMLButtonElement | null = null;
-  private dialogs: HTMLDialogElement[] = [];
 
   constructor(wrapper: HTMLElement, options: Options) {
     this.wrapper = wrapper;
@@ -75,6 +75,10 @@ export class Result {
     });
   }
 
+  private initDialogs(): void {
+    dialogs(this.template);
+  }
+
   private bindEvents(): void {
     this.button?.addEventListener('click', () => {
       this.onClick(this.product);
@@ -82,6 +86,7 @@ export class Result {
   }
 
   public render(): void {
+    this.initDialogs();
     this.wrapper.appendChild(this.template);
   }
 
