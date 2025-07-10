@@ -282,6 +282,10 @@ export const MCTManager = {
     return stateManager.getAnswers();
   },
 
+  getAnswersAsLandC(): Answers {
+    return Object.fromEntries(Object.entries(this.getAnswers()).map(([key, value]) => [key, getValueAsLandC(key)]));
+  },
+
   setCalculation(key: CalculationKey, value: CalculationValue) {
     calculationManager.setCalculation(key, value);
   },
@@ -303,7 +307,7 @@ export const MCTManager = {
   },
 
   async logUserEvent(event: LogUserEventCustom): Promise<void> {
-    const answers = this.getAnswers();
+    const answers = this.getAnswersAsLandC();
     const FormValues: Record<string, string> = {};
     for (const [key, value] of Object.entries(answers)) {
       FormValues[key] = value != null ? String(value) : '';
