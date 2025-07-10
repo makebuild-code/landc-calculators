@@ -49,7 +49,7 @@ export const getValueAsLandC = (key: AnswerKey): AnswerValue | null => {
     case 'SchemePeriods':
       return SchemePeriodsENUM[value as keyof typeof SchemePeriodsENUM];
     case 'SchemeTypes':
-      return SchemeTypesENUM[value as keyof typeof SchemeTypesENUM];
+      return (value as string[]).map((v) => SchemeTypesENUM[v as keyof typeof SchemeTypesENUM]);
     case 'SchemePurpose':
       return SchemePurposeENUM[value as keyof typeof SchemePurposeENUM];
     case 'SortColumn':
