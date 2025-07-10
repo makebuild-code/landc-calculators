@@ -57,7 +57,7 @@ export enum SortColumnENUM {
 
 export enum SapValueENUM {
   Yes = 81,
-  No = 80,
+  No = 1,
 }
 
 // Product request structure
