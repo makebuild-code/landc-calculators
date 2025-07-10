@@ -1,4 +1,6 @@
-export const DOM_CONFIG = {
+import type { CONFIG_DOM } from '$mct/types';
+
+export const DOM_CONFIG: CONFIG_DOM = {
   attributes: {
     component: 'data-mct',
     stage: 'data-mct-stage',
