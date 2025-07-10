@@ -245,17 +245,15 @@ export class MainFormManager extends FormManager {
 
       this.activeGroupIndex = outputGroupIndex;
       outputGroup.activate();
+
+      MCTManager.logUserEvent({
+        EventName: EVENTS_CONFIG.questionsComplete,
+        EventValue: EVENTS_CONFIG.questionsComplete,
+      });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
       // console.log('End of form, navigate to results');
       // console.log(MCTManager.getAnswers());
-
-      const event: LogUserEventCustom = {
-        EventName: EVENTS_CONFIG.questionsComplete,
-        EventValue: EVENTS_CONFIG.questionsComplete,
-      };
-
-      MCTManager.logUserEvent(event);
 
       MCTManager.goToStage(StageIDENUM.Results);
     }

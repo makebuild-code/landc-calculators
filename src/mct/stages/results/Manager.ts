@@ -8,6 +8,7 @@ import type {
   LCID,
   LogUserEventCustom,
   LogUserEventResponse,
+  OEF_PARAMS,
   Product,
   ProductsResponse,
   ResultsStageOptions,
@@ -311,7 +312,7 @@ export class ResultsManager {
     const answers = MCTManager.getAnswers();
     const filters = FILTERS_CONFIG;
     this.filterGroups.forEach((filterGroup) => {
-      const answer = answers[filterGroup.initialName];
+      const answer = (answers as any)[filterGroup.initialName]; //@TODO: look into types here
       const config = filters[filterGroup.initialName as keyof typeof filters];
 
       if (answer) filterGroup.setValue(answer as InputValue);
@@ -450,7 +451,43 @@ export class ResultsManager {
      * @todo
      * - populate the redirect URL with parameters
      */
-    window.location.href = 'https://www.landc.co.uk/online/mortgage-finder';
+    const { origin } = window.location;
+    const baseUrl = `${origin}/online/populate`;
+
+    const icid = MCTManager.getICID();
+    const lcid = MCTManager.getLCID();
+    const answers = MCTManager.getAnswersAsLandC();
+    const calculations = MCTManager.getCalculations();
+
+    const {
+      PurchRemo,
+      ResiBtl,
+      CreditImpaired,
+      PropertyValue,
+      RepaymentValue,
+      RepaymentType,
+      MortgageLength,
+      ReadinessToBuy,
+    } = answers;
+    const { offerAccepted } = calculations;
+    console.log('offerAccepted: ', offerAccepted);
+
+    const params: Record<string, string> = {};
+
+    if (icid) params.Icid = icid;
+    if (lcid) params.LcId = lcid;
+    if (PurchRemo) params.PurchaseOrRemortgage = PurchRemo;
+    if (ResiBtl) params.ResidentialOrBuyToLet = ResiBtl;
+    if (CreditImpaired) params.CreditIssues = CreditImpaired;
+    if (PropertyValue) params.PropertyValue = PropertyValue.toString();
+    if (RepaymentValue) params.LoanAmount = RepaymentValue.toString();
+    if (MortgageLength) params.Term = MortgageLength.toString();
+    if (RepaymentType) params.MortgageRepaymentType = RepaymentType;
+    if (offerAccepted) params.OfferAccepted = offerAccepted.toString();
+    if (ReadinessToBuy) params.StageOfJourney = ReadinessToBuy;
+
+    const oefParams = new URLSearchParams(params);
+    window.location.href = `${baseUrl}?${oefParams.toString()}`;
   }
 
   private async handleApplyDirect(): Promise<void> {

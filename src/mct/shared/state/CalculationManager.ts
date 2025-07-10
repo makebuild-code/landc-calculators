@@ -24,8 +24,7 @@ export class CalculationManager {
 
   private setupCalculationRules(): void {
     // Define calculation rules for specific answer keys
-    this.calculationRules.set('ReadinessToBuy', this.calculateOfferAccepted);
-    this.calculationRules.set('ReadinessToBuy', this.calculateIsProceedable);
+    this.calculationRules.set('ReadinessToBuy', this.calculateReadinessToBuyCalculations);
     this.calculationRules.set('CreditImpaired', this.calculateIsProceedable);
     this.calculationRules.set('EndOfTerm', this.calculateIsProceedable);
     this.calculationRules.set('PropertyValue', this.calculateLoanToValue);
@@ -63,7 +62,19 @@ export class CalculationManager {
     }
   }
 
-  private calculateIsProceedable(answers: Record<string, any>): Partial<Calculations> {
+  private calculateReadinessToBuyCalculations = (answers: Record<string, any>): Partial<Calculations> => {
+    console.log('🔄 calculateReadinessToBuyCalculations');
+
+    const isProceedable = this.calculateIsProceedable(answers);
+    console.log('🔄 isProceedable', isProceedable);
+    const offerAccepted = this.calculateOfferAccepted(answers);
+    console.log('🔄 offerAccepted', offerAccepted);
+
+    return { ...isProceedable, ...offerAccepted };
+  };
+
+  private calculateIsProceedable = (answers: Record<string, any>): Partial<Calculations> => {
+    console.log('🔄 calculateIsProceedable');
     const { ReadinessToBuy, CreditImpaired, EndOfTerm } = answers;
     if (!ReadinessToBuy && !CreditImpaired && !EndOfTerm) return {};
 
@@ -91,9 +102,10 @@ export class CalculationManager {
     console.log('🔄 isProceedable', isProceedable);
 
     return { isProceedable };
-  }
+  };
 
-  private calculateOfferAccepted(answers: Record<string, any>): Partial<Calculations> {
+  private calculateOfferAccepted = (answers: Record<string, any>): Partial<Calculations> => {
+    console.log('🔄 calculateOfferAccepted');
     const { ReadinessToBuy } = answers;
     if (!ReadinessToBuy) return {};
 
@@ -101,25 +113,27 @@ export class CalculationManager {
     const isOfferAccepted = readinessToBuyValue === ReadinessToBuyENUM.OfferAccepted;
     const offerAccepted = isOfferAccepted ? OfferAcceptedENUM.Yes : OfferAcceptedENUM.No;
 
-    return { offerAccepted };
-  }
+    console.log('🔄 offerAccepted', offerAccepted);
 
-  private calculateLoanToValue(answers: Record<string, any>): Partial<Calculations> {
+    return { offerAccepted };
+  };
+
+  private calculateLoanToValue = (answers: Record<string, any>): Partial<Calculations> => {
     const { PropertyValue, DepositAmount } = answers;
     if (!PropertyValue || !DepositAmount) return {};
 
     const LTV = ((PropertyValue - DepositAmount) / PropertyValue) * 100;
     return { LTV };
-  }
+  };
 
-  private calculateIncludeRetention(answers: Record<string, any>): Partial<Calculations> {
+  private calculateIncludeRetention = (answers: Record<string, any>): Partial<Calculations> => {
     const { RemoChange } = answers;
     if (!RemoChange) return {};
 
     const remoChangeValue = RemoChangeENUM[RemoChange as keyof typeof RemoChangeENUM];
     const IncludeRetention = remoChangeValue === RemoChangeENUM.NoChange;
     return { IncludeRetention };
-  }
+  };
 
   // Public method to manually trigger calculations
   public recalculate(): void {

@@ -10,7 +10,7 @@ import {
   StageIDENUM,
 } from '$mct/types';
 import { queryElement, queryElements } from '$utils/dom';
-import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI } from '$mct/api';
+import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI, APIError } from '$mct/api';
 import { DOM_CONFIG, MCT_CONFIG } from '$mct/config';
 import { Dates } from './Dates';
 import { Times } from './Times';
@@ -52,7 +52,7 @@ export class AppointmentManager {
   private timesGroup: HTMLFieldSetElement;
   private times!: Times;
   private formPanel: HTMLElement;
-  private tag: HTMLElement;
+  private tags: HTMLElement[];
   private form: HTMLFormElement;
   private formInputGroups: InputGroup[] = [];
   private formSuccess: HTMLElement;
@@ -95,12 +95,12 @@ export class AppointmentManager {
     });
 
     this.formPanel = queryElement(`[${attr.panel}="${PANEL_ENUM.FORM}"]`, this.component) as HTMLElement;
-    this.tag = queryElement(`[${attr.components}="tag"]`, this.formPanel) as HTMLElement;
+    this.tags = queryElements(`[${attr.components}="tag"]`, this.formPanel) as HTMLElement[];
     this.form = queryElement(`form`, this.formPanel) as HTMLFormElement;
     this.formSuccess = queryElement(`[${attr.form}="success"]`, this.formPanel) as HTMLElement;
     this.tryAgainDialog = queryElement(`[${attr.components}="try-again"]`, this.formPanel) as HTMLDialogElement;
     this.tryAgainButton = queryElement(
-      `[${attr.components}="try-again-button"]`,
+      `[${attr.components}="back-to-calendar"]`,
       this.tryAgainDialog
     ) as HTMLButtonElement;
   }
@@ -226,6 +226,8 @@ export class AppointmentManager {
     this.formPanel.style.display = 'none';
     this.currentPanel = PANEL_ENUM.CALENDAR;
     this.calendarPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // refresh the dates and slots?
   }
 
   private navigateToResults(): void {
@@ -362,7 +364,9 @@ export class AppointmentManager {
     this.dateAndTimeSet = !!date && !!time;
     this.bookButton.disabled = !this.dateAndTimeSet;
 
-    this.tag.textContent = this.getFormattedDateTime();
+    this.tags.forEach((tag) => {
+      tag.textContent = this.getFormattedDateTime();
+    });
   }
 
   private handleEnter(): void {
@@ -399,110 +403,116 @@ export class AppointmentManager {
    * Handle form submission by collecting form data and state data, then calling the API
    */
   private async handleFormSubmission(): Promise<void> {
+    // Show loading state
+    this.setLoadingState(true);
+
+    // Get form data
+    const formData = this.getFormData();
+    //   console.log('formData', formData);
+    if (!formData) {
+      console.error('Failed to get form data');
+      this.setLoadingState(false);
+      return;
+    }
+
+    // Get state data
+    const stateData = this.getStateData();
+    const calculations = MCTManager.getCalculations();
+    //   console.log('stateData', stateData);
+    if (!stateData) {
+      console.error('Failed to get state data');
+      this.setLoadingState(false);
+      return;
+    }
+
+    // Get appointment data
+    const appointmentData = this.getAppointmentData();
+    //   console.log('appointmentData', appointmentData);
+    if (!appointmentData) {
+      console.error('Failed to get appointment data');
+      this.setLoadingState(false);
+      return;
+    }
+
+    // Create the API request with default values for required fields
+    const request: CreateLeadAndBookingRequest = {
+      enquiry: {
+        //   EnquiryId: 0, // Default value - should be provided by the system
+        //   PartnerId: 1, // Default value - should be configurable
+        icid: stateData.icid as ICID,
+        lcid: stateData.lcid as LCID,
+        FirstName: formData.FirstName as string,
+        Surname: formData.Surname as string,
+        Email: formData.Email as string,
+        Mobile: formData.Mobile as string,
+        PurchasePrice: stateData.PropertyValue as number,
+        RepaymentType: stateData.RepaymentType as RepaymentTypeENUM,
+        OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
+        MortgageLength: stateData.MortgageLength as number,
+        MaximumBudget: stateData.MaximumBudget,
+        BuyerType: stateData.BuyerType,
+        ResiBtl: stateData.ResiBtl as ResiBtlENUM,
+        Lender: stateData.Lender,
+        ReadinessToBuy: stateData.ReadinessToBuy,
+        PurchRemo: stateData.PurchRemo,
+        PropertyValue: stateData.PropertyValue as number,
+        DepositAmount: stateData.DepositAmount as number,
+        LTV: calculations.LTV as number,
+        Source: stateData.Source,
+        SourceId: stateData.SourceId,
+        CreditImpaired: stateData.CreditImpaired,
+        // IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
+        // IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
+        // IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
+        // IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
+        // IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
+        IsEmailMarketingPermitted: true,
+        IsPhoneMarketingPermitted: true,
+        IsSMSMarketingPermitted: true,
+        IsPostMarketingPermitted: true,
+        IsSocialMessageMarketingPermitted: true,
+      },
+      booking: appointmentData,
+    };
+
+    console.log('Submitting booking request:', request);
     try {
-      // Show loading state
-      this.setLoadingState(true);
-
-      // Get form data
-      const formData = this.getFormData();
-      //   console.log('formData', formData);
-      if (!formData) {
-        console.error('Failed to get form data');
-        this.setLoadingState(false);
-        return;
-      }
-
-      // Get state data
-      const stateData = this.getStateData();
-      const calculations = MCTManager.getCalculations();
-      //   console.log('stateData', stateData);
-      if (!stateData) {
-        console.error('Failed to get state data');
-        this.setLoadingState(false);
-        return;
-      }
-
-      // Get appointment data
-      const appointmentData = this.getAppointmentData();
-      //   console.log('appointmentData', appointmentData);
-      if (!appointmentData) {
-        console.error('Failed to get appointment data');
-        this.setLoadingState(false);
-        return;
-      }
-
-      // Create the API request with default values for required fields
-      const request: CreateLeadAndBookingRequest = {
-        enquiry: {
-          //   EnquiryId: 0, // Default value - should be provided by the system
-          //   PartnerId: 1, // Default value - should be configurable
-          icid: stateData.icid as ICID,
-          lcid: stateData.lcid as LCID,
-          FirstName: formData.FirstName as string,
-          Surname: formData.Surname as string,
-          Email: formData.Email as string,
-          Mobile: formData.Mobile as string,
-          PurchasePrice: stateData.PropertyValue as number,
-          RepaymentType: stateData.RepaymentType as RepaymentTypeENUM,
-          OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
-          MortgageLength: stateData.MortgageLength as number,
-          MaximumBudget: stateData.MaximumBudget,
-          BuyerType: stateData.BuyerType,
-          ResiBtl: stateData.ResiBtl as ResiBtlENUM,
-          Lender: stateData.Lender,
-          ReadinessToBuy: stateData.ReadinessToBuy,
-          PurchRemo: stateData.PurchRemo,
-          PropertyValue: stateData.PropertyValue as number,
-          DepositAmount: stateData.DepositAmount as number,
-          LTV: calculations.LTV as number,
-          Source: stateData.Source,
-          SourceId: stateData.SourceId,
-          CreditImpaired: stateData.CreditImpaired,
-          // IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
-          // IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
-          // IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
-          // IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
-          // IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
-          IsEmailMarketingPermitted: true,
-          IsPhoneMarketingPermitted: true,
-          IsSMSMarketingPermitted: true,
-          IsPostMarketingPermitted: true,
-          IsSocialMessageMarketingPermitted: true,
-        },
-        booking: appointmentData,
-      };
-
-      console.log('Submitting booking request:', request);
-
       // Call the API
       const response = await createLeadAndBookingAPI.createLeadAndBooking(request);
-
       console.log('Booking response:', response);
 
-      if (response.error) {
-        if (response.error.includes('409')) {
+      // Handle successful booking
+      this.form.style.display = 'none';
+      this.formSuccess.style.removeProperty('display');
+    } catch (error: unknown) {
+      console.error('Error submitting booking:', error);
+
+      // Handle specific API errors
+      if (error instanceof APIError) {
+        console.log('API Error Status:', error.status);
+        console.log('API Error Message:', error.message);
+
+        if (error.status === 409) {
+          console.log('Booking error: 409 - Slot already taken');
           this.tryAgainDialog.showModal();
           this.tryAgainButton.addEventListener('click', () => {
             this.tryAgainDialog.close();
             this.showCalendarPanel();
           });
+        } else if (error.status === 400) {
+          console.log('Booking error: 400 - Bad request, try again');
+          // You can add specific handling for 400 errors here
+          // For example, show a different dialog or message
+          alert('Unable to book this appointment. Please try again.');
         } else {
-          console.error('Booking failed:', response.error);
+          console.error('Booking failed with status:', error.status);
+          alert('An error occurred while booking your appointment. Please try again.');
         }
-
-        return;
+      } else {
+        // Handle other types of errors
+        console.error('Unexpected error:', error);
+        alert('An unexpected error occurred. Please try again.');
       }
-
-      this.form.style.display = 'none';
-      this.formSuccess.style.removeProperty('display');
-
-      //   // Handle success - could redirect to the URL or show success message
-      //   if (response.url) {
-      //     window.location.href = response.url;
-      //   }
-    } catch (error) {
-      console.error('Error submitting booking:', error);
-      // Handle error - could show a user-friendly message
     } finally {
       this.setLoadingState(false);
     }

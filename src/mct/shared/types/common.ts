@@ -5,6 +5,8 @@
  * or are general-purpose types.
  */
 
+import type { ICID, LCID } from './api';
+
 export type Breakpoint = 'desktop' | 'tablet' | 'landscape' | 'portrait';
 export type ResponsiveConfig = {
   [T in Breakpoint]: number;
@@ -44,6 +46,20 @@ export interface Profile {
   requirements: {
     [key: string]: string;
   };
+}
+
+export interface OEF_PARAMS {
+  PurchaseOrRemortgage?: string;
+  ResidentialOrBuyToLet?: string;
+  CreditIssues?: string;
+  PropertyValue?: string;
+  LoanAmount?: string;
+  Term?: string;
+  MortgageRepaymentType?: string;
+  OfferAccepted?: string;
+  Icid: ICID;
+  StageOfJourney?: string;
+  LcId: LCID;
 }
 
 // Form options
