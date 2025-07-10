@@ -1,4 +1,4 @@
-import { DOM_CONFIG, FILTERS_CONFIG } from '$mct/config';
+import { DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/config';
 import type {
   AnswerKey,
   AnswerName,
@@ -21,7 +21,7 @@ import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterGroup } from './FilterGroup';
-import { logUserEventsAPI, productsAPI } from '$mct/api';
+import { productsAPI } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
 
 const attr = DOM_CONFIG.attributes.results;
@@ -443,7 +443,13 @@ export class ResultsManager {
     MCTManager.goToStage(StageIDENUM.Appointment);
   }
 
-  private handleGetADecision(): void {
+  private async handleGetADecision(): Promise<void> {
+    await this.handleLogUserEvents(EVENTS_CONFIG.directToBroker, 'OEF');
+
+    /**
+     * @todo
+     * - populate the redirect URL with parameters
+     */
     window.location.href = 'https://www.landc.co.uk/online/mortgage-finder';
   }
 
@@ -451,7 +457,7 @@ export class ResultsManager {
     if (!this.applyDirect) return;
     try {
       // Wait for the log user events API call to complete
-      await this.handleLogUserEvents(true, this.product?.LenderName);
+      await this.handleLogUserEvents(EVENTS_CONFIG.directToLender, this.product?.LenderName);
 
       const lender = this.product?.LenderName;
       const title = queryElement(
@@ -471,14 +477,13 @@ export class ResultsManager {
     }
   }
 
-  private handleLogUserEvents(applyDirect: boolean, lender: string = ''): void {
-    const eventName = applyDirect ? 'Direct_To_Lender' : 'Get_Free_Advice';
+  private handleLogUserEvents(EventName: string, lender: string = ''): void {
     const payload: LogUserEventCustom = {
-      EventName: eventName,
+      EventName,
       EventValue: lender,
-      FieldName: eventName,
-      FieldValue: lender,
     };
+
+    console.log('handleLogUserEvents: ', payload);
 
     MCTManager.logUserEvent(payload);
   }

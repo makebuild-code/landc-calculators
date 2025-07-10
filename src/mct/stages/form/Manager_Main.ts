@@ -1,12 +1,12 @@
 import { simulateEvent } from '@finsweet/ts-utils';
 
-import { DOM_CONFIG } from '$mct/config';
+import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { Profile, QuestionsStageOptions } from '$mct/types';
+import type { AnswerKey, AnswerValue, LogUserEventCustom, Profile, QuestionsStageOptions } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
@@ -86,8 +86,6 @@ export class MainFormManager extends FormManager {
 
       const currentItem = currentGroup.getActiveQuestion();
       if (!currentItem.isValid()) return;
-
-      this.logUserFilledInEvent(currentItem.getStateValue('initialName'));
 
       currentGroup.navigate('next');
     });
@@ -251,6 +249,14 @@ export class MainFormManager extends FormManager {
       // end of form, determine next step
       // console.log('End of form, navigate to results');
       // console.log(MCTManager.getAnswers());
+
+      const event: LogUserEventCustom = {
+        EventName: EVENTS_CONFIG.questionsComplete,
+        EventValue: EVENTS_CONFIG.questionsComplete,
+      };
+
+      MCTManager.logUserEvent(event);
+
       MCTManager.goToStage(StageIDENUM.Results);
     }
 
