@@ -97,15 +97,4 @@ export abstract class FormManager {
     this.profile = profile ? profile : null;
     return profile ? profile : null;
   }
-
-  public logUserFilledInEvent(questionName: string): void {
-    const event: LogUserEventCustom = {
-      EventName: `User filled in ${questionName}`,
-      FieldName: questionName as AnswerKey,
-      FieldValue: MCTManager.getAnswer(questionName as AnswerKey) as AnswerValue,
-      EventValue: MCTManager.getAnswer(questionName as AnswerKey) as AnswerValue as string,
-    };
-
-    MCTManager.logUserEvent(event);
-  }
 }

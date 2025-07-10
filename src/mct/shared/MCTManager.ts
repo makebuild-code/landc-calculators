@@ -27,7 +27,7 @@ import type {
   LogUserEventCustom,
   LogUserEventRequest,
 } from '$mct/types';
-import type { BaseFormManager } from '../stages/form/NEW_Manager_Base';
+import { getValueAsLandC } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes;
 
@@ -270,6 +270,10 @@ export const MCTManager = {
     return stateManager.getAnswer(key);
   },
 
+  getAnswerAsLandC(key: AnswerKey): AnswerValue | null {
+    return getValueAsLandC(key);
+  },
+
   setAnswers(answerDataArray: AnswerData[]) {
     stateManager.setAnswers(answerDataArray);
   },
@@ -299,17 +303,23 @@ export const MCTManager = {
   },
 
   async logUserEvent(event: LogUserEventCustom): Promise<void> {
+    const answers = this.getAnswers();
+    const FormValues: Record<string, string> = {};
+    for (const [key, value] of Object.entries(answers)) {
+      FormValues[key] = value != null ? String(value) : '';
+    }
+
     const payload: LogUserEventRequest = {
       ...event,
       LCID: this.getLCID() as LCID,
       ICID: this.getICID() as ICID,
-      FormValues: this.getAnswers(),
+      FormValues,
       CreatedBy: 'MCT',
     };
 
     try {
       const response = await logUserEventsAPI.logEvent(payload);
-      console.log('response', response);
+      console.log('LogUserEvent: ', response);
     } catch (error) {
       console.error('error', error);
     }

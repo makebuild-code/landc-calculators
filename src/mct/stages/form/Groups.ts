@@ -116,7 +116,7 @@ export class MainGroup extends QuestionGroup {
     return questionEls.map((element, index) => {
       const question = new QuestionComponent({
         element,
-        debug: true,
+        debug: false,
         autoBindEvents: true,
         formManager: this.formManager,
         onChange: () => this.handleChange(index),
@@ -162,7 +162,6 @@ export class MainGroup extends QuestionGroup {
 
     const current = this.getActiveQuestion();
     if (current.isValid()) {
-      this.formManager.logUserFilledInEvent(current.getStateValue('initialName'));
       this.navigate('next');
     } else {
       current.updateVisualState(false);

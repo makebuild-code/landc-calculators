@@ -11,8 +11,8 @@ export interface LogUserEventDefault {
 export interface LogUserEventCustom {
   EventName: string;
   EventValue: string;
-  FieldName: AnswerKey;
-  FieldValue: AnswerValue;
+  // FieldName: AnswerKey;
+  // FieldValue: AnswerValue;
 }
 
 export interface LogUserEventRequest extends LogUserEventDefault, LogUserEventCustom {}
