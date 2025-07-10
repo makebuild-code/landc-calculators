@@ -224,7 +224,7 @@ export class ResultsManager {
     isProceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
     if (this.applyDirect) this.applyDirect.style.display = 'none';
 
-    this.appointmentDialogButton.addEventListener('click', () => this.appointmentDialog.showModal());
+    this.appointmentDialogButton.addEventListener('click', () => MCTManager.goToStage(StageIDENUM.Appointment));
     this.appointmentDialogClose.addEventListener('click', () => {
       MCTManager.setMortgageId(null);
       this.product = null;
