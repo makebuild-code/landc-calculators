@@ -55,6 +55,7 @@ export class AppointmentManager {
   private tags: HTMLElement[];
   private form: HTMLFormElement;
   private formInputGroups: InputGroup[] = [];
+  private formError: HTMLElement;
   private formSuccess: HTMLElement;
   private tryAgainDialog: HTMLDialogElement;
   private tryAgainButton: HTMLButtonElement;
@@ -97,6 +98,7 @@ export class AppointmentManager {
     this.formPanel = queryElement(`[${attr.panel}="${PANEL_ENUM.FORM}"]`, this.component) as HTMLElement;
     this.tags = queryElements(`[${attr.components}="tag"]`, this.formPanel) as HTMLElement[];
     this.form = queryElement(`form`, this.formPanel) as HTMLFormElement;
+    this.formError = queryElement(`[${attr.form}="error"]`, this.formPanel) as HTMLElement;
     this.formSuccess = queryElement(`[${attr.form}="success"]`, this.formPanel) as HTMLElement;
     this.tryAgainDialog = queryElement(`[${attr.components}="try-again"]`, this.formPanel) as HTMLDialogElement;
     this.tryAgainButton = queryElement(
@@ -215,6 +217,8 @@ export class AppointmentManager {
   }
 
   private showFormPanel(): void {
+    this.formError.style.display = 'none';
+    this.formSuccess.style.display = 'none';
     this.calendarPanel.style.display = 'none';
     this.formPanel.style.removeProperty('display');
     this.currentPanel = PANEL_ENUM.FORM;
@@ -503,10 +507,12 @@ export class AppointmentManager {
           console.log('Booking error: 400 - Bad request, try again');
           // You can add specific handling for 400 errors here
           // For example, show a different dialog or message
-          alert('Unable to book this appointment. Please try again.');
+          // alert('Unable to book this appointment. Please try again.');
+          this.formError.style.display = 'block';
         } else {
           console.error('Booking failed with status:', error.status);
           alert('An error occurred while booking your appointment. Please try again.');
+          this.formError.style.display = 'block';
         }
       } else {
         // Handle other types of errors
