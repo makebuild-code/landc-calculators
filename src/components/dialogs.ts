@@ -1,7 +1,7 @@
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 
-export const dialogs = () => {
+export const dialogs = (component: HTMLElement = document.body) => {
   const attr = 'data-dialog';
   const components = queryElements<HTMLDivElement>(`[${attr}="component"]`);
 

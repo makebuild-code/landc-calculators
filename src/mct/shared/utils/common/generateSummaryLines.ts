@@ -44,7 +44,7 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers)
           : '5+'
   );
 
-  const SchemePeriodsText = `${SchemePeriodsMap} years`;
+  const SchemePeriodsText = `${SchemePeriodsMap} year`;
 
   const SchemeTypesText =
     SchemeTypesMap.length === 1
