@@ -10,6 +10,7 @@ import type { InputKey, InputValue, LogUserEventCustom, Profile, QuestionsStageO
 import { GroupNameENUM } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
+import { trackGAEvent } from '$utils/analytics/trackGAEvent';
 
 const attr = DOM_CONFIG.attributes.form;
 
@@ -246,9 +247,16 @@ export class MainFormManager extends FormManager {
       this.activeGroupIndex = outputGroupIndex;
       outputGroup.activate();
 
+      // Log user event for end of questions
       MCTManager.logUserEvent({
         EventName: EVENTS_CONFIG.questionsComplete,
         EventValue: EVENTS_CONFIG.questionsComplete,
+      });
+
+      // Track GA event for showing summary
+      trackGAEvent('form_interaction', {
+        event_category: 'MCTForm',
+        event_label: `MCT_Show_Summary`,
       });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
