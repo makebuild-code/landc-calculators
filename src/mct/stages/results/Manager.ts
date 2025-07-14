@@ -3,18 +3,13 @@ import type {
   InputKey,
   InputName,
   InputValue,
-  ICID,
-  InputValue,
-  LCID,
   LogUserEventCustom,
-  LogUserEventResponse,
-  OEF_PARAMS,
   Product,
   ProductsResponse,
   ResultsStageOptions,
   SummaryInfo,
 } from '$mct/types';
-import { OutputTypeENUM, StageIDENUM } from '$mct/types';
+import { InputKeysENUM, OutputTypeENUM, StageIDENUM } from '$mct/types';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { formatNumber } from '$utils/formatting';
 import { Result } from './Result';
@@ -273,8 +268,8 @@ export class ResultsManager {
        */
 
       if (key === 'LTV') {
-        const propertyValue = MCTManager.getAnswer('PropertyValue') as number;
-        const depositAmount = MCTManager.getAnswer('DepositAmount') as number;
+        const propertyValue = MCTManager.getAnswer(InputKeysENUM.PropertyValue) as number;
+        const depositAmount = MCTManager.getAnswer(InputKeysENUM.DepositAmount) as number;
         const ltv = ((propertyValue - depositAmount) / propertyValue) * 100;
 
         if (type === 'percentage') {
@@ -285,8 +280,8 @@ export class ResultsManager {
 
         return;
       } else if (key === 'MortgageAmount') {
-        const propertyValue = MCTManager.getAnswer('PropertyValue') as number;
-        const depositAmount = MCTManager.getAnswer('DepositAmount') as number;
+        const propertyValue = MCTManager.getAnswer(InputKeysENUM.PropertyValue) as number;
+        const depositAmount = MCTManager.getAnswer(InputKeysENUM.DepositAmount) as number;
         const mortgageAmount = propertyValue - depositAmount;
 
         if (type === 'currency') {
@@ -397,6 +392,7 @@ export class ResultsManager {
       numberOfResults: 100, // @TODO: Maximum of 100 on the test API?
       sortColumn: 1,
     });
+    if (!input) return null;
 
     try {
       const response = await productsAPI.search(input);
