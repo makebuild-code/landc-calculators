@@ -1,11 +1,11 @@
 import { PROFILES_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import type {
-  AnswerData,
-  AnswerKey,
-  AnswerName,
-  Answers,
-  AnswerValue,
+  InputData,
+  InputKey,
+  InputName,
+  Inputs,
+  InputValue,
   LogUserEventCustom,
   LogUserEventRequest,
   Profile,
@@ -40,7 +40,7 @@ export abstract class FormManager {
     removeInitialStyles(this.component);
   }
 
-  protected prefill(answers: Answers) {
+  protected prefill(answers: Inputs) {
     /**
      * @todo:
      * - Loop through the answers
@@ -65,16 +65,16 @@ export abstract class FormManager {
   // }
 
   public saveAnswersToMCT(): void {
-    const answerDataArray: AnswerData[] = [];
+    const answerDataArray: InputData[] = [];
 
     [...this.questions].forEach((question) => {
       const value = question.getValue();
       if (!value) return;
 
       answerDataArray.push({
-        key: question.getStateValue('initialName') as AnswerKey,
-        name: question.getStateValue('finalName') as AnswerName,
-        value: value as AnswerValue,
+        key: question.getStateValue('initialName') as InputKey,
+        name: question.getStateValue('finalName') as InputName,
+        value: value as InputValue,
         source: 'user',
       });
     });
@@ -84,7 +84,7 @@ export abstract class FormManager {
     MCTManager.setAnswers(answerDataArray);
   }
 
-  public getAnswers(): Answers {
+  public getAnswers(): Inputs {
     return { ...MCTManager.getAnswers() };
   }
 

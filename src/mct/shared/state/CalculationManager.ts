@@ -1,6 +1,6 @@
 import type { StateManager } from './StateManager';
 import {
-  type AnswerKey,
+  type InputKey,
   type Calculations,
   type CalculationKey,
   type CalculationValue,
@@ -9,11 +9,14 @@ import {
   OfferAcceptedENUM,
   EndOfTermENUM,
   RemoChangeENUM,
+  InputKeysENUM,
+  CalculationKeysENUM,
 } from '$mct/types';
+import { getEnumValue } from '$mct/utils';
 
 export class CalculationManager {
   private stateManager: StateManager;
-  private calculationRules: Map<AnswerKey, (answers: Record<string, any>) => Partial<Calculations>>;
+  private calculationRules: Map<InputKey, (answers: Record<string, any>) => Partial<Calculations>>;
 
   constructor(stateManager: StateManager) {
     this.stateManager = stateManager;
@@ -23,18 +26,18 @@ export class CalculationManager {
   }
 
   private setupCalculationRules(): void {
-    // Define calculation rules for specific answer keys
-    this.calculationRules.set('ReadinessToBuy', this.calculateReadinessToBuyCalculations);
-    this.calculationRules.set('CreditImpaired', this.calculateIsProceedable);
-    this.calculationRules.set('EndOfTerm', this.calculateIsProceedable);
-    this.calculationRules.set('PropertyValue', this.calculateLoanToValue);
-    this.calculationRules.set('DepositAmount', this.calculateLoanToValue);
-    this.calculationRules.set('RemoChange', this.calculateIncludeRetention);
+    // Define calculation rules for specific input keys
+    this.calculationRules.set(InputKeysENUM.ReadinessToBuy, this.readinessToBuy);
+    this.calculationRules.set(InputKeysENUM.CreditImpaired, this.creditImpaired);
+    this.calculationRules.set(InputKeysENUM.EndOfTerm, this.endOfTerm);
+    this.calculationRules.set(InputKeysENUM.PropertyValue, this.propertyValue);
+    this.calculationRules.set(InputKeysENUM.DepositAmount, this.depositAmount);
+    this.calculationRules.set(InputKeysENUM.RemoChange, this.remoChange);
   }
 
   private subscribeToStateChanges(): void {
     this.stateManager.subscribe((event) => {
-      if (event.changes.answers) this.runCalculations(event.currentState.answers);
+      if (event.changes.inputs) this.runCalculations(event.currentState.inputs);
     });
   }
 
@@ -53,7 +56,7 @@ export class CalculationManager {
     const definedCalculations: Partial<Calculations> = {};
     Object.entries(newCalculations).forEach(([key, value]) => {
       if (value !== undefined) {
-        definedCalculations[key as CalculationKey] = value;
+        (definedCalculations as any)[key] = value;
       }
     });
 
@@ -62,60 +65,65 @@ export class CalculationManager {
     }
   }
 
-  private calculateReadinessToBuyCalculations = (answers: Record<string, any>): Partial<Calculations> => {
-    console.log('🔄 calculateReadinessToBuyCalculations');
-
-    const isProceedable = this.calculateIsProceedable(answers);
-    console.log('🔄 isProceedable', isProceedable);
-    const offerAccepted = this.calculateOfferAccepted(answers);
-    console.log('🔄 offerAccepted', offerAccepted);
-
-    return { ...isProceedable, ...offerAccepted };
+  private readinessToBuy = (answers: Record<string, any>): Partial<Calculations> => {
+    return { ...this.calculateIsProceedable(answers), ...this.calculateOfferAccepted(answers) };
   };
 
+  private creditImpaired = (answers: Record<string, any>): Partial<Calculations> => {
+    return this.calculateIsProceedable(answers);
+  };
+
+  private endOfTerm = (answers: Record<string, any>): Partial<Calculations> => {
+    return this.calculateIsProceedable(answers);
+  };
+
+  private propertyValue = (answers: Record<string, any>): Partial<Calculations> => {
+    return this.calculateLoanToValue(answers);
+  };
+
+  private depositAmount = (answers: Record<string, any>): Partial<Calculations> => {
+    return this.calculateLoanToValue(answers);
+  };
+
+  private remoChange = (answers: Record<string, any>): Partial<Calculations> => {
+    return this.calculateIncludeRetention(answers);
+  };
+
+  /**
+   * @returns { isProceedable: boolean } not proceedable if:
+   * - ReadinessToBuy === Researching || Viewing
+   * - CreditImpaired === Yes
+   * - EndOfTerm === SixToTwelveMonths || TwelvePlusMonths
+   */
   private calculateIsProceedable = (answers: Record<string, any>): Partial<Calculations> => {
-    console.log('🔄 calculateIsProceedable');
     const { ReadinessToBuy, CreditImpaired, EndOfTerm } = answers;
-    if (!ReadinessToBuy && !CreditImpaired && !EndOfTerm) return {};
 
-    let isProceedable = false;
+    const ReadinessToBuyValue = getEnumValue(ReadinessToBuyENUM, ReadinessToBuy);
+    const CreditImpairedValue = getEnumValue(CreditImpairedENUM, CreditImpaired);
+    const EndOfTermValue = getEnumValue(EndOfTermENUM, EndOfTerm);
 
-    if (ReadinessToBuy && CreditImpaired) {
-      // run logic
-      const readinessToBuyValue = ReadinessToBuyENUM[ReadinessToBuy as keyof typeof ReadinessToBuyENUM];
-      const readinessToBuyProceedable =
-        readinessToBuyValue === ReadinessToBuyENUM.MadeAnOffer ||
-        readinessToBuyValue === ReadinessToBuyENUM.OfferAccepted;
+    let isProceedable = true;
 
-      const creditImpairedValue = CreditImpairedENUM[CreditImpaired as keyof typeof CreditImpairedENUM];
-      const creditImpairedProceedable = creditImpairedValue === CreditImpairedENUM.No;
+    if (ReadinessToBuyValue === ReadinessToBuyENUM.Researching || ReadinessToBuyValue === ReadinessToBuyENUM.Viewing)
+      isProceedable = false;
+    if (CreditImpairedValue === CreditImpairedENUM.Yes) isProceedable = false;
+    if (EndOfTermValue === EndOfTermENUM.SixToTwelveMonths || EndOfTermValue === EndOfTermENUM.TwelvePlusMonths)
+      isProceedable = false;
 
-      isProceedable = readinessToBuyProceedable && creditImpairedProceedable;
-    } else if (EndOfTerm) {
-      const endOfTermValue = EndOfTermENUM[EndOfTerm as keyof typeof EndOfTermENUM];
-      const endOfTermProceedable =
-        endOfTermValue === EndOfTermENUM.WithinThreeMonths || endOfTermValue === EndOfTermENUM.ThreeToSixMonths;
-
-      isProceedable = endOfTermProceedable;
-    }
-
-    console.log('🔄 isProceedable', isProceedable);
-
-    return { isProceedable };
+    return {
+      [CalculationKeysENUM.IsProceedable]: isProceedable,
+    };
   };
 
   private calculateOfferAccepted = (answers: Record<string, any>): Partial<Calculations> => {
-    console.log('🔄 calculateOfferAccepted');
     const { ReadinessToBuy } = answers;
     if (!ReadinessToBuy) return {};
 
-    const readinessToBuyValue = ReadinessToBuyENUM[ReadinessToBuy as keyof typeof ReadinessToBuyENUM];
+    const readinessToBuyValue = getEnumValue(ReadinessToBuyENUM, ReadinessToBuy);
     const isOfferAccepted = readinessToBuyValue === ReadinessToBuyENUM.OfferAccepted;
     const offerAccepted = isOfferAccepted ? OfferAcceptedENUM.Yes : OfferAcceptedENUM.No;
 
-    console.log('🔄 offerAccepted', offerAccepted);
-
-    return { offerAccepted };
+    return { [CalculationKeysENUM.OfferAccepted]: offerAccepted };
   };
 
   private calculateLoanToValue = (answers: Record<string, any>): Partial<Calculations> => {
@@ -130,7 +138,7 @@ export class CalculationManager {
     const { RemoChange } = answers;
     if (!RemoChange) return {};
 
-    const remoChangeValue = RemoChangeENUM[RemoChange as keyof typeof RemoChangeENUM];
+    const remoChangeValue = getEnumValue(RemoChangeENUM, RemoChange);
     const IncludeRetention = remoChangeValue === RemoChangeENUM.NoChange;
     return { IncludeRetention };
   };
@@ -143,25 +151,38 @@ export class CalculationManager {
 
   // Public method to add new calculation rules
   public addCalculationRule(
-    answerKey: AnswerKey,
+    answerKey: InputKey,
     calculationFn: (answers: Record<string, any>) => Partial<Calculations>
   ): void {
     this.calculationRules.set(answerKey, calculationFn);
   }
 
   // Public method to get available calculation keys
-  public getAvailableCalculationKeys(): CalculationKey[] {
-    return ['isProceedable', 'offerAccepted', 'LTV', 'IncludeRetention', 'RepaymentValue', 'InterestOnlyValue'];
+  public getAvailableCalculationKeys(): (keyof Calculations)[] {
+    return [
+      CalculationKeysENUM.IsProceedable,
+      CalculationKeysENUM.OfferAccepted,
+      CalculationKeysENUM.LTV,
+      CalculationKeysENUM.IncludeRetention,
+      CalculationKeysENUM.RepaymentValue,
+      CalculationKeysENUM.InterestOnlyValue,
+    ];
   }
 
   // Public method to get calculation value with type safety
-  public getCalculation<K extends CalculationKey>(key: K): CalculationValue | undefined {
+  public getCalculation(key: CalculationKeysENUM): CalculationValue | undefined {
     const calculations = this.stateManager.getCalculations();
     return calculations[key];
   }
 
+  // // Public method to get calculation value with type safety
+  // public getCalculation<K extends keyof Calculations>(key: K): Calculations[K] | undefined {
+  //   const calculations = this.stateManager.getCalculations();
+  //   return calculations[key];
+  // }
+
   // Public method to check if a calculation exists
-  public hasCalculation(key: CalculationKey): boolean {
+  public hasCalculation(key: CalculationKeysENUM): boolean {
     const calculations = this.stateManager.getCalculations();
     return key in calculations;
   }
@@ -172,7 +193,12 @@ export class CalculationManager {
   }
 
   // Public method to set a single calculation
-  public setCalculation<K extends CalculationKey>(key: K, value: CalculationValue): void {
+  public setCalculation(key: CalculationKeysENUM, value: CalculationValue): void {
     this.stateManager.setCalculations({ [key]: value });
   }
+
+  // // Public method to set a single calculation
+  // public setCalculation<K extends CalculationKey>(key: K, value: CalculationValue): void {
+  //   this.stateManager.setCalculations({ [key]: value });
+  // }
 }

@@ -20,6 +20,7 @@ import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/typ
 import type { StatefulInputGroup } from '$mct/components';
 import { InputGroup } from './Form';
 import type { Input } from 'src/types';
+import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -579,26 +580,33 @@ export class AppointmentManager {
         icid: state.icid || '',
         lcid: state.lcid || '',
         PurchasePrice: this.getNumericAnswer(answers, 'PropertyValue'),
-        RepaymentType:
-          RepaymentTypeENUM[this.getStringAnswer(answers, 'RepaymentType') as keyof typeof RepaymentTypeENUM],
-        OfferAccepted:
-          OfferAcceptedENUM[this.getStringAnswer(answers, 'OfferAccepted') as keyof typeof OfferAcceptedENUM],
+        RepaymentType: getEnumValue(RepaymentTypeENUM, this.getStringAnswer(answers, 'RepaymentType')),
+        // RepaymentType:
+        //   RepaymentTypeENUM[this.getStringAnswer(answers, 'RepaymentType') as keyof typeof RepaymentTypeENUM],
+        OfferAccepted: getEnumValue(OfferAcceptedENUM, this.getStringAnswer(answers, 'OfferAccepted')),
+        // OfferAccepted:
+        //   OfferAcceptedENUM[this.getStringAnswer(answers, 'OfferAccepted') as keyof typeof OfferAcceptedENUM],
         MortgageLength: this.getNumericAnswer(answers, 'MortgageLength'),
         MaximumBudget: this.getNumericAnswer(answers, 'MaximumBudget'), // unsure
-        BuyerType: BuyerTypeENUM[this.getStringAnswer(answers, 'BuyerType') as keyof typeof BuyerTypeENUM], // unsure
-        ResiBtl: ResiBtlENUM[this.getStringAnswer(answers, 'ResiBtl') as keyof typeof ResiBtlENUM],
+        BuyerType: getEnumValue(BuyerTypeENUM, this.getStringAnswer(answers, 'BuyerType')), // unsure
+        // BuyerType: BuyerTypeENUM[this.getStringAnswer(answers, 'BuyerType') as keyof typeof BuyerTypeENUM], // unsure
+        ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, 'ResiBtl')),
+        // ResiBtl: ResiBtlENUM[this.getStringAnswer(answers, 'ResiBtl') as keyof typeof ResiBtlENUM],
         Lender: this.getStringAnswer(answers, 'Lender'),
-        ReadinessToBuy:
-          ReadinessToBuyENUM[this.getStringAnswer(answers, 'ReadinessToBuy') as keyof typeof ReadinessToBuyENUM],
-        PurchRemo: PurchRemoENUM[this.getStringAnswer(answers, 'PurchRemo') as keyof typeof PurchRemoENUM],
+        ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, 'ReadinessToBuy')),
+        // ReadinessToBuy:
+        //   ReadinessToBuyENUM[this.getStringAnswer(answers, 'ReadinessToBuy') as keyof typeof ReadinessToBuyENUM],
+        PurchRemo: getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, 'PurchRemo')),
+        // PurchRemo: PurchRemoENUM[this.getStringAnswer(answers, 'PurchRemo') as keyof typeof PurchRemoENUM],
         PropertyValue: this.getNumericAnswer(answers, 'PropertyValue'),
         DepositAmount: this.getNumericAnswer(answers, 'DepositAmount'),
         LTV: this.getNumericAnswer(answers, 'LTV'), // get from calculations
         Source: this.getStringAnswer(answers, 'Source'), // unsure
         SourceId: this.getNumericAnswer(answers, 'SourceId'), // unsure
-        CreditImpaired:
-          CreditImpairedENUM[this.getStringAnswer(answers, 'CreditImpaired') as keyof typeof CreditImpairedENUM],
+        CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, 'CreditImpaired')),
       };
+
+      console.log('stateData', stateData);
 
       return stateData;
     } catch (error) {

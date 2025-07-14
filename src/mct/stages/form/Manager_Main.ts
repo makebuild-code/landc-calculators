@@ -6,7 +6,7 @@ import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { AnswerKey, AnswerValue, LogUserEventCustom, Profile, QuestionsStageOptions } from '$mct/types';
+import type { InputKey, InputValue, LogUserEventCustom, Profile, QuestionsStageOptions } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';

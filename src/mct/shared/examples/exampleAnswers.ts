@@ -1,6 +1,6 @@
-import type { Answers } from '$mct/types';
+import type { Inputs } from '$mct/types';
 
-export const EXAMPLE_ANSWERS: Answers = {
+export const EXAMPLE_ANSWERS: Inputs = {
   PurchRemo: 'P',
   FTB: 'N',
   ResiBtl: 'R',

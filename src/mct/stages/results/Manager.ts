@@ -1,8 +1,8 @@
 import { DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/config';
 import type {
-  AnswerKey,
-  AnswerName,
-  AnswerValue,
+  InputKey,
+  InputName,
+  InputValue,
   ICID,
   InputValue,
   LCID,
@@ -207,9 +207,9 @@ export class ResultsManager {
       // Only set the answer if we have a valid key, value and name
       if (key && value !== null && value !== undefined && name)
         MCTManager.setAnswer({
-          key: key as AnswerKey,
-          name: name as AnswerName,
-          value: value as AnswerValue,
+          key: key as InputKey,
+          name: name as InputName,
+          value: value as InputValue,
           source: 'user',
         });
     });
@@ -300,13 +300,13 @@ export class ResultsManager {
         const text = summaryLines[key as keyof typeof summaryLines];
         if (text) output.innerHTML = text;
       } else if (type === 'currency') {
-        const value = MCTManager.getAnswer(key as AnswerKey) as number;
+        const value = MCTManager.getAnswer(key as InputKey) as number;
         if (value) output.textContent = formatNumber(value, { type: 'currency' });
       } else if (type === 'percentage') {
-        const value = MCTManager.getAnswer(key as AnswerKey) as number;
+        const value = MCTManager.getAnswer(key as InputKey) as number;
         if (value) output.textContent = formatNumber(value, { type: 'percent' });
       } else if (type === 'progress-bar') {
-        const value = MCTManager.getAnswer(key as AnswerKey) as number;
+        const value = MCTManager.getAnswer(key as InputKey) as number;
         if (value) output.style.width = `${value}%`;
       }
     });

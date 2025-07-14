@@ -13,11 +13,10 @@ export type SelectOption = {
   label: string;
 };
 
-// Input value types
+// Input value types at the point of retrieval
 export type RadioValue = string;
-export type CheckboxList = string[];
-export type CheckboxValues = CheckboxList | boolean;
+export type CheckboxValues = boolean | string[];
 export type TextValue = string;
 export type NumberValue = number;
 export type SelectValue = string;
-export type InputValue = RadioValue | CheckboxValues | TextValue | NumberValue | SelectValue;
+// export type InputValue = RadioValue | CheckboxValues | TextValue | NumberValue | SelectValue;

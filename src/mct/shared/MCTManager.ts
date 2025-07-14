@@ -13,10 +13,10 @@ import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager } from '$mct/state';
 import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
 import type {
-  AnswerData,
-  AnswerKey,
-  Answers,
-  AnswerValue,
+  InputData,
+  InputKey,
+  Inputs,
+  InputValue,
   AppState,
   CalculationKey,
   Calculations,
@@ -26,8 +26,9 @@ import type {
   LCID,
   LogUserEventCustom,
   LogUserEventRequest,
+  CalculationKeysENUM,
 } from '$mct/types';
-import { getValueAsLandC } from '$mct/utils';
+import { getInputValueAsLandC } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes;
 
@@ -262,33 +263,39 @@ export const MCTManager = {
     return stateManager.getLCID();
   },
 
-  setAnswer(answerData: AnswerData) {
+  setAnswer(answerData: InputData) {
     stateManager.setAnswer(answerData);
   },
 
-  getAnswer(key: AnswerKey): AnswerValue | null {
+  getAnswer(key: InputKey): InputValue | undefined {
     return stateManager.getAnswer(key);
   },
 
-  getAnswerAsLandC(key: AnswerKey): AnswerValue | null {
-    return getValueAsLandC(key);
+  getAnswerAsLandC(key: InputKey): InputValue | undefined {
+    return getInputValueAsLandC(key) as InputValue | undefined;
   },
 
-  setAnswers(answerDataArray: AnswerData[]) {
+  setAnswers(answerDataArray: InputData[]) {
     stateManager.setAnswers(answerDataArray);
   },
 
-  getAnswers(): Answers {
+  getAnswers(): Inputs {
     return stateManager.getAnswers();
   },
 
-  getAnswersAsLandC(): Answers {
-    return Object.fromEntries(Object.entries(this.getAnswers()).map(([key, value]) => [key, getValueAsLandC(key)]));
+  getAnswersAsLandC(): Inputs {
+    return Object.fromEntries(
+      Object.entries(this.getAnswers()).map(([key, value]) => [key, getInputValueAsLandC(key as InputKey)])
+    );
   },
 
-  setCalculation(key: CalculationKey, value: CalculationValue) {
+  setCalculation(key: CalculationKeysENUM, value: CalculationValue) {
     calculationManager.setCalculation(key, value);
-  },
+  }, // TEST
+
+  getCalculation(key: CalculationKeysENUM): CalculationValue | undefined {
+    return calculationManager.getCalculation(key);
+  }, // TEST
 
   setCalculations(calculations: Partial<Calculations>) {
     stateManager.setCalculations(calculations);
@@ -296,6 +303,10 @@ export const MCTManager = {
 
   getCalculations(): Calculations {
     return stateManager.getCalculations();
+  },
+
+  recalculate(): void {
+    calculationManager.recalculate();
   },
 
   setMortgageId(mortgageId: number | null) {

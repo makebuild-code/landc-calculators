@@ -1,10 +1,10 @@
-import type { AnswerKey, AnswerValue } from '../state';
+import type { InputKey, InputValue } from '../state';
 import type { ICID, LCID } from './base';
 
 export interface LogUserEventDefault {
   LCID: LCID;
   ICID: ICID;
-  FormValues: Record<AnswerKey, AnswerValue>;
+  FormValues: Record<InputKey, InputValue>;
   CreatedBy: 'MCT';
 }
 
