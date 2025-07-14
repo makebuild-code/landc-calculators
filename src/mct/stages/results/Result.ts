@@ -13,6 +13,7 @@ interface Options {
   template: HTMLElement;
   product: Product;
   onClick: (product: Product) => void;
+  buttonText: string;
 }
 
 export class Result {
@@ -20,9 +21,10 @@ export class Result {
   private template: HTMLElement;
   private product: Product;
   private onClick: (product: Product) => void;
+  private buttonText: string;
 
   private outputs: HTMLElement[] = [];
-  private button: HTMLButtonElement | null = null;
+  private button: HTMLButtonElement;
 
   constructor(wrapper: HTMLElement, options: Options) {
     this.wrapper = wrapper;
@@ -30,6 +32,7 @@ export class Result {
     this.template.removeAttribute(DOM_CONFIG.attributes.initial);
     this.product = options.product;
     this.onClick = options.onClick;
+    this.buttonText = options.buttonText;
 
     this.outputs = queryElements(`[${attr.output}]`, this.template) as HTMLElement[];
     this.button = queryElement(`[${attr.element}="template-cta"]`, this.template) as HTMLButtonElement;
@@ -73,6 +76,8 @@ export class Result {
         output.textContent = outputValue.toString();
       }
     });
+
+    this.button.textContent = this.buttonText;
   }
 
   private initDialogs(): void {
