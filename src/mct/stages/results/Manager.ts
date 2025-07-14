@@ -49,6 +49,7 @@ export class ResultsManager {
   private component: HTMLElement;
   public id: StageIDENUM;
   private isInitialised: boolean = false;
+  private isProceedable: boolean = false;
 
   private products: Product[] = [];
   private product: Product | null = null;
@@ -61,21 +62,28 @@ export class ResultsManager {
 
   private showIfProceedable: HTMLElement[];
 
-  private appointmentDialogButton: HTMLButtonElement;
-  private appointmentDialog: HTMLDialogElement;
-  private appointmentDialogClose: HTMLButtonElement;
+  private goToAppointmentButtons: HTMLButtonElement[] = [];
+  private goToOEFButtons: HTMLButtonElement[] = [];
+  private goToLenderButtons: HTMLButtonElement[] = [];
+
+  // private appointmentButton: HTMLButtonElement;
+  private howToApplyDialog: HTMLDialogElement;
+  private howToApplyDialogClose: HTMLButtonElement;
 
   private getFreeAdvice: HTMLElement;
-  private getFreeAdviceButton: HTMLButtonElement;
+  // private getFreeAdviceButton: HTMLButtonElement;
   private getADecision: HTMLElement;
-  private getADecisionButtons: HTMLButtonElement[];
-  private applyDirect: HTMLElement | null;
-  private applyDirectLink: HTMLLinkElement | undefined;
-  private applyDirectDialog: HTMLDialogElement | undefined;
+  // private getADecisionButtons: HTMLButtonElement[];
+  private applyDirect: HTMLElement | null = null;
+  // private applyDirectButton: HTMLButtonElement | null = null;
+  private applyDirectDialog: HTMLDialogElement | null = null;
+  private allowApplyDirect: boolean = false;
 
   private results: Result[] = [];
   private resultsList: HTMLElement;
   private resultsTemplate: HTMLElement;
+  private resultsButton: HTMLButtonElement;
+  private resultsButtonText: string;
 
   private loader: HTMLElement;
   private empty: HTMLElement;
@@ -93,50 +101,70 @@ export class ResultsManager {
 
     this.showIfProceedable = queryElements(`[${attr.showIfProceedable}]`, this.component) as HTMLElement[];
 
-    this.appointmentDialogButton = queryElement(
-      `[${attr.components}="book-an-appointment"]`,
+    this.goToAppointmentButtons = queryElements(
+      `[${attr.components}="go-to-appointment"]`,
       this.header
-    ) as HTMLButtonElement;
-    this.appointmentDialog = queryElement(
-      `[${attr.components}="appointment-dialog"]`,
+    ) as HTMLButtonElement[];
+    this.goToOEFButtons = queryElements(`[${attr.components}="go-to-oef"]`, this.header) as HTMLButtonElement[];
+    this.goToLenderButtons = queryElements(`[${attr.components}="go-to-lender"]`, this.header) as HTMLButtonElement[];
+
+    // this.appointmentButton = queryElement(
+    //   `[${attr.components}="book-an-appointment"]`,
+    //   this.header
+    // ) as HTMLButtonElement;
+
+    this.howToApplyDialog = queryElement(
+      `[${attr.components}="how-to-apply-dialog"]`,
       this.component
     ) as HTMLDialogElement;
-    this.appointmentDialogClose = queryElement(
-      `[${attr.components}="close-appointment-dialog"]`,
-      this.appointmentDialog
+
+    this.howToApplyDialogClose = queryElement(
+      `[${attr.components}="how-to-apply-dialog-close"]`,
+      this.howToApplyDialog
     ) as HTMLButtonElement;
 
-    this.getFreeAdvice = queryElement(`[${attr.components}="get-free-advice"]`, this.appointmentDialog) as HTMLElement;
-    this.getFreeAdviceButton = queryElement('button', this.getFreeAdvice) as HTMLButtonElement;
-    this.getADecision = queryElement(`[${attr.components}="get-a-decision"]`, this.appointmentDialog) as HTMLElement;
-    this.getADecisionButtons = [
-      queryElement('button', this.getADecision) as HTMLButtonElement,
-      queryElement(`[${attr.components}="get-a-decision-button"]`, this.header) as HTMLButtonElement,
-    ];
-    this.applyDirect = queryElement(
-      `[${attr.components}="apply-direct"]`,
-      this.appointmentDialog
-    ) as HTMLElement | null;
-    if (this.applyDirect) this.applyDirectLink = queryElement('a', this.applyDirect) as HTMLLinkElement;
-    if (this.applyDirect)
+    this.getFreeAdvice = queryElement(`[${attr.components}="get-free-advice"]`, this.howToApplyDialog) as HTMLElement;
+    // this.getFreeAdviceButton = queryElement('button', this.getFreeAdvice) as HTMLButtonElement;
+    this.getADecision = queryElement(`[${attr.components}="get-a-decision"]`, this.howToApplyDialog) as HTMLElement;
+    // this.getADecisionButtons = [
+    //   queryElement('button', this.getADecision) as HTMLButtonElement,
+    //   queryElement(`[${attr.components}="get-a-decision-button"]`, this.header) as HTMLButtonElement,
+    // ];
+
+    this.applyDirect = queryElement(`[${attr.components}="apply-direct"]`, this.howToApplyDialog) as HTMLElement | null;
+    if (this.applyDirect) {
+      // this.applyDirectButton = queryElement('button', this.applyDirect) as HTMLButtonElement;
       this.applyDirectDialog = queryElement(
         `[${attr.components}="apply-direct-redirect"]`,
         this.component
       ) as HTMLDialogElement;
+    }
+
+    this.allowApplyDirect = !!this.applyDirect;
 
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
+    console.log('resultsTemplate: ', this.resultsTemplate);
+    this.resultsButton = queryElement(`[${attr.element}="template-cta"]`, this.resultsTemplate) as HTMLButtonElement;
+    console.log('resultsButton: ', this.resultsButton);
+    this.resultsButtonText = this.resultsButton.textContent as string;
+    console.log('resultsButtonText: ', this.resultsButtonText);
     this.resultsTemplate.remove();
 
     this.loader = queryElement(`[${attr.components}="loader"]`, this.component) as HTMLElement;
     this.empty = queryElement(`[${attr.components}="empty"]`, this.component) as HTMLElement;
     this.pagination = queryElement(`[${attr.components}="pagination"]`, this.component) as HTMLElement;
     this.paginationButton = queryElement('button', this.pagination) as HTMLButtonElement;
+
+    console.log('Results: ', this);
   }
 
   public init(options?: ResultsStageOptions): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
+
+    const calculations = MCTManager.getCalculations();
+    this.isProceedable = !!calculations.isProceedable;
 
     // if (options?.exampleData) {
     //   // Answers will be saved from prior stage, just temporary to avoid inputting every time
@@ -163,6 +191,17 @@ export class ResultsManager {
     // if (options?.autoLoad === true) this.handleProductsAPI();
 
     this.handleButtons();
+    this.handleShowIfProceedable();
+  }
+
+  public onEnter(): void {
+    const calculations = MCTManager.getCalculations();
+    this.isProceedable = !!calculations.isProceedable;
+
+    this.initAppointmentDialog();
+    this.renderOutputs();
+    this.renderFilters();
+    this.handleProductsAPI();
     this.handleShowIfProceedable();
   }
 
@@ -216,20 +255,30 @@ export class ResultsManager {
   }
 
   private initAppointmentDialog(): void {
-    const calculations = MCTManager.getCalculations();
-    const { isProceedable } = calculations;
+    /**
+     * If proceedable:
+     * ✓ show 'Get free advice', hide 'Get a decision'
+     * × hide 'Get free advice', show 'Get a decision'
+     */
 
-    isProceedable ? this.getFreeAdvice.style.removeProperty('display') : (this.getFreeAdvice.style.display = 'none');
-    isProceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
+    // Show/Hide buttons based on proceedability
+    this.isProceedable
+      ? this.getFreeAdvice.style.removeProperty('display')
+      : (this.getFreeAdvice.style.display = 'none');
+    this.isProceedable ? (this.getADecision.style.display = 'none') : this.getADecision.style.removeProperty('display');
+
+    // Hide apply direct by default (only show if product has ApplyDirectLink)
     if (this.applyDirect) this.applyDirect.style.display = 'none';
 
-    this.appointmentDialogButton.addEventListener('click', () => MCTManager.goToStage(StageIDENUM.Appointment));
-    this.appointmentDialogClose.addEventListener('click', () => {
+    // Close dialog on button click
+    this.howToApplyDialogClose.addEventListener('click', () => {
+      this.howToApplyDialog.close();
+    });
+
+    // Reset state on dialog close
+    this.howToApplyDialog.addEventListener('close', () => {
       MCTManager.setMortgageId(null);
       this.product = null;
-      this.appointmentDialog.close();
-    });
-    this.appointmentDialog.addEventListener('close', () => {
       if (this.applyDirect) this.applyDirect.style.display = 'none';
     });
   }
@@ -329,11 +378,29 @@ export class ResultsManager {
       return;
     }
 
+    /**
+     * If allowDirect?
+     * - use the normal button text
+     *
+     * If not?
+     * & isProceedable?
+     * - use goToAppointment text
+     *
+     * & is not proceedable?
+     * - use goToOEF text
+     */
+    const buttonText = this.allowApplyDirect
+      ? this.resultsButtonText
+      : this.isProceedable
+        ? (this.goToAppointmentButtons[0].textContent as string)
+        : (this.goToOEFButtons[0].textContent as string);
+
     this.results = this.products.map((product) => {
       return new Result(this.resultsList, {
         template: this.resultsTemplate,
         product,
         onClick: (product) => this.handleProductCTA(product),
+        buttonText,
       });
     });
 
@@ -342,19 +409,38 @@ export class ResultsManager {
   }
 
   private handleButtons(): void {
-    this.getFreeAdviceButton.addEventListener('click', () => this.handleGetFreeAdvice());
-    this.getADecisionButtons.forEach((button) => button.addEventListener('click', () => this.handleGetADecision()));
-    if (this.applyDirectLink) this.applyDirectLink.addEventListener('click', () => this.handleApplyDirect());
+    // Close the dialog and go to appointment
+    this.goToAppointmentButtons.forEach((button) =>
+      button.addEventListener('click', () => {
+        this.howToApplyDialog.close();
+        MCTManager.goToStage(StageIDENUM.Appointment);
+      })
+    );
+
+    // Close the dialog and go to OEF
+    this.goToOEFButtons.forEach((button) =>
+      button.addEventListener('click', () => {
+        this.howToApplyDialog.close();
+        this.handleDirectToBroker();
+      })
+    );
+
+    // Close the dialog and go to lender
+    this.goToLenderButtons.forEach((button) =>
+      button.addEventListener('click', () => {
+        this.howToApplyDialog.close();
+        this.handleDirectToLender();
+      })
+    );
+
+    // Render the next 10 results
     this.paginationButton.addEventListener('click', () => this.renderResults(10));
   }
 
   private handleShowIfProceedable(): void {
-    const calculations = MCTManager.getCalculations();
-    const { isProceedable } = calculations;
-
     this.showIfProceedable.forEach((element) => {
       const showIfProceedable = element.getAttribute(attr.showIfProceedable) === 'true';
-      if ((isProceedable && showIfProceedable) || (!isProceedable && !showIfProceedable))
+      if ((this.isProceedable && showIfProceedable) || (!this.isProceedable && !showIfProceedable))
         element.style.removeProperty('display');
       else element.style.display = 'none';
     });
@@ -382,9 +468,15 @@ export class ResultsManager {
     this.product = product;
     const { ApplyDirectLink } = product;
 
-    if (this.applyDirect)
-      ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
-    simulateEvent(this.appointmentDialogButton, 'click');
+    // If apply direct is allowed, show the box
+    if (this.applyDirect && this.allowApplyDirect) {
+      !!ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
+      this.howToApplyDialog.showModal();
+    } else if (this.isProceedable) {
+      MCTManager.goToStage(StageIDENUM.Appointment);
+    } else if (!this.isProceedable) {
+      this.handleDirectToBroker();
+    }
   }
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
@@ -415,6 +507,8 @@ export class ResultsManager {
 
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
+    // this.allowApplyDirect = true;
+    this.allowApplyDirect = !!this.products.find((product) => product.ApplyDirectLink);
 
     this.initiateResults();
     this.renderOutputs();
@@ -439,12 +533,12 @@ export class ResultsManager {
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 
-  private handleGetFreeAdvice(): void {
-    this.appointmentDialog.close();
-    MCTManager.goToStage(StageIDENUM.Appointment);
-  }
+  // private handleGetFreeAdvice(): void {
+  //   this.howToApplyDialog.close();
+  //   MCTManager.goToStage(StageIDENUM.Appointment);
+  // }
 
-  private async handleGetADecision(): Promise<void> {
+  private async handleDirectToBroker(): Promise<void> {
     await this.handleLogUserEvents(EVENTS_CONFIG.directToBroker, 'OEF');
 
     /**
@@ -490,8 +584,10 @@ export class ResultsManager {
     window.location.href = `${baseUrl}?${oefParams.toString()}`;
   }
 
-  private async handleApplyDirect(): Promise<void> {
-    if (!this.applyDirect) return;
+  private async handleDirectToLender(): Promise<void> {
+    // Return if apply direct is not available
+    if (!this.applyDirect || !this.applyDirectDialog) return;
+
     try {
       // Wait for the log user events API call to complete
       await this.handleLogUserEvents(EVENTS_CONFIG.directToLender, this.product?.LenderName);
