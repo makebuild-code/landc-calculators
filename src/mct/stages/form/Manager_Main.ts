@@ -15,46 +15,48 @@ const attr = DOM_CONFIG.attributes.form;
 
 export class MainFormManager extends FormManager {
   public activeGroupIndex: number = 0;
-  public components: {
-    header: HTMLElement;
-    secondHeader: HTMLElement;
-    identifier: HTMLElement;
-    // profileSelect: HTMLSelectElement;
-    wrapper: HTMLElement;
-    scroll: HTMLElement;
-    nextButton: HTMLButtonElement;
-    prevButton: HTMLButtonElement;
-    groupElements: HTMLElement[];
-    hideOnGroup: HTMLElement[];
-    showOnGroup: HTMLElement[];
-    loader: HTMLElement;
-  };
+  private header: HTMLElement;
+  private secondHeader: HTMLElement;
+  private identifier: HTMLElement;
+  // profileSelect: HTMLSelectElement;
+  public track: HTMLElement;
+  private list: HTMLElement;
+  private nextButton: HTMLButtonElement;
+  private prevButton: HTMLButtonElement;
+  private groupElements: HTMLElement[];
+  private hideOnGroup: HTMLElement[];
+  private showOnGroup: HTMLElement[];
+  private loader: HTMLElement;
 
   constructor(component: HTMLElement) {
     super(component);
-    this.components = {
-      header: queryElement(`[${attr.components}="header"]`, component) as HTMLElement,
-      secondHeader: queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement,
-      identifier: queryElement(`[${attr.components}="identifier"]`, component) as HTMLElement,
-      wrapper: queryElement(`[${attr.components}="wrapper"]`, component) as HTMLElement,
-      scroll: queryElement(`[${attr.components}="scroll"]`, component) as HTMLElement,
-      nextButton: queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement,
-      prevButton: queryElement(`[${attr.components}="previous"]`, component) as HTMLButtonElement,
-      groupElements: queryElements(`[${attr.group}]`, component) as HTMLElement[],
-      hideOnGroup: queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[],
-      showOnGroup: queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[],
-      loader: queryElement(`[${attr.components}="loader"]`, component) as HTMLElement,
-    };
+
+    this.header = queryElement(`[${attr.components}="header"]`, component) as HTMLElement;
+    this.secondHeader = queryElement(`[${attr.components}="sticky-header"]`, component) as HTMLElement;
+    this.identifier = queryElement(`[${attr.components}="identifier"]`, this.secondHeader) as HTMLElement;
+    this.track = queryElement(`[${attr.components}="track"]`, component) as HTMLElement;
+    this.list = queryElement(`[${attr.components}="list"]`, this.track) as HTMLElement;
+    this.nextButton = queryElement(`[${attr.components}="next"]`, component) as HTMLButtonElement;
+    this.prevButton = queryElement(`[${attr.components}="previous"]`, component) as HTMLButtonElement;
+    this.groupElements = queryElements(`[${attr.group}]`, this.list) as HTMLElement[];
+    this.hideOnGroup = queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[];
+    this.showOnGroup = queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[];
+    this.loader = queryElement(`[${attr.components}="loader"]`, component) as HTMLElement;
+
+    console.log('this', this);
   }
 
   public init(): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
+    console.log('init: showLoader');
     this.showLoader(true);
+    console.log('init: showHeader');
     this.showHeader('static');
 
-    this.components.groupElements.forEach((groupEl, index) => {
+    console.log('init: groupElements');
+    this.groupElements.forEach((groupEl, index) => {
       const name = groupEl.getAttribute(attr.group) as GroupNameENUM;
       if (!name) return;
 
@@ -63,6 +65,7 @@ export class MainFormManager extends FormManager {
       this.groups.push(group);
     });
 
+    console.log('init: handleShowHideOnGroup');
     this.handleShowHideOnGroup();
 
     // this.prepareWrapper();
@@ -71,15 +74,18 @@ export class MainFormManager extends FormManager {
     // if (initialGroup) initialGroup.show();
 
     // Handle profile option if provided
+    console.log('init: handleIdentifier');
     this.handleIdentifier();
 
+    console.log('init: mct:navigation:update');
     this.component.addEventListener('mct:navigation:update', (event: Event) => {
       const { nextEnabled, prevEnabled } = (event as CustomEvent).detail;
-      if (typeof nextEnabled === 'boolean') this.components.nextButton.disabled = !nextEnabled;
-      if (typeof prevEnabled === 'boolean') this.components.prevButton.disabled = !prevEnabled;
+      if (typeof nextEnabled === 'boolean') this.nextButton.disabled = !nextEnabled;
+      if (typeof prevEnabled === 'boolean') this.prevButton.disabled = !prevEnabled;
     });
 
-    this.components.nextButton.addEventListener('click', () => {
+    console.log('init: nextButton');
+    this.nextButton.addEventListener('click', () => {
       console.log('nextButton clicked');
       const currentGroup = this.getActiveGroup();
       if (!currentGroup || currentGroup instanceof OutputGroup) return;
@@ -90,7 +96,8 @@ export class MainFormManager extends FormManager {
       currentGroup.navigate('next');
     });
 
-    this.components.prevButton.addEventListener('click', () => {
+    console.log('init: prevButton');
+    this.prevButton.addEventListener('click', () => {
       const currentGroup = this.getActiveGroup();
       if (!currentGroup || currentGroup instanceof OutputGroup) {
         this.navigateToPreviousGroup();
@@ -100,8 +107,13 @@ export class MainFormManager extends FormManager {
       currentGroup.navigate('prev');
     });
 
+    console.log('init: onMount');
     this.onMount();
+
+    console.log('init: prepareWrapper');
     this.prepareWrapper();
+
+    console.log('init: showLoader: false');
     this.showLoader(false);
 
     // setTimeout(() => {
@@ -120,23 +132,25 @@ export class MainFormManager extends FormManager {
   }
 
   private showLoader(show: boolean): void {
-    this.components.loader.style.display = show ? 'flex' : 'none';
+    this.loader.style.display = show ? 'flex' : 'none';
   }
 
+  /**
+   * @plan
+   *
+   * - for the top padding, we want the
+   */
   public prepareWrapper(): void {
-    if (this.groups.length === 0) return;
-
-    const firstItem = this.getFirstEl();
-    const lastItem = this.getLastEl();
-    if (!firstItem || !lastItem) return;
-
-    const { scroll, wrapper } = this.components;
-
-    const topPad = scroll.offsetHeight / 2 - firstItem.offsetHeight / 2;
-    const bottomPad = scroll.offsetHeight / 2 - lastItem.offsetHeight / 2;
-
-    wrapper.style.paddingTop = `${topPad}px`;
-    wrapper.style.paddingBottom = `${bottomPad}px`;
+    // if (this.groups.length === 0) return;
+    // const firstItem = this.getFirstEl();
+    // const lastItem = this.getLastEl();
+    // console.log('firstItem', firstItem);
+    // console.log('lastItem', lastItem);
+    // if (!firstItem || !lastItem) return;
+    // const topPad = this.track.offsetHeight / 2 - firstItem.offsetHeight / 2;
+    // const bottomPad = this.track.offsetHeight / 2 - lastItem.offsetHeight / 2;
+    // this.list.style.paddingTop = `${topPad}px`;
+    // this.list.style.paddingBottom = `${bottomPad}px`;
   }
 
   private getFirstEl(): HTMLElement | null {
@@ -271,7 +285,7 @@ export class MainFormManager extends FormManager {
     console.log(name);
 
     // hide elements that are in the hideOnGroup array
-    this.components.hideOnGroup.forEach((element) => {
+    this.hideOnGroup.forEach((element) => {
       const group = element.getAttribute(attr.hideOnGroup);
 
       if (group === name) {
@@ -282,7 +296,7 @@ export class MainFormManager extends FormManager {
     });
 
     // show elements that are in the showOnGroup array
-    this.components.showOnGroup.forEach((element) => {
+    this.showOnGroup.forEach((element) => {
       const group = element.getAttribute(attr.showOnGroup);
 
       if (group === name) {
@@ -343,22 +357,21 @@ export class MainFormManager extends FormManager {
   private handleIdentifier(profile?: Profile) {
     console.log('handleIdentifier', profile);
     if (!profile) {
-      this.components.identifier.style.display = 'none';
+      this.identifier.style.display = 'none';
     } else {
-      this.components.identifier.textContent = profile.display;
-      this.components.identifier.style.removeProperty('display');
+      this.identifier.textContent = profile.display;
+      this.identifier.style.removeProperty('display');
     }
   }
 
   private showHeader(type: 'static' | 'sticky') {
-    const { header, secondHeader: stickyHeader } = this.components;
-    if (!header || !stickyHeader) return;
+    if (!this.header || !this.secondHeader) return;
     if (type === 'static') {
-      header.style.removeProperty('display');
-      stickyHeader.style.display = 'none';
+      this.header.style.removeProperty('display');
+      this.secondHeader.style.display = 'none';
     } else if (type === 'sticky') {
-      header.style.display = 'none';
-      stickyHeader.style.removeProperty('display');
+      this.header.style.display = 'none';
+      this.secondHeader.style.removeProperty('display');
     }
 
     this.prepareWrapper();

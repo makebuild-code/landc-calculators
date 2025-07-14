@@ -80,8 +80,9 @@ export abstract class QuestionGroup extends BaseGroup {
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
-    this.questions.forEach((question) => {
+    this.questions.forEach((question, index) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
+      if (index === 0 && shouldBeVisible) question.showQuestion(true);
       shouldBeVisible ? question.require() : question.unrequire();
     });
   }
@@ -106,8 +107,6 @@ export class MainGroup extends QuestionGroup {
     super(component, formManager);
     this.formManager = formManager;
     this.questions = this.initQuestions();
-    this.formManager.components.scroll = queryElement(`[${attr.components}="scroll"]`) as HTMLElement;
-    // console.log('init: updateActiveQuestions');
     this.updateActiveQuestions();
   }
 
@@ -136,8 +135,8 @@ export class MainGroup extends QuestionGroup {
 
   public handleChange(index: number): void {
     console.log('handleChange', index);
-    if (index !== this.activeQuestionIndex)
-      throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
+    // if (index !== this.activeQuestionIndex)
+    //   throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
     console.log('handleChange: updateActiveQuestions');
 
     const question = this.questions[index];
@@ -148,12 +147,6 @@ export class MainGroup extends QuestionGroup {
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
-
-    // console.log('handleChange, sending GA event');
-    trackGAEvent('form_interaction', {
-      event_category: 'MCTForm',
-      event_label: `MCT_${question.getStateValue('finalName')}`,
-    });
   }
 
   public handleEnter(index: number): void {
@@ -204,6 +197,12 @@ export class MainGroup extends QuestionGroup {
     if (direction === 'next') {
       const nextIndex = this.getNextVisibleIndex(this.activeQuestionIndex);
 
+      // console.log('handleChange, sending GA event');
+      trackGAEvent('form_interaction', {
+        event_category: 'MCTForm',
+        event_label: `MCT_${activeQuestion.getStateValue('finalName')}`,
+      });
+
       // If there's a next question in this group
       if (nextIndex < this.questions.length) {
         this.activeQuestionIndex = nextIndex;
@@ -237,20 +236,31 @@ export class MainGroup extends QuestionGroup {
     question.enable();
     question.focus();
     question.toggleActive(true);
+    question.showQuestion(true);
     this.scrollToQuestion(question);
     this.handleNextButton(question.isValid());
   }
 
   private deactivateQuestion(question: QuestionComponent): void {
-    question.disable();
-    question.toggleActive(false);
+    const required = question.isRequired;
+    if (!required) {
+      question.disable();
+      question.toggleActive(false);
+      question.showQuestion(false);
+    }
   }
 
   private scrollToQuestion(item: QuestionComponent): void {
-    this.formManager.components.scroll.scrollTo({
+    // this.formManager.track.scrollTo({
+    //   top: item.getElement().offsetTop - this.formManager.track.offsetHeight / 2 + item.getElement().offsetHeight / 2,
+    //   behavior: 'smooth',
+    // });
+
+    window.scrollTo({
       top:
-        item.getElement().offsetTop -
-        this.formManager.components.scroll.offsetHeight / 2 +
+        item.getElement().getBoundingClientRect().top +
+        window.scrollY -
+        window.innerHeight / 2 +
         item.getElement().offsetHeight / 2,
       behavior: 'smooth',
     });
@@ -293,11 +303,8 @@ export class OutputGroup extends BaseGroup {
   }
 
   private scrollToOutput(): void {
-    this.formManager.components.scroll.scrollTo({
-      top:
-        this.component.offsetTop -
-        this.formManager.components.scroll.offsetHeight / 2 +
-        this.component.offsetHeight / 2,
+    this.formManager.track.scrollTo({
+      top: this.component.offsetTop - this.formManager.track.offsetHeight / 2 + this.component.offsetHeight / 2,
       behavior: 'smooth',
     });
   }
@@ -339,6 +346,8 @@ export class OutputGroup extends BaseGroup {
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput();
+    if (!input) return null;
+
     try {
       return await productsAPI.search(input);
     } catch (error) {
@@ -359,6 +368,11 @@ export class OutputGroup extends BaseGroup {
   }
 
   private navigateToResults(): void {
+    trackGAEvent('form_interaction', {
+      event_category: 'MCTForm',
+      event_label: `MCT_Summary`,
+    });
+
     this.formManager.navigateToNextGroup();
   }
 }

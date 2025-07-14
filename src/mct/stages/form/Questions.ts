@@ -21,6 +21,7 @@ interface QuestionState extends StatefulInputGroupState {
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private formManager: FormManager;
   public indexInGroup: number;
+  public isRequired: boolean = false;
 
   constructor(options: QuestionOptions) {
     super(options);
@@ -93,17 +94,27 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public require(): void {
-    this.eventBus.emit(FormEventNames.QUESTION_REQUIRED, { question: this });
+    // this.eventBus.emit(FormEventNames.QUESTION_REQUIRED, { question: this });
+    this.isRequired = true;
     this.formManager.saveQuestion(this);
-    this.show();
+    // this.show();
     this.setStateValue('isVisible', true);
   }
 
   public unrequire(): void {
-    this.eventBus.emit(FormEventNames.QUESTION_UNREQUIRED, { question: this });
+    // this.eventBus.emit(FormEventNames.QUESTION_UNREQUIRED, { question: this });
+    this.isRequired = false;
     this.formManager.removeQuestion(this);
     this.hide();
     this.setStateValue('isVisible', false);
+  }
+
+  public showQuestion(show: boolean): void {
+    if (show) {
+      this.show();
+    } else {
+      this.hide();
+    }
   }
 
   public toggleActive(active?: boolean): void {
