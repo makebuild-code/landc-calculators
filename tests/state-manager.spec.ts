@@ -15,7 +15,7 @@ test('should initialize with default state', () => {
   expect(state.lcid).toBeNull();
   expect(state.icid).toBeNull();
   expect(state.currentStageId).toBeNull();
-  expect(state.answers).toEqual({});
+  expect(state.inputs).toEqual({});
   expect(state.summary).toBeNull();
   expect(state.products).toBeNull();
 });

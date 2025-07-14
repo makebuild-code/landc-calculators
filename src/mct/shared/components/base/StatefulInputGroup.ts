@@ -150,14 +150,14 @@ export abstract class StatefulInputGroup<
     this.setState({ value, isValid } as Partial<T>);
     this.onChange();
 
-    // Emit change event
-    this.emit(FormEventNames.INPUT_CHANGED, {
-      value,
-      isValid,
-      type: this.getStateValue('type'),
-      groupName: this.getStateValue('groupName'),
-      finalName: this.getStateValue('finalName'),
-    });
+    // // Emit change event
+    // this.emit(FormEventNames.INPUT_CHANGED, {
+    //   value,
+    //   isValid,
+    //   type: this.getStateValue('type'),
+    //   groupName: this.getStateValue('groupName'),
+    //   finalName: this.getStateValue('finalName'),
+    // });
   }
 
   protected handleEnter(event: Event): void {
@@ -177,13 +177,13 @@ export abstract class StatefulInputGroup<
     if (!isValid) return;
     this.onEnter();
 
-    this.emit(FormEventNames.INPUT_ON_ENTER, {
-      value,
-      isValid,
-      type: this.getStateValue('type'),
-      groupName: this.getStateValue('groupName'),
-      finalName: this.getStateValue('finalName'),
-    });
+    // this.emit(FormEventNames.INPUT_ON_ENTER, {
+    //   value,
+    //   isValid,
+    //   type: this.getStateValue('type'),
+    //   groupName: this.getStateValue('groupName'),
+    //   finalName: this.getStateValue('finalName'),
+    // });
   }
 
   public isValid(): boolean {

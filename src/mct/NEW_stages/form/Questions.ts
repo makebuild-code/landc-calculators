@@ -1,7 +1,7 @@
 import { lendersAPI } from '$mct/api';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
-import { FormEventNames, type Answers, type AnswerValue, type SelectOption } from '$mct/types';
+import { FormEventNames, type Inputs, type InputValue, type SelectOption } from '$mct/types';
 import type { BaseFormManager } from './Base';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -109,7 +109,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     }
   }
 
-  public shouldBeVisible(answers: Answers, groupIsVisible: boolean): boolean {
+  public shouldBeVisible(answers: Inputs, groupIsVisible: boolean): boolean {
     // parent group is not visible
     if (!groupIsVisible) return false;
 

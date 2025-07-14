@@ -3,58 +3,81 @@ import {
   CreditImpairedENUM,
   EndOfTermENUM,
   FirstTimeBuyerENUM,
-  MortgageTypeENUM,
-  PropertyTypeENUM,
+  InputKeysENUM,
   PurchRemoENUM,
   ReadinessToBuyENUM,
   RemoChangeENUM,
   RepaymentTypeENUM,
   ResiBtlENUM,
-  SapValueENUM,
   SchemePeriodsENUM,
-  SchemePurposeENUM,
   SchemeTypesENUM,
-  SortColumnENUM,
-  type AnswerKey,
-  type AnswerValue,
+  type InputKey,
+  type Inputs,
 } from '$mct/types';
+import { getEnumValue } from '$mct/utils';
 
-export const getValueAsLandC = (key: AnswerKey): AnswerValue | null => {
-  const value = MCTManager.getAnswer(key);
-  if (!value) return null;
+// Helper type to extract the value type from an interface
+type ExtractValueType<T, K extends keyof T> = T[K];
 
-  switch (key) {
-    case 'CreditImpaired':
-      return CreditImpairedENUM[value as keyof typeof CreditImpairedENUM];
-    case 'EndOfTerm':
-      return EndOfTermENUM[value as keyof typeof EndOfTermENUM];
-    case 'FTB':
-      return FirstTimeBuyerENUM[value as keyof typeof FirstTimeBuyerENUM];
-    case 'MortgageType':
-      return MortgageTypeENUM[value as keyof typeof MortgageTypeENUM];
-    case 'PropertyType':
-      return PropertyTypeENUM[value as keyof typeof PropertyTypeENUM];
-    case 'PurchRemo':
-      return PurchRemoENUM[value as keyof typeof PurchRemoENUM];
-    case 'ReadinessToBuy':
-      return ReadinessToBuyENUM[value as keyof typeof ReadinessToBuyENUM];
-    case 'RemoChange':
-      return RemoChangeENUM[value as keyof typeof RemoChangeENUM];
-    case 'RepaymentType':
-      return RepaymentTypeENUM[value as keyof typeof RepaymentTypeENUM];
-    case 'ResiBtl':
-      return ResiBtlENUM[value as keyof typeof ResiBtlENUM];
-    case 'SapValue':
-      return SapValueENUM[value as keyof typeof SapValueENUM];
-    case 'SchemePeriods':
-      return SchemePeriodsENUM[value as keyof typeof SchemePeriodsENUM];
-    case 'SchemeTypes':
-      return (value as string[]).map((v) => SchemeTypesENUM[v as keyof typeof SchemeTypesENUM]);
-    case 'SchemePurpose':
-      return SchemePurposeENUM[value as keyof typeof SchemePurposeENUM];
-    case 'SortColumn':
-      return SortColumnENUM[value as keyof typeof SortColumnENUM];
-    default:
-      return value;
+// Union type for all possible keys (both enum values and literal keys)
+type AllKeys = keyof Inputs | (typeof InputKeysENUM)[keyof typeof InputKeysENUM];
+
+// Map of keys to their corresponding enums
+type EnumMap = {
+  PurchRemo: typeof PurchRemoENUM;
+  FTB: typeof FirstTimeBuyerENUM;
+  ResiBtl: typeof ResiBtlENUM;
+  ReadinessToBuy: typeof ReadinessToBuyENUM;
+  CreditImpaired: typeof CreditImpairedENUM;
+  RepaymentType: typeof RepaymentTypeENUM;
+  SchemeTypes: typeof SchemeTypesENUM;
+  SchemePeriods: typeof SchemePeriodsENUM;
+  EndOfTerm: typeof EndOfTermENUM;
+  RemoChange: typeof RemoChangeENUM;
+};
+
+// Conditional type that returns the enum values
+type GetValueAsLandCReturnType<T extends AllKeys> = T extends keyof EnumMap
+  ? T extends 'SchemeTypes'
+    ? SchemeTypesENUM[] // Special case for SchemeTypes which should return an array
+    : EnumMap[T][keyof EnumMap[T]]
+  : T extends keyof Inputs
+    ? ExtractValueType<Inputs, T>
+    : never;
+
+export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCReturnType<T> | undefined => {
+  const value = MCTManager.getAnswer(key as InputKey);
+
+  if (!value) return undefined;
+
+  // Return number or boolean values as they are
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return value as GetValueAsLandCReturnType<T>;
   }
+
+  // Dynamic enum mapping
+  const enumMap: Record<string, any> = {
+    PurchRemo: PurchRemoENUM,
+    FTB: FirstTimeBuyerENUM,
+    ResiBtl: ResiBtlENUM,
+    ReadinessToBuy: ReadinessToBuyENUM,
+    CreditImpaired: CreditImpairedENUM,
+    RepaymentType: RepaymentTypeENUM,
+    SchemeTypes: SchemeTypesENUM,
+    SchemePeriods: SchemePeriodsENUM,
+    EndOfTerm: EndOfTermENUM,
+    RemoChange: RemoChangeENUM,
+  };
+
+  const enumType = enumMap[key as string];
+  if (enumType) {
+    // Handle array values (like SchemeTypes)
+    if (Array.isArray(value)) {
+      return value.map((v) => getEnumValue(enumType, v)) as unknown as GetValueAsLandCReturnType<T>;
+    }
+    // Handle string values
+    return getEnumValue(enumType, value as string) as GetValueAsLandCReturnType<T>;
+  }
+
+  return value as GetValueAsLandCReturnType<T>;
 };

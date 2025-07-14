@@ -1,4 +1,4 @@
-import type { AnswerData, AppState, StageIDENUM } from '$mct/types';
+import type { InputData, AppState, StageIDENUM } from '$mct/types';
 import type { QuestionComponent } from 'src/mct/stages/form/Questions';
 
 /**
@@ -138,7 +138,7 @@ export interface FormEvents {
 
   [FormEventNames.GROUP_COMPLETED]: {
     groupId: string;
-    answers: AnswerData[];
+    answers: InputData[];
   };
 
   [FormEventNames.GROUP_READY]: {
@@ -164,11 +164,11 @@ export interface FormEvents {
 
   // Answer-related events
   [FormEventNames.ANSWERS_SAVED]: {
-    answers: AnswerData[];
+    answers: InputData[];
   };
 
   [FormEventNames.ANSWERS_LOADED]: {
-    answers: AnswerData[];
+    answers: InputData[];
   };
 
   // Form lifecycle events
@@ -187,7 +187,7 @@ export interface FormEvents {
   };
 
   [FormEventNames.RESULTS_READY]: {
-    answers: AnswerData[];
+    answers: InputData[];
     canShowResults: boolean;
   };
 }

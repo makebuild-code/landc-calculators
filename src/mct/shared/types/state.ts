@@ -5,59 +5,118 @@
  * and data persistence.
  */
 
-import type {
-  CreditImpairedENUM,
-  EndOfTermENUM,
-  FirstTimeBuyerENUM,
+import {
+  OfferAcceptedENUM,
+  ProductsRequestENUM,
   PurchRemoENUM,
-  ReadinessToBuyENUM,
-  RemoChangeENUM,
-  RepaymentTypeENUM,
-  ResiBtlENUM,
-  SchemePeriodsENUM,
-  SchemeTypesENUM,
+  type CreditImpairedENUM,
+  type EndOfTermENUM,
+  type FirstTimeBuyerENUM,
+  type PropertyTypeENUM,
+  type ReadinessToBuyENUM,
+  type RemoChangeENUM,
+  type RepaymentTypeENUM,
+  type ResiBtlENUM,
+  type SchemePeriodsENUM,
+  type SchemeTypesENUM,
 } from './api';
+import type { CheckboxValues, NumberValue, RadioValue, SelectValue, TextValue } from './dom';
 
-// Answer-related types
-export type AnswerKey = string; // Name of the question group
-export type AnswerName = string; // Name of the answer input
-export type AnswerValue = string | number | (string | number)[] | null; // Value of the answer input
-// export type Answers = Record<AnswerKey, AnswerValue>; // All answers
-export type Answers = {
-  PurchRemo?: PurchRemoENUM; // will have by the end
-  FTB?: FirstTimeBuyerENUM;
-  ResiBtl?: ResiBtlENUM; // will have by the end
-  ReadinessToBuy?: ReadinessToBuyENUM;
-  CreditImpaired?: CreditImpairedENUM;
-  PropertyValue?: number; // will have by the end
-  DepositAmount?: number;
-  RepaymentType?: RepaymentTypeENUM; // will have by the end
-  InterestOnlyValue?: number; // optional?
-  MortgageLength?: number; // will have by the end
-  SchemeTypes?: SchemeTypesENUM[]; // will have by the end
-  SchemePeriods?: SchemePeriodsENUM; // will have by the end
-  EndOfTerm?: EndOfTermENUM;
-  RepaymentValue?: number; // will have by the end
-  RemoChange?: RemoChangeENUM;
-  Lender?: string;
+// Input-related types
+export type InputKey = keyof Inputs; // // Initial name of the input group, same as the key in the Inputs object
+export type InputName = string; // Final name of the input group, unique identifier based on the InputKey, GroupName and Value if a Radio or Checkbox input
+export type InputValue = RadioValue | CheckboxValues | TextValue | NumberValue | SelectValue | undefined; // The value of the input
+export type InputPrefillConfig = Record<InputName, InputValue>; // Answers that are prefilled
+
+export enum InputKeysENUM {
+  PurchRemo = 'PurchRemo',
+  FTB = 'FTB',
+  ResiBtl = 'ResiBtl',
+  ReadinessToBuy = 'ReadinessToBuy',
+  CreditImpaired = 'CreditImpaired',
+  PropertyValue = 'PropertyValue',
+  DepositAmount = 'DepositAmount',
+  RepaymentType = 'RepaymentType',
+  InterestOnlyValue = 'InterestOnlyValue',
+  MortgageLength = 'MortgageLength',
+  SchemeTypes = 'SchemeTypes',
+  SchemePeriods = 'SchemePeriods',
+  EndOfTerm = 'EndOfTerm',
+  RepaymentValue = 'RepaymentValue',
+  RemoChange = 'RemoChange',
+  Lender = 'Lender',
+}
+
+export type Inputs = {
+  [InputKeysENUM.PurchRemo]?: keyof typeof PurchRemoENUM; // will have by the end
+  [InputKeysENUM.FTB]?: keyof typeof FirstTimeBuyerENUM;
+  [InputKeysENUM.ResiBtl]?: keyof typeof ResiBtlENUM; // will have by the end
+  [InputKeysENUM.ReadinessToBuy]?: keyof typeof ReadinessToBuyENUM;
+  [InputKeysENUM.CreditImpaired]?: keyof typeof CreditImpairedENUM;
+  [InputKeysENUM.PropertyValue]?: number; // will have by the end
+  // [AnswerKeysENUM.PropertyType]?: keyof typeof PropertyTypeENUM;
+  [InputKeysENUM.DepositAmount]?: number;
+  [InputKeysENUM.RepaymentType]?: keyof typeof RepaymentTypeENUM; // will have by the end
+  [InputKeysENUM.InterestOnlyValue]?: number; // optional?
+  [InputKeysENUM.MortgageLength]?: number; // will have by the end
+  [InputKeysENUM.SchemeTypes]?: keyof (typeof SchemeTypesENUM)[]; // will have by the end
+  [InputKeysENUM.SchemePeriods]?: keyof typeof SchemePeriodsENUM; // will have by the end
+  [InputKeysENUM.EndOfTerm]?: keyof typeof EndOfTermENUM;
+  [InputKeysENUM.RepaymentValue]?: number; // will have by the end
+  [InputKeysENUM.RemoChange]?: keyof typeof RemoChangeENUM;
+  [InputKeysENUM.Lender]?: string;
 };
-export type PrefillAnswers = Record<AnswerName, AnswerValue>; // Answers that are prefilled
+
+export type PurchInputs = {
+  [InputKeysENUM.FTB]: keyof typeof FirstTimeBuyerENUM;
+  [InputKeysENUM.ReadinessToBuy]: keyof typeof ReadinessToBuyENUM;
+  [InputKeysENUM.DepositAmount]: number;
+};
+
+export type RemoInputs = {
+  [InputKeysENUM.EndOfTerm]: keyof typeof EndOfTermENUM;
+  [InputKeysENUM.RemoChange]: keyof typeof RemoChangeENUM;
+  [InputKeysENUM.Lender]: string;
+};
+
+export type InputsByEndOfForm = {
+  [InputKeysENUM.PurchRemo]: keyof typeof PurchRemoENUM;
+  [InputKeysENUM.ResiBtl]: keyof typeof ResiBtlENUM;
+  [InputKeysENUM.CreditImpaired]: keyof typeof CreditImpairedENUM;
+  [InputKeysENUM.PropertyValue]: number;
+  [InputKeysENUM.RepaymentType]: keyof typeof RepaymentTypeENUM;
+  [InputKeysENUM.InterestOnlyValue]: number;
+  [InputKeysENUM.MortgageLength]: number;
+  [InputKeysENUM.SchemeTypes]: keyof (typeof SchemeTypesENUM)[];
+  [InputKeysENUM.SchemePeriods]: keyof typeof SchemePeriodsENUM;
+  [InputKeysENUM.RepaymentValue]: number;
+};
 
 // Calculation-related types
-export type CalculationKey =
-  | 'isProceedable'
-  | 'offerAccepted'
-  | 'LTV'
-  | 'IncludeRetention'
-  | 'RepaymentValue'
-  | 'InterestOnlyValue';
-export type CalculationValue = string | number | boolean;
-export type Calculations = Record<CalculationKey, CalculationValue>; // All calculations
+export enum CalculationKeysENUM {
+  IsProceedable = 'isProceedable',
+  OfferAccepted = 'offerAccepted',
+  LTV = 'LTV',
+  IncludeRetention = ProductsRequestENUM.IncludeRetention,
+  RepaymentValue = InputKeysENUM.RepaymentValue,
+  InterestOnlyValue = InputKeysENUM.InterestOnlyValue,
+}
 
-export interface AnswerData {
-  key: AnswerKey;
-  name: AnswerName;
-  value: AnswerValue;
+export type CalculationKey = keyof typeof CalculationKeysENUM;
+export type CalculationValue = string | number | boolean;
+export type Calculations = {
+  [CalculationKeysENUM.IsProceedable]?: boolean;
+  [CalculationKeysENUM.OfferAccepted]?: OfferAcceptedENUM;
+  [CalculationKeysENUM.LTV]?: number;
+  [CalculationKeysENUM.IncludeRetention]?: boolean;
+  [CalculationKeysENUM.RepaymentValue]?: number;
+  [CalculationKeysENUM.InterestOnlyValue]?: number;
+};
+
+export interface InputData {
+  key: InputKey;
+  name: InputName;
+  value: InputValue;
   source?: 'user' | 'prefill' | 'param';
 }
 
@@ -66,8 +125,8 @@ export interface AppState {
   lcid: string | null;
   icid: string | null;
   currentStageId: string | null;
-  answers: Answers;
-  prefillAnswers: PrefillAnswers;
+  inputs: Inputs;
+  inputPrefillConfig: InputPrefillConfig;
   calculations: Calculations;
   mortgageId: number | null;
 }

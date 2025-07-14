@@ -4,8 +4,8 @@ import {
   RepaymentTypeENUM,
   SchemePeriodsENUM,
   SchemeTypesENUM,
-  type Answers,
-  type CheckboxList,
+  type Inputs,
+  // type CheckboxList,
   type SummaryInfo,
   type SummaryLines,
 } from '$mct/types';
@@ -13,8 +13,9 @@ import { generateProductsAPIInput } from './generateProductsAPIInput';
 
 const classes = DOM_CONFIG.classes;
 
-export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Answers): SummaryLines | null => {
+export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs): SummaryLines | null => {
   const productsAPIInput = generateProductsAPIInput();
+  if (!productsAPIInput) return null;
   const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
   const { RepaymentType } = answers;
 

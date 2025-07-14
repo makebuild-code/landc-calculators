@@ -20,6 +20,7 @@ import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/typ
 import type { StatefulInputGroup } from '$mct/components';
 import { InputGroup } from './Form';
 import type { Input } from 'src/types';
+import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -51,6 +52,7 @@ export class AppointmentManager {
   private dates!: Dates;
   private timesGroup: HTMLFieldSetElement;
   private times!: Times;
+
   private formPanel: HTMLElement;
   private tags: HTMLElement[];
   private form: HTMLFormElement;
@@ -412,7 +414,7 @@ export class AppointmentManager {
 
     // Get form data
     const formData = this.getFormData();
-    //   console.log('formData', formData);
+    console.log('formData from function', formData);
     if (!formData) {
       console.error('Failed to get form data');
       this.setLoadingState(false);
@@ -465,16 +467,11 @@ export class AppointmentManager {
         Source: stateData.Source,
         SourceId: stateData.SourceId,
         CreditImpaired: stateData.CreditImpaired,
-        // IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
-        // IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
-        // IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
-        // IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
-        // IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
-        IsEmailMarketingPermitted: true,
-        IsPhoneMarketingPermitted: true,
-        IsSMSMarketingPermitted: true,
-        IsPostMarketingPermitted: true,
-        IsSocialMessageMarketingPermitted: true,
+        IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
+        IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
+        IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
+        IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
+        IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
       },
       booking: appointmentData,
     };
@@ -529,16 +526,6 @@ export class AppointmentManager {
    */
   private getFormData(): Partial<EnquiryLead> | null {
     try {
-      //   const formInputs = queryElements('input, select, textarea', this.form) as HTMLInputElement[];
-      //   const formData: Record<string, any> = {};
-
-      //   formInputs.forEach((input) => {
-      //     console.log('input', input.name, input.value);
-      //     if (input.name && input.value) {
-      //       formData[input.name] = input.value;
-      //     }
-      //   });
-
       const formData: Record<string, any> = {};
       this.formInputGroups.forEach((group) => {
         formData[group.getStateValue('initialName')] = group.getValue() as InputValue;
@@ -558,6 +545,8 @@ export class AppointmentManager {
         IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
         IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
       };
+
+      console.log('mappedData', mappedData);
 
       return mappedData;
     } catch (error) {
@@ -579,26 +568,33 @@ export class AppointmentManager {
         icid: state.icid || '',
         lcid: state.lcid || '',
         PurchasePrice: this.getNumericAnswer(answers, 'PropertyValue'),
-        RepaymentType:
-          RepaymentTypeENUM[this.getStringAnswer(answers, 'RepaymentType') as keyof typeof RepaymentTypeENUM],
-        OfferAccepted:
-          OfferAcceptedENUM[this.getStringAnswer(answers, 'OfferAccepted') as keyof typeof OfferAcceptedENUM],
+        RepaymentType: getEnumValue(RepaymentTypeENUM, this.getStringAnswer(answers, 'RepaymentType')),
+        // RepaymentType:
+        //   RepaymentTypeENUM[this.getStringAnswer(answers, 'RepaymentType') as keyof typeof RepaymentTypeENUM],
+        OfferAccepted: getEnumValue(OfferAcceptedENUM, this.getStringAnswer(answers, 'OfferAccepted')),
+        // OfferAccepted:
+        //   OfferAcceptedENUM[this.getStringAnswer(answers, 'OfferAccepted') as keyof typeof OfferAcceptedENUM],
         MortgageLength: this.getNumericAnswer(answers, 'MortgageLength'),
         MaximumBudget: this.getNumericAnswer(answers, 'MaximumBudget'), // unsure
-        BuyerType: BuyerTypeENUM[this.getStringAnswer(answers, 'BuyerType') as keyof typeof BuyerTypeENUM], // unsure
-        ResiBtl: ResiBtlENUM[this.getStringAnswer(answers, 'ResiBtl') as keyof typeof ResiBtlENUM],
+        BuyerType: getEnumValue(BuyerTypeENUM, this.getStringAnswer(answers, 'BuyerType')), // unsure
+        // BuyerType: BuyerTypeENUM[this.getStringAnswer(answers, 'BuyerType') as keyof typeof BuyerTypeENUM], // unsure
+        ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, 'ResiBtl')),
+        // ResiBtl: ResiBtlENUM[this.getStringAnswer(answers, 'ResiBtl') as keyof typeof ResiBtlENUM],
         Lender: this.getStringAnswer(answers, 'Lender'),
-        ReadinessToBuy:
-          ReadinessToBuyENUM[this.getStringAnswer(answers, 'ReadinessToBuy') as keyof typeof ReadinessToBuyENUM],
-        PurchRemo: PurchRemoENUM[this.getStringAnswer(answers, 'PurchRemo') as keyof typeof PurchRemoENUM],
+        ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, 'ReadinessToBuy')),
+        // ReadinessToBuy:
+        //   ReadinessToBuyENUM[this.getStringAnswer(answers, 'ReadinessToBuy') as keyof typeof ReadinessToBuyENUM],
+        PurchRemo: getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, 'PurchRemo')),
+        // PurchRemo: PurchRemoENUM[this.getStringAnswer(answers, 'PurchRemo') as keyof typeof PurchRemoENUM],
         PropertyValue: this.getNumericAnswer(answers, 'PropertyValue'),
         DepositAmount: this.getNumericAnswer(answers, 'DepositAmount'),
         LTV: this.getNumericAnswer(answers, 'LTV'), // get from calculations
         Source: this.getStringAnswer(answers, 'Source'), // unsure
         SourceId: this.getNumericAnswer(answers, 'SourceId'), // unsure
-        CreditImpaired:
-          CreditImpairedENUM[this.getStringAnswer(answers, 'CreditImpaired') as keyof typeof CreditImpairedENUM],
+        CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, 'CreditImpaired')),
       };
+
+      console.log('stateData', stateData);
 
       return stateData;
     } catch (error) {

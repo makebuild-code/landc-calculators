@@ -11,12 +11,19 @@ export interface ProductsOptions {
   SapValue?: number;
 }
 
+export enum ProductsRequestFeaturesENUM {
+  HelpToBuy = 'HelpToBuy',
+  Offset = 'Offset',
+  EarlyRepaymentCharge = 'EarlyRepaymentCharge',
+  NewBuild = 'NewBuild',
+}
+
 // Features for product requests
-export interface Features {
-  HelpToBuy?: boolean;
-  Offset?: boolean;
-  EarlyRepaymentCharge?: boolean;
-  NewBuild?: boolean;
+export interface ProductsRequestFeatures {
+  [ProductsRequestFeaturesENUM.HelpToBuy]?: boolean;
+  [ProductsRequestFeaturesENUM.Offset]?: boolean;
+  [ProductsRequestFeaturesENUM.EarlyRepaymentCharge]?: boolean;
+  [ProductsRequestFeaturesENUM.NewBuild]?: boolean;
 }
 
 export enum PropertyTypeENUM {
@@ -60,25 +67,45 @@ export enum SapValueENUM {
   No = 1,
 }
 
+export enum ProductsRequestENUM {
+  PropertyValue = 'PropertyValue',
+  RepaymentValue = 'RepaymentValue',
+  PropertyType = 'PropertyType',
+  MortgageType = 'MortgageType',
+  InterestOnlyValue = 'InterestOnlyValue',
+  TermYears = 'TermYears',
+  SchemePurpose = 'SchemePurpose',
+  SchemePeriods = 'SchemePeriods',
+  SchemeTypes = 'SchemeTypes',
+  NumberOfResults = 'NumberOfResults',
+  Features = 'Features',
+  SortColumn = 'SortColumn',
+  UseStaticApr = 'UseStaticApr',
+  SapValue = 'SapValue',
+  Lenders = 'Lenders',
+  IncludeRetention = 'IncludeRetention',
+  RetentionLenderId = 'RetentionLenderId',
+}
+
 // Product request structure
 export interface ProductsRequest {
-  PropertyValue: number;
-  RepaymentValue: number;
-  PropertyType: PropertyTypeENUM;
-  MortgageType: MortgageTypeENUM;
-  InterestOnlyValue?: number;
-  TermYears: number;
-  SchemePurpose: SchemePurposeENUM;
-  SchemePeriods: SchemePeriodsENUM[];
-  SchemeTypes: SchemeTypesENUM[];
-  NumberOfResults: number;
-  Features?: Features;
-  SortColumn: SortColumnENUM;
-  UseStaticApr?: boolean;
-  SapValue?: number;
-  Lenders?: LenderNames;
-  IncludeRetention?: boolean;
-  RetentionLenderId?: number;
+  [ProductsRequestENUM.PropertyValue]: number;
+  [ProductsRequestENUM.RepaymentValue]: number;
+  [ProductsRequestENUM.PropertyType]: PropertyTypeENUM;
+  [ProductsRequestENUM.MortgageType]: MortgageTypeENUM;
+  [ProductsRequestENUM.InterestOnlyValue]?: number;
+  [ProductsRequestENUM.TermYears]: number;
+  [ProductsRequestENUM.SchemePurpose]: SchemePurposeENUM;
+  [ProductsRequestENUM.SchemePeriods]: SchemePeriodsENUM[];
+  [ProductsRequestENUM.SchemeTypes]: SchemeTypesENUM[];
+  [ProductsRequestENUM.NumberOfResults]: number;
+  [ProductsRequestENUM.Features]?: ProductsRequestFeatures;
+  [ProductsRequestENUM.SortColumn]: SortColumnENUM;
+  [ProductsRequestENUM.UseStaticApr]?: boolean;
+  [ProductsRequestENUM.SapValue]?: number;
+  [ProductsRequestENUM.Lenders]?: LenderNames;
+  [ProductsRequestENUM.IncludeRetention]?: boolean;
+  [ProductsRequestENUM.RetentionLenderId]?: number;
 }
 
 // Summary information

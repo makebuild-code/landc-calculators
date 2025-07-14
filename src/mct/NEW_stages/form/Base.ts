@@ -1,7 +1,7 @@
 import { StatefulManager, type StatefulManagerOptions, type StatefulManagerState } from '$mct/components';
 import { PROFILES_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
-import type { AnswerData, AnswerKey, AnswerName, AnswerValue, Profile } from '$mct/types';
+import type { InputData, InputKey, InputName, InputValue, Profile } from '$mct/types';
 import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
@@ -100,16 +100,16 @@ export abstract class BaseFormManager extends StatefulManager<BaseFormManagerSta
   }
 
   private saveAnswersToMCT(): void {
-    const answerDataArray: AnswerData[] = [];
+    const answerDataArray: InputData[] = [];
 
     [...this.getStateValue('questions')].forEach((question) => {
       const value = question.getValue();
       if (!value) return;
 
       answerDataArray.push({
-        key: question.getStateValue('initialName') as AnswerKey,
-        name: question.getStateValue('finalName') as AnswerName,
-        value: value as AnswerValue,
+        key: question.getStateValue('initialName') as InputKey,
+        name: question.getStateValue('finalName') as InputName,
+        value: value as InputValue,
         source: 'user',
       });
     });

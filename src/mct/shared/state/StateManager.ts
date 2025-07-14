@@ -2,11 +2,11 @@ import { StorageManager } from './StorageManager';
 import { StatePersistenceManager } from './persistence';
 import type {
   AppState,
-  AnswerKey,
-  AnswerValue,
-  Answers,
-  AnswerData,
-  PrefillAnswers,
+  InputKey,
+  InputValue,
+  Inputs,
+  InputData,
+  InputPrefillConfig,
   StageIDENUM,
   Calculations,
 } from '$mct/types';
@@ -23,8 +23,8 @@ const defaultState: AppState = {
   lcid: null,
   icid: null,
   currentStageId: null,
-  answers: {},
-  prefillAnswers: {},
+  inputs: {},
+  inputPrefillConfig: {},
   calculations: {} as Calculations,
   mortgageId: null,
 };
@@ -126,46 +126,46 @@ export class StateManager {
     return this.get('currentStageId') as StageIDENUM;
   }
 
-  setAnswer(answerData: AnswerData): void {
+  setAnswer(answerData: InputData): void {
     answerData = {
       ...answerData,
       source: answerData.source || 'user',
     };
 
-    const answers = { ...this.state.answers, [answerData.key]: answerData.value };
-    const prefillAnswers = { ...this.state.prefillAnswers, [answerData.name]: answerData.value };
+    const answers = { ...this.state.inputs, [answerData.key]: answerData.value };
+    const prefillAnswers = { ...this.state.inputPrefillConfig, [answerData.name]: answerData.value };
 
-    this.setState({ answers, prefillAnswers });
+    this.setState({ inputs: answers, inputPrefillConfig: prefillAnswers });
   }
 
-  getAnswer(key: AnswerKey): AnswerValue | null {
-    return this.state.answers[key] || null;
+  getAnswer(key: InputKey): InputValue | undefined {
+    return this.state.inputs[key] as InputValue | undefined;
   }
 
-  setAnswers(answerDataArray: AnswerData[]): void {
-    const answers = answerDataArray.reduce((acc, answer) => {
-      acc[answer.key] = answer.value;
+  setAnswers(answerDataArray: InputData[]): void {
+    const answers = answerDataArray.reduce<Partial<Inputs>>((acc, answer) => {
+      acc[answer.key] = answer.value as any;
       return acc;
-    }, {} as Answers);
+    }, {} as Inputs);
 
     const prefillAnswers = answerDataArray.reduce((acc, answer) => {
       acc[answer.name] = answer.value;
       return acc;
-    }, {} as PrefillAnswers);
+    }, {} as InputPrefillConfig);
 
-    this.setState({ answers, prefillAnswers });
+    this.setState({ inputs: answers, inputPrefillConfig: prefillAnswers });
   }
 
-  getAnswers(): Answers {
-    return { ...this.state.answers };
+  getAnswers(): Inputs {
+    return { ...this.state.inputs };
   }
 
-  setPrefillValues(prefillData: PrefillAnswers): void {
-    this.set('prefillAnswers', { ...this.state.prefillAnswers, ...prefillData });
+  setPrefillValues(prefillData: InputPrefillConfig): void {
+    this.set('inputPrefillConfig', { ...this.state.inputPrefillConfig, ...prefillData });
   }
 
-  getPrefillAnswers(): PrefillAnswers {
-    return { ...this.state.prefillAnswers };
+  getPrefillAnswers(): InputPrefillConfig {
+    return { ...this.state.inputPrefillConfig };
   }
 
   setCalculations(calculations: Partial<Calculations>): void {
