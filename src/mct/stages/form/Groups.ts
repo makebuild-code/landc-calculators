@@ -148,12 +148,6 @@ export class MainGroup extends QuestionGroup {
     this.formManager.updateGroupVisibility();
     this.formManager.prepareWrapper();
     this.handleNextButton(question.isValid());
-
-    // console.log('handleChange, sending GA event');
-    trackGAEvent('form_interaction', {
-      event_category: 'MCTForm',
-      event_label: `MCT_${question.getStateValue('finalName')}`,
-    });
   }
 
   public handleEnter(index: number): void {
@@ -202,6 +196,11 @@ export class MainGroup extends QuestionGroup {
     this.deactivateQuestion(activeQuestion);
 
     if (direction === 'next') {
+      trackGAEvent('form_interaction', {
+        event_category: 'MCTForm',
+        event_label: `MCT_Submit_${activeQuestion.getStateValue('finalName')}`,
+      });
+
       const nextIndex = this.getNextVisibleIndex(this.activeQuestionIndex);
 
       // If there's a next question in this group
@@ -339,6 +338,8 @@ export class OutputGroup extends BaseGroup {
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput();
+    if (!input) return null;
+
     try {
       return await productsAPI.search(input);
     } catch (error) {
