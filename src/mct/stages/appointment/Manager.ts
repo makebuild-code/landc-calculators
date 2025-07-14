@@ -52,6 +52,7 @@ export class AppointmentManager {
   private dates!: Dates;
   private timesGroup: HTMLFieldSetElement;
   private times!: Times;
+
   private formPanel: HTMLElement;
   private tags: HTMLElement[];
   private form: HTMLFormElement;
@@ -413,7 +414,7 @@ export class AppointmentManager {
 
     // Get form data
     const formData = this.getFormData();
-    //   console.log('formData', formData);
+    console.log('formData from function', formData);
     if (!formData) {
       console.error('Failed to get form data');
       this.setLoadingState(false);
@@ -466,16 +467,11 @@ export class AppointmentManager {
         Source: stateData.Source,
         SourceId: stateData.SourceId,
         CreditImpaired: stateData.CreditImpaired,
-        // IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
-        // IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
-        // IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
-        // IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
-        // IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
-        IsEmailMarketingPermitted: true,
-        IsPhoneMarketingPermitted: true,
-        IsSMSMarketingPermitted: true,
-        IsPostMarketingPermitted: true,
-        IsSocialMessageMarketingPermitted: true,
+        IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
+        IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
+        IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
+        IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
+        IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
       },
       booking: appointmentData,
     };
@@ -530,16 +526,6 @@ export class AppointmentManager {
    */
   private getFormData(): Partial<EnquiryLead> | null {
     try {
-      //   const formInputs = queryElements('input, select, textarea', this.form) as HTMLInputElement[];
-      //   const formData: Record<string, any> = {};
-
-      //   formInputs.forEach((input) => {
-      //     console.log('input', input.name, input.value);
-      //     if (input.name && input.value) {
-      //       formData[input.name] = input.value;
-      //     }
-      //   });
-
       const formData: Record<string, any> = {};
       this.formInputGroups.forEach((group) => {
         formData[group.getStateValue('initialName')] = group.getValue() as InputValue;
@@ -559,6 +545,8 @@ export class AppointmentManager {
         IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
         IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
       };
+
+      console.log('mappedData', mappedData);
 
       return mappedData;
     } catch (error) {
