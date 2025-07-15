@@ -111,7 +111,7 @@ export class MainFormManager extends FormManager {
     this.showLoader(false);
   }
 
-  private getLastVisibleGroup(): MainGroup | OutputGroup | undefined {
+  public getLastVisibleGroup(): MainGroup | OutputGroup | undefined {
     let lastVisibleGroup: MainGroup | OutputGroup | undefined;
     this.groups.forEach((group) => {
       if (group.isVisible) lastVisibleGroup = group;

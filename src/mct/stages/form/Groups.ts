@@ -192,6 +192,12 @@ export class MainGroup extends QuestionGroup {
     this.handleNextButton(isValid);
     if (!isValid) return;
 
+    const currentGroup = this.formManager.getLastVisibleGroup();
+    if (currentGroup instanceof OutputGroup) {
+      currentGroup.activate();
+      this.formManager.updateNavigation({ nextEnabled: false });
+    }
+
     this.navigate('next', index);
   }
 
