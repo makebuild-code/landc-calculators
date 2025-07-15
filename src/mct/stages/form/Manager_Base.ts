@@ -3,6 +3,7 @@ import { MCTManager } from '$mct/manager';
 import type {
   InputData,
   InputKey,
+  InputKeysENUM,
   InputName,
   Inputs,
   InputValue,
@@ -69,7 +70,8 @@ export abstract class FormManager {
 
     [...this.questions].forEach((question) => {
       const value = question.getValue();
-      if (!value) return;
+      const valid = question.isValid();
+      if (!value || !valid) return;
 
       answerDataArray.push({
         key: question.getStateValue('initialName') as InputKey,
@@ -78,8 +80,6 @@ export abstract class FormManager {
         source: 'user',
       });
     });
-
-    // console.log('saveAnswersToMCT: ', answerDataArray);
 
     MCTManager.setAnswers(answerDataArray);
   }
@@ -91,7 +91,7 @@ export abstract class FormManager {
   public determineProfile(): Profile | null {
     const answers = this.getAnswers();
     const profile: Profile | undefined = PROFILES.find((profile) => {
-      return Object.entries(profile.requirements).every(([key, value]) => answers[key] === value);
+      return Object.entries(profile.requirements).every(([key, value]) => answers[key as InputKeysENUM] === value);
     });
 
     this.profile = profile ? profile : null;

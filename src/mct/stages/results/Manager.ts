@@ -507,8 +507,10 @@ export class ResultsManager {
 
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
-    // this.allowApplyDirect = true;
-    this.allowApplyDirect = !!this.products.find((product) => product.ApplyDirectLink);
+
+    // Force the modal to show
+    this.allowApplyDirect = true;
+    // this.allowApplyDirect = !!this.products.find((product) => product.ApplyDirectLink);
 
     this.initiateResults();
     this.renderOutputs();

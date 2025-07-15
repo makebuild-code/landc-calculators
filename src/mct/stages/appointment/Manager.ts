@@ -125,10 +125,11 @@ export class AppointmentManager {
       this.formPanel
     ) as HTMLElement[];
 
-    this.formInputGroups = inputGroups.map((input) => {
+    this.formInputGroups = inputGroups.map((input, index) => {
       const inputGroup = new InputGroup({
         element: input,
         groupName: 'appointment',
+        indexInGroup: index,
         onChange: () => {},
         onEnter: () => {},
       });
