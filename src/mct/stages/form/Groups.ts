@@ -195,6 +195,11 @@ export class MainGroup extends QuestionGroup {
     this.deactivateQuestion(activeQuestion);
 
     if (direction === 'next') {
+      trackGAEvent('form_interaction', {
+        event_category: 'MCTForm',
+        event_label: `MCT_Submit_${activeQuestion.getStateValue('finalName')}`,
+      });
+
       const nextIndex = this.getNextVisibleIndex(this.activeQuestionIndex);
 
       // console.log('handleChange, sending GA event');

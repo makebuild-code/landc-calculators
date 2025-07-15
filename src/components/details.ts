@@ -5,13 +5,11 @@ export const details = () => {
     const target = event.target as HTMLElement;
     if (!target) return;
 
-    const { tagName } = target;
-    if (tagName !== 'SUMMARY') return;
-
     const details = target.closest('details') as HTMLDetailsElement;
-    const icon = queryElement('[data-details="icon"]', details) as HTMLElement;
+    if (!details) return;
 
-    if (!details || !icon) return;
+    const icon = queryElement('[data-details="icon"]', details) as HTMLElement;
+    if (!icon) return;
 
     const { open } = details;
     let rotate = icon.dataset.detailsIconRotate as string;

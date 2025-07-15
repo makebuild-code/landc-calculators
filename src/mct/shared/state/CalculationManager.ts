@@ -107,8 +107,7 @@ export class CalculationManager {
     if (ReadinessToBuyValue === ReadinessToBuyENUM.Researching || ReadinessToBuyValue === ReadinessToBuyENUM.Viewing)
       isProceedable = false;
     if (CreditImpairedValue === CreditImpairedENUM.Yes) isProceedable = false;
-    if (EndOfTermValue === EndOfTermENUM.SixToTwelveMonths || EndOfTermValue === EndOfTermENUM.TwelvePlusMonths)
-      isProceedable = false;
+    if (EndOfTermValue === EndOfTermENUM.TwelvePlusMonths) isProceedable = false;
 
     return {
       [CalculationKeysENUM.IsProceedable]: isProceedable,
