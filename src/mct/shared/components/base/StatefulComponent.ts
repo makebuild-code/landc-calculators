@@ -40,21 +40,21 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
     this.previousState = { ...this.state };
     this.state = { ...this.state, ...updates };
 
-    this.log('State updated', {
-      previous: this.previousState,
-      current: this.state,
-      changes: updates,
-    });
+    // this.log('State updated', {
+    //   previous: this.previousState,
+    //   current: this.state,
+    //   changes: updates,
+    // });
 
     // Notify subscribers
     this.notifyStateSubscribers();
 
-    // Emit state change event
-    this.emit('state:changed', {
-      changes: updates,
-      previousState: this.previousState,
-      currentState: this.state,
-    });
+    // // Emit state change event
+    // this.emit('state:changed', {
+    //   changes: updates,
+    //   previousState: this.previousState,
+    //   currentState: this.state,
+    // });
 
     // Call the state change handler
     this.onStateChange(this.previousState, this.state);

@@ -1,7 +1,7 @@
 import { lendersAPI } from '$mct/api';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
-import { FormEventNames, type Inputs, type InputValue, type SelectOption } from '$mct/types';
+import { InputKeysENUM, type Inputs, type SelectOption } from '$mct/types';
 import type { FormManager } from './Manager_Base';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -9,26 +9,28 @@ const classes = DOM_CONFIG.classes;
 
 interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
   formManager: FormManager;
-  indexInGroup: number;
+  // indexInGroup: number;
 }
 
 interface QuestionState extends StatefulInputGroupState {
   isVisible: boolean;
+  isRequired: boolean;
   dependsOn: string | null;
   dependsOnValue: string | null;
 }
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private formManager: FormManager;
-  public indexInGroup: number;
-  public isRequired: boolean = false;
+  // public indexInGroup: number;
+  // public isRequired: boolean = false;
 
   constructor(options: QuestionOptions) {
     super(options);
 
     this.formManager = options.formManager;
     this.onEnter = options.onEnter;
-    this.indexInGroup = options.indexInGroup;
+    // this.indexInGroup = options.indexInGroup;
+    this.debug = true;
   }
 
   protected init(): void {
@@ -36,21 +38,16 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     this.isInitialized = true;
     this.onInit();
 
-    const dependsOn = this.getAttribute(attr.dependsOn);
-    const dependsOnValue = this.getAttribute(attr.dependsOnValue);
-    if (dependsOn) this.setStateValue('dependsOn', dependsOn);
-    if (dependsOnValue) this.setStateValue('dependsOnValue', dependsOnValue);
+    this.setStateValue('isVisible', false);
+    this.setStateValue('isRequired', false);
+
+    const dependsOn = this.getAttribute(attr.dependsOn) || null;
+    const dependsOnValue = this.getAttribute(attr.dependsOnValue) || null;
+    this.setStateValue('dependsOn', dependsOn);
+    this.setStateValue('dependsOnValue', dependsOnValue);
 
     // Call the lender select handler
     if (this.getStateValue('initialName') === 'Lender') this.handleLenderSelect();
-
-    this.log('QuestionComponent: init complete');
-  }
-
-  // Test method to verify the component is working
-  public testState(): void {
-    console.log('QuestionComponent state:', this.getState());
-    console.log('QuestionComponent isVisible:', this.getStateValue('isVisible'));
   }
 
   private async handleLenderSelect(): Promise<void> {
@@ -72,7 +69,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public updateVisualState(isValid: boolean): void {
-    this.toggleClass(this.element, 'has-error');
+    this.toggleClass(this.element, 'has-error', !isValid);
   }
 
   public enable(): void {
@@ -94,35 +91,30 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public require(): void {
-    // this.eventBus.emit(FormEventNames.QUESTION_REQUIRED, { question: this });
-    this.isRequired = true;
+    this.setStateValue('isRequired', true);
     this.formManager.saveQuestion(this);
-    // this.show();
-    this.setStateValue('isVisible', true);
   }
 
   public unrequire(): void {
-    // this.eventBus.emit(FormEventNames.QUESTION_UNREQUIRED, { question: this });
-    this.isRequired = false;
+    this.setStateValue('isRequired', false);
     this.formManager.removeQuestion(this);
-    this.hide();
-    this.setStateValue('isVisible', false);
+    this.showQuestion(false);
   }
 
   public showQuestion(show: boolean): void {
-    if (show) {
-      this.show();
-    } else {
-      this.hide();
-    }
+    show ? this.show() : this.hide();
+    this.setStateValue('isVisible', show);
   }
 
   public toggleActive(active?: boolean): void {
-    if (active === undefined) {
-      this.toggleClass(this.element, classes.active);
-    } else {
-      this.toggleClass(this.element, classes.active, active);
-    }
+    active ? this.toggleClass(this.element, classes.active, active) : this.toggleClass(this.element, classes.active);
+  }
+
+  public activate(): void {
+    this.require();
+    this.enable();
+    this.toggleActive(true);
+    this.showQuestion(true);
   }
 
   public shouldBeVisible(answers: Inputs, groupIsVisible: boolean): boolean {
@@ -133,7 +125,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     const dependsOnValue = this.getStateValue('dependsOnValue');
 
     if (!dependsOn) return true; // question depends on nothing
-    if (!dependsOnValue) return answers[dependsOn] !== null; // question depends on a prior question being answered, no specific value
-    return answers[dependsOn] === dependsOnValue; // question depends on a prior question being answered, with a specific value
+    if (!dependsOnValue) return answers[dependsOn as InputKeysENUM] !== null; // question depends on a prior question being answered, no specific value
+    return answers[dependsOn as InputKeysENUM] === dependsOnValue; // question depends on a prior question being answered, with a specific value
   }
 }

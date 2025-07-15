@@ -12,7 +12,8 @@ export class EventBus {
   private globalHandlers: Set<TypedEventHandler<any>> = new Set();
 
   constructor(options: { debug?: boolean } = {}) {
-    this.debug = options.debug || false;
+    // this.debug = options.debug || false;
+    this.debug = false;
   }
 
   /**

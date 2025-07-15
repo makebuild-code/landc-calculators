@@ -19,6 +19,7 @@ export interface StatefulInputGroupState {
   isInitialised: boolean;
   type: InputType;
   groupName: string;
+  indexInGroup: number;
   initialName: string;
   finalName: string;
 }
@@ -30,6 +31,7 @@ export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = S
   onChange: () => void;
   onEnter: () => void;
   groupName: string;
+  indexInGroup: number;
 }
 
 export abstract class StatefulInputGroup<
@@ -51,6 +53,7 @@ export abstract class StatefulInputGroup<
           isInitialised: false,
           type: 'text', // Will be set in onInit
           groupName: options.groupName,
+          indexInGroup: options.indexInGroup,
           initialName: '', // Will be set in onInit
           finalName: '', // Will be set in onInit
         };
@@ -96,7 +99,7 @@ export abstract class StatefulInputGroup<
   protected formatInputNamesAndIDs(): void {
     const groupName = this.getStateValue('groupName');
     const initialName = this.getStateValue('initialName');
-    const finalName = `${groupName}-${initialName}`;
+    const finalName = `${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
     this.setStateValue('finalName', finalName);
 
     if (this.getStateValue('type') === 'radio' || this.getStateValue('type') === 'checkbox') {
@@ -123,9 +126,9 @@ export abstract class StatefulInputGroup<
   protected bindEvents(): void {
     this.inputs.forEach((input) => {
       if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
-        this.addEventListener({ element: input, event: 'input', handler: () => this.onChange() });
+        this.addEventListener({ element: input, event: 'input', handler: () => this.handleChange() });
       } else {
-        this.addEventListener({ element: input, event: 'change', handler: () => this.onChange() });
+        this.addEventListener({ element: input, event: 'change', handler: () => this.handleChange() });
       }
     });
 
@@ -135,16 +138,18 @@ export abstract class StatefulInputGroup<
       handler: (event: Event) => {
         const ke = event as KeyboardEvent;
         if (ke.key !== 'Enter') return;
-        this.onEnter();
+        this.handleEnter();
       },
     });
   }
 
   protected handleChange(): void {
-    console.log('handleChange');
+    this.log('[StatefulInputGroup] handleChange');
     // Update value and validity
     const value = this.getValue();
     const isValid = this.isValid();
+
+    this.log('[StatefulInputGroup]handleChange', { value, isValid });
 
     // Update state and call the onChange callback
     this.setState({ value, isValid } as Partial<T>);
@@ -160,15 +165,13 @@ export abstract class StatefulInputGroup<
     // });
   }
 
-  protected handleEnter(event: Event): void {
-    console.log('handleEnter');
-    // Check if the enter key was pressed
-    const ke = event as KeyboardEvent;
-    if (ke.key !== 'Enter') return;
-
+  protected handleEnter(): void {
+    this.log('[StatefulInputGroup] handleEnter');
     // Update value and validity
     const value = this.getValue();
     const isValid = this.isValid();
+
+    this.log('[StatefulInputGroup] handleEnter', { value, isValid });
 
     // Update state and call the onEnter callback
     this.setState({ value, isValid } as Partial<T>);
@@ -187,32 +190,50 @@ export abstract class StatefulInputGroup<
   }
 
   public isValid(): boolean {
+    console.log('CHECKING VALIDITY');
+    this.log('[StatefulInputGroup] isValid', { element: this.element });
     // Check if any of the inputs are invalid using the native validation API
     const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
+    this.log('[StatefulInputGroup] isValid: hasInvalidInput', { hasInvalidInput });
     if (hasInvalidInput) return false;
 
     const value = this.getValue();
     const type = this.getStateValue('type');
+    this.log('[StatefulInputGroup] isValid: value & type', { value, type });
+
+    let isValid = false;
 
     // Additional type-specific validation
-    if (type === 'radio') return typeof value === 'string' && value !== '';
-    if (type === 'checkbox') {
-      if (typeof value === 'boolean') return true; // Single checkbox is always valid if it exists
-      return Array.isArray(value) && value.length > 0; // Multiple checkboxes need at least one selected
+    switch (type) {
+      case 'radio':
+        isValid = typeof value === 'string' && value !== '';
+        break;
+      case 'checkbox':
+        isValid = typeof value === 'boolean' ? true : Array.isArray(value) && value.length > 0;
+        break;
+      case 'text':
+        isValid = typeof value === 'string' && value.trim() !== '';
+        break;
+      case 'number':
+        isValid = typeof value === 'number' && !isNaN(value);
+        break;
+      case 'select-one':
+        const select = this.inputs[0] as HTMLSelectElement;
+        const selectedOption = select.options[select.selectedIndex];
+        isValid = typeof value === 'string' && selectedOption.getAttribute('value') === value;
+        break;
     }
-    if (type === 'text') return typeof value === 'string' && value.trim() !== '';
-    if (type === 'number') return typeof value === 'number' && !isNaN(value);
-    if (type === 'select-one') return typeof value === 'string' && value !== '';
 
-    return false;
+    this.log('[StatefulInputGroup] isValid: isValid', { isValid });
+    return isValid;
   }
 
-  protected onStateChange(previousstate: T, currentState: T): void {
-    // Update visual state based on validation
-    if (this.hasStateChanged('isValid')) {
-      this.toggleClass(this.element, 'is-invalid', !currentState.isValid);
-    }
-  }
+  // protected onStateChange(previousstate: T, currentState: T): void {
+  //   // Update visual state based on validation
+  //   if (this.hasStateChanged('isValid')) {
+  //     this.toggleClass(this.element, 'is-invalid', !currentState.isValid);
+  //   }
+  // }
 
   protected detectType(): InputType {
     const input = this.queryElement('input, select') as Input;

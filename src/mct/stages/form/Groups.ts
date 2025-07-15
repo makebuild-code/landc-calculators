@@ -56,16 +56,30 @@ export abstract class QuestionGroup extends BaseGroup {
   public show(): void {
     this.component.style.removeProperty('display');
     this.isVisible = true;
-    // console.log('show: updateActiveQuestions', this.name);
+
     this.updateActiveQuestions();
   }
 
   public hide(): void {
     this.component.style.display = 'none';
     this.isVisible = false;
-    // console.log('hide: updateActiveQuestions', this.name);
     this.updateActiveQuestions();
   }
+
+  /**
+   * When a question changes:
+   *
+   * if it is the expected index
+   * - run as is
+   *
+   * if it is greater than the expected index
+   * - something has gone wrong
+   *
+   * if it is less than the expected index
+   *
+   * & we're in the current group
+   * - go from the first index
+   */
 
   public updateActiveQuestions(): void {
     /**
@@ -75,15 +89,24 @@ export abstract class QuestionGroup extends BaseGroup {
      * - Answers will need to be rendered on page load for this to display nicely
      */
 
-    // console.log('function: updateActiveQuestions');
-    // console.log('saving answers to MCT');
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
+    console.log('updateActiveQuestions', {
+      name: this.name,
+      questions: this.questions,
+      answers: currentAnswers,
+      groupVisible: this.isVisible,
+    });
+
     this.questions.forEach((question, index) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
-      if (index === 0 && shouldBeVisible) question.showQuestion(true);
-      shouldBeVisible ? question.require() : question.unrequire();
+      if (index === 0 && shouldBeVisible) question.activate();
+
+      const isValid = question.isValid();
+      if (shouldBeVisible && isValid) question.activate();
+      else if (shouldBeVisible) question.require();
+      else question.unrequire();
     });
   }
 
@@ -120,8 +143,8 @@ export class MainGroup extends QuestionGroup {
         formManager: this.formManager,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
-        indexInGroup: index,
         groupName: this.name as string,
+        indexInGroup: index,
       });
 
       // Initialize the component
@@ -133,32 +156,43 @@ export class MainGroup extends QuestionGroup {
     });
   }
 
+  /**
+   * When a question changes, validate it and show the next question
+   * @param index - the index of the question that changed
+   */
   public handleChange(index: number): void {
-    console.log('handleChange', index);
-    // if (index !== this.activeQuestionIndex)
-    //   throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
-    console.log('handleChange: updateActiveQuestions');
-
+    // Check if the question is valid, update the visual state and, if not valid, return
     const question = this.questions[index];
+    const isValid = question.isValid();
+    question.updateVisualState(isValid);
+    this.handleNextButton(isValid);
+    if (!isValid) return;
 
-    console.log('handleChange: updateActiveQuestions');
+    // If valid, update the active questions, group visibility and wrapper
     this.formManager.saveAnswersToMCT();
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
+
+    // Show the next active question
+    const nextIndex = this.getNextRequiredIndex(index);
+    if (nextIndex < this.questions.length) {
+      this.activeQuestionIndex = nextIndex;
+      const nextQuestion = this.getActiveQuestion();
+      nextQuestion.activate();
+      this.formManager.updateNavigation({ prevEnabled: true });
+    }
+
     this.formManager.prepareWrapper();
-    this.handleNextButton(question.isValid());
   }
 
   public handleEnter(index: number): void {
-    if (index !== this.activeQuestionIndex)
-      throw new Error(`Invalid question index: ${index}. Expected: ${this.activeQuestionIndex}`);
+    const question = this.questions[index];
+    const isValid = question.isValid();
+    question.updateVisualState(isValid);
+    this.handleNextButton(isValid);
+    if (!isValid) return;
 
-    const current = this.getActiveQuestion();
-    if (current.isValid()) {
-      this.navigate('next');
-    } else {
-      current.updateVisualState(false);
-    }
+    this.navigate('next', index);
   }
 
   public handleNextButton(isValid: boolean) {
@@ -169,13 +203,21 @@ export class MainGroup extends QuestionGroup {
     return this.questions[this.activeQuestionIndex];
   }
 
+  public getQuestionByIndex(index: number): QuestionComponent {
+    return this.questions[index];
+  }
+
   public getVisibleQuestions(): QuestionComponent[] {
     return this.questions.filter((question) => question.getStateValue('isVisible'));
   }
 
-  public getNextVisibleIndex(start: number): number {
+  public getRequiredQuestions(): QuestionComponent[] {
+    return this.questions.filter((question) => question.getStateValue('isRequired'));
+  }
+
+  public getNextRequiredIndex(start: number): number {
     let index = start + 1;
-    while (index < this.questions.length && !this.questions[index].getStateValue('isVisible')) {
+    while (index < this.questions.length && !this.questions[index].getStateValue('isRequired')) {
       index += 1;
     }
     return index;
@@ -189,24 +231,19 @@ export class MainGroup extends QuestionGroup {
     return index;
   }
 
-  public navigate(direction: 'next' | 'prev') {
+  public navigate(direction: 'next' | 'prev', fromIndex?: number) {
     this.formManager.saveAnswersToMCT();
-    const activeQuestion = this.getActiveQuestion();
-    this.deactivateQuestion(activeQuestion);
+    const indexToUse = fromIndex || fromIndex === 0 ? fromIndex : this.activeQuestionIndex;
+    const activeQuestion = this.getQuestionByIndex(indexToUse);
 
     if (direction === 'next') {
+      // this.formManager.showHeader('sticky');
       trackGAEvent('form_interaction', {
         event_category: 'MCTForm',
         event_label: `MCT_Submit_${activeQuestion.getStateValue('finalName')}`,
       });
 
-      const nextIndex = this.getNextVisibleIndex(this.activeQuestionIndex);
-
-      // console.log('handleChange, sending GA event');
-      trackGAEvent('form_interaction', {
-        event_category: 'MCTForm',
-        event_label: `MCT_${activeQuestion.getStateValue('finalName')}`,
-      });
+      const nextIndex = this.getNextRequiredIndex(indexToUse);
 
       // If there's a next question in this group
       if (nextIndex < this.questions.length) {
@@ -218,7 +255,7 @@ export class MainGroup extends QuestionGroup {
         // If we're at the end of this group, try the next group
         this.formManager.navigateToNextGroup();
       }
-    } else {
+    } else if (direction === 'prev') {
       const prevIndex = this.getPrevVisibleIndex(this.activeQuestionIndex);
 
       // If there's a previous question in this group
@@ -238,38 +275,20 @@ export class MainGroup extends QuestionGroup {
   }
 
   public activateQuestion(question: QuestionComponent): void {
-    question.enable();
+    question.activate();
     question.focus();
-    question.toggleActive(true);
-    question.showQuestion(true);
-    this.scrollToQuestion(question);
+    this.formManager.scrollTo(question);
     this.handleNextButton(question.isValid());
   }
 
-  private deactivateQuestion(question: QuestionComponent): void {
-    const required = question.isRequired;
-    if (!required) {
-      question.disable();
-      question.toggleActive(false);
-      question.showQuestion(false);
-    }
-  }
-
-  private scrollToQuestion(item: QuestionComponent): void {
-    // this.formManager.track.scrollTo({
-    //   top: item.getElement().offsetTop - this.formManager.track.offsetHeight / 2 + item.getElement().offsetHeight / 2,
-    //   behavior: 'smooth',
-    // });
-
-    window.scrollTo({
-      top:
-        item.getElement().getBoundingClientRect().top +
-        window.scrollY -
-        window.innerHeight / 2 +
-        item.getElement().offsetHeight / 2,
-      behavior: 'smooth',
-    });
-  }
+  // private deactivateQuestion(question: QuestionComponent): void {
+  //   const required = question.getStateValue('isRequired');
+  //   if (!required) {
+  //     question.disable();
+  //     question.toggleActive(false);
+  //     question.showQuestion(false);
+  //   }
+  // }
 }
 
 // @description: Output group of questions
@@ -307,11 +326,8 @@ export class OutputGroup extends BaseGroup {
     this.isVisible = false;
   }
 
-  private scrollToOutput(): void {
-    this.formManager.track.scrollTo({
-      top: this.component.offsetTop - this.formManager.track.offsetHeight / 2 + this.component.offsetHeight / 2,
-      behavior: 'smooth',
-    });
+  private scrollTo(): void {
+    this.formManager.scrollTo('bottom');
   }
 
   private showLoader(show: boolean): void {
@@ -324,7 +340,7 @@ export class OutputGroup extends BaseGroup {
 
   public activate(): void {
     this.card.classList.add(classes.active);
-    this.scrollToOutput();
+    this.scrollTo();
     this.handleProducts();
   }
 
