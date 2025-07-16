@@ -1,13 +1,15 @@
 import { DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/config';
-import type {
-  InputKey,
-  InputName,
-  InputValue,
-  LogUserEventCustom,
-  Product,
-  ProductsResponse,
-  ResultsStageOptions,
-  SummaryInfo,
+import {
+  CalculationKeysENUM,
+  RepaymentTypeENUM,
+  type InputKey,
+  type InputName,
+  type InputValue,
+  type LogUserEventCustom,
+  type Product,
+  type ProductsResponse,
+  type ResultsStageOptions,
+  type SummaryInfo,
 } from '$mct/types';
 import { InputKeysENUM, OutputTypeENUM, StageIDENUM } from '$mct/types';
 import { MCTManager } from 'src/mct/shared/MCTManager';
@@ -565,8 +567,8 @@ export class ResultsManager {
       MortgageLength,
       ReadinessToBuy,
     } = answers;
+
     const { offerAccepted } = calculations;
-    console.log('offerAccepted: ', offerAccepted);
 
     const params: Record<string, string> = {};
 
@@ -576,14 +578,16 @@ export class ResultsManager {
     if (ResiBtl) params.ResidentialOrBuyToLet = ResiBtl;
     if (CreditImpaired) params.CreditIssues = CreditImpaired;
     if (PropertyValue) params.PropertyValue = PropertyValue.toString();
-    if (RepaymentValue) params.LoanAmount = RepaymentValue.toString();
+    if (RepaymentValue) params.LoanAmount = calculations[CalculationKeysENUM.RepaymentValue]?.toString() || '';
     if (MortgageLength) params.Term = MortgageLength.toString();
-    if (RepaymentType) params.MortgageRepaymentType = RepaymentType;
+    if (RepaymentType)
+      params.MortgageRepaymentType =
+        RepaymentType === RepaymentTypeENUM.Repayment ? 'R' : RepaymentType === RepaymentTypeENUM.Both ? 'P' : 'I';
     if (offerAccepted) params.OfferAccepted = offerAccepted.toString();
     if (ReadinessToBuy) params.StageOfJourney = ReadinessToBuy;
 
     const oefParams = new URLSearchParams(params);
-    window.location.href = `${baseUrl}?${oefParams.toString()}`;
+    window.open(`${baseUrl}?${oefParams.toString()}`, '_blank');
   }
 
   private async handleDirectToLender(): Promise<void> {
