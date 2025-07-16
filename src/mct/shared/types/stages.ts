@@ -45,4 +45,5 @@ export enum OutputTypeENUM {
   Currency = 'currency',
   Percentage = 'percentage',
   ProgressBar = 'progress-bar',
+  Number = 'number',
 }

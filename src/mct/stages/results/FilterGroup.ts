@@ -1,12 +1,11 @@
-import { InputGroupBase } from '$mct/components';
-import type { InputGroupOptions } from '$mct/types';
+import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 
-type FilterOptions = {} & InputGroupOptions;
+interface NewFilterOptions extends StatefulInputGroupOptions<NewFilterState> {}
 
-export class FilterGroup extends InputGroupBase {
-  constructor(el: HTMLElement, options: FilterOptions) {
-    super(el, options);
+interface NewFilterState extends StatefulInputGroupState {}
+
+export class NewFilterComponent extends StatefulInputGroup<NewFilterState> {
+  constructor(options: NewFilterOptions) {
+    super(options);
   }
-
-  protected init(): void {}
 }

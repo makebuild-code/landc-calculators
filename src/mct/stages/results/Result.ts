@@ -55,6 +55,13 @@ export class Result {
         case OutputTypeENUM.Currency:
           outputValue = formatNumber(outputValue as number, { type: 'currency' });
           break;
+        case OutputTypeENUM.Number:
+          const decimals = output.dataset.decimals;
+          outputValue = formatNumber(outputValue as number, {
+            type: 'number',
+            decimals: decimals ? Number(decimals) : undefined,
+          });
+          break;
         case 'boolean':
           outputValue = outputValue ? true : false;
           break;

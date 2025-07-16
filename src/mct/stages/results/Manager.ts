@@ -2,6 +2,7 @@ import { DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/config';
 import {
   CalculationKeysENUM,
   RepaymentTypeENUM,
+  SortColumnENUM,
   type InputKey,
   type InputName,
   type InputValue,
@@ -18,7 +19,7 @@ import { Result } from './Result';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
-import { FilterGroup } from './FilterGroup';
+import { NewFilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { simulateEvent } from '@finsweet/ts-utils';
 
@@ -60,7 +61,7 @@ export class ResultsManager {
 
   private header: HTMLDivElement;
   private outputs: HTMLDivElement[] = [];
-  private filterGroups: FilterGroup[] = [];
+  private newFilterGroups: NewFilterComponent[] = [];
 
   private showIfProceedable: HTMLElement[];
 
@@ -146,19 +147,14 @@ export class ResultsManager {
 
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
-    console.log('resultsTemplate: ', this.resultsTemplate);
     this.resultsButton = queryElement(`[${attr.element}="template-cta"]`, this.resultsTemplate) as HTMLButtonElement;
-    console.log('resultsButton: ', this.resultsButton);
     this.resultsButtonText = this.resultsButton.textContent as string;
-    console.log('resultsButtonText: ', this.resultsButtonText);
     this.resultsTemplate.remove();
 
     this.loader = queryElement(`[${attr.components}="loader"]`, this.component) as HTMLElement;
     this.empty = queryElement(`[${attr.components}="empty"]`, this.component) as HTMLElement;
     this.pagination = queryElement(`[${attr.components}="pagination"]`, this.component) as HTMLElement;
     this.paginationButton = queryElement('button', this.pagination) as HTMLButtonElement;
-
-    console.log('Results: ', this);
   }
 
   public init(options?: ResultsStageOptions): void {
@@ -225,22 +221,26 @@ export class ResultsManager {
 
   private initFilterGroups(): void {
     const filterGroups = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
-    this.filterGroups = filterGroups.map((el) => {
-      return new FilterGroup(el, {
+    this.newFilterGroups = filterGroups.map((el, index) => {
+      const group = new NewFilterComponent({
+        element: el,
+        indexInGroup: index,
+        onEnter: () => console.log('onEnter'),
         onChange: () => this.handleChange(),
         groupName: 'filterGroup',
       });
+
+      group.initialise();
+      return group;
     });
   }
 
   private saveFilterValues(): void {
-    // Get all filter group values and merge them into MCTManager answers
-    this.filterGroups.forEach((group) => {
-      const value = group.getValue();
-      const key = group.initialName;
-      const name = group.finalName;
+    this.newFilterGroups.forEach((group) => {
+      const value = group.getStateValue('value');
+      const key = group.getStateValue('initialName');
+      const name = group.getStateValue('finalName');
 
-      // Only set the answer if we have a valid key, value and name
       if (key && value !== null && value !== undefined && name)
         MCTManager.setAnswer({
           key: key as InputKey,
@@ -361,9 +361,10 @@ export class ResultsManager {
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
     const filters = FILTERS_CONFIG;
-    this.filterGroups.forEach((filterGroup) => {
-      const answer = (answers as any)[filterGroup.initialName]; //@TODO: look into types here
-      const config = filters[filterGroup.initialName as keyof typeof filters];
+
+    this.newFilterGroups.forEach((filterGroup) => {
+      const answer = (answers as any)[filterGroup.getStateValue('initialName')]; // @TODO: look into types here
+      const config = filters[filterGroup.getStateValue('initialName') as keyof typeof filters];
 
       if (answer) filterGroup.setValue(answer as InputValue);
       else if (config) filterGroup.setValue(config as InputValue);
@@ -481,10 +482,20 @@ export class ResultsManager {
     }
   }
 
+  private getSortColumnValue(): SortColumnENUM {
+    const sortColumnInput = this.newFilterGroups.find((group) => group.getStateValue('initialName') === 'SortColumn');
+    if (!sortColumnInput) return SortColumnENUM.Rate;
+
+    const sortColumnValue = sortColumnInput.getStateValue('value') as SortColumnENUM;
+    if (!sortColumnValue) return SortColumnENUM.Rate;
+
+    return sortColumnValue;
+  }
+
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput({
-      numberOfResults: 100, // @TODO: Maximum of 100 on the test API?
-      sortColumn: 1,
+      numberOfResults: 100,
+      sortColumn: this.getSortColumnValue(),
     });
     if (!input) return null;
 
@@ -587,7 +598,9 @@ export class ResultsManager {
     if (ReadinessToBuy) params.StageOfJourney = ReadinessToBuy;
 
     const oefParams = new URLSearchParams(params);
-    window.open(`${baseUrl}?${oefParams.toString()}`, '_blank');
+    const url = `${baseUrl}?${oefParams.toString()}`;
+
+    window.open(url, '_blank');
   }
 
   private async handleDirectToLender(): Promise<void> {
@@ -621,8 +634,6 @@ export class ResultsManager {
       EventName,
       EventValue: lender,
     };
-
-    console.log('handleLogUserEvents: ', payload);
 
     MCTManager.logUserEvent(payload);
   }
