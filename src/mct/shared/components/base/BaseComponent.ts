@@ -25,9 +25,7 @@ export abstract class BaseComponent {
    * Initialize the component - call this after construction
    */
   public initialise(): void {
-    this.log('BaseComponent: initialise');
     if (this.isInitialized || this.isDestroyed) return;
-    this.log('BaseComponent: calling init');
     this.init();
   }
 
@@ -36,13 +34,11 @@ export abstract class BaseComponent {
    * Override in subclasses to add initialization logic
    */
   protected init(): void {
-    this.log('BaseComponent: init');
     if (this.isInitialized) return;
 
     this.isInitialized = true;
 
     // Call the abstract initialization method
-    this.log('BaseComponent: calling abstract onInit');
     this.onInit();
   }
 

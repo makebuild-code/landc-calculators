@@ -31,6 +31,19 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
   }
 
   /**
+   * Shallow compare two state objects
+   */
+  private shallowEqual(objA: any, objB: any): boolean {
+    const keysA = Object.keys(objA);
+    const keysB = Object.keys(objB);
+    if (keysA.length !== keysB.length) return false;
+    for (const key of keysA) {
+      if (objA[key] !== objB[key]) return false;
+    }
+    return true;
+  }
+
+  /**
    * Set state with updates
    * Triggers state change events and notifies subscribers
    */
@@ -40,11 +53,9 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
     this.previousState = { ...this.state };
     this.state = { ...this.state, ...updates };
 
-    // this.log('State updated', {
-    //   previous: this.previousState,
-    //   current: this.state,
-    //   changes: updates,
-    // });
+    // Only log if state actually changed
+    if (this.debug && !this.shallowEqual(this.previousState, this.state))
+      this.log('State updated', { previous: this.previousState, current: this.state, changes: updates });
 
     // Notify subscribers
     this.notifyStateSubscribers();
