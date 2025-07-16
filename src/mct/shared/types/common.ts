@@ -15,8 +15,9 @@ export type ResponsiveConfig = {
 // Profile-related types
 export enum ProfileNameENUM {
   ResidentialPurchase = 'residential-purchase',
-  FtbResidentialPurchase = 'ftb-residential-purchase',
   BtlPurchase = 'btl-purchase',
+  FtbResidentialPurchase = 'ftb-residential-purchase',
+  FtbBtlPurchase = 'ftb-btl-purchase',
   ResidentialRemortgage = 'residential-remortgage',
   BtlRemortgage = 'btl-remortgage',
 }
