@@ -7,7 +7,7 @@ import { queryElements } from '$utils/dom/queryelements';
 
 import { DOM_CONFIG } from '$mct/config';
 import { QuestionComponent } from './Questions';
-import { trackGAEvent } from '$utils/analytics/trackGAEvent';
+import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
@@ -152,7 +152,7 @@ export class MainGroup extends QuestionGroup {
     this.handleNextButton(question.isValid());
 
     // console.log('handleChange, sending GA event');
-    trackGAEvent('form_interaction', {
+    dataLayer('form_interaction', {
       event_category: 'MCTForm',
       event_label: `MCT_${question.getStateValue('finalName')}`,
     });

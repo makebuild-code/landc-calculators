@@ -8,10 +8,10 @@ import { queryElements } from '$utils/dom/queryelements';
 import { DOM_CONFIG } from '$mct/config';
 import { QuestionComponent } from './Questions';
 import type { FormManager } from './Manager_Base';
-import { trackGAEvent } from '$utils/analytics/trackGAEvent';
+import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
-import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
+import type { InputValue, ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
@@ -244,9 +244,10 @@ export class MainGroup extends QuestionGroup {
 
     if (direction === 'next') {
       // this.formManager.showHeader('sticky');
-      trackGAEvent('form_interaction', {
+      dataLayer('form_interaction', {
         event_category: 'MCTForm',
         event_label: `MCT_Submit_${activeQuestion.getStateValue('finalName')}`,
+        event_value: activeQuestion.getStateValue('value')?.toString(),
       });
 
       const nextIndex = this.getNextRequiredIndex(indexToUse);
@@ -395,9 +396,9 @@ export class OutputGroup extends BaseGroup {
   }
 
   private navigateToResults(): void {
-    trackGAEvent('form_interaction', {
+    dataLayer('form_interaction', {
       event_category: 'MCTForm',
-      event_label: `MCT_Summary`,
+      event_label: `MCT_Show_Results`,
     });
 
     this.formManager.navigateToNextGroup();
