@@ -144,12 +144,9 @@ export abstract class StatefulInputGroup<
   }
 
   protected handleChange(): void {
-    this.log('[StatefulInputGroup] handleChange');
     // Update value and validity
     const value = this.getValue();
     const isValid = this.isValid();
-
-    this.log('[StatefulInputGroup]handleChange', { value, isValid });
 
     // Update state and call the onChange callback
     this.setState({ value, isValid } as Partial<T>);
@@ -166,12 +163,9 @@ export abstract class StatefulInputGroup<
   }
 
   protected handleEnter(): void {
-    this.log('[StatefulInputGroup] handleEnter');
     // Update value and validity
     const value = this.getValue();
     const isValid = this.isValid();
-
-    this.log('[StatefulInputGroup] handleEnter', { value, isValid });
 
     // Update state and call the onEnter callback
     this.setState({ value, isValid } as Partial<T>);
@@ -190,16 +184,12 @@ export abstract class StatefulInputGroup<
   }
 
   public isValid(): boolean {
-    console.log('CHECKING VALIDITY');
-    this.log('[StatefulInputGroup] isValid', { element: this.element });
     // Check if any of the inputs are invalid using the native validation API
     const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
-    this.log('[StatefulInputGroup] isValid: hasInvalidInput', { hasInvalidInput });
     if (hasInvalidInput) return false;
 
     const value = this.getValue();
     const type = this.getStateValue('type');
-    this.log('[StatefulInputGroup] isValid: value & type', { value, type });
 
     let isValid = false;
 
@@ -221,11 +211,9 @@ export abstract class StatefulInputGroup<
         const select = this.inputs[0] as HTMLSelectElement;
         const selectedOption = select.options[select.selectedIndex];
         isValid = typeof value === 'string' && selectedOption.getAttribute('value') === value;
-        this.log('[StatefulInputGroup] isValid: select-one', { isValid, value, select, selectedOption });
         break;
     }
 
-    this.log('[StatefulInputGroup] isValid: isValid', { isValid });
     return isValid;
   }
 
