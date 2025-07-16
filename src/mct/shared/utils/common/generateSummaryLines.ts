@@ -31,9 +31,6 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs):
         ? 'interest only'
         : 'part repayment part interest';
 
-  // Get scheme types text
-  const SchemeTypesMap = SchemeTypes.map((type) => (type === SchemeTypesENUM.Fixed ? 'fixed' : 'variable'));
-
   // Get scheme periods text
   const SchemePeriodsMap = SchemePeriods.map((period) =>
     period === SchemePeriodsENUM.TwoYears
@@ -47,12 +44,17 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs):
 
   const SchemePeriodsText = `${SchemePeriodsMap} year`;
 
-  const SchemeTypesText =
-    SchemeTypesMap.length === 1
-      ? `${SchemeTypesMap[0]} rate`
-      : SchemeTypesMap.length > 1
-        ? `${SchemeTypesMap[0]} or ${SchemeTypesMap[1]} rate`
-        : null;
+  // SchemeTypes = [1], [2] or [1, 2]
+
+  const SchemeTypesStringified = JSON.stringify(SchemeTypes);
+  const SchemeTypesPrefix =
+    SchemeTypesStringified === SchemeTypesENUM.Fixed
+      ? 'fixed'
+      : SchemeTypesStringified === SchemeTypesENUM.Variable
+        ? 'variable'
+        : 'fixed or variable';
+
+  const SchemeTypesText = `${SchemeTypesPrefix} rate`;
 
   const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
   const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;

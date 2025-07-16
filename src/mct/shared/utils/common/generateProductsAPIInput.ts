@@ -50,7 +50,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const SchemePurpose =
     PurchRemo === PurchRemoENUM.Purchase ? SchemePurposeENUM.Purchase : SchemePurposeENUM.Remortgage;
   const SchemePeriods = getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM; // Make sure this returns non-undefined (should be fine)
-  const SchemeTypes = getValueAsLandC(InputKeysENUM.SchemeTypes) as SchemeTypesENUM[]; // This returns an array as expected
+  const SchemeTypes = JSON.parse(getValueAsLandC(InputKeysENUM.SchemeTypes) as SchemeTypesENUM); // This returns an array as expected
 
   const NumberOfResults = options.numberOfResults ?? 1;
   const SortColumn = options.sortColumn ?? SortColumnENUM.Rate;
@@ -99,7 +99,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     IncludeRetention,
   };
 
-  console.log('input', input);
+  console.log('generateProductsAPIInput input', input);
 
   MCTManager.setCalculations({ RepaymentValue, InterestOnlyValue });
 
