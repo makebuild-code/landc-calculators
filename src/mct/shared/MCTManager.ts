@@ -28,7 +28,7 @@ import type {
   LogUserEventRequest,
   CalculationKeysENUM,
 } from '$mct/types';
-import { getInputValueAsLandC } from '$mct/utils';
+import { getInputValueAsLandC, getValueAsLandC } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes;
 
@@ -275,7 +275,8 @@ export const MCTManager = {
   },
 
   getAnswerAsLandC(key: InputKey): InputValue | undefined {
-    return getInputValueAsLandC(key) as InputValue | undefined;
+    return getValueAsLandC(key) as InputValue | undefined;
+    // return getInputValueAsLandC(key) as InputValue | undefined;
   },
 
   setAnswers(answerDataArray: InputData[]) {
@@ -288,7 +289,8 @@ export const MCTManager = {
 
   getAnswersAsLandC(): Inputs {
     return Object.fromEntries(
-      Object.entries(this.getAnswers()).map(([key, value]) => [key, getInputValueAsLandC(key as InputKey)])
+      Object.entries(this.getAnswers()).map(([key, value]) => [key, getValueAsLandC(key as InputKey)])
+      // Object.entries(this.getAnswers()).map(([key, value]) => [key, getInputValueAsLandC(key as InputKey)])
     );
   },
 

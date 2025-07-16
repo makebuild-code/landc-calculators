@@ -38,12 +38,19 @@ type EnumMap = {
 
 // Conditional type that returns the enum values
 type GetValueAsLandCReturnType<T extends AllKeys> = T extends keyof EnumMap
-  ? T extends 'SchemeTypes'
-    ? SchemeTypesENUM[] // Special case for SchemeTypes which should return an array
-    : EnumMap[T][keyof EnumMap[T]]
+  ? EnumMap[T][keyof EnumMap[T]]
   : T extends keyof Inputs
     ? ExtractValueType<Inputs, T>
     : never;
+
+// // Conditional type that returns the enum values
+// type GetValueAsLandCReturnType<T extends AllKeys> = T extends keyof EnumMap
+//   ? T extends 'SchemeTypes'
+//     ? SchemeTypesENUM[] // Special case for SchemeTypes which should return an array
+//     : EnumMap[T][keyof EnumMap[T]]
+//   : T extends keyof Inputs
+//     ? ExtractValueType<Inputs, T>
+//     : never;
 
 export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCReturnType<T> | undefined => {
   const value = MCTManager.getAnswer(key as InputKey);
