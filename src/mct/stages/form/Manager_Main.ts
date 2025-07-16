@@ -10,7 +10,7 @@ import type { InputKey, InputValue, LogUserEventCustom, Profile, QuestionsStageO
 import { GroupNameENUM } from '$mct/types';
 import { StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
-import { trackGAEvent } from '$utils/analytics/trackGAEvent';
+import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -326,7 +326,7 @@ export class MainFormManager extends FormManager {
       });
 
       // Track GA event for showing summary
-      trackGAEvent('form_interaction', {
+      dataLayer('form_interaction', {
         event_category: 'MCTForm',
         event_label: `MCT_Show_Summary`,
       });

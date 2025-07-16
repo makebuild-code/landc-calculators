@@ -1,1 +1,1 @@
-export * from './trackGAEvent';
+export * from './dataLayer';

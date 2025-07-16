@@ -21,7 +21,7 @@ export interface TrackGAEventParams {
  * Usage:
  *   trackGAEvent('form_interaction', { event_category: 'form', event_label: 'submit', value: 1 });
  */
-export function trackGAEvent(eventType: string, params: TrackGAEventParams = {}): void {
+export function dataLayer(eventType: string, params: TrackGAEventParams = {}): void {
   // GA4 (gtag.js)
   if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
     window.gtag('event', eventType, params);
