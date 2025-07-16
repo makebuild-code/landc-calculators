@@ -325,7 +325,7 @@ export class MainFormManager extends FormManager {
         EventValue: EVENTS_CONFIG.questionsComplete,
       });
 
-      // Track GA event for showing summary
+      // Push to dataLayer for showing summary
       dataLayer('form_interaction', {
         event_category: 'MCTForm',
         event_label: `MCT_Show_Summary`,
