@@ -1,4 +1,4 @@
-import type { AppointmentStageOptions, AppointmentDay, ICID, LCID, InputValue } from '$mct/types';
+import type { AppointmentStageOptions, AppointmentDay, ICID, LCID, InputValue, LogUserEventCustom } from '$mct/types';
 import {
   BuyerTypeENUM,
   CreditImpairedENUM,
@@ -486,6 +486,8 @@ export class AppointmentManager {
       // Handle successful booking
       this.form.style.display = 'none';
       this.formSuccess.style.removeProperty('display');
+
+      this.logUserEvent(); // No await, just log the event and handle separately
     } catch (error: unknown) {
       console.error('Error submitting booking:', error);
 
@@ -519,6 +521,19 @@ export class AppointmentManager {
       }
     } finally {
       this.setLoadingState(false);
+    }
+  }
+
+  private async logUserEvent(): Promise<void> {
+    const event: LogUserEventCustom = {
+      EventName: 'MCT_Appointment_Booked',
+      EventValue: `${this.dates.getValue()} ${this.times.getValue()}`,
+    };
+
+    try {
+      MCTManager.logUserEvent(event);
+    } catch (error) {
+      console.error('Error logging user event:', error);
     }
   }
 
@@ -612,9 +627,7 @@ export class AppointmentManager {
       const date = this.dates.getValue();
       const time = this.times.getValue();
 
-      if (!date || !time || typeof date !== 'string' || typeof time !== 'string') {
-        return null;
-      }
+      if (!date || !time || typeof date !== 'string' || typeof time !== 'string') return null;
 
       // Parse the time (format is "HH:MM:SS-HH:MM:SS" or "HH:MM-HH:MM")
       const timeParts = time.split('-');
@@ -629,7 +642,7 @@ export class AppointmentManager {
 
       const booking: Booking = {
         source: 'SYSTEM', // unsure
-        bookingDate: new Date(date).toISOString(),
+        bookingDate: date,
         bookingStart: startTime,
         bookingEnd: endTime,
         bookingProfile: 'DEFAULT', // unsure

@@ -221,6 +221,7 @@ export abstract class StatefulInputGroup<
         const select = this.inputs[0] as HTMLSelectElement;
         const selectedOption = select.options[select.selectedIndex];
         isValid = typeof value === 'string' && selectedOption.getAttribute('value') === value;
+        this.log('[StatefulInputGroup] isValid: select-one', { isValid, value, select, selectedOption });
         break;
     }
 
@@ -365,7 +366,7 @@ export abstract class StatefulInputGroup<
     // Add new options
     options.forEach((option) => {
       const optionEl = document.createElement('option');
-      optionEl.value = option.value;
+      if (option.value) optionEl.value = option.value;
       optionEl.text = option.label;
       input.appendChild(optionEl);
     });

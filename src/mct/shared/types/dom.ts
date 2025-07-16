@@ -9,7 +9,7 @@
 export type Input = HTMLInputElement | HTMLSelectElement;
 export type InputType = 'radio' | 'checkbox' | 'text' | 'number' | 'select-one';
 export type SelectOption = {
-  value: string;
+  value?: string;
   label: string;
 };
 

@@ -55,12 +55,15 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
     try {
       const lenders = await lendersAPI.getAll();
-      const lenderOptions = lenders.map(
-        (lender): SelectOption => ({
-          value: lender.MasterLenderId.toString(),
-          label: lender.LenderName,
-        })
-      );
+      const lenderOptions: SelectOption[] = [
+        { label: 'Select a lender...' },
+        ...lenders.map(
+          (lender): SelectOption => ({
+            value: lender.MasterLenderId.toString(),
+            label: lender.LenderName,
+          })
+        ),
+      ];
 
       this.setSelectOptions(lenderOptions);
     } catch (error) {
