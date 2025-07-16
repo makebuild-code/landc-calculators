@@ -49,9 +49,18 @@ export enum SchemePeriodsENUM {
 }
 
 export enum SchemeTypesENUM {
-  Fixed = 1,
-  Variable = 2,
+  Fixed = '[1]',
+  Variable = '[2]',
+  All = '[1, 2]',
 }
+
+export const SchemeTypesMAP = {
+  Fixed: [1],
+  Variable: [2],
+  All: [1, 2],
+} as const;
+
+type SchemeTypesValue = (typeof SchemeTypesMAP)[keyof typeof SchemeTypesMAP];
 
 export enum SortColumnENUM {
   Rate = 1,
@@ -97,7 +106,7 @@ export interface ProductsRequest {
   [ProductsRequestENUM.TermYears]: number;
   [ProductsRequestENUM.SchemePurpose]: SchemePurposeENUM;
   [ProductsRequestENUM.SchemePeriods]: SchemePeriodsENUM[];
-  [ProductsRequestENUM.SchemeTypes]: SchemeTypesENUM[];
+  [ProductsRequestENUM.SchemeTypes]: SchemeTypesValue;
   [ProductsRequestENUM.NumberOfResults]: number;
   [ProductsRequestENUM.Features]?: ProductsRequestFeatures;
   [ProductsRequestENUM.SortColumn]: SortColumnENUM;

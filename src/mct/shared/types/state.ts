@@ -59,7 +59,7 @@ export type Inputs = {
   [InputKeysENUM.RepaymentType]?: keyof typeof RepaymentTypeENUM; // will have by the end
   [InputKeysENUM.InterestOnlyValue]?: number; // optional?
   [InputKeysENUM.MortgageLength]?: number; // will have by the end
-  [InputKeysENUM.SchemeTypes]?: keyof (typeof SchemeTypesENUM)[]; // will have by the end
+  [InputKeysENUM.SchemeTypes]?: keyof typeof SchemeTypesENUM; // will have by the end
   [InputKeysENUM.SchemePeriods]?: keyof typeof SchemePeriodsENUM; // will have by the end
   [InputKeysENUM.EndOfTerm]?: keyof typeof EndOfTermENUM;
   [InputKeysENUM.RepaymentValue]?: number; // will have by the end
@@ -87,7 +87,7 @@ export type InputsByEndOfForm = {
   [InputKeysENUM.RepaymentType]: keyof typeof RepaymentTypeENUM;
   [InputKeysENUM.InterestOnlyValue]: number;
   [InputKeysENUM.MortgageLength]: number;
-  [InputKeysENUM.SchemeTypes]: keyof (typeof SchemeTypesENUM)[];
+  [InputKeysENUM.SchemeTypes]: keyof typeof SchemeTypesENUM;
   [InputKeysENUM.SchemePeriods]: keyof typeof SchemePeriodsENUM;
   [InputKeysENUM.RepaymentValue]: number;
 };
