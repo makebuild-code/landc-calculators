@@ -9,7 +9,6 @@ const classes = DOM_CONFIG.classes;
 
 interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
   formManager: FormManager;
-  // indexInGroup: number;
 }
 
 interface QuestionState extends StatefulInputGroupState {
@@ -21,15 +20,12 @@ interface QuestionState extends StatefulInputGroupState {
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private formManager: FormManager;
-  // public indexInGroup: number;
-  // public isRequired: boolean = false;
 
   constructor(options: QuestionOptions) {
     super(options);
 
     this.formManager = options.formManager;
     this.onEnter = options.onEnter;
-    // this.indexInGroup = options.indexInGroup;
     this.debug = true;
   }
 

@@ -23,7 +23,6 @@ import { getEnumKey, getValueAsLandC } from '$mct/utils';
 
 export const generateProductsAPIInput = (options: ProductsOptions = {}): ProductsRequest | null => {
   MCTManager.recalculate();
-  console.log('generateProductsAPIInput');
   const PurchRemo = getValueAsLandC(InputKeysENUM.PurchRemo);
   const answers =
     PurchRemo === PurchRemoENUM.Purchase
