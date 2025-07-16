@@ -1,4 +1,4 @@
-import type { AppointmentStageOptions, AppointmentDay, ICID, LCID, InputValue } from '$mct/types';
+import type { AppointmentStageOptions, AppointmentDay, ICID, LCID, InputValue, LogUserEventCustom } from '$mct/types';
 import {
   BuyerTypeENUM,
   CreditImpairedENUM,
@@ -486,6 +486,8 @@ export class AppointmentManager {
       // Handle successful booking
       this.form.style.display = 'none';
       this.formSuccess.style.removeProperty('display');
+
+      this.logUserEvent(); // No await, just log the event and handle separately
     } catch (error: unknown) {
       console.error('Error submitting booking:', error);
 
@@ -519,6 +521,19 @@ export class AppointmentManager {
       }
     } finally {
       this.setLoadingState(false);
+    }
+  }
+
+  private async logUserEvent(): Promise<void> {
+    const event: LogUserEventCustom = {
+      EventName: 'MCT_Appointment_Booked',
+      EventValue: `${this.dates.getValue()} ${this.times.getValue()}`,
+    };
+
+    try {
+      MCTManager.logUserEvent(event);
+    } catch (error) {
+      console.error('Error logging user event:', error);
     }
   }
 
