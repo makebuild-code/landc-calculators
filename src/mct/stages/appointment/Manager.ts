@@ -612,9 +612,7 @@ export class AppointmentManager {
       const date = this.dates.getValue();
       const time = this.times.getValue();
 
-      if (!date || !time || typeof date !== 'string' || typeof time !== 'string') {
-        return null;
-      }
+      if (!date || !time || typeof date !== 'string' || typeof time !== 'string') return null;
 
       // Parse the time (format is "HH:MM:SS-HH:MM:SS" or "HH:MM-HH:MM")
       const timeParts = time.split('-');
@@ -629,7 +627,7 @@ export class AppointmentManager {
 
       const booking: Booking = {
         source: 'SYSTEM', // unsure
-        bookingDate: new Date(date).toISOString(),
+        bookingDate: date,
         bookingStart: startTime,
         bookingEnd: endTime,
         bookingProfile: 'DEFAULT', // unsure
