@@ -155,7 +155,7 @@ export class MainFormManager extends FormManager {
     const currentMarginTop = firstQuestionEl.style.marginTop;
 
     // Margin is the desired - actual + current
-    const topMargin = desiredTop - actualDistanceFromTop + parseInt(currentMarginTop || '0');
+    const topMargin = Math.max(desiredTop - actualDistanceFromTop + parseInt(currentMarginTop || '0'), 0);
     firstQuestionEl.style.marginTop = `${topMargin}px`;
 
     // Get the last visible group and last visible item within
@@ -173,7 +173,7 @@ export class MainFormManager extends FormManager {
     const currentPaddingBottom = this.track.style.paddingBottom;
 
     // Padding is the desired - actual + current
-    const bottomPadding = desiredBottom - actualDistanceFromBottom + parseInt(currentPaddingBottom || '0');
+    const bottomPadding = Math.max(desiredBottom - actualDistanceFromBottom + parseInt(currentPaddingBottom || '0'), 0);
     this.track.style.paddingBottom = `${bottomPadding}px`;
   }
 
