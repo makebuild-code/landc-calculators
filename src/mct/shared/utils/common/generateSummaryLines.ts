@@ -32,20 +32,21 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs):
         : 'part repayment part interest';
 
   // Get scheme periods text
-  const SchemePeriodsMap = SchemePeriods.map((period) =>
-    period === SchemePeriodsENUM.TwoYears
-      ? '2'
-      : period === SchemePeriodsENUM.ThreeYears
-        ? '3'
-        : period === SchemePeriodsENUM.FiveYears
-          ? '5'
-          : '5+'
-  );
+  const SchemePeriodsStringified = JSON.stringify(SchemePeriods);
+  const SchemePeriodsText =
+    SchemePeriodsStringified === SchemePeriodsENUM.TwoYears
+      ? '2 year'
+      : SchemePeriodsStringified === SchemePeriodsENUM.ThreeYears
+        ? '3 year'
+        : SchemePeriodsStringified === SchemePeriodsENUM.FiveYears
+          ? '5 year'
+          : SchemePeriodsStringified === SchemePeriodsENUM.FivePlusYears
+            ? '5+ year'
+            : SchemePeriodsStringified === SchemePeriodsENUM.All
+              ? 'all'
+              : '2-5+ year';
 
-  const SchemePeriodsText = `${SchemePeriodsMap} year`;
-
-  // SchemeTypes = [1], [2] or [1, 2]
-
+  // Get scheme types text
   const SchemeTypesStringified = JSON.stringify(SchemeTypes);
   const SchemeTypesPrefix =
     SchemeTypesStringified === SchemeTypesENUM.Fixed
