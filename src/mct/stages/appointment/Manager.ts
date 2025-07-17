@@ -159,7 +159,10 @@ export class AppointmentManager {
   }
 
   private bindEvents(): void {
-    this.bookButton.addEventListener('click', () => this.navigate('next'));
+    this.bookButton.addEventListener('click', () => {
+      console.log('bookButton clicked');
+      this.navigate('next');
+    });
     this.backButtons.forEach((button) => {
       button.addEventListener('click', () => this.handleBackButtons());
     });
@@ -180,6 +183,7 @@ export class AppointmentManager {
   private navigate(direction: 'next' | 'previous'): void {
     try {
       if (direction === 'next') {
+        console.log('navigateNext');
         this.navigateNext();
       } else if (direction === 'previous') {
         this.navigatePrevious();
@@ -216,8 +220,8 @@ export class AppointmentManager {
   }
 
   private canProceedToForm(): boolean {
-    const date = this.dates.getStateValue('value');
-    const time = this.times.getStateValue('value');
+    const date = this.dates.getValue();
+    const time = this.times.getValue();
 
     return !!date && !!time;
   }
@@ -350,9 +354,6 @@ export class AppointmentManager {
     const slots = await this.fetchSlotsForDateRange(date, date);
 
     this.selectedDate ? this.times.renderTimeSlots(slots[0].slots) : (this.timesGroup.style.display = 'none');
-
-    // const currentTime = this.times.getStateValue('value');
-    // if (currentTime) this.times.setValue(currentTime);
   }
 
   private async handleTimeChange(): Promise<void> {
