@@ -11,8 +11,10 @@ import {
   RemoChangeENUM,
   InputKeysENUM,
   CalculationKeysENUM,
+  PurchRemoENUM,
+  type Inputs,
 } from '$mct/types';
-import { getEnumValue } from '$mct/utils';
+import { getEnumKey, getEnumValue } from '$mct/utils';
 
 export class CalculationManager {
   private stateManager: StateManager;
@@ -27,12 +29,14 @@ export class CalculationManager {
 
   private setupCalculationRules(): void {
     // Define calculation rules for specific input keys
+    this.calculationRules.set(InputKeysENUM.PurchRemo, this.purchRemo);
     this.calculationRules.set(InputKeysENUM.ReadinessToBuy, this.readinessToBuy);
     this.calculationRules.set(InputKeysENUM.CreditImpaired, this.creditImpaired);
     this.calculationRules.set(InputKeysENUM.EndOfTerm, this.endOfTerm);
     this.calculationRules.set(InputKeysENUM.PropertyValue, this.propertyValue);
     this.calculationRules.set(InputKeysENUM.DepositAmount, this.depositAmount);
     this.calculationRules.set(InputKeysENUM.RemoChange, this.remoChange);
+    this.calculationRules.set(InputKeysENUM.RepaymentValue, this.repaymentValue);
   }
 
   private subscribeToStateChanges(): void {
@@ -65,28 +69,36 @@ export class CalculationManager {
     }
   }
 
-  private readinessToBuy = (answers: Record<string, any>): Partial<Calculations> => {
+  private purchRemo = (answers: Inputs): Partial<Calculations> => {
+    return { ...this.calculateLoanToValue(answers), ...this.calculateIsProceedable(answers) };
+  };
+
+  private readinessToBuy = (answers: Inputs): Partial<Calculations> => {
     return { ...this.calculateIsProceedable(answers), ...this.calculateOfferAccepted(answers) };
   };
 
-  private creditImpaired = (answers: Record<string, any>): Partial<Calculations> => {
+  private creditImpaired = (answers: Inputs): Partial<Calculations> => {
     return this.calculateIsProceedable(answers);
   };
 
-  private endOfTerm = (answers: Record<string, any>): Partial<Calculations> => {
+  private endOfTerm = (answers: Inputs): Partial<Calculations> => {
     return this.calculateIsProceedable(answers);
   };
 
-  private propertyValue = (answers: Record<string, any>): Partial<Calculations> => {
+  private propertyValue = (answers: Inputs): Partial<Calculations> => {
     return this.calculateLoanToValue(answers);
   };
 
-  private depositAmount = (answers: Record<string, any>): Partial<Calculations> => {
+  private depositAmount = (answers: Inputs): Partial<Calculations> => {
     return this.calculateLoanToValue(answers);
   };
 
-  private remoChange = (answers: Record<string, any>): Partial<Calculations> => {
+  private remoChange = (answers: Inputs): Partial<Calculations> => {
     return this.calculateIncludeRetention(answers);
+  };
+
+  private repaymentValue = (answers: Inputs): Partial<Calculations> => {
+    return this.calculateLoanToValue(answers);
   };
 
   /**
@@ -95,26 +107,47 @@ export class CalculationManager {
    * - CreditImpaired === Yes
    * - EndOfTerm === SixToTwelveMonths || TwelvePlusMonths
    */
-  private calculateIsProceedable = (answers: Record<string, any>): Partial<Calculations> => {
-    const { ReadinessToBuy, CreditImpaired, EndOfTerm } = answers;
+  private calculateIsProceedable = (answers: Inputs): Partial<Calculations> => {
+    const { PurchRemo, ReadinessToBuy, CreditImpaired, EndOfTerm } = answers;
 
-    const ReadinessToBuyValue = getEnumValue(ReadinessToBuyENUM, ReadinessToBuy);
-    const CreditImpairedValue = getEnumValue(CreditImpairedENUM, CreditImpaired);
-    const EndOfTermValue = getEnumValue(EndOfTermENUM, EndOfTerm);
-
+    // Start with proceedable is true, remove it if any conditions are met
     let isProceedable = true;
 
-    if (ReadinessToBuyValue === ReadinessToBuyENUM.Researching || ReadinessToBuyValue === ReadinessToBuyENUM.Viewing)
+    // If CreditImpaired doesn't exist or is 'Yes', isProceedable is false
+    if (!CreditImpaired || CreditImpaired === getEnumKey(CreditImpairedENUM, CreditImpairedENUM.Yes)) {
       isProceedable = false;
-    if (CreditImpairedValue === CreditImpairedENUM.Yes) isProceedable = false;
-    if (EndOfTermValue === EndOfTermENUM.TwelvePlusMonths) isProceedable = false;
+    }
+
+    // If PurchRemo is 'Purchase'
+    if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase)) {
+      // If ReadinessToBuy doesn't exist or is 'Researching' or 'Viewing', isProceedable is false
+      if (
+        !ReadinessToBuy ||
+        ReadinessToBuy === getEnumKey(ReadinessToBuyENUM, ReadinessToBuyENUM.Researching) ||
+        ReadinessToBuy === getEnumKey(ReadinessToBuyENUM, ReadinessToBuyENUM.Viewing)
+      ) {
+        isProceedable = false;
+      }
+
+      // If PurchRemo is 'Remortgage'
+    } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage)) {
+      // If EndOfTerm doesn't exist or is 'TwelvePlusMonths', isProceedable is false
+      if (!EndOfTerm || EndOfTerm === getEnumKey(EndOfTermENUM, EndOfTermENUM.TwelvePlusMonths)) {
+        isProceedable = false;
+      }
+    }
 
     return {
       [CalculationKeysENUM.IsProceedable]: isProceedable,
     };
   };
 
-  private calculateOfferAccepted = (answers: Record<string, any>): Partial<Calculations> => {
+  /**
+   * @returns { OfferAccepted: boolean }
+   * - If ReadinessToBuy is OfferAccepted, OfferAccepted = true
+   * - If ReadinessToBuy is not OfferAccepted, OfferAccepted = false
+   */
+  private calculateOfferAccepted = (answers: Inputs): Partial<Calculations> => {
     const { ReadinessToBuy } = answers;
     if (!ReadinessToBuy) return { [CalculationKeysENUM.OfferAccepted]: OfferAcceptedENUM.No };
 
@@ -125,15 +158,31 @@ export class CalculationManager {
     return { [CalculationKeysENUM.OfferAccepted]: offerAccepted };
   };
 
-  private calculateLoanToValue = (answers: Record<string, any>): Partial<Calculations> => {
-    const { PropertyValue, DepositAmount } = answers;
-    if (!PropertyValue || !DepositAmount) return { LTV: undefined };
+  /**
+   * @returns { LTV: number }
+   * - If Purchase, LTV = (PropertyValue - DepositAmount) / PropertyValue
+   * - If Remortgage, LTV = RepaymentValue / PropertyValue
+   */
+  private calculateLoanToValue = (answers: Inputs): Partial<Calculations> => {
+    const { PurchRemo, PropertyValue, DepositAmount, RepaymentValue } = answers;
+    if (!PurchRemo || !PropertyValue) return { LTV: undefined };
 
-    const LTV = ((PropertyValue - DepositAmount) / PropertyValue) * 100;
+    let LTV = undefined;
+    if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase) && DepositAmount) {
+      LTV = ((PropertyValue - DepositAmount) / PropertyValue) * 100;
+    } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage) && RepaymentValue) {
+      LTV = (RepaymentValue / PropertyValue) * 100;
+    }
+
     return { LTV };
   };
 
-  private calculateIncludeRetention = (answers: Record<string, any>): Partial<Calculations> => {
+  /**
+   * @returns { IncludeRetention: boolean }
+   * - If RemoChange is NoChange, IncludeRetention = true
+   * - If RemoChange is Change, IncludeRetention = false
+   */
+  private calculateIncludeRetention = (answers: Inputs): Partial<Calculations> => {
     const { RemoChange } = answers;
     if (!RemoChange) return { IncludeRetention: false };
 

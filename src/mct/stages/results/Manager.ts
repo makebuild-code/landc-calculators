@@ -294,7 +294,8 @@ export class ResultsManager {
     if (!this.summaryInfo) return;
 
     const summaryLines = generateSummaryLines(this.summaryInfo, MCTManager.getAnswers());
-    if (!summaryLines) return;
+    const calculations = MCTManager.getCalculations();
+    if (!summaryLines || !calculations) return;
 
     this.outputs.forEach((output) => {
       const key = output.getAttribute(attr.output);
@@ -318,26 +319,18 @@ export class ResultsManager {
        */
 
       if (key === 'LTV') {
-        const propertyValue = MCTManager.getAnswer(InputKeysENUM.PropertyValue) as number;
-        const depositAmount = MCTManager.getAnswer(InputKeysENUM.DepositAmount) as number;
-        const ltv = ((propertyValue - depositAmount) / propertyValue) * 100;
+        const ltv = calculations[CalculationKeysENUM.LTV];
+        if (!ltv) return;
 
-        if (type === 'percentage') {
-          if (ltv) output.textContent = formatNumber(ltv, { type: 'percent', decimals: 0 });
-        } else if (type === 'progress-bar') {
-          if (ltv) output.style.width = `${ltv}%`;
-        }
-
+        if (type === 'percentage') output.textContent = formatNumber(ltv, { type: 'percent', decimals: 0 });
+        else if (type === 'progress-bar') output.style.width = `${ltv}%`;
         return;
       } else if (key === 'MortgageAmount') {
-        const propertyValue = MCTManager.getAnswer(InputKeysENUM.PropertyValue) as number;
-        const depositAmount = MCTManager.getAnswer(InputKeysENUM.DepositAmount) as number;
-        const mortgageAmount = propertyValue - depositAmount;
+        const mortgageAmount = calculations[CalculationKeysENUM.RepaymentValue];
+        if (!mortgageAmount) return;
 
-        if (type === 'currency') {
-          if (mortgageAmount) output.textContent = formatNumber(mortgageAmount, { type: 'currency' });
-        }
-
+        if (type === 'currency') output.textContent = formatNumber(mortgageAmount, { type: 'currency' });
+        else output.textContent = mortgageAmount.toString();
         return;
       }
 
