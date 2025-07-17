@@ -116,7 +116,7 @@ export class CalculationManager {
 
   private calculateOfferAccepted = (answers: Record<string, any>): Partial<Calculations> => {
     const { ReadinessToBuy } = answers;
-    if (!ReadinessToBuy) return {};
+    if (!ReadinessToBuy) return { [CalculationKeysENUM.OfferAccepted]: OfferAcceptedENUM.No };
 
     const readinessToBuyValue = getEnumValue(ReadinessToBuyENUM, ReadinessToBuy);
     const isOfferAccepted = readinessToBuyValue === ReadinessToBuyENUM.OfferAccepted;
@@ -127,7 +127,7 @@ export class CalculationManager {
 
   private calculateLoanToValue = (answers: Record<string, any>): Partial<Calculations> => {
     const { PropertyValue, DepositAmount } = answers;
-    if (!PropertyValue || !DepositAmount) return {};
+    if (!PropertyValue || !DepositAmount) return { LTV: undefined };
 
     const LTV = ((PropertyValue - DepositAmount) / PropertyValue) * 100;
     return { LTV };
@@ -135,7 +135,7 @@ export class CalculationManager {
 
   private calculateIncludeRetention = (answers: Record<string, any>): Partial<Calculations> => {
     const { RemoChange } = answers;
-    if (!RemoChange) return {};
+    if (!RemoChange) return { IncludeRetention: false };
 
     const remoChangeValue = getEnumValue(RemoChangeENUM, RemoChange);
     const IncludeRetention = remoChangeValue === RemoChangeENUM.NoChange;

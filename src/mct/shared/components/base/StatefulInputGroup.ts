@@ -94,7 +94,7 @@ export abstract class StatefulInputGroup<
     this.setStateValue('isInitialised', true);
   }
 
-  // protected abstract init(): void;
+  protected abstract init(): void;
 
   protected formatInputNamesAndIDs(): void {
     const groupName = this.getStateValue('groupName');
@@ -124,13 +124,7 @@ export abstract class StatefulInputGroup<
   }
 
   protected bindEvents(): void {
-    this.inputs.forEach((input) => {
-      if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
-        this.addEventListener({ element: input, event: 'input', handler: () => this.handleChange() });
-      } else {
-        this.addEventListener({ element: input, event: 'change', handler: () => this.handleChange() });
-      }
-    });
+    this.inputs.forEach((input) => this.bindInputEvents(input));
 
     this.addEventListener({
       element: this.element,
@@ -141,6 +135,14 @@ export abstract class StatefulInputGroup<
         this.handleEnter();
       },
     });
+  }
+
+  protected bindInputEvents(input: Input): void {
+    if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
+      this.addEventListener({ element: input, event: 'input', handler: () => this.handleChange() });
+    } else {
+      this.addEventListener({ element: input, event: 'change', handler: () => this.handleChange() });
+    }
   }
 
   protected handleChange(): void {

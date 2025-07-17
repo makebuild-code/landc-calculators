@@ -19,9 +19,8 @@ import { Result } from './Result';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
-import { NewFilterComponent } from './FilterGroup';
+import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
-import { simulateEvent } from '@finsweet/ts-utils';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -61,7 +60,7 @@ export class ResultsManager {
 
   private header: HTMLDivElement;
   private outputs: HTMLDivElement[] = [];
-  private newFilterGroups: NewFilterComponent[] = [];
+  private filters: FilterComponent[] = [];
 
   private showIfProceedable: HTMLElement[];
 
@@ -177,7 +176,7 @@ export class ResultsManager {
     // }
 
     this.handleUpdateAnswers();
-    this.initFilterGroups();
+    this.initFilters();
     this.initAppointmentDialog();
     this.initListElements();
     this.renderOutputs();
@@ -219,27 +218,27 @@ export class ResultsManager {
     });
   }
 
-  private initFilterGroups(): void {
-    const filterGroups = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
-    this.newFilterGroups = filterGroups.map((el, index) => {
-      const group = new NewFilterComponent({
-        element: el,
+  private initFilters(): void {
+    const filters = queryElements(`[${attr.components}="filter-group"]`, this.component) as HTMLElement[];
+    this.filters = filters.map((element, index) => {
+      const filter = new FilterComponent({
+        element,
         indexInGroup: index,
         onEnter: () => console.log('onEnter'),
         onChange: () => this.handleChange(),
         groupName: 'filterGroup',
       });
 
-      group.initialise();
-      return group;
+      filter.initialise();
+      return filter;
     });
   }
 
   private saveFilterValues(): void {
-    this.newFilterGroups.forEach((group) => {
-      const value = group.getStateValue('value');
-      const key = group.getStateValue('initialName');
-      const name = group.getStateValue('finalName');
+    this.filters.forEach((filter) => {
+      const value = filter.getStateValue('value');
+      const key = filter.getStateValue('initialName');
+      const name = filter.getStateValue('finalName');
 
       if (key && value !== null && value !== undefined && name)
         MCTManager.setAnswer({
@@ -362,7 +361,7 @@ export class ResultsManager {
     const answers = MCTManager.getAnswers();
     const filters = FILTERS_CONFIG;
 
-    this.newFilterGroups.forEach((filterGroup) => {
+    this.filters.forEach((filterGroup) => {
       const answer = (answers as any)[filterGroup.getStateValue('initialName')]; // @TODO: look into types here
       const config = filters[filterGroup.getStateValue('initialName') as keyof typeof filters];
 
@@ -483,7 +482,7 @@ export class ResultsManager {
   }
 
   private getSortColumnValue(): SortColumnENUM {
-    const sortColumnInput = this.newFilterGroups.find((group) => group.getStateValue('initialName') === 'SortColumn');
+    const sortColumnInput = this.filters.find((group) => group.getStateValue('initialName') === 'SortColumn');
     if (!sortColumnInput) return SortColumnENUM.Rate;
 
     const sortColumnValue = sortColumnInput.getStateValue('value') as SortColumnENUM;

@@ -1,5 +1,5 @@
-import { InputGroupBase } from '$mct/components';
-import type { AppointmentDay, Input, InputGroupOptions } from '$mct/types';
+import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
+import type { AppointmentDay, Input } from '$mct/types';
 import { queryElement } from '$utils/dom';
 import { DOM_CONFIG } from '$mct/config';
 import { getOrginalDate } from '$utils/formatting';
@@ -7,60 +7,65 @@ import { Slider } from './Slider';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
-type DateOptions = {
+interface DatesOptions extends StatefulInputGroupOptions<DatesState> {
   wrapper: HTMLElement;
-  onChange: () => void;
   onLoadMore: () => void;
-  onEnter: () => void;
-} & InputGroupOptions;
+}
 
-export class Dates extends InputGroupBase {
+interface DatesState extends StatefulInputGroupState {
+  appointmentDays: AppointmentDay[];
+  selectedDate: AppointmentDay | null;
+}
+
+export class DatesComponent extends StatefulInputGroup<DatesState> {
   private wrapper: HTMLElement;
   private onLoadMore: () => void;
-  private onEnter: () => void;
-  private slider: Slider;
-  private slideTemplate: HTMLElement;
-  private appointmentDays: AppointmentDay[] = [];
-  private selectedDate: AppointmentDay | null = null;
+  private slider!: Slider;
+  private slideTemplate!: HTMLElement;
 
-  constructor(el: HTMLElement, options: DateOptions) {
-    super(el, options);
+  constructor(options: DatesOptions) {
+    super(options);
+
     this.wrapper = options.wrapper;
     this.onLoadMore = options.onLoadMore;
-    this.onEnter = options.onEnter;
 
-    const slider = queryElement(`[${attr.slider}="component"]`, this.wrapper) as HTMLElement;
+    this.setStateValue('type', 'radio');
+    this.setStateValue('appointmentDays', []);
+    this.setStateValue('selectedDate', null);
+  }
+
+  protected init(): void {
+    const slider = this.queryElement(`[${attr.slider}="component"]`, this.wrapper) as HTMLElement;
     this.slider = new Slider(slider, {
-      wrapper: options.wrapper,
+      wrapper: this.wrapper,
       onThresholdReached: () => this.onThresholdReached(),
     });
 
     this.slideTemplate = this.createSlideTemplate();
   }
 
-  protected init(): void {
-    // Any additional initialization if needed
-  }
-
   public addDays(days: AppointmentDay[]): void {
-    this.appointmentDays = [...this.appointmentDays, ...days];
+    const currentDays = this.getStateValue('appointmentDays');
+    const newDays = [...currentDays, ...days];
+    this.setStateValue('appointmentDays', newDays);
 
     const slides = days.map((day, index) => this.createDateSlide(day, index));
     this.slider.addSlides(slides);
   }
 
   public getSelectedDate(): AppointmentDay | null {
-    return this.selectedDate;
+    return this.getStateValue('selectedDate');
   }
 
   public getLastDate(): Date | null {
-    if (this.appointmentDays.length === 0) return null;
-    const lastDay = this.appointmentDays[this.appointmentDays.length - 1];
+    const appointmentDays = this.getStateValue('appointmentDays');
+    if (appointmentDays.length === 0) return null;
+    const lastDay = appointmentDays[appointmentDays.length - 1];
     return new Date(lastDay.date);
   }
 
   private createSlideTemplate(): HTMLElement {
-    const slide = queryElement(`[${attr.slider}="slide-template"]`, this.el) as HTMLElement;
+    const slide = queryElement(`[${attr.slider}="slide-template"]`, this.element) as HTMLElement;
     if (!slide) throw new Error(`Slide template element with attribute [${attr.slider}="slide-template"] not found`);
 
     const template = slide.cloneNode(true) as HTMLElement;
@@ -95,35 +100,25 @@ export class Dates extends InputGroupBase {
     label.setAttribute('for', input.id);
     label.textContent = `${month}, ${ordinalDate}`;
 
+    input.addEventListener('change', () => this.setStateValue('selectedDate', day));
+
     this.inputs.push(input);
-
-    // Add change listener for date selection
-    input.addEventListener('change', () => {
-      if (input instanceof HTMLInputElement && input.checked) {
-        this.selectedDate = day;
-        this.onChange();
-      }
-    });
-
-    // Add keyboard event listener for Enter key
-    input.addEventListener('keydown', (event: Event) => {
-      const ke = event as KeyboardEvent;
-      if (ke.key !== 'Enter') return;
-
-      this.onEnter();
-    });
+    this.bindInputEvents(input);
 
     return slide;
   }
 
   private onThresholdReached(): void {
-    // console.log('Threshold reached, requesting more dates...');
     this.onLoadMore();
   }
 
   public selectFirstActiveDay(date: string): void {
     this.setValue(date);
-    this.selectedDate = this.appointmentDays.find((day) => day.date === date)!;
+
+    const appointmentDays = this.getStateValue('appointmentDays');
+    const selectedDate = appointmentDays.find((day) => day.date === date)!;
+    this.setStateValue('selectedDate', selectedDate);
+
     this.onChange();
   }
 }

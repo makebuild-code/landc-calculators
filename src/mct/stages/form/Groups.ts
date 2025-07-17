@@ -385,12 +385,21 @@ export class OutputGroup extends BaseGroup {
 
   private updateOutputs(): void {
     if (!this.summaryInfo) return;
+    const hasProducts = this.summaryInfo.NumberOfProducts > 0;
 
     const summaryLines = generateSummaryLines(this.summaryInfo, this.formManager.getAnswers());
     if (!summaryLines) return;
 
     this.outputs.forEach((output) => {
-      const key = output.getAttribute(attr.output) as keyof SummaryLines;
+      const key = output.getAttribute(attr.output) as keyof SummaryLines | 'NoProducts';
+
+      if (key === 'NoProducts') {
+        hasProducts ? (output.style.display = 'none') : output.style.removeProperty('display');
+        return;
+      } else if (key === 'ProductsAndLenders') {
+        hasProducts ? output.style.removeProperty('display') : (output.style.display = 'none');
+      }
+
       output.innerHTML = summaryLines[key];
     });
   }

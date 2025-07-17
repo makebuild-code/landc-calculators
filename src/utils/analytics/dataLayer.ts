@@ -26,8 +26,6 @@ export type DataLayerEvent = 'form_interaction';
 export function dataLayer(event: DataLayerEvent, params: DataLayerParams = {}): void {
   window.dataLayer = window.dataLayer || [];
 
-  console.log('dataLayer', event, params);
-
   window.dataLayer.push({
     event,
     ...params,

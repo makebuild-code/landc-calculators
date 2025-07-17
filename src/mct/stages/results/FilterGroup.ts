@@ -1,11 +1,11 @@
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 
-interface NewFilterOptions extends StatefulInputGroupOptions<NewFilterState> {}
+interface FilterOptions extends StatefulInputGroupOptions<FilterState> {}
 
-interface NewFilterState extends StatefulInputGroupState {}
+interface FilterState extends StatefulInputGroupState {}
 
-export class NewFilterComponent extends StatefulInputGroup<NewFilterState> {
-  constructor(options: NewFilterOptions) {
+export class FilterComponent extends StatefulInputGroup<FilterState> {
+  constructor(options: FilterOptions) {
     super(options);
   }
 }
