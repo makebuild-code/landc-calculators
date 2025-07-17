@@ -145,13 +145,14 @@ export abstract class StatefulInputGroup<
     }
   }
 
-  protected handleChange(): void {
-    // Update value and validity
+  protected saveValueAndValidity(): void {
     const value = this.getValue();
     const isValid = this.isValid();
-
-    // Update state and call the onChange callback
     this.setState({ value, isValid } as Partial<T>);
+  }
+
+  protected handleChange(): void {
+    this.saveValueAndValidity();
     this.onChange();
 
     // // Emit change event
@@ -404,6 +405,8 @@ export abstract class StatefulInputGroup<
       default:
         throw new Error(`Unsupported question type: ${this.getStateValue('type')}`);
     }
+
+    this.saveValueAndValidity();
   }
 
   public getLabels(): string[] {

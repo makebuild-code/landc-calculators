@@ -71,16 +71,24 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   const InterestOnlyValue = (answers.InterestOnlyValue as number) ?? 0;
 
-  // First try options, then filters config
-  // @TODO: check that NewBuild flag is being passed through options
-  const NewBuild = options.NewBuild ?? FILTERS_CONFIG.NewBuild === 'true' ? true : false;
+  // If remortgage, NewBuild is undefined. If in answers, use it. If not, use options. If not, use filters config.
+  const NewBuild =
+    SchemePurpose === SchemePurposeENUM.Remortgage
+      ? undefined
+      : answers.NewBuild === 'true'
+        ? true
+        : answers.NewBuild === 'false'
+          ? false
+          : options.NewBuild ?? FILTERS_CONFIG.NewBuild === 'true'
+            ? true
+            : false;
 
-  // First try options, then filters config
-  // @TODO: check that SapValue flag is being passed through options
-  const SapValue =
-    options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
-      ? SapValueENUM.No
-      : SapValueENUM.Yes;
+  // // First try options, then filters config
+  // // @TODO: check that SapValue flag is being passed through options
+  // const SapValue =
+  //   options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
+  //     ? SapValueENUM.No
+  //     : SapValueENUM.Yes;
 
   const Features: ProductsRequestFeatures = {};
   if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
@@ -93,7 +101,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const input: ProductsRequest = {
     ...endOfAnswersInput,
     InterestOnlyValue,
-    SapValue,
+    // SapValue,
     Features,
     IncludeRetention,
   };

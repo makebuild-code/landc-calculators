@@ -5,6 +5,7 @@ export const DOM_CONFIG: CONFIG_DOM = {
     component: 'data-mct',
     stage: 'data-mct-stage',
     initial: 'data-mct-initial',
+    visibility: 'data-mct-visible-if',
     form: {
       components: 'data-mct-questions',
       group: 'data-mct-questions-group',

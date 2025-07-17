@@ -41,13 +41,6 @@ export enum SchemePurposeENUM {
   Remortgage = 2,
 }
 
-// export enum SchemePeriodsENUM {
-//   TwoYears = 1,
-//   ThreeYears = 2,
-//   FiveYears = 3,
-//   FivePlusYears = 4,
-// }
-
 export enum SchemePeriodsENUM {
   TwoYears = '[1]',
   ThreeYears = '[2]',
