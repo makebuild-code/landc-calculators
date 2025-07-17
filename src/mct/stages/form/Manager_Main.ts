@@ -1,7 +1,7 @@
 import { simulateEvent } from '@finsweet/ts-utils';
 
 import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
-import { MainGroup, OutputGroup } from './Groups';
+import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
@@ -62,7 +62,12 @@ export class MainFormManager extends FormManager {
       const name = groupEl.getAttribute(attr.group) as GroupNameENUM;
       if (!name) return;
 
-      const group = name === GroupNameENUM.Output ? new OutputGroup(groupEl, this) : new MainGroup(groupEl, this);
+      const options: GroupOptions = {
+        component: groupEl,
+        formManager: this,
+        index,
+      };
+      const group = name === GroupNameENUM.Output ? new OutputGroup(options) : new MainGroup(options);
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
@@ -231,7 +236,6 @@ export class MainFormManager extends FormManager {
 
     if (isValid) {
       const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-      console.log('outputGroup', outputGroup);
       if (outputGroup) outputGroup.update();
     }
   }
@@ -295,7 +299,6 @@ export class MainFormManager extends FormManager {
       this.showHeader('sticky');
 
       const firstRequiredIndex = profileGroup.getNextRequiredIndex(-1);
-      console.log('firstRequiredIndex', firstRequiredIndex);
       if (firstRequiredIndex < profileGroup.questions.length) {
         profileGroup.activeQuestionIndex = firstRequiredIndex;
         const firstQuestion = profileGroup.getActiveQuestion();
@@ -334,7 +337,7 @@ export class MainFormManager extends FormManager {
     this.handleShowHideOnGroup();
   }
 
-  private handleShowHideOnGroup(): void {
+  public handleShowHideOnGroup(): void {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup) return;
 
@@ -344,22 +347,14 @@ export class MainFormManager extends FormManager {
     this.hideOnGroup.forEach((element) => {
       const group = element.getAttribute(attr.hideOnGroup);
 
-      if (group === name) {
-        element.style.display = 'none';
-      } else {
-        element.style.removeProperty('display');
-      }
+      group === name ? (element.style.display = 'none') : element.style.removeProperty('display');
     });
 
     // show elements that are in the showOnGroup array
     this.showOnGroup.forEach((element) => {
       const group = element.getAttribute(attr.showOnGroup);
 
-      if (group === name) {
-        element.style.removeProperty('display');
-      } else {
-        element.style.display = 'none';
-      }
+      group === name ? element.style.removeProperty('display') : (element.style.display = 'none');
     });
   }
 

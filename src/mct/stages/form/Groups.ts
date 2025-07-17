@@ -20,17 +20,25 @@ import { MCTManager } from '$mct/manager';
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
 
+export interface GroupOptions {
+  component: HTMLElement;
+  formManager: FormManager;
+  index: number;
+}
+
 // @description: Base class for all groups
 export abstract class BaseGroup {
   protected component: HTMLElement;
   protected formManager: FormManager;
   public isVisible: boolean = false;
   public name: GroupNameENUM | null = null;
+  public index: number;
 
-  constructor(component: HTMLElement, formManager: FormManager) {
-    this.component = component;
-    this.formManager = formManager;
-    this.name = component.getAttribute(attr.group) as GroupNameENUM | null;
+  constructor(options: GroupOptions) {
+    this.component = options.component;
+    this.formManager = options.formManager;
+    this.index = options.index;
+    this.name = options.component.getAttribute(attr.group) as GroupNameENUM | null;
   }
 
   public getComponent(): HTMLElement {
@@ -46,8 +54,8 @@ export abstract class QuestionGroup extends BaseGroup {
   public questions: QuestionComponent[] = [];
   public activeQuestionIndex: number = 0;
 
-  constructor(component: HTMLElement, formManager: FormManager) {
-    super(component, formManager);
+  constructor(options: GroupOptions) {
+    super(options);
   }
 
   abstract handleChange(index: number): void;
@@ -93,13 +101,6 @@ export abstract class QuestionGroup extends BaseGroup {
     this.formManager.saveAnswersToMCT();
     const currentAnswers = this.formManager.getAnswers();
 
-    console.log('updateActiveQuestions', {
-      name: this.name,
-      questions: this.questions,
-      answers: currentAnswers,
-      groupVisible: this.isVisible,
-    });
-
     this.questions.forEach((question, index) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
       if (index === 0 && shouldBeVisible) question.activate();
@@ -127,9 +128,9 @@ export abstract class QuestionGroup extends BaseGroup {
 export class MainGroup extends QuestionGroup {
   protected formManager: MainFormManager;
 
-  constructor(component: HTMLElement, formManager: MainFormManager) {
-    super(component, formManager);
-    this.formManager = formManager;
+  constructor(options: GroupOptions) {
+    super(options);
+    this.formManager = options.formManager as MainFormManager;
     this.questions = this.initQuestions();
     this.updateActiveQuestions();
   }
@@ -162,6 +163,15 @@ export class MainGroup extends QuestionGroup {
    * @param index - the index of the question that changed
    */
   public handleChange(index: number): void {
+    this.activeQuestionIndex = index;
+    this.formManager.activeGroupIndex = this.index;
+    this.formManager.updateNavigation({
+      prevEnabled: this.index !== 0 && index !== 0,
+      nextEnabled: this.name !== GroupNameENUM.Output && index !== this.questions.length - 1,
+    });
+
+    this.formManager.handleShowHideOnGroup();
+
     // Check if the question is valid, update the visual state and, if not valid, return
     const question = this.questions[index];
     const isValid = question.isValid();
@@ -229,9 +239,7 @@ export class MainGroup extends QuestionGroup {
   public navigate(direction: 'next' | 'prev', fromIndex?: number) {
     this.formManager.saveAnswersToMCT();
     const indexToUse = fromIndex || fromIndex === 0 ? fromIndex : this.activeQuestionIndex;
-    console.log('navigate', { direction, fromIndex, indexToUse, activeQuestionIndex: this.activeQuestionIndex });
     const activeQuestion = this.getQuestionByIndex(indexToUse);
-    console.log('activeQuestion', activeQuestion);
 
     if (direction === 'next') {
       // this.formManager.showHeader('sticky');
@@ -242,7 +250,6 @@ export class MainGroup extends QuestionGroup {
       });
 
       const nextIndex = this.getNextRequiredIndex(indexToUse);
-      console.log('nextIndex', nextIndex);
 
       // If there's a next question in this group
       if (nextIndex < this.questions.length) {
@@ -301,9 +308,9 @@ export class OutputGroup extends BaseGroup {
   private button: HTMLButtonElement;
   private activated: boolean = false;
 
-  constructor(component: HTMLElement, formManager: MainFormManager) {
-    super(component, formManager);
-    this.formManager = formManager;
+  constructor(options: GroupOptions) {
+    super(options);
+    this.formManager = options.formManager as MainFormManager;
     this.card = queryElement(`[${attr.element}="output-card"]`, this.component) as HTMLElement;
     this.loader = queryElement(`[${attr.element}="output-loader"]`, this.component) as HTMLElement;
     this.outputs = queryElements(`[${attr.output}]`, this.component) as HTMLDivElement[];
@@ -317,7 +324,6 @@ export class OutputGroup extends BaseGroup {
   }
 
   public update(): void {
-    console.log('update');
     if (!this.activated) return;
     this.handleProducts();
   }
@@ -349,7 +355,7 @@ export class OutputGroup extends BaseGroup {
     this.card.classList.add(classes.active);
     this.scrollTo();
     this.handleProducts();
-    this.formManager.updateNavigation({ nextEnabled: false });
+    // this.formManager.updateNavigation({ nextEnabled: false });
   }
 
   private async handleProducts(): Promise<void> {
@@ -411,9 +417,6 @@ export class OutputGroup extends BaseGroup {
       event_label: `MCT_Show_Results`,
     });
 
-    console.log('navigateToResults');
-
-    // this.formManager.navigateToNextGroup();
     MCTManager.goToStage(StageIDENUM.Results);
   }
 }
