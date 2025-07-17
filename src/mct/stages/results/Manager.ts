@@ -619,7 +619,7 @@ export class ResultsManager {
       this.applyDirectDialog?.showModal();
 
       setTimeout(() => {
-        window.location.href = this.product?.ApplyDirectLink || '';
+        window.open(this.product?.ApplyDirectLink || '', '_blank');
       }, 3000);
     } catch (error) {
       console.error('Failed to log user events before redirect:', error);
