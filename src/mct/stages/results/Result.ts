@@ -70,7 +70,7 @@ export class Result {
       }
 
       if (outputName === 'SAP') {
-        outputValue = Number(outputValue) >= SapValueENUM.Yes ? true : false;
+        outputValue = Number(outputValue) > SapValueENUM.No ? true : false;
       } else if (outputName === 'NewBuild') {
         outputValue = !!outputValue;
       }

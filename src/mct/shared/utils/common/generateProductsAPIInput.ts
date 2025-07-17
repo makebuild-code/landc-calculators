@@ -101,7 +101,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const input: ProductsRequest = {
     ...endOfAnswersInput,
     InterestOnlyValue,
-    // SapValue,
+    SapValue: 100,
     Features,
     IncludeRetention,
   };
