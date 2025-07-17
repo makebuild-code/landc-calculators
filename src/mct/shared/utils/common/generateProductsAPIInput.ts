@@ -68,8 +68,6 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     SortColumn,
   };
 
-  console.log('endOfAnswersInput', endOfAnswersInput);
-
   const InterestOnlyValue = (answers.InterestOnlyValue as number) ?? 0;
 
   // First try options, then filters config
@@ -98,8 +96,6 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     Features,
     IncludeRetention,
   };
-
-  console.log('generateProductsAPIInput input', input);
 
   MCTManager.setCalculations({ RepaymentValue, InterestOnlyValue });
 
