@@ -102,6 +102,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   console.log('input', input);
   console.log('endOfAnswersInput', endOfAnswersInput);
+  console.log('endOfAnswersInput', endOfAnswersInput);
 
   return input;
 };
