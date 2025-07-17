@@ -9,6 +9,7 @@ import {
   OfferAcceptedENUM,
   ProductsRequestENUM,
   PurchRemoENUM,
+  SapValueENUM,
   type CreditImpairedENUM,
   type EndOfTermENUM,
   type FirstTimeBuyerENUM,
@@ -45,6 +46,8 @@ export enum InputKeysENUM {
   RepaymentValue = 'RepaymentValue',
   RemoChange = 'RemoChange',
   Lender = 'Lender',
+  NewBuild = 'NewBuild',
+  SapValue = 'SapValue',
 }
 
 export type Inputs = {
@@ -65,6 +68,8 @@ export type Inputs = {
   [InputKeysENUM.RepaymentValue]?: number; // will have by the end
   [InputKeysENUM.RemoChange]?: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]?: string;
+  [InputKeysENUM.NewBuild]?: boolean;
+  [InputKeysENUM.SapValue]?: keyof typeof SapValueENUM;
 };
 
 export type PurchInputs = {
@@ -90,6 +95,8 @@ export type InputsByEndOfForm = {
   [InputKeysENUM.SchemeTypes]: keyof typeof SchemeTypesENUM;
   [InputKeysENUM.SchemePeriods]: keyof typeof SchemePeriodsENUM;
   [InputKeysENUM.RepaymentValue]: number;
+  [InputKeysENUM.NewBuild]?: 'true' | 'false';
+  [InputKeysENUM.SapValue]?: keyof typeof SapValueENUM;
 };
 
 // Calculation-related types
