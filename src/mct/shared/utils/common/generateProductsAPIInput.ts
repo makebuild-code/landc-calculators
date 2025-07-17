@@ -49,7 +49,8 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const TermYears = MortgageLength;
   const SchemePurpose =
     PurchRemo === PurchRemoENUM.Purchase ? SchemePurposeENUM.Purchase : SchemePurposeENUM.Remortgage;
-  const SchemePeriods = getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM; // Make sure this returns non-undefined (should be fine)
+  // const SchemePeriods = getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM; // Make sure this returns non-undefined (should be fine)
+  const SchemePeriods = JSON.parse(getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM); // This returns an array as expected
   const SchemeTypes = JSON.parse(getValueAsLandC(InputKeysENUM.SchemeTypes) as SchemeTypesENUM); // This returns an array as expected
 
   const NumberOfResults = options.numberOfResults ?? 1;
@@ -62,7 +63,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     MortgageType,
     TermYears,
     SchemePurpose,
-    SchemePeriods: [SchemePeriods],
+    SchemePeriods,
     SchemeTypes,
     NumberOfResults,
     SortColumn,
@@ -98,6 +99,9 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   };
 
   MCTManager.setCalculations({ RepaymentValue, InterestOnlyValue });
+
+  console.log('input', input);
+  console.log('endOfAnswersInput', endOfAnswersInput);
 
   return input;
 };

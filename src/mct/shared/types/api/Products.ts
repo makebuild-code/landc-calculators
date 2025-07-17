@@ -41,12 +41,30 @@ export enum SchemePurposeENUM {
   Remortgage = 2,
 }
 
+// export enum SchemePeriodsENUM {
+//   TwoYears = 1,
+//   ThreeYears = 2,
+//   FiveYears = 3,
+//   FivePlusYears = 4,
+// }
+
 export enum SchemePeriodsENUM {
-  TwoYears = 1,
-  ThreeYears = 2,
-  FiveYears = 3,
-  FivePlusYears = 4,
+  TwoYears = '[1]',
+  ThreeYears = '[2]',
+  FiveYears = '[3]',
+  FivePlusYears = '[4]',
+  All = '[1, 2, 3, 4]',
 }
+
+export const SchemePeriodsMAP = {
+  TwoYears: [1],
+  ThreeYears: [2],
+  FiveYears: [3],
+  FivePlusYears: [4],
+  All: [1, 2, 3, 4],
+} as const;
+
+type SchemePeriodsValue = (typeof SchemePeriodsMAP)[keyof typeof SchemePeriodsMAP];
 
 export enum SchemeTypesENUM {
   Fixed = '[1]',
@@ -105,7 +123,7 @@ export interface ProductsRequest {
   [ProductsRequestENUM.InterestOnlyValue]?: number;
   [ProductsRequestENUM.TermYears]: number;
   [ProductsRequestENUM.SchemePurpose]: SchemePurposeENUM;
-  [ProductsRequestENUM.SchemePeriods]: SchemePeriodsENUM[];
+  [ProductsRequestENUM.SchemePeriods]: SchemePeriodsValue;
   [ProductsRequestENUM.SchemeTypes]: SchemeTypesValue;
   [ProductsRequestENUM.NumberOfResults]: number;
   [ProductsRequestENUM.Features]?: ProductsRequestFeatures;
