@@ -30,6 +30,7 @@ export interface CONFIG_DOM {
     component: string;
     stage: string;
     initial: string;
+    visibility: string;
     form: Record<string, string>;
     results: Record<string, string>;
     appointment: Record<string, string>;

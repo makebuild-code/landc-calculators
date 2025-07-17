@@ -10,7 +10,7 @@ import type { AppointmentManager } from '../stages/appointment/Manager';
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
 import { globalEventBus, testComponents, testSimpleComponent } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
-import { StateManager, CalculationManager } from '$mct/state';
+import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
 import type {
   InputData,
@@ -55,6 +55,7 @@ const dom: DOM = {
 
 const stateManager = new StateManager();
 const calculationManager = new CalculationManager(stateManager);
+const visibilityManager = new VisibilityManager(stateManager);
 
 export const MCTManager = {
   start() {
@@ -94,6 +95,9 @@ export const MCTManager = {
       const name = stage.getAttribute(attr.stage);
       if (name) dom.stages[name as StageIDENUM] = stage as HTMLElement;
     });
+
+    // Initialize visibility manager for the component
+    visibilityManager.initialize(dom.component);
 
     return dom;
   },
@@ -397,6 +401,10 @@ export const MCTManager = {
 
   getCalculationManager(): CalculationManager {
     return calculationManager;
+  },
+
+  getVisibilityManager(): VisibilityManager {
+    return visibilityManager;
   },
 
   setupEventBusDebug() {
