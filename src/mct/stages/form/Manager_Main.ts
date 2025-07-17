@@ -73,20 +73,10 @@ export class MainFormManager extends FormManager {
     this.handleIdentifier(null);
 
     this.nextButton.addEventListener('click', () => {
-      // const currentGroup = this.getActiveGroup();
-      const currentGroup = this.getLastVisibleGroup();
-
-      if (!currentGroup) return;
-      else if (currentGroup instanceof OutputGroup) {
+      const currentGroup = this.getActiveGroup();
+      if (currentGroup instanceof OutputGroup) {
         currentGroup.activate();
-        this.updateNavigation({ nextEnabled: false });
       } else if (currentGroup instanceof MainGroup) {
-        const currentItem = currentGroup.getActiveQuestion();
-        if (!currentItem.isValid()) {
-          this.scrollTo('bottom');
-          return;
-        }
-
         currentGroup.navigate('next');
       }
     });
@@ -95,10 +85,9 @@ export class MainFormManager extends FormManager {
       const currentGroup = this.getActiveGroup();
       if (!currentGroup || currentGroup instanceof OutputGroup) {
         this.navigateToPreviousGroup();
-        return;
+      } else {
+        currentGroup.navigate('prev');
       }
-
-      currentGroup.navigate('prev');
     });
 
     this.onMount();
@@ -239,6 +228,12 @@ export class MainFormManager extends FormManager {
 
   public handleInputChange(isValid: boolean) {
     this.updateNavigation({ nextEnabled: isValid });
+
+    if (isValid) {
+      const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+      console.log('outputGroup', outputGroup);
+      if (outputGroup) outputGroup.update();
+    }
   }
 
   private getActiveGroup(): MainGroup | OutputGroup | undefined {
@@ -300,6 +295,7 @@ export class MainFormManager extends FormManager {
       this.showHeader('sticky');
 
       const firstRequiredIndex = profileGroup.getNextRequiredIndex(-1);
+      console.log('firstRequiredIndex', firstRequiredIndex);
       if (firstRequiredIndex < profileGroup.questions.length) {
         profileGroup.activeQuestionIndex = firstRequiredIndex;
         const firstQuestion = profileGroup.getActiveQuestion();
@@ -332,7 +328,7 @@ export class MainFormManager extends FormManager {
       });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      MCTManager.goToStage(StageIDENUM.Results);
+      activeGroup.navigateToResults();
     } else this.updateNavigation({ nextEnabled: true, prevEnabled: true });
 
     this.handleShowHideOnGroup();
