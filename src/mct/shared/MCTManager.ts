@@ -28,7 +28,7 @@ import type {
   LogUserEventRequest,
   CalculationKeysENUM,
 } from '$mct/types';
-import { getInputValueAsLandC, getValueAsLandC } from '$mct/utils';
+import { getValueAsLandC } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes;
 
