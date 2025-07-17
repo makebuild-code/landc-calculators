@@ -73,14 +73,19 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   // First try options, then filters config
   // @TODO: check that NewBuild flag is being passed through options
-  const NewBuild = options.NewBuild ?? FILTERS_CONFIG.NewBuild === 'true' ? true : false;
+  const NewBuild =
+    SchemePurpose === SchemePurposeENUM.Remortgage
+      ? false
+      : options.NewBuild ?? FILTERS_CONFIG.NewBuild === 'true'
+        ? true
+        : false;
 
-  // First try options, then filters config
-  // @TODO: check that SapValue flag is being passed through options
-  const SapValue =
-    options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
-      ? SapValueENUM.No
-      : SapValueENUM.Yes;
+  // // First try options, then filters config
+  // // @TODO: check that SapValue flag is being passed through options
+  // const SapValue =
+  //   options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
+  //     ? SapValueENUM.No
+  //     : SapValueENUM.Yes;
 
   const Features: ProductsRequestFeatures = {};
   if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
@@ -93,7 +98,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const input: ProductsRequest = {
     ...endOfAnswersInput,
     InterestOnlyValue,
-    SapValue,
+    // SapValue,
     Features,
     IncludeRetention,
   };
