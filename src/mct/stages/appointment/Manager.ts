@@ -12,14 +12,12 @@ import {
 import { queryElement, queryElements } from '$utils/dom';
 import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI, APIError } from '$mct/api';
 import { DOM_CONFIG, MCT_CONFIG } from '$mct/config';
-import { Dates } from './Dates';
-import { Times } from './Times';
+import { DatesComponent } from './Dates';
+import { TimesComponent } from './Times';
 import { getOrginalDate } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
 import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/types';
-import type { StatefulInputGroup } from '$mct/components';
 import { InputGroup } from './Form';
-import type { Input } from 'src/types';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 
 const attr = DOM_CONFIG.attributes.appointment;
@@ -49,9 +47,9 @@ export class AppointmentManager {
 
   private calendarPanel: HTMLElement;
   private datesGroup: HTMLFieldSetElement;
-  private dates!: Dates;
+  private dates!: DatesComponent;
   private timesGroup: HTMLFieldSetElement;
-  private times!: Times;
+  private times!: TimesComponent;
 
   private formPanel: HTMLElement;
   private tags: HTMLElement[];
@@ -83,18 +81,22 @@ export class AppointmentManager {
     this.timesGroup = queryElement(`[${attr.components}="times"]`, this.calendarPanel) as HTMLFieldSetElement;
 
     // Initialize the dates manager
-    this.dates = new Dates(this.datesGroup, {
+    this.dates = new DatesComponent({
+      element: this.datesGroup,
       onChange: () => this.handleDateChange(),
-      groupName: 'date-filters',
       wrapper: queryElement(`[${attr.components}="content"]`, this.calendarPanel) as HTMLElement,
       onLoadMore: () => this.handleLoadMoreDates(),
       onEnter: () => this.handleEnter(),
+      groupName: 'date-filters',
+      indexInGroup: 0,
     });
 
-    this.times = new Times(this.timesGroup, {
+    this.times = new TimesComponent({
+      element: this.timesGroup,
       onChange: () => this.handleTimeChange(),
-      groupName: 'time-filters',
       onEnter: () => this.handleEnter(),
+      groupName: 'time-filters',
+      indexInGroup: 1,
     });
 
     this.formPanel = queryElement(`[${attr.panel}="${PANEL_ENUM.FORM}"]`, this.component) as HTMLElement;
@@ -138,12 +140,13 @@ export class AppointmentManager {
       return inputGroup;
     });
 
-    console.log('formInputGroups', this.formInputGroups);
-
     // Load initial dates
     const tomorrow = new Date(this.today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     this.handleDays(true, tomorrow);
+
+    this.dates.initialise();
+    this.times.initialise();
   }
 
   public show(scrollTo: boolean = true): void {
@@ -158,7 +161,7 @@ export class AppointmentManager {
   private bindEvents(): void {
     this.bookButton.addEventListener('click', () => this.navigate('next'));
     this.backButtons.forEach((button) => {
-      button.addEventListener('click', () => this.handleBackButtons(button));
+      button.addEventListener('click', () => this.handleBackButtons());
     });
 
     this.form.addEventListener('submit', (event) => this.onFormSubmit(event));
@@ -213,8 +216,8 @@ export class AppointmentManager {
   }
 
   private canProceedToForm(): boolean {
-    const date = this.dates.getValue();
-    const time = this.times.getValue();
+    const date = this.dates.getStateValue('value');
+    const time = this.times.getStateValue('value');
 
     return !!date && !!time;
   }
@@ -238,7 +241,6 @@ export class AppointmentManager {
   }
 
   private navigateToResults(): void {
-    console.log('Back to results');
     MCTManager.goToStage(StageIDENUM.Results);
   }
 
@@ -271,19 +273,16 @@ export class AppointmentManager {
   private calculateFetchStartDate(isInit: boolean, startDate?: Date): Date | null {
     if (isInit) {
       // On initial load, use the provided startDate (tomorrow)
-      //   console.log('Initial load - starting from:', startDate);
       return startDate!;
     } else {
       // On slider move, get the last date from the dates manager
       const lastDate = this.dates.getLastDate();
       if (!lastDate) {
-        // console.log('No dates available, cannot determine start date');
         this.setLoadingState(false);
         return null;
       }
       const fetchStartDate = new Date(lastDate);
       fetchStartDate.setDate(fetchStartDate.getDate() + 1);
-      //   console.log('Slider move - starting from:', fetchStartDate);
       return fetchStartDate;
     }
   }
@@ -302,7 +301,6 @@ export class AppointmentManager {
 
   private shouldFetchMoreDays(endDate: Date): boolean {
     if (endDate <= this.lastDate) {
-      //   console.log('No more days to fetch');
       return false;
     }
     return true;
@@ -311,8 +309,6 @@ export class AppointmentManager {
   private async fetchAppointmentSlots(startDate: Date, endDate: Date): Promise<AppointmentDay[]> {
     const dateFrom = this.formatDateForAPI(startDate);
     const dateTo = this.formatDateForAPI(endDate);
-
-    // console.log('Fetching days from:', dateFrom, 'to:', dateTo);
 
     const response = await mortgageAppointmentSlotsAPI.getSlots(dateFrom, dateTo);
     return response.result;
@@ -332,10 +328,7 @@ export class AppointmentManager {
 
     if (!isInit || appointmentDays.length === 0) return;
 
-    // console.log('appointmentDays', appointmentDays);
-
     const firstActiveDay = appointmentDays.find((day) => day.slots.some((slot) => slot.enabled));
-    // firstActiveDay ? this.times.renderTimeSlots(firstActiveDay.slots) : (this.timesGroup.style.display = 'none');
     firstActiveDay ? this.dates.selectFirstActiveDay(firstActiveDay.date) : (this.timesGroup.style.display = 'none');
   }
 
@@ -353,18 +346,16 @@ export class AppointmentManager {
 
   private async handleDateChange(): Promise<void> {
     this.selectedDate = this.dates.getSelectedDate();
-    // console.log('selectedDate', this.selectedDate);
-
-    // console.log('selectedDate', this.selectedDate);
     const date = new Date(this.selectedDate!.date);
     const slots = await this.fetchSlotsForDateRange(date, date);
 
     this.selectedDate ? this.times.renderTimeSlots(slots[0].slots) : (this.timesGroup.style.display = 'none');
+
+    // const currentTime = this.times.getStateValue('value');
+    // if (currentTime) this.times.setValue(currentTime);
   }
 
   private async handleTimeChange(): Promise<void> {
-    // console.log('handleTimeChange');
-
     const date = this.dates.getValue();
     const time = this.times.getValue();
 
@@ -377,17 +368,13 @@ export class AppointmentManager {
   }
 
   private handleEnter(): void {
-    // console.log('Enter key pressed');
     if (this.canProceedToForm()) this.navigate('next');
   }
 
   private async handleLoadMoreDates(): Promise<void> {
     // Get the last date from the dates manager
     const lastDate = this.dates.getLastDate();
-    if (!lastDate) {
-      //   console.log('No dates available, cannot load more');
-      return;
-    }
+    if (!lastDate) return;
 
     // Calculate next start date
     const nextStartDate = new Date(lastDate);
@@ -415,7 +402,6 @@ export class AppointmentManager {
 
     // Get form data
     const formData = this.getFormData();
-    console.log('formData from function', formData);
     if (!formData) {
       console.error('Failed to get form data');
       this.setLoadingState(false);
@@ -425,7 +411,6 @@ export class AppointmentManager {
     // Get state data
     const stateData = this.getStateData();
     const calculations = MCTManager.getCalculations();
-    //   console.log('stateData', stateData);
     if (!stateData) {
       console.error('Failed to get state data');
       this.setLoadingState(false);
@@ -434,7 +419,6 @@ export class AppointmentManager {
 
     // Get appointment data
     const appointmentData = this.getAppointmentData();
-    //   console.log('appointmentData', appointmentData);
     if (!appointmentData) {
       console.error('Failed to get appointment data');
       this.setLoadingState(false);
@@ -477,11 +461,9 @@ export class AppointmentManager {
       booking: appointmentData,
     };
 
-    console.log('Submitting booking request:', request);
     try {
       // Call the API
       const response = await createLeadAndBookingAPI.createLeadAndBooking(request);
-      console.log('Booking response:', response);
 
       // Handle successful booking
       this.form.style.display = 'none';
@@ -505,9 +487,6 @@ export class AppointmentManager {
           });
         } else if (error.status === 400) {
           console.log('Booking error: 400 - Bad request, try again');
-          // You can add specific handling for 400 errors here
-          // For example, show a different dialog or message
-          // alert('Unable to book this appointment. Please try again.');
           this.formError.style.display = 'block';
         } else {
           console.error('Booking failed with status:', error.status);
@@ -547,8 +526,6 @@ export class AppointmentManager {
         formData[group.getStateValue('initialName')] = group.getValue() as InputValue;
       });
 
-      console.log('formData', formData);
-
       // Map form fields to API fields
       const mappedData: Partial<EnquiryLead> = {
         FirstName: formData.FirstName,
@@ -561,8 +538,6 @@ export class AppointmentManager {
         IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
         IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
       };
-
-      console.log('mappedData', mappedData);
 
       return mappedData;
     } catch (error) {
@@ -609,8 +584,6 @@ export class AppointmentManager {
         SourceId: this.getNumericAnswer(answers, 'SourceId'), // unsure
         CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, 'CreditImpaired')),
       };
-
-      console.log('stateData', stateData);
 
       return stateData;
     } catch (error) {
@@ -688,8 +661,7 @@ export class AppointmentManager {
     return false;
   }
 
-  private handleBackButtons(button: HTMLButtonElement): void {
-    console.log('handleBackButtons', button);
+  private handleBackButtons(): void {
     this.navigate('previous');
   }
 
