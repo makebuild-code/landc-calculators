@@ -73,6 +73,7 @@ export const MCTManager = {
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
+    console.log('FORCING DIST');
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
