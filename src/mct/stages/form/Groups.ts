@@ -12,9 +12,10 @@ import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { InputValue, ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { GroupNameENUM } from '$mct/types';
+import { GroupNameENUM, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
+import { MCTManager } from '$mct/manager';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -165,7 +166,7 @@ export class MainGroup extends QuestionGroup {
     const question = this.questions[index];
     const isValid = question.isValid();
     question.updateVisualState(isValid);
-    this.handleNextButton(isValid);
+    this.onInputChange(isValid);
     if (!isValid) return;
 
     // If valid, update the active questions, group visibility and wrapper
@@ -173,11 +174,11 @@ export class MainGroup extends QuestionGroup {
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
 
-    // Show the next active question
+    // Show but do not scroll to the next question
     const nextIndex = this.getNextRequiredIndex(index);
     if (nextIndex < this.questions.length) {
-      this.activeQuestionIndex = nextIndex;
-      const nextQuestion = this.getActiveQuestion();
+      // this.activeQuestionIndex = nextIndex;
+      const nextQuestion = this.getQuestionByIndex(nextIndex);
       nextQuestion.activate();
       this.formManager.updateNavigation({ prevEnabled: true });
     }
@@ -186,23 +187,11 @@ export class MainGroup extends QuestionGroup {
   }
 
   public handleEnter(index: number): void {
-    const question = this.questions[index];
-    const isValid = question.isValid();
-    question.updateVisualState(isValid);
-    this.handleNextButton(isValid);
-    if (!isValid) return;
-
-    const currentGroup = this.formManager.getLastVisibleGroup();
-    if (currentGroup instanceof OutputGroup) {
-      currentGroup.activate();
-      this.formManager.updateNavigation({ nextEnabled: false });
-    }
-
     this.navigate('next', index);
   }
 
-  public handleNextButton(isValid: boolean) {
-    this.formManager.updateNavigation({ nextEnabled: isValid });
+  public onInputChange(isValid: boolean) {
+    this.formManager.handleInputChange(isValid);
   }
 
   public getActiveQuestion(): QuestionComponent {
@@ -240,7 +229,9 @@ export class MainGroup extends QuestionGroup {
   public navigate(direction: 'next' | 'prev', fromIndex?: number) {
     this.formManager.saveAnswersToMCT();
     const indexToUse = fromIndex || fromIndex === 0 ? fromIndex : this.activeQuestionIndex;
+    console.log('navigate', { direction, fromIndex, indexToUse, activeQuestionIndex: this.activeQuestionIndex });
     const activeQuestion = this.getQuestionByIndex(indexToUse);
+    console.log('activeQuestion', activeQuestion);
 
     if (direction === 'next') {
       // this.formManager.showHeader('sticky');
@@ -251,6 +242,7 @@ export class MainGroup extends QuestionGroup {
       });
 
       const nextIndex = this.getNextRequiredIndex(indexToUse);
+      console.log('nextIndex', nextIndex);
 
       // If there's a next question in this group
       if (nextIndex < this.questions.length) {
@@ -285,7 +277,7 @@ export class MainGroup extends QuestionGroup {
     question.activate();
     question.focus();
     this.formManager.scrollTo(question);
-    this.handleNextButton(question.isValid());
+    this.onInputChange(question.isValid());
   }
 
   // private deactivateQuestion(question: QuestionComponent): void {
@@ -307,6 +299,7 @@ export class OutputGroup extends BaseGroup {
   private summaryInfo: SummaryInfo | null = null;
   private outputs: HTMLDivElement[];
   private button: HTMLButtonElement;
+  private activated: boolean = false;
 
   constructor(component: HTMLElement, formManager: MainFormManager) {
     super(component, formManager);
@@ -321,6 +314,12 @@ export class OutputGroup extends BaseGroup {
 
   private bindEvents(): void {
     this.button.addEventListener('click', () => this.navigateToResults());
+  }
+
+  public update(): void {
+    console.log('update');
+    if (!this.activated) return;
+    this.handleProducts();
   }
 
   public show(): void {
@@ -346,9 +345,11 @@ export class OutputGroup extends BaseGroup {
   }
 
   public activate(): void {
+    this.activated = true;
     this.card.classList.add(classes.active);
     this.scrollTo();
     this.handleProducts();
+    this.formManager.updateNavigation({ nextEnabled: false });
   }
 
   private async handleProducts(): Promise<void> {
@@ -404,12 +405,15 @@ export class OutputGroup extends BaseGroup {
     });
   }
 
-  private navigateToResults(): void {
+  public navigateToResults(): void {
     dataLayer('form_interaction', {
       event_category: 'MCTForm',
       event_label: `MCT_Show_Results`,
     });
 
-    this.formManager.navigateToNextGroup();
+    console.log('navigateToResults');
+
+    // this.formManager.navigateToNextGroup();
+    MCTManager.goToStage(StageIDENUM.Results);
   }
 }
