@@ -2,6 +2,7 @@ import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputG
 import type { AppointmentSlot, Input } from '$mct/types';
 import { queryElement } from '$utils/dom';
 import { DOM_CONFIG } from '$mct/config';
+import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 
 const mctAttr = DOM_CONFIG.attributes.component;
 const attr = DOM_CONFIG.attributes.appointment;
@@ -28,16 +29,19 @@ export class TimesComponent extends StatefulInputGroup<TimesState> {
   protected init(): void {}
 
   private generateTimeSlot(timeSlot: AppointmentSlot): HTMLElement {
+    const startTime = formatToHHMM(timeSlot.startTime);
+    const endTime = formatToHHMM(timeSlot.endTime);
+
     const element = this.template.cloneNode(true) as HTMLElement;
     const input = this.queryElement('input', element) as Input;
     const name = input.name;
-    input.id = `${name}-${timeSlot.startTime}-${timeSlot.endTime}`;
-    input.value = `${timeSlot.startTime}-${timeSlot.endTime}`;
+    input.id = `${name}-${startTime}-${endTime}`;
+    input.value = `${startTime} - ${endTime}`;
     input.disabled = !timeSlot.enabled;
 
     const label = this.queryElement('label', element) as HTMLLabelElement;
     label.setAttribute('for', input.id);
-    label.textContent = `${timeSlot.startTime} - ${timeSlot.endTime}`;
+    label.textContent = `${startTime} - ${endTime}`;
 
     this.inputs.push(input);
     this.bindInputEvents(input);

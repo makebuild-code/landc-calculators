@@ -14,11 +14,12 @@ import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI, APIError } from '
 import { DOM_CONFIG, MCT_CONFIG } from '$mct/config';
 import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
-import { getOrginalDate } from '$utils/formatting';
+import { getOrdinalSuffix, getOrginalDate } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
 import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
+import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -605,12 +606,6 @@ export class AppointmentManager {
 
       // Parse the time (format is "HH:MM:SS-HH:MM:SS" or "HH:MM-HH:MM")
       const timeParts = time.split('-');
-      // Ensure bookingStart and bookingEnd are in "HH:MM" format
-      const formatToHHMM = (t: string) => {
-        // Accepts "HH:MM:SS" or "HH:MM"
-        const parts = t.split(':');
-        return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : t;
-      };
       const startTime = formatToHHMM(timeParts[0]); // e.g., "09:00"
       const endTime = formatToHHMM(timeParts[1]); // e.g., "10:00"
 
@@ -674,27 +669,28 @@ export class AppointmentManager {
     const date = this.dates.getValue();
     const time = this.times.getValue();
 
+    console.log('getFormattedDateTime');
+    console.log('date', date);
+    console.log('time', time);
+
     // Type checking for date and time values
     if (!date || !time || typeof date !== 'string' || typeof time !== 'string') return null;
 
     // Parse the date
     const dateObj = new Date(date);
 
-    // Parse the time (format is "HH:MM-HH:MM")
-    const timeParts = time.split('-');
-    const startTime = timeParts[0]; // e.g., "09:00"
-
-    // Convert 24-hour format to 12-hour format
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    const formattedTime = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-
     // Format the date
     const dayName = dateObj.toLocaleDateString('en-GB', { weekday: 'long' });
-    const dayNumber = getOrginalDate(dateObj);
+    const dayNumber = dateObj.toLocaleString('en-GB', { day: 'numeric' });
+    const daySuffix = getOrdinalSuffix(parseInt(dayNumber));
     const monthName = dateObj.toLocaleDateString('en-GB', { month: 'long' });
 
-    return `${dayName} ${dayNumber} ${monthName} at ${formattedTime}`;
+    console.log('dayName', dayName);
+    console.log('dayNumber', dayNumber);
+    console.log('daySuffix', daySuffix);
+    console.log('monthName', monthName);
+    console.log('time', time);
+
+    return `${dayName} ${dayNumber}${daySuffix} ${monthName} from ${time}`;
   }
 }
