@@ -58,7 +58,7 @@ export class VisibilityManager {
    */
   private subscribeToStateChanges(): void {
     this.stateManager.subscribe((event) => {
-      if (event.changes.inputs || event.changes.calculations) {
+      if (event.changes.inputs || event.changes.calculations || event.changes.form) {
         this.updateAllVisibility();
       }
     });
@@ -195,7 +195,7 @@ export class VisibilityManager {
       case 'contains':
         return this.compareValues(variableValue, condition.value, 'contains');
       default:
-        return true;
+        return false;
     }
   }
 
@@ -203,18 +203,16 @@ export class VisibilityManager {
    * Get variable value from either inputs or calculations
    */
   private getVariableValue(variable: string): any {
-    const answers = this.stateManager.getAnswers();
-    const calculations = this.stateManager.getCalculations();
+    // const answers = this.stateManager.getAnswers();
+    const answers = this.stateManager.get('answers');
+    // const calculations = this.stateManager.getCalculations();
+    const calculations = this.stateManager.get('calculations');
+    const formData = this.stateManager.get('form');
 
     // Check in answers first
-    if (variable in answers) {
-      return answers[variable as keyof Inputs];
-    }
-
-    // Check in calculations
-    if (variable in calculations) {
-      return calculations[variable as keyof Calculations];
-    }
+    if (variable in answers) return answers[variable as keyof Inputs];
+    else if (variable in calculations) return calculations[variable as keyof Calculations];
+    else if (variable in formData) return formData[variable as keyof Inputs];
 
     return undefined;
   }
@@ -259,6 +257,7 @@ export class VisibilityManager {
    * Manually add an element to visibility management
    */
   public addElement(element: HTMLElement, condition: string): void {
+    console.log('[VISIBILITY_MANAGER] ADDING ELEMENT', element, condition);
     this.elements.set(element, condition);
     this.evaluateElementVisibility(element, condition);
   }

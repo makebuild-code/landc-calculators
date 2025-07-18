@@ -43,27 +43,27 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
   answers: {
     type: 'localStorage',
     key: 'mct_answers_new',
-    serialize: false,
+    serialize: true,
   },
   filters: {
     type: 'memory',
     key: 'mct_filters',
-    serialize: false,
+    serialize: true,
   },
   product: {
     type: 'sessionStorage',
     key: 'mct_product',
-    serialize: false,
+    serialize: true,
   },
   appointment: {
     type: 'sessionStorage',
     key: 'mct_appointment',
-    serialize: false,
+    serialize: true,
   },
   form: {
-    type: 'memory',
+    type: 'sessionStorage',
     key: 'mct_form',
-    serialize: false,
+    serialize: true,
   },
 };
 

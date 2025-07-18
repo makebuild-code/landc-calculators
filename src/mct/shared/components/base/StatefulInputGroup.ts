@@ -72,12 +72,9 @@ export abstract class StatefulInputGroup<
 
     this.onChange = options.onChange;
     this.onEnter = options.onEnter;
-
-    console.log(this);
   }
 
   protected init(): void {
-    this.log('[STATEFUL_INPUT_GROUP] init()');
     if (this.isInitialized) return;
     this.isInitialized = true;
 
@@ -133,10 +130,7 @@ export abstract class StatefulInputGroup<
   }
 
   protected bindEvents(): void {
-    this.inputs.forEach((input) => {
-      console.log('BINDING_EVENTS', input);
-      this.bindInputEvents(input);
-    });
+    this.inputs.forEach((input) => this.bindInputEvents(input));
 
     this.addEventListener({
       element: this.element,
@@ -151,23 +145,9 @@ export abstract class StatefulInputGroup<
 
   protected bindInputEvents(input: Input): void {
     if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
-      this.addEventListener({
-        element: input,
-        event: 'input',
-        handler: () => {
-          console.log('INPUT_CHANGED');
-          this.handleChange();
-        },
-      });
+      this.addEventListener({ element: input, event: 'input', handler: () => this.handleChange() });
     } else {
-      this.addEventListener({
-        element: input,
-        event: 'change',
-        handler: () => {
-          console.log('INPUT_CHANGED');
-          this.handleChange();
-        },
-      });
+      this.addEventListener({ element: input, event: 'change', handler: () => this.handleChange() });
     }
   }
 
@@ -178,7 +158,6 @@ export abstract class StatefulInputGroup<
   }
 
   protected handleChange(): void {
-    this.log('[STATEFUL_INPUT_GROUP] handleChange()');
     this.saveValueAndValidity();
     this.onChange();
 
@@ -193,15 +172,10 @@ export abstract class StatefulInputGroup<
   }
 
   protected handleEnter(): void {
-    // Update value and validity
-    const value = this.getValue();
-    const isValid = this.isValid();
-
-    // Update state and call the onEnter callback
-    this.setState({ value, isValid } as Partial<T>);
+    this.saveValueAndValidity();
 
     // If the input is not valid, do not call the onEnter callback
-    if (!isValid) return;
+    if (!this.isValid()) return;
     this.onEnter();
 
     // this.emit(FormEventNames.INPUT_ON_ENTER, {

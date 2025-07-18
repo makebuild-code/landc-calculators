@@ -400,6 +400,10 @@ export const MCTManager = {
     return stateManager.getState();
   },
 
+  getStateManager(): StateManager {
+    return stateManager;
+  },
+
   getCalculationManager(): CalculationManager {
     return calculationManager;
   },
