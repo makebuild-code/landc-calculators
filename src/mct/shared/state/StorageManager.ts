@@ -1,6 +1,6 @@
 import { getFromCookie, setToCookie } from '$utils/storage';
 
-export type StorageType = 'localStorage' | 'sessionStorage' | 'cookie';
+export type StorageType = 'localStorage' | 'sessionStorage' | 'cookie' | 'memory';
 
 export interface StorageConfig {
   type: StorageType;
@@ -17,6 +17,8 @@ export interface StorageConfig {
  * - Also need to make sure they are not then parsed
  * - Do we add this to the config?
  */
+
+const memoryStore: Record<string, any> = {};
 
 export class StorageManager {
   /**
@@ -37,6 +39,9 @@ export class StorageManager {
           break;
         case 'cookie':
           setToCookie(config.key, valueToStore);
+          break;
+        case 'memory':
+          memoryStore[config.key] = valueToStore;
           break;
       }
     } catch (error) {
@@ -60,6 +65,10 @@ export class StorageManager {
           break;
         case 'cookie':
           data = getFromCookie(config.key);
+          break;
+        case 'memory':
+          const value = memoryStore[config.key];
+          data = config.serialize && typeof value === 'string' ? JSON.parse(value) : value;
           break;
       }
 
@@ -91,6 +100,9 @@ export class StorageManager {
         case 'cookie':
           // For cookies, we set an expired date to remove them
           document.cookie = `${config.key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          break;
+        case 'memory':
+          delete memoryStore[config.key];
           break;
       }
     } catch (error) {

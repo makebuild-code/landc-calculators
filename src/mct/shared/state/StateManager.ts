@@ -27,6 +27,10 @@ const defaultState: AppState = {
   inputPrefillConfig: {},
   calculations: {} as Calculations,
   mortgageId: null,
+  answers: {},
+  product: {},
+  appointment: {},
+  form: {},
 };
 
 export class StateManager {

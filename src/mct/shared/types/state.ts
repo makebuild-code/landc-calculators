@@ -136,4 +136,9 @@ export interface AppState {
   inputPrefillConfig: InputPrefillConfig;
   calculations: Calculations;
   mortgageId: number | null;
+
+  answers: any;
+  product: any;
+  appointment: any;
+  form: any;
 }
