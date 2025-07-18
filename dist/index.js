@@ -18263,7 +18263,7 @@
     //   }
     // }
     detectType() {
-      const input = this.queryElement("input, select");
+      const input = this.inputs[0];
       if (!input)
         throw new Error('No "input" element found in question item');
       if (input.type === "radio")
