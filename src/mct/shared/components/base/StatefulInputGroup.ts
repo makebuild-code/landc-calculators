@@ -228,7 +228,7 @@ export abstract class StatefulInputGroup<
   // }
 
   protected detectType(): InputType {
-    const input = this.queryElement('input, select') as Input;
+    const input = this.inputs[0];
     if (!input) throw new Error('No "input" element found in question item');
 
     if (input.type === 'radio') return 'radio';
