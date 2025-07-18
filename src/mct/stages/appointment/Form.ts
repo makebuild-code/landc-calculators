@@ -6,4 +6,6 @@ export class InputGroup extends StatefulInputGroup {
   constructor(options: InputGroupOptions) {
     super(options);
   }
+
+  protected init(): void {}
 }
