@@ -29,11 +29,8 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     this.debug = true;
   }
 
-  protected init(): void {
-    if (this.isInitialized) return;
-    this.isInitialized = true;
-    this.onInit();
-
+  protected onInit(): void {
+    this.log('[QUESTION_COMPONENT] onInit()');
     this.setStateValue('isVisible', false);
     this.setStateValue('isRequired', false);
 

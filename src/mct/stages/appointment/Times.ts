@@ -26,7 +26,7 @@ export class TimesComponent extends StatefulInputGroup<TimesState> {
     this.template.remove();
   }
 
-  protected init(): void {}
+  protected onInit(): void {}
 
   private generateTimeSlot(timeSlot: AppointmentSlot): HTMLElement {
     const startTime = formatToHHMM(timeSlot.startTime);

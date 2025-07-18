@@ -7,5 +7,5 @@ export class InputGroup extends StatefulInputGroup {
     super(options);
   }
 
-  protected init(): void {}
+  protected onInit(): void {}
 }

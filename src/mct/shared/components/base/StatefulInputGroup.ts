@@ -72,9 +72,15 @@ export abstract class StatefulInputGroup<
 
     this.onChange = options.onChange;
     this.onEnter = options.onEnter;
+
+    console.log(this);
   }
 
-  protected onInit(): void {
+  protected init(): void {
+    this.log('[STATEFUL_INPUT_GROUP] init()');
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
     // Initialise inputs and detect type
     this.inputs = this.queryElements('input, select, textarea') as Input[];
     const type = this.detectType();
@@ -87,14 +93,17 @@ export abstract class StatefulInputGroup<
     // Format names and IDs
     this.formatInputNamesAndIDs();
 
+    // Mark as initialised
+    this.setStateValue('isInitialised', true);
+
     // Bind event listeners using new component system
     if (this.autoBindEvents) this.bindEvents();
 
-    // Mark as initialised
-    this.setStateValue('isInitialised', true);
+    // Call the abstract initialization method
+    this.onInit();
   }
 
-  protected abstract init(): void;
+  protected abstract onInit(): void;
 
   protected formatInputNamesAndIDs(): void {
     const groupName = this.getStateValue('groupName');
@@ -124,7 +133,10 @@ export abstract class StatefulInputGroup<
   }
 
   protected bindEvents(): void {
-    this.inputs.forEach((input) => this.bindInputEvents(input));
+    this.inputs.forEach((input) => {
+      console.log('BINDING_EVENTS', input);
+      this.bindInputEvents(input);
+    });
 
     this.addEventListener({
       element: this.element,
@@ -139,9 +151,23 @@ export abstract class StatefulInputGroup<
 
   protected bindInputEvents(input: Input): void {
     if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
-      this.addEventListener({ element: input, event: 'input', handler: () => this.handleChange() });
+      this.addEventListener({
+        element: input,
+        event: 'input',
+        handler: () => {
+          console.log('INPUT_CHANGED');
+          this.handleChange();
+        },
+      });
     } else {
-      this.addEventListener({ element: input, event: 'change', handler: () => this.handleChange() });
+      this.addEventListener({
+        element: input,
+        event: 'change',
+        handler: () => {
+          console.log('INPUT_CHANGED');
+          this.handleChange();
+        },
+      });
     }
   }
 
@@ -152,11 +178,12 @@ export abstract class StatefulInputGroup<
   }
 
   protected handleChange(): void {
+    this.log('[STATEFUL_INPUT_GROUP] handleChange()');
     this.saveValueAndValidity();
     this.onChange();
 
     // // Emit change event
-    // this.emit(FormEventNames.INPUT_CHANGED, {
+    // this.emit(FormEventNames.ANSWERS_SAVED, {
     //   value,
     //   isValid,
     //   type: this.getStateValue('type'),

@@ -18,6 +18,7 @@ export abstract class InteractiveComponent extends BaseComponent {
    * Override to add event binding logic
    */
   protected onInit(): void {
+    this.log('[INTERACTIVE_COMPONENT] onInit()');
     if (this.autoBindEvents) this.bindEvents();
   }
 
