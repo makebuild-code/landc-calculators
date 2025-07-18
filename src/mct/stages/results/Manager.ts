@@ -223,6 +223,7 @@ export class ResultsManager {
     this.filters = filters.map((element, index) => {
       const filter = new FilterComponent({
         element,
+        debug: true,
         indexInGroup: index,
         onEnter: () => console.log('onEnter'),
         onChange: () => this.handleChange(),

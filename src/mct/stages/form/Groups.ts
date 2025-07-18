@@ -140,7 +140,7 @@ export class MainGroup extends QuestionGroup {
     return questionEls.map((element, index) => {
       const question = new QuestionComponent({
         element,
-        debug: false,
+        debug: true,
         autoBindEvents: true,
         formManager: this.formManager,
         onChange: () => this.handleChange(index),

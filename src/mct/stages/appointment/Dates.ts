@@ -34,7 +34,7 @@ export class DatesComponent extends StatefulInputGroup<DatesState> {
     this.setStateValue('selectedDate', null);
   }
 
-  protected init(): void {
+  protected onInit(): void {
     const slider = this.queryElement(`[${attr.slider}="component"]`, this.wrapper) as HTMLElement;
     this.slider = new Slider(slider, {
       wrapper: this.wrapper,

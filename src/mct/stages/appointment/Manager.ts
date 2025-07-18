@@ -84,6 +84,7 @@ export class AppointmentManager {
     // Initialize the dates manager
     this.dates = new DatesComponent({
       element: this.datesGroup,
+      debug: true,
       onChange: () => this.handleDateChange(),
       wrapper: queryElement(`[${attr.components}="content"]`, this.calendarPanel) as HTMLElement,
       onLoadMore: () => this.handleLoadMoreDates(),
@@ -94,6 +95,7 @@ export class AppointmentManager {
 
     this.times = new TimesComponent({
       element: this.timesGroup,
+      debug: true,
       onChange: () => this.handleTimeChange(),
       onEnter: () => this.handleEnter(),
       groupName: 'time-filters',
@@ -131,6 +133,7 @@ export class AppointmentManager {
     this.formInputGroups = inputGroups.map((input, index) => {
       const inputGroup = new InputGroup({
         element: input,
+        debug: true,
         groupName: 'appointment',
         indexInGroup: index,
         onChange: () => {},
@@ -140,6 +143,8 @@ export class AppointmentManager {
       inputGroup.initialise();
       return inputGroup;
     });
+
+    console.log('FORM_INPUT_GROUPS', this.formInputGroups);
 
     // Load initial dates
     const tomorrow = new Date(this.today);

@@ -8,4 +8,6 @@ export class FilterComponent extends StatefulInputGroup<FilterState> {
   constructor(options: FilterOptions) {
     super(options);
   }
+
+  protected onInit(): void {}
 }

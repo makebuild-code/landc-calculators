@@ -20,12 +20,12 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     key: 'mct_current_stage',
     serialize: false,
   },
-  prefillAnswers: {
+  inputPrefillConfig: {
     type: 'sessionStorage',
     key: 'mct_prefill_answers',
     serialize: true,
   },
-  answers: {
+  inputs: {
     type: 'localStorage',
     key: 'mct_answers',
     serialize: true,
