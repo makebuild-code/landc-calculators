@@ -20,14 +20,14 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     key: 'mct_current_stage',
     serialize: false,
   },
-  inputPrefillConfig: {
-    type: 'sessionStorage',
-    key: 'mct_prefill_answers',
-    serialize: true,
-  },
   inputs: {
     type: 'localStorage',
     key: 'mct_answers',
+    serialize: true,
+  },
+  inputPrefillConfig: {
+    type: 'sessionStorage',
+    key: 'mct_prefill_answers',
     serialize: true,
   },
   calculations: {
@@ -39,6 +39,31 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     type: 'sessionStorage',
     key: 'mct_mortgage_id',
     serialize: false,
+  },
+  answers: {
+    type: 'localStorage',
+    key: 'mct_answers_new',
+    serialize: true,
+  },
+  filters: {
+    type: 'memory',
+    key: 'mct_filters',
+    serialize: true,
+  },
+  product: {
+    type: 'sessionStorage',
+    key: 'mct_product',
+    serialize: true,
+  },
+  appointment: {
+    type: 'sessionStorage',
+    key: 'mct_appointment',
+    serialize: true,
+  },
+  form: {
+    type: 'sessionStorage',
+    key: 'mct_form',
+    serialize: true,
   },
 };
 

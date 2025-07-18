@@ -20,6 +20,7 @@ import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/typ
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
+import type { StateManager, VisibilityManager } from '$mct/state';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -37,6 +38,9 @@ export class AppointmentManager {
   private component: HTMLElement;
   public id: StageIDENUM;
   private isInitialised: boolean = false;
+
+  private stateManager: StateManager = MCTManager.getStateManager();
+  private visibilityManager: VisibilityManager = MCTManager.getVisibilityManager();
 
   private loader: HTMLElement;
   private currentPanel: (typeof PANEL_ENUM)[keyof typeof PANEL_ENUM] = PANEL_ENUM.CALENDAR;
@@ -136,15 +140,19 @@ export class AppointmentManager {
         debug: true,
         groupName: 'appointment',
         indexInGroup: index,
-        onChange: () => {},
+        onChange: () => {
+          this.stateManager.set('form', {
+            ...this.stateManager.get('form'),
+            [inputGroup.getStateValue('initialName')]: inputGroup.getStateValue('value'),
+          });
+        },
         onEnter: () => {},
       });
 
       inputGroup.initialise();
+
       return inputGroup;
     });
-
-    console.log('FORM_INPUT_GROUPS', this.formInputGroups);
 
     // Load initial dates
     const tomorrow = new Date(this.today);
