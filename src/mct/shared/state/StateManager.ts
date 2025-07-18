@@ -28,6 +28,7 @@ const defaultState: AppState = {
   calculations: {} as Calculations,
   mortgageId: null,
   answers: {},
+  filters: {},
   product: {},
   appointment: {},
   form: {},

@@ -45,6 +45,11 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     key: 'mct_answers_new',
     serialize: false,
   },
+  filters: {
+    type: 'memory',
+    key: 'mct_filters',
+    serialize: false,
+  },
   product: {
     type: 'sessionStorage',
     key: 'mct_product',

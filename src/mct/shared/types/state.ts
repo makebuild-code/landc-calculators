@@ -138,6 +138,7 @@ export interface AppState {
   mortgageId: number | null;
 
   answers: any;
+  filters: any;
   product: any;
   appointment: any;
   form: any;
