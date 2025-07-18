@@ -1,4 +1,4 @@
-import { BuyerTypeENUM } from '$mct/types';
+import { BuyerTypeENUM, MortgageTypeENUM } from '$mct/types';
 import { type LCID, type ICID, type LenderName } from './base';
 
 export type PartnerId = number | 'default';
@@ -72,6 +72,16 @@ export interface EnquiryLead {
   IsSMSMarketingPermitted: boolean;
   IsPostMarketingPermitted: boolean;
   IsSocialMessageMarketingPermitted: boolean;
+  // NEW
+  MortgageType: MortgageTypeENUM;
+  CurrentLender?: string;
+  LoanAmount: number;
+  InterestOnlyAmount: number;
+  Notes?: string;
+  FTB: boolean;
+  NewBuild: boolean;
+  DatePlanToRemo?: string;
+  ChosenMCTProduct: string;
 }
 
 export interface Booking {

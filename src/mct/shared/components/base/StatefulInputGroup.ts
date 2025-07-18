@@ -76,7 +76,7 @@ export abstract class StatefulInputGroup<
 
   protected onInit(): void {
     // Initialise inputs and detect type
-    this.inputs = this.queryElements('input, select') as Input[];
+    this.inputs = this.queryElements('input, select, textarea') as Input[];
     const type = this.detectType();
     this.setStateValue('type', type);
 
@@ -238,6 +238,7 @@ export abstract class StatefulInputGroup<
     if (input.type === 'select-one') return 'select-one';
     if (input.type === 'email') return 'text';
     if (input.type === 'tel') return 'text';
+    if (input.type === 'textarea') return 'text';
     throw new Error(`Unsupported input type: ${input.type}`);
   }
 

@@ -93,7 +93,16 @@ CreateLead:
 		"IsPhoneMarketingPermitted": BOOL,
 		"IsSMSMarketingPermitted": BOOL,
 		"IsPostMarketingPermitted": BOOL,
-		"IsSocialMessageMarketingPermitted": BOOL
+		"IsSocialMessageMarketingPermitted": BOOL,
+    "MortgageType": "M",
+    "CurrentLender": STRING,
+    "LoanAmount": INT,
+    "InterestOnlyAmount": INT,
+    "Notes": STRING,
+    "FTB": BOOL,
+    "NewBuild": BOOL,
+    "DatePlanToRemo": STRING,
+    "ChosenMCTProduct": STRING,
 	}
 
 }
@@ -155,7 +164,16 @@ Create Lead and Booking
       "IsPhoneMarketingPermitted": true,
       "IsSMSMarketingPermitted": true,
       "IsPostMarketingPermitted": true,
-      "IsSocialMessageMarketingPermitted": true
+      "IsSocialMessageMarketingPermitted": true,
+      "MortgageType": "M",
+      "CurrentLender": "HSBC",
+      "LoanAmount": 100000,
+      "InterestOnlyAmount": 0,
+      "Notes": "Some Sample Notes",
+      "FTB": true,
+      "NewBuild": true,
+      "DatePlanToRemo": null,
+      "ChosenMCTProduct": "An MCT Product"
     },
     "booking": {
       "source": "SYSTEM",

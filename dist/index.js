@@ -18158,7 +18158,7 @@
       this.onEnter = options.onEnter;
     }
     onInit() {
-      this.inputs = this.queryElements("input, select");
+      this.inputs = this.queryElements("input, select, textarea");
       const type = this.detectType();
       this.setStateValue("type", type);
       const initialName = this.inputs.find((input) => !!input.name)?.name;
@@ -18279,6 +18279,8 @@
       if (input.type === "email")
         return "text";
       if (input.type === "tel")
+        return "text";
+      if (input.type === "textarea")
         return "text";
       throw new Error(`Unsupported input type: ${input.type}`);
     }
@@ -18745,6 +18747,7 @@
   // src/utils/analytics/dataLayer.ts
   init_live_reload();
   function dataLayer(event, params = {}) {
+    console.log("PUSHING TO DATA LAYER", { event, ...params });
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
       event,
@@ -22844,6 +22847,8 @@
   var InputGroup = class extends StatefulInputGroup {
     constructor(options) {
       super(options);
+    }
+    init() {
     }
   };
 
