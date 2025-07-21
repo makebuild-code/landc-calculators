@@ -312,14 +312,11 @@ export abstract class StatefulInputGroup<
   }
 
   protected getNumberValue(): NumberValue | null {
-    const input = this.inputs[0];
+    const input = this.inputs[0] as HTMLInputElement;
     if (!input) return null;
 
-    const value = input.value.trim();
-    if (!value) return null;
-
-    const number = parseFloat(value);
-    return isNaN(number) ? null : number;
+    const value = input.valueAsNumber;
+    return isNaN(value) ? null : value;
   }
 
   protected setNumberValue(value: NumberValue): void {

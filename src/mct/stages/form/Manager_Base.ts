@@ -71,7 +71,8 @@ export abstract class FormManager {
     [...this.questions].forEach((question) => {
       const value = question.getValue();
       const valid = question.isValid();
-      if (!value || !valid) return;
+
+      if (!valid) return;
 
       answerDataArray.push({
         key: question.getStateValue('initialName') as InputKey,
