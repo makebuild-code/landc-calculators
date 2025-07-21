@@ -244,7 +244,7 @@ export class MainFormManager extends FormManager {
     return this.groups[this.activeGroupIndex];
   }
 
-  private getGroupByName(name: GroupNameENUM): MainGroup | OutputGroup | undefined {
+  public getGroupByName(name: GroupNameENUM): MainGroup | OutputGroup | undefined {
     return this.groups.find((group) => group.name === name);
   }
 
