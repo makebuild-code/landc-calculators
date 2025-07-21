@@ -186,11 +186,15 @@ export class MainGroup extends QuestionGroup {
 
     // Show but do not scroll to the next question
     const nextIndex = this.getNextRequiredIndex(index);
+    console.log('nextIndex', nextIndex);
     if (nextIndex < this.questions.length) {
       // this.activeQuestionIndex = nextIndex;
       const nextQuestion = this.getQuestionByIndex(nextIndex);
       nextQuestion.activate();
       this.formManager.updateNavigation({ prevEnabled: true });
+    } else if (this.name !== GroupNameENUM.CustomerIdentifier && this.name !== GroupNameENUM.Output) {
+      console.log('nextIndex is out of bounds, navigating to the Ouptut group');
+      this.formManager.navigateToNextGroup();
     }
 
     this.formManager.prepareWrapper();
