@@ -194,7 +194,8 @@ export class MainGroup extends QuestionGroup {
       this.formManager.updateNavigation({ prevEnabled: true });
     } else if (this.name !== GroupNameENUM.CustomerIdentifier && this.name !== GroupNameENUM.Output) {
       console.log('nextIndex is out of bounds, navigating to the Ouptut group');
-      this.formManager.navigateToNextGroup();
+      const outputGroup = this.formManager.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+      if (outputGroup) outputGroup.activate(false);
     }
 
     this.formManager.prepareWrapper();
@@ -354,12 +355,11 @@ export class OutputGroup extends BaseGroup {
     }
   }
 
-  public activate(): void {
+  public activate(scrollTo: boolean = true): void {
     this.activated = true;
     this.card.classList.add(classes.active);
-    this.scrollTo();
+    if (scrollTo) this.scrollTo();
     this.handleProducts();
-    // this.formManager.updateNavigation({ nextEnabled: false });
   }
 
   private async handleProducts(): Promise<void> {
