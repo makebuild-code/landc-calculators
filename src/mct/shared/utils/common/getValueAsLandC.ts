@@ -1,7 +1,7 @@
 import { MCTManager } from '$mct/manager';
 import {
   CreditImpairedENUM,
-  EndOfTermENUM,
+  DatePlanToRemoENUM,
   FirstTimeBuyerENUM,
   InputKeysENUM,
   PurchRemoENUM,
@@ -32,7 +32,7 @@ type EnumMap = {
   RepaymentType: typeof RepaymentTypeENUM;
   SchemeTypes: typeof SchemeTypesENUM;
   SchemePeriods: typeof SchemePeriodsENUM;
-  EndOfTerm: typeof EndOfTermENUM;
+  EndOfTerm: typeof DatePlanToRemoENUM;
   RemoChange: typeof RemoChangeENUM;
 };
 
@@ -72,7 +72,7 @@ export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCRetur
     RepaymentType: RepaymentTypeENUM,
     SchemeTypes: SchemeTypesENUM,
     SchemePeriods: SchemePeriodsENUM,
-    EndOfTerm: EndOfTermENUM,
+    EndOfTerm: DatePlanToRemoENUM,
     RemoChange: RemoChangeENUM,
   };
 

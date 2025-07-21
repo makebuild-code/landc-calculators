@@ -27,6 +27,8 @@ import type {
   LogUserEventCustom,
   LogUserEventRequest,
   CalculationKeysENUM,
+  Booking,
+  EnquiryForm,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
@@ -73,7 +75,7 @@ export const MCTManager = {
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
-    console.log('FORCING DIST v3');
+    console.log('FORCING DIST v4');
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
@@ -319,12 +321,60 @@ export const MCTManager = {
     calculationManager.recalculate();
   },
 
-  setMortgageId(mortgageId: number | null) {
-    stateManager.set('mortgageId', mortgageId);
+  setFilters(filterDataArray: InputData[]): void {
+    const filters = filterDataArray.reduce<Partial<Inputs>>((acc, filter) => {
+      acc[filter.key] = filter.value as any;
+      return acc;
+    }, {} as Inputs);
+
+    stateManager.set('filters', filters);
   },
 
-  getMortgageId(): number | null {
-    return stateManager.get('mortgageId');
+  getFilters(): Inputs {
+    return stateManager.get('filters');
+  },
+
+  setProduct(productId: number) {
+    stateManager.set('product', productId);
+  },
+
+  getProduct(): number | null {
+    return stateManager.get('product');
+  },
+
+  clearProduct(): void {
+    stateManager.set('product', null);
+  },
+
+  setBooking(booking: Pick<Booking, 'bookingDate' | 'bookingStart' | 'bookingEnd'>): void {
+    stateManager.set('booking', {
+      ...booking,
+      source: 'SYSTEM',
+      bookingProfile: 'DEFAULT',
+      bookingProfileId: 1,
+    });
+  },
+
+  getBooking(): Booking | null {
+    return stateManager.get('booking');
+  },
+
+  setFormInput(formData: Record<string, any>): void {
+    stateManager.set('form', { ...stateManager.get('form'), ...formData });
+  },
+
+  clearFormInput(key: keyof EnquiryForm): void {
+    const form = { ...stateManager.get('form') };
+    delete form[key];
+    stateManager.set('form', form);
+  },
+
+  getForm(): EnquiryForm {
+    return stateManager.get('form');
+  },
+
+  clearForm(): void {
+    stateManager.set('form', {} as EnquiryForm);
   },
 
   async logUserEvent(event: LogUserEventCustom): Promise<void> {

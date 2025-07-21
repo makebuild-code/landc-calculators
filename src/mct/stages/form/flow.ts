@@ -1,6 +1,6 @@
 import {
   CreditImpairedENUM,
-  EndOfTermENUM,
+  DatePlanToRemoENUM,
   FirstTimeBuyerENUM,
   PurchRemoENUM,
   ReadinessToBuyENUM,
@@ -38,7 +38,7 @@ interface Purchase {
 }
 
 interface Remortgage {
-  EndOfTerm: EndOfTermENUM;
+  EndOfTerm: DatePlanToRemoENUM;
   PropertyValue: number;
   RepaymentType: RepaymentTypeENUM;
   InterestOnlyValue: number;

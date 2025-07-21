@@ -70,5 +70,5 @@ export interface MCTConfig {
   events: CONFIG_EVENTS;
   filters: CONFIG_FILTERS;
   profiles: CONFIG_PROFILES;
-  storage: CONFIG_STORAGE;
+  // storage: CONFIG_STORAGE;
 }

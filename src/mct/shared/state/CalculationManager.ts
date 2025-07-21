@@ -7,7 +7,7 @@ import {
   ReadinessToBuyENUM,
   CreditImpairedENUM,
   OfferAcceptedENUM,
-  EndOfTermENUM,
+  DatePlanToRemoENUM,
   RemoChangeENUM,
   InputKeysENUM,
   CalculationKeysENUM,
@@ -32,7 +32,7 @@ export class CalculationManager {
     this.calculationRules.set(InputKeysENUM.PurchRemo, this.purchRemo);
     this.calculationRules.set(InputKeysENUM.ReadinessToBuy, this.readinessToBuy);
     this.calculationRules.set(InputKeysENUM.CreditImpaired, this.creditImpaired);
-    this.calculationRules.set(InputKeysENUM.EndOfTerm, this.endOfTerm);
+    this.calculationRules.set(InputKeysENUM.DatePlanToRemo, this.endOfTerm);
     this.calculationRules.set(InputKeysENUM.PropertyValue, this.propertyValue);
     this.calculationRules.set(InputKeysENUM.DepositAmount, this.depositAmount);
     this.calculationRules.set(InputKeysENUM.RemoChange, this.remoChange);
@@ -132,7 +132,7 @@ export class CalculationManager {
       // If PurchRemo is 'Remortgage'
     } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage)) {
       // If EndOfTerm doesn't exist or is 'TwelvePlusMonths', isProceedable is false
-      if (!EndOfTerm || EndOfTerm === getEnumKey(EndOfTermENUM, EndOfTermENUM.TwelvePlusMonths)) {
+      if (!EndOfTerm || EndOfTerm === getEnumKey(DatePlanToRemoENUM, DatePlanToRemoENUM.TwelvePlusMonths)) {
         isProceedable = false;
       }
     }

@@ -3,8 +3,10 @@ import {
   CalculationKeysENUM,
   RepaymentTypeENUM,
   SortColumnENUM,
+  type InputData,
   type InputKey,
   type InputName,
+  type Inputs,
   type InputValue,
   type LogUserEventCustom,
   type Product,
@@ -191,6 +193,16 @@ export class ResultsManager {
     this.handleShowIfProceedable();
   }
 
+  private handleProduct(action: 'set' | 'clear', product?: Product): void {
+    if (action === 'set' && product) {
+      this.product = product;
+      MCTManager.setProduct(this.product.ProductId);
+    } else {
+      MCTManager.clearProduct();
+      this.product = null;
+    }
+  }
+
   public onEnter(): void {
     const calculations = MCTManager.getCalculations();
     this.isProceedable = !!calculations.isProceedable;
@@ -236,19 +248,15 @@ export class ResultsManager {
   }
 
   private saveFilterValues(): void {
-    this.filters.forEach((filter) => {
-      const value = filter.getStateValue('value');
-      const key = filter.getStateValue('initialName');
+    const filterDataArray: InputData[] = this.filters.map((filter) => {
+      const key = filter.getStateValue('initialName') as keyof Inputs;
       const name = filter.getStateValue('finalName');
+      const value = filter.getStateValue('value') as InputValue;
 
-      if (key && value !== null && value !== undefined && name)
-        MCTManager.setAnswer({
-          key: key as InputKey,
-          name: name as InputName,
-          value: value as InputValue,
-          source: 'user',
-        });
+      return { key, name, value, source: 'user' };
     });
+
+    MCTManager.setFilters(filterDataArray);
   }
 
   public handleChange(): void {
@@ -272,15 +280,15 @@ export class ResultsManager {
     // Hide apply direct by default (only show if product has ApplyDirectLink)
     if (this.applyDirect) this.applyDirect.style.display = 'none';
 
-    // Close dialog on button click
+    // Close dialog on button click and clear product (user is cancelling)
     this.howToApplyDialogClose.addEventListener('click', () => {
+      this.handleProduct('clear');
       this.howToApplyDialog.close();
     });
 
-    // Reset state on dialog close
+    // Reset UI on dialog close (but don't clear product - it may be needed for appointment booking)
     this.howToApplyDialog.addEventListener('close', () => {
-      MCTManager.setMortgageId(null);
-      this.product = null;
+      console.log('closing howToApplyDialog');
       if (this.applyDirect) this.applyDirect.style.display = 'none';
     });
   }
@@ -416,6 +424,7 @@ export class ResultsManager {
     // Close the dialog and go to OEF
     this.goToOEFButtons.forEach((button) =>
       button.addEventListener('click', () => {
+        this.handleProduct('clear');
         this.howToApplyDialog.close();
         this.handleDirectToBroker();
       })
@@ -424,6 +433,7 @@ export class ResultsManager {
     // Close the dialog and go to lender
     this.goToLenderButtons.forEach((button) =>
       button.addEventListener('click', () => {
+        this.handleProduct('clear');
         this.howToApplyDialog.close();
         this.handleDirectToLender();
       })
@@ -460,8 +470,7 @@ export class ResultsManager {
   }
 
   private handleProductCTA(product: Product): void {
-    MCTManager.setMortgageId(product.ProductId);
-    this.product = product;
+    this.handleProduct('set', product);
     const { ApplyDirectLink } = product;
 
     // If apply direct is allowed, show the box

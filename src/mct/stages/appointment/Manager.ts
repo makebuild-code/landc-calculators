@@ -1,7 +1,21 @@
-import type { AppointmentStageOptions, AppointmentDay, ICID, LCID, InputValue, LogUserEventCustom } from '$mct/types';
+import type {
+  AppointmentStageOptions,
+  AppointmentDay,
+  ICID,
+  LCID,
+  InputValue,
+  LogUserEventCustom,
+  EnquiryForm,
+  Inputs,
+  InputKey,
+  DatePlanToRemoENUM,
+  EnquiryData,
+} from '$mct/types';
 import {
   BuyerTypeENUM,
+  CalculationKeysENUM,
   CreditImpairedENUM,
+  InputKeysENUM,
   OfferAcceptedENUM,
   PurchRemoENUM,
   ReadinessToBuyENUM,
@@ -140,18 +154,18 @@ export class AppointmentManager {
         debug: true,
         groupName: 'appointment',
         indexInGroup: index,
-        onChange: () => {
-          this.stateManager.set('form', {
-            ...this.stateManager.get('form'),
-            [inputGroup.getStateValue('initialName')]: inputGroup.getStateValue('value'),
-          });
-        },
+        onChange: () => this.handleInputChange(inputGroup),
         onEnter: () => {},
       });
 
       inputGroup.initialise();
-
       return inputGroup;
+    });
+
+    this.formInputGroups.forEach((inputGroup) => {
+      const key = inputGroup.getStateValue('initialName');
+      const value = inputGroup.getStateValue('value');
+      MCTManager.setFormInput({ [key]: value });
     });
 
     // Load initial dates
@@ -161,6 +175,12 @@ export class AppointmentManager {
 
     this.dates.initialise();
     this.times.initialise();
+  }
+
+  private handleInputChange(inputGroup: InputGroup): void {
+    const key = inputGroup.getStateValue('initialName');
+    const value = inputGroup.getStateValue('value');
+    MCTManager.setFormInput({ [key]: value });
   }
 
   public show(scrollTo: boolean = true): void {
@@ -237,7 +257,29 @@ export class AppointmentManager {
     const date = this.dates.getValue();
     const time = this.times.getValue();
 
-    return !!date && !!time;
+    const canProceed = !!date && !!time;
+    if (!canProceed) return false;
+
+    this.saveBooking();
+    return true;
+  }
+
+  private saveBooking(): void {
+    const date = this.dates.getValue();
+    const time = this.times.getValue();
+
+    if (!date || !time || typeof date !== 'string' || typeof time !== 'string') return;
+
+    // Parse the time (format is "HH:MM:SS-HH:MM:SS" or "HH:MM-HH:MM")
+    const timeParts = time.split('-');
+    const startTime = formatToHHMM(timeParts[0]).trim(); // e.g., "09:00"
+    const endTime = formatToHHMM(timeParts[1]).trim(); // e.g., "10:00"
+
+    MCTManager.setBooking({
+      bookingDate: date,
+      bookingStart: startTime,
+      bookingEnd: endTime,
+    });
   }
 
   private showFormPanel(): void {
@@ -416,65 +458,58 @@ export class AppointmentManager {
     this.setLoadingState(true);
 
     // Get form data
-    const formData = this.getFormData();
+    const formData = MCTManager.getForm();
     if (!formData) {
       console.error('Failed to get form data');
       this.setLoadingState(false);
       return;
     }
 
+    /**
+     * @todo
+     *
+     * - Take VulnerableMessage and add it to the notes
+     * - Remove Vulnerable and VulnerableMessage from the formData
+     */
+
     // Get state data
     const stateData = this.getStateData();
-    const calculations = MCTManager.getCalculations();
     if (!stateData) {
       console.error('Failed to get state data');
       this.setLoadingState(false);
       return;
+    } else {
+      if (formData.Vulnerable === 'Yes') {
+        stateData.Notes = `Vulnerable: ${formData.Vulnerable} - Notes: ${formData.VulnerableMessage}`;
+      }
+      console.log('stateData', stateData);
+      console.log('MCTManager.getProduct()', MCTManager.getProduct());
+      stateData.ChosenMCTProduct = MCTManager.getProduct() as number;
     }
 
     // Get appointment data
-    const appointmentData = this.getAppointmentData();
-    if (!appointmentData) {
-      console.error('Failed to get appointment data');
+    const bookingData = MCTManager.getBooking();
+    if (!bookingData) {
+      console.error('Failed to get booking data');
       this.setLoadingState(false);
       return;
     }
 
+    const enquiry: EnquiryLead = {
+      ...formData,
+      ...stateData,
+    };
+
     // Create the API request with default values for required fields
     const request: CreateLeadAndBookingRequest = {
       enquiry: {
-        //   EnquiryId: 0, // Default value - should be provided by the system
-        //   PartnerId: 1, // Default value - should be configurable
-        icid: stateData.icid as ICID,
-        lcid: stateData.lcid as LCID,
-        FirstName: formData.FirstName as string,
-        Surname: formData.Surname as string,
-        Email: formData.Email as string,
-        Mobile: formData.Mobile as string,
-        PurchasePrice: stateData.PropertyValue as number,
-        RepaymentType: stateData.RepaymentType as RepaymentTypeENUM,
-        OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
-        MortgageLength: stateData.MortgageLength as number,
-        MaximumBudget: stateData.MaximumBudget,
-        BuyerType: stateData.BuyerType,
-        ResiBtl: stateData.ResiBtl as ResiBtlENUM,
-        Lender: stateData.Lender,
-        ReadinessToBuy: stateData.ReadinessToBuy,
-        PurchRemo: stateData.PurchRemo,
-        PropertyValue: stateData.PropertyValue as number,
-        DepositAmount: stateData.DepositAmount as number,
-        LTV: calculations.LTV as number,
-        Source: stateData.Source,
-        SourceId: stateData.SourceId,
-        CreditImpaired: stateData.CreditImpaired,
-        IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted as boolean,
-        IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted as boolean,
-        IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
-        IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
-        IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
+        ...formData,
+        ...stateData,
       },
-      booking: appointmentData,
+      booking: bookingData,
     };
+
+    console.log('request', request);
 
     try {
       // Call the API
@@ -531,124 +566,79 @@ export class AppointmentManager {
     }
   }
 
-  /**
-   * Get form data from the appointment form
-   */
-  private getFormData(): Partial<EnquiryLead> | null {
-    try {
-      const formData: Record<string, any> = {};
-      this.formInputGroups.forEach((group) => {
-        formData[group.getStateValue('initialName')] = group.getValue() as InputValue;
-      });
+  // /**
+  //  * Get form data from the appointment form
+  //  */
+  // private getFormData(): EnquiryForm {
+  //   const formData = MCTManager.getForm();
 
-      // Map form fields to API fields
-      const mappedData: Partial<EnquiryLead> = {
-        FirstName: formData.FirstName,
-        Surname: formData.Surname,
-        Email: formData.Email,
-        Mobile: formData.Mobile,
-        IsEmailMarketingPermitted: formData.IsEmailMarketingPermitted,
-        IsPhoneMarketingPermitted: formData.IsPhoneMarketingPermitted,
-        IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted,
-        IsPostMarketingPermitted: formData.IsPostMarketingPermitted,
-        IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted,
-      };
-
-      return mappedData;
-    } catch (error) {
-      console.error('Error getting form data:', error);
-      return null;
-    }
-  }
+  //   return formData;
+  // }
 
   /**
    * Get state data from the MCT manager
    */
-  private getStateData(): Partial<EnquiryLead> | null {
-    try {
-      const state = MCTManager.getState();
-      const answers = MCTManager.getAnswers();
+  private getStateData(): EnquiryData {
+    const state = MCTManager.getState();
+    const answers = MCTManager.getAnswers();
+    const calculations = MCTManager.getCalculations();
 
-      // Map state and answers to API fields
-      const stateData: Partial<EnquiryLead> = {
-        icid: state.icid || '',
-        lcid: state.lcid || '',
-        PurchasePrice: this.getNumericAnswer(answers, 'PropertyValue'),
-        RepaymentType: getEnumValue(RepaymentTypeENUM, this.getStringAnswer(answers, 'RepaymentType')),
-        // RepaymentType:
-        //   RepaymentTypeENUM[this.getStringAnswer(answers, 'RepaymentType') as keyof typeof RepaymentTypeENUM],
-        OfferAccepted: getEnumValue(OfferAcceptedENUM, this.getStringAnswer(answers, 'OfferAccepted')),
-        // OfferAccepted:
-        //   OfferAcceptedENUM[this.getStringAnswer(answers, 'OfferAccepted') as keyof typeof OfferAcceptedENUM],
-        MortgageLength: this.getNumericAnswer(answers, 'MortgageLength'),
-        MaximumBudget: this.getNumericAnswer(answers, 'MaximumBudget'), // unsure
-        BuyerType: getEnumValue(BuyerTypeENUM, this.getStringAnswer(answers, 'BuyerType')), // unsure
-        // BuyerType: BuyerTypeENUM[this.getStringAnswer(answers, 'BuyerType') as keyof typeof BuyerTypeENUM], // unsure
-        ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, 'ResiBtl')),
-        // ResiBtl: ResiBtlENUM[this.getStringAnswer(answers, 'ResiBtl') as keyof typeof ResiBtlENUM],
-        Lender: this.getStringAnswer(answers, 'Lender'),
-        ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, 'ReadinessToBuy')),
-        // ReadinessToBuy:
-        //   ReadinessToBuyENUM[this.getStringAnswer(answers, 'ReadinessToBuy') as keyof typeof ReadinessToBuyENUM],
-        PurchRemo: getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, 'PurchRemo')),
-        // PurchRemo: PurchRemoENUM[this.getStringAnswer(answers, 'PurchRemo') as keyof typeof PurchRemoENUM],
-        PropertyValue: this.getNumericAnswer(answers, 'PropertyValue'),
-        DepositAmount: this.getNumericAnswer(answers, 'DepositAmount'),
-        LTV: this.getNumericAnswer(answers, 'LTV'), // get from calculations
-        Source: this.getStringAnswer(answers, 'Source'), // unsure
-        SourceId: this.getNumericAnswer(answers, 'SourceId'), // unsure
-        CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, 'CreditImpaired')),
-      };
+    // Map state and answers to API fields
+    const stateData: EnquiryData = {
+      icid: state.icid as ICID,
+      lcid: state.lcid as LCID,
+      PurchasePrice: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
+      RepaymentType: getEnumValue(
+        RepaymentTypeENUM,
+        this.getStringAnswer(answers, InputKeysENUM.RepaymentType)
+      ) as RepaymentTypeENUM,
+      OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
+      MortgageLength: this.getNumericAnswer(answers, InputKeysENUM.MortgageLength),
+      ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, InputKeysENUM.ResiBtl)) as ResiBtlENUM,
+      Lender: this.getStringAnswer(answers, InputKeysENUM.Lender),
+      ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, InputKeysENUM.ReadinessToBuy)),
+      PurchRemo: getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo)),
+      PropertyValue: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
+      DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
+      LTV: calculations.LTV as number,
+      CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)),
+      LoanAmount: this.getNumericAnswer(answers, InputKeysENUM.RepaymentValue),
+      InterestOnlyAmount: this.getNumericAnswer(answers, InputKeysENUM.InterestOnlyValue),
+      FTB: this.getBooleanAnswer(answers, InputKeysENUM.FTB),
+      NewBuild: this.getBooleanAnswer(answers, InputKeysENUM.NewBuild),
+      DatePlanToRemo: this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo) as DatePlanToRemoENUM,
+      ChosenMCTProduct: MCTManager.getProduct() as number,
+    };
 
-      return stateData;
-    } catch (error) {
-      console.error('Error getting state data:', error);
-      return null;
-    }
+    return stateData;
   }
 
-  /**
-   * Get appointment data including date and time
-   */
-  private getAppointmentData(): Booking | null {
-    try {
-      const date = this.dates.getValue();
-      const time = this.times.getValue();
+  // /**
+  //  * Get appointment data including date and time
+  //  */
+  // private getAppointmentData(): Booking | null {
+  //   try {
+  //     const booking = MCTManager.getBooking();
+  //     if (!booking) return null;
 
-      if (!date || !time || typeof date !== 'string' || typeof time !== 'string') return null;
-
-      // Parse the time (format is "HH:MM:SS-HH:MM:SS" or "HH:MM-HH:MM")
-      const timeParts = time.split('-');
-      const startTime = formatToHHMM(timeParts[0]); // e.g., "09:00"
-      const endTime = formatToHHMM(timeParts[1]); // e.g., "10:00"
-
-      const booking: Booking = {
-        source: 'SYSTEM', // unsure
-        bookingDate: date,
-        bookingStart: startTime,
-        bookingEnd: endTime,
-        bookingProfile: 'DEFAULT', // unsure
-        bookingProfileId: 1, // unsure
-      };
-
-      return booking;
-    } catch (error) {
-      console.error('Error getting appointment data:', error);
-      return null;
-    }
-  }
+  //     return booking;
+  //   } catch (error) {
+  //     console.error('Error getting appointment data:', error);
+  //     return null;
+  //   }
+  // }
 
   /**
    * Helper method to get string answer from answers object
    */
-  private getStringAnswer(answers: Record<string, any>, key: string): string {
-    return answers[key] || '';
+  private getStringAnswer(answers: Inputs, key: InputKeysENUM): string {
+    return answers[key]?.toString() || '';
   }
 
   /**
    * Helper method to get numeric answer from answers object
    */
-  private getNumericAnswer(answers: Record<string, any>, key: string): number {
+  private getNumericAnswer(answers: Inputs, key: InputKeysENUM): number {
     const value = answers[key];
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
@@ -682,10 +672,6 @@ export class AppointmentManager {
     const date = this.dates.getValue();
     const time = this.times.getValue();
 
-    console.log('getFormattedDateTime');
-    console.log('date', date);
-    console.log('time', time);
-
     // Type checking for date and time values
     if (!date || !time || typeof date !== 'string' || typeof time !== 'string') return null;
 
@@ -697,12 +683,6 @@ export class AppointmentManager {
     const dayNumber = dateObj.toLocaleString('en-GB', { day: 'numeric' });
     const daySuffix = getOrdinalSuffix(parseInt(dayNumber));
     const monthName = dateObj.toLocaleDateString('en-GB', { month: 'long' });
-
-    console.log('dayName', dayName);
-    console.log('dayNumber', dayNumber);
-    console.log('daySuffix', daySuffix);
-    console.log('monthName', monthName);
-    console.log('time', time);
 
     return `${dayName} ${dayNumber}${daySuffix} ${monthName} from ${time}`;
   }

@@ -6,9 +6,11 @@ import type {
   InputValue,
   Inputs,
   InputData,
-  InputPrefillConfig,
+  InputPrefill,
   StageIDENUM,
   Calculations,
+  Product,
+  Booking,
 } from '$mct/types';
 
 export interface StateChangeEvent {
@@ -24,14 +26,12 @@ const defaultState: AppState = {
   icid: null,
   currentStageId: null,
   inputs: {},
-  inputPrefillConfig: {},
+  inputPrefill: {},
   calculations: {} as Calculations,
-  mortgageId: null,
-  answers: {},
   filters: {},
-  product: {},
-  appointment: {},
-  form: {},
+  product: null,
+  booking: null,
+  form: null,
 };
 
 export class StateManager {
@@ -138,9 +138,9 @@ export class StateManager {
     };
 
     const answers = { ...this.state.inputs, [answerData.key]: answerData.value };
-    const prefillAnswers = { ...this.state.inputPrefillConfig, [answerData.name]: answerData.value };
+    const prefillAnswers = { ...this.state.inputPrefill, [answerData.name]: answerData.value };
 
-    this.setState({ inputs: answers, inputPrefillConfig: prefillAnswers });
+    this.setState({ inputs: answers, inputPrefill: prefillAnswers });
   }
 
   getAnswer(key: InputKey): InputValue | undefined {
@@ -156,21 +156,21 @@ export class StateManager {
     const prefillAnswers = answerDataArray.reduce((acc, answer) => {
       acc[answer.name] = answer.value;
       return acc;
-    }, {} as InputPrefillConfig);
+    }, {} as InputPrefill);
 
-    this.setState({ inputs: answers, inputPrefillConfig: prefillAnswers });
+    this.setState({ inputs: answers, inputPrefill: prefillAnswers });
   }
 
   getAnswers(): Inputs {
     return { ...this.state.inputs };
   }
 
-  setPrefillValues(prefillData: InputPrefillConfig): void {
-    this.set('inputPrefillConfig', { ...this.state.inputPrefillConfig, ...prefillData });
+  setPrefillValues(prefillData: InputPrefill): void {
+    this.set('inputPrefill', { ...this.state.inputPrefill, ...prefillData });
   }
 
-  getPrefillAnswers(): InputPrefillConfig {
-    return { ...this.state.inputPrefillConfig };
+  getPrefillAnswers(): InputPrefill {
+    return { ...this.state.inputPrefill };
   }
 
   setCalculations(calculations: Partial<Calculations>): void {
