@@ -70,7 +70,7 @@ export type Inputs = {
   [InputKeysENUM.RepaymentValue]?: number; // will have by the end
   [InputKeysENUM.RemoChange]?: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]?: string;
-  [InputKeysENUM.NewBuild]?: boolean;
+  [InputKeysENUM.NewBuild]?: 'true' | 'false' | undefined;
   [InputKeysENUM.SapValue]?: keyof typeof SapValueENUM;
 };
 

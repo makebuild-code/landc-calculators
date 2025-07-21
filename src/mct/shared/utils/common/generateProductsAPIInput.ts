@@ -53,8 +53,9 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const SchemePeriods = JSON.parse(getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM); // This returns an array as expected
   const SchemeTypes = JSON.parse(getValueAsLandC(InputKeysENUM.SchemeTypes) as SchemeTypesENUM); // This returns an array as expected
 
+  const filters = MCTManager.getFilters();
+  const SortColumn = filters.SortColumn ?? options.sortColumn ?? SortColumnENUM.Rate;
   const NumberOfResults = options.numberOfResults ?? 1;
-  const SortColumn = options.sortColumn ?? SortColumnENUM.Rate;
 
   const endOfAnswersInput: ProductsRequest = {
     PropertyValue,
@@ -75,9 +76,9 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const NewBuild =
     SchemePurpose === SchemePurposeENUM.Remortgage
       ? undefined
-      : answers.NewBuild === 'true'
+      : filters.NewBuild === 'true'
         ? true
-        : answers.NewBuild === 'false'
+        : filters.NewBuild === 'false'
           ? false
           : options.NewBuild ?? FILTERS_CONFIG.NewBuild === 'true'
             ? true
@@ -108,9 +109,8 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   MCTManager.setCalculations({ RepaymentValue, InterestOnlyValue });
 
+  console.log('endOfAnswersInput', endOfAnswersInput);
   console.log('input', input);
-  console.log('endOfAnswersInput', endOfAnswersInput);
-  console.log('endOfAnswersInput', endOfAnswersInput);
 
   return input;
 };

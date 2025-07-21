@@ -75,7 +75,7 @@ export const MCTManager = {
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
-    console.log('FORCING DIST v7');
+    console.log('FORCING DIST v8');
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
@@ -330,7 +330,7 @@ export const MCTManager = {
     stateManager.set('filters', filters);
   },
 
-  getFilters(): Inputs {
+  getFilters(): Record<string, any> {
     return stateManager.get('filters');
   },
 
