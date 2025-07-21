@@ -602,7 +602,7 @@ export class AppointmentManager {
       DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
       LTV: calculations.LTV as number,
       CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)),
-      LoanAmount: this.getNumericAnswer(answers, InputKeysENUM.RepaymentValue),
+      LoanAmount: this.getNumericAnswer(answers, InputKeysENUM.BorrowAmount),
       InterestOnlyAmount: this.getNumericAnswer(answers, InputKeysENUM.InterestOnlyValue),
       FTB: this.getBooleanAnswer(answers, InputKeysENUM.FTB),
       NewBuild: this.getBooleanAnswer(answers, InputKeysENUM.NewBuild),

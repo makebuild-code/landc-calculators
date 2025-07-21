@@ -45,7 +45,7 @@ export enum InputKeysENUM {
   SchemeTypes = 'SchemeTypes',
   SchemePeriods = 'SchemePeriods',
   DatePlanToRemo = 'DatePlanToRemo',
-  RepaymentValue = 'RepaymentValue',
+  BorrowAmount = 'BorrowAmount',
   RemoChange = 'RemoChange',
   Lender = 'Lender',
   NewBuild = 'NewBuild',
@@ -67,7 +67,7 @@ export type Inputs = {
   [InputKeysENUM.SchemeTypes]?: keyof typeof SchemeTypesENUM; // will have by the end
   [InputKeysENUM.SchemePeriods]?: keyof typeof SchemePeriodsENUM; // will have by the end
   [InputKeysENUM.DatePlanToRemo]?: keyof typeof DatePlanToRemoENUM;
-  [InputKeysENUM.RepaymentValue]?: number; // will have by the end
+  [InputKeysENUM.BorrowAmount]?: number; // will have by the end
   [InputKeysENUM.RemoChange]?: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]?: string;
   [InputKeysENUM.NewBuild]?: 'true' | 'false' | undefined;
@@ -84,6 +84,7 @@ export type RemoInputs = {
   [InputKeysENUM.DatePlanToRemo]: keyof typeof DatePlanToRemoENUM;
   [InputKeysENUM.RemoChange]: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]: string;
+  [InputKeysENUM.BorrowAmount]: number;
 };
 
 export type InputsByEndOfForm = {
@@ -96,7 +97,6 @@ export type InputsByEndOfForm = {
   [InputKeysENUM.MortgageLength]: number;
   [InputKeysENUM.SchemeTypes]: keyof typeof SchemeTypesENUM;
   [InputKeysENUM.SchemePeriods]: keyof typeof SchemePeriodsENUM;
-  [InputKeysENUM.RepaymentValue]: number;
   [InputKeysENUM.NewBuild]?: 'true' | 'false';
   [InputKeysENUM.SapValue]?: keyof typeof SapValueENUM;
 };
@@ -107,8 +107,8 @@ export enum CalculationKeysENUM {
   OfferAccepted = 'offerAccepted',
   LTV = 'LTV',
   IncludeRetention = ProductsRequestENUM.IncludeRetention,
-  RepaymentValue = InputKeysENUM.RepaymentValue,
-  InterestOnlyValue = InputKeysENUM.InterestOnlyValue,
+  BorrowAmount = InputKeysENUM.BorrowAmount,
+  // InterestOnlyValue = InputKeysENUM.InterestOnlyValue,
 }
 
 export type CalculationKey = keyof typeof CalculationKeysENUM;
@@ -118,8 +118,8 @@ export type Calculations = {
   [CalculationKeysENUM.OfferAccepted]?: OfferAcceptedENUM;
   [CalculationKeysENUM.LTV]?: number;
   [CalculationKeysENUM.IncludeRetention]?: boolean;
-  [CalculationKeysENUM.RepaymentValue]?: number;
-  [CalculationKeysENUM.InterestOnlyValue]?: number;
+  [CalculationKeysENUM.BorrowAmount]?: number;
+  // [CalculationKeysENUM.InterestOnlyValue]?: number;
 };
 
 export interface InputData {
