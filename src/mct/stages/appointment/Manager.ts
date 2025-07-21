@@ -479,7 +479,9 @@ export class AppointmentManager {
       this.setLoadingState(false);
       return;
     } else {
-      stateData.Notes = `Vulnerable: ${formData.Vulnerable} - Notes: ${formData.VulnerableMessage}`;
+      if (formData.Vulnerable === 'Yes') {
+        stateData.Notes = `Vulnerable: ${formData.Vulnerable} - Notes: ${formData.VulnerableMessage}`;
+      }
       console.log('stateData', stateData);
       console.log('MCTManager.getProduct()', MCTManager.getProduct());
       stateData.ChosenMCTProduct = MCTManager.getProduct() as number;

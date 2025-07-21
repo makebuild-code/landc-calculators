@@ -48,7 +48,7 @@ export interface EnquiryForm {
   Surname: string;
   Email: string;
   Mobile: string;
-  Vulnerable: boolean;
+  Vulnerable: 'Yes' | 'No';
   VulnerableMessage: string;
   IsEmailMarketingPermitted: boolean;
   IsPhoneMarketingPermitted: boolean;
