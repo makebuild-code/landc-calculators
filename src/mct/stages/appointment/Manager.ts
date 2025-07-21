@@ -495,6 +495,11 @@ export class AppointmentManager {
       return;
     }
 
+    const enquiry: EnquiryLead = {
+      ...formData,
+      ...stateData,
+    };
+
     // Create the API request with default values for required fields
     const request: CreateLeadAndBookingRequest = {
       enquiry: {
@@ -505,8 +510,6 @@ export class AppointmentManager {
     };
 
     console.log('request', request);
-
-    return;
 
     try {
       // Call the API

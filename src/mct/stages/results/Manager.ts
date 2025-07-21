@@ -280,15 +280,15 @@ export class ResultsManager {
     // Hide apply direct by default (only show if product has ApplyDirectLink)
     if (this.applyDirect) this.applyDirect.style.display = 'none';
 
-    // Close dialog on button click
+    // Close dialog on button click and clear product (user is cancelling)
     this.howToApplyDialogClose.addEventListener('click', () => {
+      this.handleProduct('clear');
       this.howToApplyDialog.close();
     });
 
-    // Reset state on dialog close
+    // Reset UI on dialog close (but don't clear product - it may be needed for appointment booking)
     this.howToApplyDialog.addEventListener('close', () => {
       console.log('closing howToApplyDialog');
-      this.handleProduct('clear');
       if (this.applyDirect) this.applyDirect.style.display = 'none';
     });
   }
@@ -424,6 +424,7 @@ export class ResultsManager {
     // Close the dialog and go to OEF
     this.goToOEFButtons.forEach((button) =>
       button.addEventListener('click', () => {
+        this.handleProduct('clear');
         this.howToApplyDialog.close();
         this.handleDirectToBroker();
       })
@@ -432,6 +433,7 @@ export class ResultsManager {
     // Close the dialog and go to lender
     this.goToLenderButtons.forEach((button) =>
       button.addEventListener('click', () => {
+        this.handleProduct('clear');
         this.howToApplyDialog.close();
         this.handleDirectToLender();
       })

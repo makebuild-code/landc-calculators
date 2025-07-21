@@ -19661,11 +19661,11 @@
       if (this.applyDirect)
         this.applyDirect.style.display = "none";
       this.howToApplyDialogClose.addEventListener("click", () => {
+        this.handleProduct("clear");
         this.howToApplyDialog.close();
       });
       this.howToApplyDialog.addEventListener("close", () => {
         console.log("closing howToApplyDialog");
-        this.handleProduct("clear");
         if (this.applyDirect)
           this.applyDirect.style.display = "none";
       });
@@ -19764,12 +19764,14 @@
       );
       this.goToOEFButtons.forEach(
         (button) => button.addEventListener("click", () => {
+          this.handleProduct("clear");
           this.howToApplyDialog.close();
           this.handleDirectToBroker();
         })
       );
       this.goToLenderButtons.forEach(
         (button) => button.addEventListener("click", () => {
+          this.handleProduct("clear");
           this.howToApplyDialog.close();
           this.handleDirectToLender();
         })
@@ -23144,6 +23146,10 @@
         this.setLoadingState(false);
         return;
       }
+      const enquiry = {
+        ...formData,
+        ...stateData
+      };
       const request = {
         enquiry: {
           ...formData,
@@ -23152,7 +23158,6 @@
         booking: bookingData
       };
       console.log("request", request);
-      return;
       try {
         const response = await createLeadAndBookingAPI.createLeadAndBooking(request);
         this.form.style.display = "none";
