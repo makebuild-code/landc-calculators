@@ -40,6 +40,9 @@ export interface TrackedEventListener {
 
 export enum MCTEventNames {
   STAGE_GO_TO = 'mct:stage:goTo',
+  STAGE_TRANSITION_REQUEST = 'mct:stage:transition:request',
+  STAGE_TRANSITION_COMPLETE = 'mct:stage:transition:complete',
+  STAGE_VALIDATION_CHECK = 'mct:stage:validation:check',
 }
 
 export enum FormEventNames {
@@ -47,6 +50,8 @@ export enum FormEventNames {
   QUESTION_VALIDATED = 'form:question:validated',
   QUESTION_REQUIRED = 'form:question:required',
   QUESTION_UNREQUIRED = 'form:question:unrequired',
+  QUESTION_ACTIVATED = 'form:question:activated',
+  QUESTION_DEACTIVATED = 'form:question:deactivated',
   INPUT_CHANGED = 'input:changed',
   INPUT_ON_ENTER = 'input:on-enter',
   GROUP_CHANGED = 'form:group:changed',
@@ -70,12 +75,20 @@ export enum StateEventNames {
   CHANGED = 'state:changed',
   LOADED = 'state:loaded',
   SAVED = 'state:saved',
+  CALCULATION_REQUEST = 'state:calculation:request',
+  CALCULATION_COMPLETE = 'state:calculation:complete',
 }
 
 export enum APIEventNames {
   REQUEST_START = 'api:request:start',
   REQUEST_SUCCESS = 'api:request:success',
   REQUEST_ERROR = 'api:request:error',
+  PRODUCTS_LOADING = 'api:products:loading',
+  PRODUCTS_SUCCESS = 'api:products:success',
+  PRODUCTS_ERROR = 'api:products:error',
+  LENDERS_LOADING = 'api:lenders:loading',
+  LENDERS_SUCCESS = 'api:lenders:success',
+  LENDERS_ERROR = 'api:lenders:error',
 }
 
 /**
@@ -86,6 +99,24 @@ export enum APIEventNames {
 export interface MCTEvents {
   [MCTEventNames.STAGE_GO_TO]: {
     stageId: StageIDENUM;
+  };
+
+  [MCTEventNames.STAGE_TRANSITION_REQUEST]: {
+    fromStage: StageIDENUM;
+    toStage: StageIDENUM;
+    options?: Record<string, any>;
+  };
+
+  [MCTEventNames.STAGE_TRANSITION_COMPLETE]: {
+    fromStage: StageIDENUM;
+    toStage: StageIDENUM;
+    success: boolean;
+  };
+
+  [MCTEventNames.STAGE_VALIDATION_CHECK]: {
+    stageId: StageIDENUM;
+    isValid: boolean;
+    errors?: string[];
   };
 }
 
@@ -105,6 +136,16 @@ export interface FormEvents {
 
   [FormEventNames.QUESTION_UNREQUIRED]: {
     question: QuestionComponent;
+  };
+
+  [FormEventNames.QUESTION_ACTIVATED]: {
+    question: QuestionComponent;
+    index: number;
+  };
+
+  [FormEventNames.QUESTION_DEACTIVATED]: {
+    question: QuestionComponent;
+    index: number;
   };
 
   // // Input-related events
@@ -206,6 +247,17 @@ export interface StateEvents {
   [StateEventNames.SAVED]: {
     state: AppState;
   };
+
+  [StateEventNames.CALCULATION_REQUEST]: {
+    trigger: string;
+    inputData?: InputData[];
+  };
+
+  [StateEventNames.CALCULATION_COMPLETE]: {
+    calculations: Record<string, any>;
+    success: boolean;
+    errors?: string[];
+  };
 }
 
 export interface APIEvents {
@@ -225,6 +277,33 @@ export interface APIEvents {
     method: string;
     error: Error;
   };
+
+  [APIEventNames.PRODUCTS_LOADING]: {
+    searchCriteria?: Record<string, any>;
+  };
+
+  [APIEventNames.PRODUCTS_SUCCESS]: {
+    products: any[];
+    totalCount: number;
+    searchCriteria?: Record<string, any>;
+  };
+
+  [APIEventNames.PRODUCTS_ERROR]: {
+    error: Error;
+    searchCriteria?: Record<string, any>;
+  };
+
+  [APIEventNames.LENDERS_LOADING]: {
+    // No specific payload needed
+  };
+
+  [APIEventNames.LENDERS_SUCCESS]: {
+    lenders: any[];
+  };
+
+  [APIEventNames.LENDERS_ERROR]: {
+    error: Error;
+  };
 }
 
 // Combine all event types
@@ -242,4 +321,6 @@ export const EVENT_CATEGORIES = {
   APPOINTMENT: 'appointment:',
   STATE: 'state:',
   API: 'api:',
+  NAVIGATION: 'navigation:',
+  VALIDATION: 'validation:',
 } as const;
