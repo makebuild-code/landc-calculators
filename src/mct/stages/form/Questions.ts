@@ -47,6 +47,10 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
     try {
       const lenders = await lendersAPI.getAll();
+      lenders
+        .filter((lender) => lender.LenderName !== '' && lender.LenderName !== null)
+        .sort((a, b) => a.LenderName.localeCompare(b.LenderName));
+
       const lenderOptions: SelectOption[] = [
         { label: 'Select a lender...' },
         ...lenders.map(
