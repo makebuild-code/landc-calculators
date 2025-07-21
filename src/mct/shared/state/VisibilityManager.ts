@@ -210,9 +210,9 @@ export class VisibilityManager {
     const formData = this.stateManager.get('form');
 
     // Check in answers first
-    if (variable in answers) return answers[variable as keyof Inputs];
-    else if (variable in calculations) return calculations[variable as keyof Calculations];
-    else if (variable in formData) return formData[variable as keyof EnquiryForm];
+    if (answers && variable in answers) return answers[variable as keyof Inputs];
+    else if (calculations && variable in calculations) return calculations[variable as keyof Calculations];
+    else if (formData && variable in formData) return formData[variable as keyof EnquiryForm];
 
     return undefined;
   }
