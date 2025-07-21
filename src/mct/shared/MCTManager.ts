@@ -75,7 +75,7 @@ export const MCTManager = {
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
-    console.log('FORCING DIST v4');
+    console.log('FORCING DIST v5');
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
@@ -359,17 +359,17 @@ export const MCTManager = {
     return stateManager.get('booking');
   },
 
-  setFormInput(formData: Record<string, any>): void {
-    stateManager.set('form', { ...stateManager.get('form'), ...formData });
+  setFormInput(formData: Partial<EnquiryForm>): void {
+    stateManager.set('form', { ...stateManager.get('form'), ...formData } as EnquiryForm);
   },
 
   clearFormInput(key: keyof EnquiryForm): void {
     const form = { ...stateManager.get('form') };
     delete form[key];
-    stateManager.set('form', form);
+    stateManager.set('form', form as EnquiryForm);
   },
 
-  getForm(): EnquiryForm {
+  getForm(): EnquiryForm | null {
     return stateManager.get('form');
   },
 
