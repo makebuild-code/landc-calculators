@@ -36,7 +36,7 @@ export class CalculationManager {
     this.calculationRules.set(InputKeysENUM.PropertyValue, this.propertyValue);
     this.calculationRules.set(InputKeysENUM.DepositAmount, this.depositAmount);
     this.calculationRules.set(InputKeysENUM.RemoChange, this.remoChange);
-    this.calculationRules.set(InputKeysENUM.RepaymentValue, this.repaymentValue);
+    this.calculationRules.set(InputKeysENUM.BorrowAmount, this.repaymentValue);
   }
 
   private subscribeToStateChanges(): void {
@@ -212,8 +212,8 @@ export class CalculationManager {
       CalculationKeysENUM.OfferAccepted,
       CalculationKeysENUM.LTV,
       CalculationKeysENUM.IncludeRetention,
-      CalculationKeysENUM.RepaymentValue,
-      CalculationKeysENUM.InterestOnlyValue,
+      CalculationKeysENUM.BorrowAmount,
+      // CalculationKeysENUM.InterestOnlyValue,
     ];
   }
 

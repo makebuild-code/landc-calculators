@@ -6,6 +6,7 @@ import {
   MortgageTypeENUM,
   PropertyTypeENUM,
   PurchRemoENUM,
+  RepaymentTypeENUM,
   ResiBtlENUM,
   SapValueENUM,
   SchemePeriodsENUM,
@@ -33,12 +34,47 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   if (!answers) return null;
 
-  const { PropertyValue, ResiBtl, MortgageLength } = answers;
+  const { PropertyValue, ResiBtl, MortgageLength, RepaymentType } = answers;
 
-  const RepaymentValue =
-    PurchRemo === PurchRemoENUM.Purchase
-      ? PropertyValue - (answers as InputsByEndOfForm & PurchInputs)[InputKeysENUM.DepositAmount]
-      : answers.RepaymentValue;
+  /**
+   * Calc InterestOnlyValue and RepaymentValue
+   *
+   * if RepaymentType is Part & part:
+   * RepaymentValue = PropertyValue - DepositAmount - InterestOnlyValue
+   *
+   * else if InterestOnly
+   * RepaymentValue = 0
+   * InterestOnlyValue = PropertyValue - DepositAmount
+   */
+
+  let InterestOnlyValue = answers[InputKeysENUM.InterestOnlyValue] ?? 0;
+  let RepaymentValue = 0;
+
+  if (PurchRemo === PurchRemoENUM.Purchase) {
+    const DepositAmount = (answers as InputsByEndOfForm & PurchInputs)[InputKeysENUM.DepositAmount];
+
+    if (RepaymentType === getEnumKey(RepaymentTypeENUM, RepaymentTypeENUM.Repayment)) {
+      RepaymentValue = PropertyValue - DepositAmount;
+      InterestOnlyValue = 0;
+    } else if (RepaymentType === getEnumKey(RepaymentTypeENUM, RepaymentTypeENUM.InterestOnly)) {
+      InterestOnlyValue = PropertyValue - DepositAmount;
+      RepaymentValue = 0;
+    } else if (RepaymentType === getEnumKey(RepaymentTypeENUM, RepaymentTypeENUM.Both)) {
+      RepaymentValue = PropertyValue - DepositAmount - InterestOnlyValue;
+    }
+  } else if (PurchRemo === PurchRemoENUM.Remortgage) {
+    const BorrowAmount = (answers as InputsByEndOfForm & RemoInputs)[InputKeysENUM.BorrowAmount];
+
+    if (RepaymentType === getEnumKey(RepaymentTypeENUM, RepaymentTypeENUM.Repayment)) {
+      RepaymentValue = BorrowAmount;
+      InterestOnlyValue = 0;
+    } else if (RepaymentType === getEnumKey(RepaymentTypeENUM, RepaymentTypeENUM.InterestOnly)) {
+      InterestOnlyValue = BorrowAmount;
+      RepaymentValue = 0;
+    } else if (RepaymentType === getEnumKey(RepaymentTypeENUM, RepaymentTypeENUM.Both)) {
+      RepaymentValue = BorrowAmount - InterestOnlyValue;
+    }
+  }
 
   // No question exists for PropertyType, so we use the default value
   const PropertyType = PropertyTypeENUM.House;
@@ -60,6 +96,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const endOfAnswersInput: ProductsRequest = {
     PropertyValue,
     RepaymentValue,
+    InterestOnlyValue,
     PropertyType,
     MortgageType,
     TermYears,
@@ -69,8 +106,6 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     NumberOfResults,
     SortColumn,
   };
-
-  const InterestOnlyValue = (answers.InterestOnlyValue as number) ?? 0;
 
   // If remortgage, NewBuild is undefined. If in answers, use it. If not, use options. If not, use filters config.
   const NewBuild =
@@ -101,13 +136,10 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   const input: ProductsRequest = {
     ...endOfAnswersInput,
-    InterestOnlyValue,
     SapValue: 100,
     Features,
     IncludeRetention,
   };
-
-  MCTManager.setCalculations({ RepaymentValue, InterestOnlyValue });
 
   console.log('endOfAnswersInput', endOfAnswersInput);
   console.log('input', input);
