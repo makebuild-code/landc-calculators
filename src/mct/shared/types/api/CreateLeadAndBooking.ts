@@ -1,5 +1,5 @@
 import { BuyerTypeENUM, MortgageTypeENUM } from '$mct/types';
-import { type LCID, type ICID, type LenderName } from './base';
+import { type LCID, type ICID, type LenderName, DatePlanToRemoENUM } from './base';
 
 export type PartnerId = number | 'default';
 export type Source = string;
@@ -43,14 +43,24 @@ export enum CreditImpairedENUM {
   No = 'N',
 }
 
-export interface EnquiryLead {
-  lcid: LCID;
-  icid: ICID;
-  PartnerId?: PartnerId;
+export interface EnquiryForm {
   FirstName: string;
   Surname: string;
   Email: string;
   Mobile: string;
+  Vulnerable: boolean;
+  VulnerableMessage: string;
+  IsEmailMarketingPermitted: boolean;
+  IsPhoneMarketingPermitted: boolean;
+  IsSMSMarketingPermitted: boolean;
+  IsPostMarketingPermitted: boolean;
+  IsSocialMessageMarketingPermitted: boolean;
+}
+
+export interface EnquiryLead extends Omit<EnquiryForm, 'Vulnerable' | 'VulnerableMessage'> {
+  lcid: LCID;
+  icid: ICID;
+  // PartnerId?: PartnerId;
   PurchasePrice: number;
   RepaymentType: RepaymentTypeENUM;
   OfferAccepted?: OfferAcceptedENUM;
@@ -64,14 +74,9 @@ export interface EnquiryLead {
   PropertyValue: number;
   DepositAmount: number;
   LTV?: number;
-  Source?: Source;
-  SourceId?: SourceID;
+  // Source?: Source;
+  // SourceId?: SourceID;
   CreditImpaired?: CreditImpairedENUM;
-  IsEmailMarketingPermitted: boolean;
-  IsPhoneMarketingPermitted: boolean;
-  IsSMSMarketingPermitted: boolean;
-  IsPostMarketingPermitted: boolean;
-  IsSocialMessageMarketingPermitted: boolean;
   // NEW
   // MortgageType: MortgageTypeENUM;
   CurrentLender?: string;
@@ -80,7 +85,7 @@ export interface EnquiryLead {
   Notes?: string;
   FTB: boolean;
   NewBuild: boolean;
-  DatePlanToRemo?: string;
+  DatePlanToRemo?: DatePlanToRemoENUM;
   ChosenMCTProduct: string;
 }
 

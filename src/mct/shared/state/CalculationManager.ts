@@ -7,7 +7,7 @@ import {
   ReadinessToBuyENUM,
   CreditImpairedENUM,
   OfferAcceptedENUM,
-  EndOfTermENUM,
+  DatePlanToRemoENUM,
   RemoChangeENUM,
   InputKeysENUM,
   CalculationKeysENUM,
@@ -132,7 +132,7 @@ export class CalculationManager {
       // If PurchRemo is 'Remortgage'
     } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage)) {
       // If EndOfTerm doesn't exist or is 'TwelvePlusMonths', isProceedable is false
-      if (!EndOfTerm || EndOfTerm === getEnumKey(EndOfTermENUM, EndOfTermENUM.TwelvePlusMonths)) {
+      if (!EndOfTerm || EndOfTerm === getEnumKey(DatePlanToRemoENUM, DatePlanToRemoENUM.TwelvePlusMonths)) {
         isProceedable = false;
       }
     }

@@ -10,11 +10,11 @@ export type LenderName = string;
 export type LenderNames = LenderName[];
 
 // @todo
-export enum EndOfTermENUM {
-  WithinThreeMonths = '1',
-  ThreeToSixMonths = '2',
-  SixToTwelveMonths = '3',
-  TwelvePlusMonths = '4',
+export enum DatePlanToRemoENUM {
+  WithinThreeMonths = '0-3 months',
+  ThreeToSixMonths = '3-6 months',
+  SixToTwelveMonths = '6-12 months',
+  TwelvePlusMonths = 'Over 12 months',
 }
 
 export enum RemoChangeENUM {
