@@ -24231,7 +24231,7 @@
     },
     initState() {
       console.log("\u{1F504} Initializing hybrid MCTManager with new state management...");
-      console.log("FORCING DIST v3");
+      console.log("FORCING DIST v4");
       stateManager.subscribe((event) => {
         console.log("\u{1F504} State changed via new manager:", {
           changes: event.changes,
