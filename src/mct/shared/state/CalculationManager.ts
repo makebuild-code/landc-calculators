@@ -108,7 +108,7 @@ export class CalculationManager {
    * - EndOfTerm === SixToTwelveMonths || TwelvePlusMonths
    */
   private calculateIsProceedable = (answers: Inputs): Partial<Calculations> => {
-    const { PurchRemo, ReadinessToBuy, CreditImpaired, EndOfTerm } = answers;
+    const { PurchRemo, ReadinessToBuy, CreditImpaired, DatePlanToRemo } = answers;
 
     // Start with proceedable is true, remove it if any conditions are met
     let isProceedable = true;
@@ -132,7 +132,7 @@ export class CalculationManager {
       // If PurchRemo is 'Remortgage'
     } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage)) {
       // If EndOfTerm doesn't exist or is 'TwelvePlusMonths', isProceedable is false
-      if (!EndOfTerm || EndOfTerm === getEnumKey(DatePlanToRemoENUM, DatePlanToRemoENUM.TwelvePlusMonths)) {
+      if (!DatePlanToRemo || DatePlanToRemo === getEnumKey(DatePlanToRemoENUM, DatePlanToRemoENUM.TwelvePlusMonths)) {
         isProceedable = false;
       }
     }
