@@ -207,7 +207,7 @@ export class ResultsManager {
 
     this.appointmentDialogButton.addEventListener('click', () => this.appointmentDialog.showModal());
     this.appointmentDialogClose.addEventListener('click', () => {
-      MCTManager.setMortgageId(null);
+      MCTManager.setProduct(null);
       this.product = null;
       this.appointmentDialog.close();
     });
@@ -355,7 +355,7 @@ export class ResultsManager {
   }
 
   private handleProductCTA(product: Product): void {
-    MCTManager.setMortgageId(product.ProductId);
+    MCTManager.setProduct(product.ProductId);
     this.product = product;
     const { ApplyDirectLink } = product;
 

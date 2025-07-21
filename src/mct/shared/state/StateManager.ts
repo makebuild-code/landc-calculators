@@ -6,7 +6,7 @@ import type {
   InputValue,
   Inputs,
   InputData,
-  InputPrefillConfig,
+  InputPrefill,
   StageIDENUM,
   Calculations,
   Product,
@@ -26,13 +26,11 @@ const defaultState: AppState = {
   icid: null,
   currentStageId: null,
   inputs: {},
-  inputPrefillConfig: {},
+  inputPrefill: {},
   calculations: {} as Calculations,
-  mortgageId: null,
-  answers: {},
   filters: {},
-  product: {},
-  booking: {},
+  product: null,
+  booking: null,
   form: {},
 };
 
@@ -140,9 +138,9 @@ export class StateManager {
     };
 
     const answers = { ...this.state.inputs, [answerData.key]: answerData.value };
-    const prefillAnswers = { ...this.state.inputPrefillConfig, [answerData.name]: answerData.value };
+    const prefillAnswers = { ...this.state.inputPrefill, [answerData.name]: answerData.value };
 
-    this.setState({ inputs: answers, inputPrefillConfig: prefillAnswers });
+    this.setState({ inputs: answers, inputPrefill: prefillAnswers });
   }
 
   getAnswer(key: InputKey): InputValue | undefined {
@@ -158,21 +156,21 @@ export class StateManager {
     const prefillAnswers = answerDataArray.reduce((acc, answer) => {
       acc[answer.name] = answer.value;
       return acc;
-    }, {} as InputPrefillConfig);
+    }, {} as InputPrefill);
 
-    this.setState({ inputs: answers, inputPrefillConfig: prefillAnswers });
+    this.setState({ inputs: answers, inputPrefill: prefillAnswers });
   }
 
   getAnswers(): Inputs {
     return { ...this.state.inputs };
   }
 
-  setPrefillValues(prefillData: InputPrefillConfig): void {
-    this.set('inputPrefillConfig', { ...this.state.inputPrefillConfig, ...prefillData });
+  setPrefillValues(prefillData: InputPrefill): void {
+    this.set('inputPrefill', { ...this.state.inputPrefill, ...prefillData });
   }
 
-  getPrefillAnswers(): InputPrefillConfig {
-    return { ...this.state.inputPrefillConfig };
+  getPrefillAnswers(): InputPrefill {
+    return { ...this.state.inputPrefill };
   }
 
   setCalculations(calculations: Partial<Calculations>): void {
@@ -181,57 +179,6 @@ export class StateManager {
 
   getCalculations(): Calculations {
     return { ...this.state.calculations };
-  }
-
-  setFilters(filterDataArray: InputData[]): void {
-    const filters = filterDataArray.reduce<Partial<Inputs>>((acc, filter) => {
-      acc[filter.key] = filter.value as any;
-      return acc;
-    }, {} as Inputs);
-
-    this.set('filters', filters);
-  }
-
-  getFilters(): Inputs {
-    return this.state.filters;
-  }
-
-  setProduct(product: Product) {
-    this.set('product', product);
-  }
-
-  getProduct(): Product {
-    return this.state.product;
-  }
-
-  clearProduct(): void {
-    this.set('product', {});
-  }
-
-  setBooking(booking: Booking): void {
-    this.set('booking', booking);
-  }
-
-  getBooking(): Booking {
-    return this.state.booking;
-  }
-
-  setFormInput(formData: Record<string, any>): void {
-    this.set('form', { ...this.state.form, [formData.key]: formData.value });
-  }
-
-  clearFormInput(key: string): void {
-    const form = { ...this.state.form };
-    delete form[key];
-    this.set('form', form);
-  }
-
-  getForm(): Record<string, any> {
-    return this.state.form;
-  }
-
-  clearForm(): void {
-    this.set('form', {});
   }
 
   // clearAnswer(key: AnswerKey): void {

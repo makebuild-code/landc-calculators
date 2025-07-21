@@ -10,8 +10,9 @@ import {
   ProductsRequestENUM,
   PurchRemoENUM,
   SapValueENUM,
+  type Booking,
   type CreditImpairedENUM,
-  type EndOfTermENUM,
+  type DatePlanToRemoENUM,
   type FirstTimeBuyerENUM,
   type PropertyTypeENUM,
   type ReadinessToBuyENUM,
@@ -27,7 +28,7 @@ import type { CheckboxValues, NumberValue, RadioValue, SelectValue, TextValue } 
 export type InputKey = keyof Inputs; // // Initial name of the input group, same as the key in the Inputs object
 export type InputName = string; // Final name of the input group, unique identifier based on the InputKey, GroupName and Value if a Radio or Checkbox input
 export type InputValue = RadioValue | CheckboxValues | TextValue | NumberValue | SelectValue | undefined; // The value of the input
-export type InputPrefillConfig = Record<InputName, InputValue>; // Answers that are prefilled
+export type InputPrefill = Record<InputName, InputValue>; // Answers that are prefilled
 
 export enum InputKeysENUM {
   PurchRemo = 'PurchRemo',
@@ -64,7 +65,7 @@ export type Inputs = {
   [InputKeysENUM.MortgageLength]?: number; // will have by the end
   [InputKeysENUM.SchemeTypes]?: keyof typeof SchemeTypesENUM; // will have by the end
   [InputKeysENUM.SchemePeriods]?: keyof typeof SchemePeriodsENUM; // will have by the end
-  [InputKeysENUM.EndOfTerm]?: keyof typeof EndOfTermENUM;
+  [InputKeysENUM.EndOfTerm]?: keyof typeof DatePlanToRemoENUM;
   [InputKeysENUM.RepaymentValue]?: number; // will have by the end
   [InputKeysENUM.RemoChange]?: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]?: string;
@@ -79,7 +80,7 @@ export type PurchInputs = {
 };
 
 export type RemoInputs = {
-  [InputKeysENUM.EndOfTerm]: keyof typeof EndOfTermENUM;
+  [InputKeysENUM.EndOfTerm]: keyof typeof DatePlanToRemoENUM;
   [InputKeysENUM.RemoChange]: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]: string;
 };
@@ -133,13 +134,10 @@ export interface AppState {
   icid: string | null;
   currentStageId: string | null;
   inputs: Inputs;
-  inputPrefillConfig: InputPrefillConfig;
+  inputPrefill: InputPrefill;
   calculations: Calculations;
-  mortgageId: number | null;
-
-  answers: any;
-  filters: any;
-  product: any;
-  booking: any;
-  form: any;
+  product: number | null;
+  filters: Inputs;
+  booking: Booking | null;
+  form: Record<string, any>;
 }
