@@ -9,6 +9,8 @@ import type {
   InputPrefillConfig,
   StageIDENUM,
   Calculations,
+  Product,
+  Booking,
 } from '$mct/types';
 
 export interface StateChangeEvent {
@@ -30,7 +32,7 @@ const defaultState: AppState = {
   answers: {},
   filters: {},
   product: {},
-  appointment: {},
+  booking: {},
   form: {},
 };
 
@@ -179,6 +181,57 @@ export class StateManager {
 
   getCalculations(): Calculations {
     return { ...this.state.calculations };
+  }
+
+  setFilters(filterDataArray: InputData[]): void {
+    const filters = filterDataArray.reduce<Partial<Inputs>>((acc, filter) => {
+      acc[filter.key] = filter.value as any;
+      return acc;
+    }, {} as Inputs);
+
+    this.set('filters', filters);
+  }
+
+  getFilters(): Inputs {
+    return this.state.filters;
+  }
+
+  setProduct(product: Product) {
+    this.set('product', product);
+  }
+
+  getProduct(): Product {
+    return this.state.product;
+  }
+
+  clearProduct(): void {
+    this.set('product', {});
+  }
+
+  setBooking(booking: Booking): void {
+    this.set('booking', booking);
+  }
+
+  getBooking(): Booking {
+    return this.state.booking;
+  }
+
+  setFormInput(formData: Record<string, any>): void {
+    this.set('form', { ...this.state.form, [formData.key]: formData.value });
+  }
+
+  clearFormInput(key: string): void {
+    const form = { ...this.state.form };
+    delete form[key];
+    this.set('form', form);
+  }
+
+  getForm(): Record<string, any> {
+    return this.state.form;
+  }
+
+  clearForm(): void {
+    this.set('form', {});
   }
 
   // clearAnswer(key: AnswerKey): void {

@@ -140,6 +140,6 @@ export interface AppState {
   answers: any;
   filters: any;
   product: any;
-  appointment: any;
+  booking: any;
   form: any;
 }

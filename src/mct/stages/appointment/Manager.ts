@@ -141,10 +141,9 @@ export class AppointmentManager {
         groupName: 'appointment',
         indexInGroup: index,
         onChange: () => {
-          this.stateManager.set('form', {
-            ...this.stateManager.get('form'),
-            [inputGroup.getStateValue('initialName')]: inputGroup.getStateValue('value'),
-          });
+          const key = inputGroup.getStateValue('initialName');
+          const value = inputGroup.getStateValue('value');
+          this.stateManager.setFormInput({ [key]: value });
         },
         onEnter: () => {},
       });
@@ -458,7 +457,7 @@ export class AppointmentManager {
         MaximumBudget: stateData.MaximumBudget,
         BuyerType: stateData.BuyerType,
         ResiBtl: stateData.ResiBtl as ResiBtlENUM,
-        Lender: stateData.Lender,
+        // Lender: stateData.Lender,
         ReadinessToBuy: stateData.ReadinessToBuy,
         PurchRemo: stateData.PurchRemo,
         PropertyValue: stateData.PropertyValue as number,
@@ -472,6 +471,15 @@ export class AppointmentManager {
         IsSMSMarketingPermitted: formData.IsSMSMarketingPermitted as boolean,
         IsPostMarketingPermitted: formData.IsPostMarketingPermitted as boolean,
         IsSocialMessageMarketingPermitted: formData.IsSocialMessageMarketingPermitted as boolean,
+        // NEW
+        CurrentLender: stateData.Lender, // optional
+        LoanAmount: 0,
+        InterestOnlyAmount: 0,
+        Notes: 'string', // optional
+        FTB: false,
+        NewBuild: false,
+        DatePlanToRemo: 'string', // optional
+        ChosenMCTProduct: 'string',
       },
       booking: appointmentData,
     };

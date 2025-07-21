@@ -22,12 +22,12 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
   },
   inputs: {
     type: 'localStorage',
-    key: 'mct_answers',
+    key: 'mct_inputs',
     serialize: true,
   },
   inputPrefillConfig: {
     type: 'sessionStorage',
-    key: 'mct_prefill_answers',
+    key: 'mct_inputs_prefill',
     serialize: true,
   },
   calculations: {
@@ -42,7 +42,7 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
   },
   answers: {
     type: 'localStorage',
-    key: 'mct_answers_new',
+    key: 'mct_answers',
     serialize: true,
   },
   filters: {
@@ -55,7 +55,7 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     key: 'mct_product',
     serialize: true,
   },
-  appointment: {
+  booking: {
     type: 'sessionStorage',
     key: 'mct_appointment',
     serialize: true,
