@@ -536,9 +536,10 @@ export class AppointmentManager {
    */
   private getFormData(): Partial<EnquiryLead> | null {
     try {
+      // const formData = this.stateManager.get('form');
       const formData: Record<string, any> = {};
       this.formInputGroups.forEach((group) => {
-        formData[group.getStateValue('initialName')] = group.getValue() as InputValue;
+        formData[group.getStateValue('initialName')] = group.getValue();
       });
 
       // Map form fields to API fields

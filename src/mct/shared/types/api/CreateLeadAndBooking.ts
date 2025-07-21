@@ -73,7 +73,7 @@ export interface EnquiryLead {
   IsPostMarketingPermitted: boolean;
   IsSocialMessageMarketingPermitted: boolean;
   // NEW
-  MortgageType: MortgageTypeENUM;
+  // MortgageType: MortgageTypeENUM;
   CurrentLender?: string;
   LoanAmount: number;
   InterestOnlyAmount: number;
