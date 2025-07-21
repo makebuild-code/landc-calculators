@@ -27,6 +27,7 @@ import type {
   LogUserEventCustom,
   LogUserEventRequest,
   CalculationKeysENUM,
+  Booking,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
@@ -319,12 +320,55 @@ export const MCTManager = {
     calculationManager.recalculate();
   },
 
-  setMortgageId(mortgageId: number | null) {
-    stateManager.set('mortgageId', mortgageId);
+  setFilters(filterDataArray: InputData[]): void {
+    const filters = filterDataArray.reduce<Partial<Inputs>>((acc, filter) => {
+      acc[filter.key] = filter.value as any;
+      return acc;
+    }, {} as Inputs);
+
+    stateManager.set('filters', filters);
   },
 
-  getMortgageId(): number | null {
-    return stateManager.get('mortgageId');
+  getFilters(): Inputs {
+    return stateManager.get('filters');
+  },
+
+  setProduct(productId: number) {
+    stateManager.set('product', productId);
+  },
+
+  getProduct(): number | null {
+    return stateManager.get('product');
+  },
+
+  clearProduct(): void {
+    stateManager.set('product', null);
+  },
+
+  setBooking(booking: Booking): void {
+    stateManager.set('booking', booking);
+  },
+
+  getBooking(): Booking | null {
+    return stateManager.get('booking');
+  },
+
+  setFormInput(formData: Record<string, any>): void {
+    stateManager.set('form', { ...stateManager.get('form'), [formData.key]: formData.value });
+  },
+
+  clearFormInput(key: string): void {
+    const form = { ...stateManager.get('form') };
+    delete form[key];
+    stateManager.set('form', form);
+  },
+
+  getForm(): Record<string, any> {
+    return stateManager.get('form');
+  },
+
+  clearForm(): void {
+    stateManager.set('form', {});
   },
 
   async logUserEvent(event: LogUserEventCustom): Promise<void> {
