@@ -28,6 +28,7 @@ import type {
   LogUserEventRequest,
   CalculationKeysENUM,
   Booking,
+  EnquiryForm,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
@@ -345,8 +346,13 @@ export const MCTManager = {
     stateManager.set('product', null);
   },
 
-  setBooking(booking: Booking): void {
-    stateManager.set('booking', booking);
+  setBooking(booking: Pick<Booking, 'bookingDate' | 'bookingStart' | 'bookingEnd'>): void {
+    stateManager.set('booking', {
+      ...booking,
+      source: 'SYSTEM',
+      bookingProfile: 'DEFAULT',
+      bookingProfileId: 1,
+    });
   },
 
   getBooking(): Booking | null {
@@ -354,21 +360,21 @@ export const MCTManager = {
   },
 
   setFormInput(formData: Record<string, any>): void {
-    stateManager.set('form', { ...stateManager.get('form'), [formData.key]: formData.value });
+    stateManager.set('form', { ...stateManager.get('form'), ...formData });
   },
 
-  clearFormInput(key: string): void {
+  clearFormInput(key: keyof EnquiryForm): void {
     const form = { ...stateManager.get('form') };
     delete form[key];
     stateManager.set('form', form);
   },
 
-  getForm(): Record<string, any> {
+  getForm(): EnquiryForm {
     return stateManager.get('form');
   },
 
   clearForm(): void {
-    stateManager.set('form', {});
+    stateManager.set('form', {} as EnquiryForm);
   },
 
   async logUserEvent(event: LogUserEventCustom): Promise<void> {

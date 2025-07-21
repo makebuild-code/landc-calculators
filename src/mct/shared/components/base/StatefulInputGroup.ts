@@ -51,11 +51,11 @@ export abstract class StatefulInputGroup<
           value: null,
           isValid: false,
           isInitialised: false,
-          type: 'text', // Will be set in onInit
+          type: 'text', // Will be set in init()
           groupName: options.groupName,
           indexInGroup: options.indexInGroup,
-          initialName: '', // Will be set in onInit
-          finalName: '', // Will be set in onInit
+          initialName: '', // Will be set in init()
+          finalName: '', // Will be set in init()
         };
 
         // Merge base state with extended state
@@ -75,6 +75,7 @@ export abstract class StatefulInputGroup<
   }
 
   protected init(): void {
+    console.log('[STATEFUL_INPUT_GROUP] init()');
     if (this.isInitialized) return;
     this.isInitialized = true;
 
@@ -86,6 +87,9 @@ export abstract class StatefulInputGroup<
     // Get initial name
     const initialName = this.inputs.find((input) => !!input.name)?.name as string;
     this.setStateValue('initialName', initialName);
+
+    // Get value
+    this.setStateValue('value', this.getValue());
 
     // Format names and IDs
     this.formatInputNamesAndIDs();

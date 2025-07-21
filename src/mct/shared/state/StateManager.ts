@@ -31,7 +31,7 @@ const defaultState: AppState = {
   filters: {},
   product: null,
   booking: null,
-  form: {},
+  form: null,
 };
 
 export class StateManager {

@@ -1,5 +1,5 @@
 import type { StateManager } from './StateManager';
-import type { Inputs, Calculations, InputKey, CalculationKey } from '$mct/types';
+import type { Inputs, Calculations, InputKey, CalculationKey, EnquiryForm } from '$mct/types';
 import { DOM_CONFIG } from '$mct/config';
 import { queryElements } from '$utils/dom';
 import { toggleElement } from '../utils/dom/visibility';
@@ -204,7 +204,7 @@ export class VisibilityManager {
    */
   private getVariableValue(variable: string): any {
     // const answers = this.stateManager.getAnswers();
-    const answers = this.stateManager.get('answers');
+    const answers = this.stateManager.get('inputs');
     // const calculations = this.stateManager.getCalculations();
     const calculations = this.stateManager.get('calculations');
     const formData = this.stateManager.get('form');
@@ -212,7 +212,7 @@ export class VisibilityManager {
     // Check in answers first
     if (variable in answers) return answers[variable as keyof Inputs];
     else if (variable in calculations) return calculations[variable as keyof Calculations];
-    else if (variable in formData) return formData[variable as keyof Inputs];
+    else if (variable in formData) return formData[variable as keyof EnquiryForm];
 
     return undefined;
   }

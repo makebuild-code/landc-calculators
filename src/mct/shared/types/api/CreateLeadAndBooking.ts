@@ -57,7 +57,7 @@ export interface EnquiryForm {
   IsSocialMessageMarketingPermitted: boolean;
 }
 
-export interface EnquiryLead extends Omit<EnquiryForm, 'Vulnerable' | 'VulnerableMessage'> {
+export interface EnquiryData {
   lcid: LCID;
   icid: ICID;
   // PartnerId?: PartnerId;
@@ -86,8 +86,10 @@ export interface EnquiryLead extends Omit<EnquiryForm, 'Vulnerable' | 'Vulnerabl
   FTB: boolean;
   NewBuild: boolean;
   DatePlanToRemo?: DatePlanToRemoENUM;
-  ChosenMCTProduct: string;
+  ChosenMCTProduct: number;
 }
+
+export type EnquiryLead = Omit<EnquiryForm, 'Vulnerable' | 'VulnerableMessage'> & EnquiryData;
 
 export interface Booking {
   source: 'SYSTEM';

@@ -13,6 +13,7 @@ import {
   type Booking,
   type CreditImpairedENUM,
   type DatePlanToRemoENUM,
+  type EnquiryForm,
   type FirstTimeBuyerENUM,
   type PropertyTypeENUM,
   type ReadinessToBuyENUM,
@@ -43,7 +44,7 @@ export enum InputKeysENUM {
   MortgageLength = 'MortgageLength',
   SchemeTypes = 'SchemeTypes',
   SchemePeriods = 'SchemePeriods',
-  EndOfTerm = 'EndOfTerm',
+  DatePlanToRemo = 'DatePlanToRemo',
   RepaymentValue = 'RepaymentValue',
   RemoChange = 'RemoChange',
   Lender = 'Lender',
@@ -65,7 +66,7 @@ export type Inputs = {
   [InputKeysENUM.MortgageLength]?: number; // will have by the end
   [InputKeysENUM.SchemeTypes]?: keyof typeof SchemeTypesENUM; // will have by the end
   [InputKeysENUM.SchemePeriods]?: keyof typeof SchemePeriodsENUM; // will have by the end
-  [InputKeysENUM.EndOfTerm]?: keyof typeof DatePlanToRemoENUM;
+  [InputKeysENUM.DatePlanToRemo]?: keyof typeof DatePlanToRemoENUM;
   [InputKeysENUM.RepaymentValue]?: number; // will have by the end
   [InputKeysENUM.RemoChange]?: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]?: string;
@@ -80,7 +81,7 @@ export type PurchInputs = {
 };
 
 export type RemoInputs = {
-  [InputKeysENUM.EndOfTerm]: keyof typeof DatePlanToRemoENUM;
+  [InputKeysENUM.DatePlanToRemo]: keyof typeof DatePlanToRemoENUM;
   [InputKeysENUM.RemoChange]: keyof typeof RemoChangeENUM;
   [InputKeysENUM.Lender]: string;
 };
@@ -139,5 +140,5 @@ export interface AppState {
   product: number | null;
   filters: Inputs;
   booking: Booking | null;
-  form: Record<string, any>;
+  form: EnquiryForm | null;
 }

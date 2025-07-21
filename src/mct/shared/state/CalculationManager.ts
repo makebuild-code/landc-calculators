@@ -32,7 +32,7 @@ export class CalculationManager {
     this.calculationRules.set(InputKeysENUM.PurchRemo, this.purchRemo);
     this.calculationRules.set(InputKeysENUM.ReadinessToBuy, this.readinessToBuy);
     this.calculationRules.set(InputKeysENUM.CreditImpaired, this.creditImpaired);
-    this.calculationRules.set(InputKeysENUM.EndOfTerm, this.endOfTerm);
+    this.calculationRules.set(InputKeysENUM.DatePlanToRemo, this.endOfTerm);
     this.calculationRules.set(InputKeysENUM.PropertyValue, this.propertyValue);
     this.calculationRules.set(InputKeysENUM.DepositAmount, this.depositAmount);
     this.calculationRules.set(InputKeysENUM.RemoChange, this.remoChange);
