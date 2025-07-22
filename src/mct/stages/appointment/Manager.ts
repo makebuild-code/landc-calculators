@@ -684,6 +684,6 @@ export class AppointmentManager {
     const daySuffix = getOrdinalSuffix(parseInt(dayNumber));
     const monthName = dateObj.toLocaleDateString('en-GB', { month: 'long' });
 
-    return `${dayName} ${dayNumber}${daySuffix} ${monthName} from ${time}`;
+    return `${dayName} ${dayNumber}${daySuffix} ${monthName} between ${time}`;
   }
 }
