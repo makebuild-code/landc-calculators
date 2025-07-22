@@ -49,13 +49,16 @@ export class Result {
     this.outputs.forEach((output) => {
       const outputName = output.getAttribute(attr.output) as keyof Product;
       const outputType = output.getAttribute(attr.type);
-      let outputValue = this.product[outputName] ?? 0;
+      let outputValue = this.product[outputName] ?? undefined;
+      let outputShow = true;
 
       switch (outputType) {
         case OutputTypeENUM.Currency:
+          if (!outputValue) outputValue = 0;
           outputValue = formatNumber(outputValue as number, { type: 'currency' });
           break;
         case OutputTypeENUM.Number:
+          if (!outputValue) outputValue = 0;
           const decimals = output.dataset.decimals;
           outputValue = formatNumber(outputValue as number, {
             type: 'number',
@@ -63,22 +66,22 @@ export class Result {
           });
           break;
         case 'boolean':
-          outputValue = outputValue ? true : false;
+          outputShow = !!outputValue;
           break;
         default:
           outputValue = outputValue.toString();
       }
 
       if (outputName === 'SAP') {
-        outputValue = Number(outputValue) > SapValueENUM.No ? true : false;
+        outputShow = Number(outputValue) > SapValueENUM.No ? true : false;
       } else if (outputName === 'NewBuild') {
-        outputValue = !!outputValue;
+        outputShow = outputValue === 'New Build Only' ? true : false;
       }
 
       if (output instanceof HTMLImageElement) {
         output.src = outputValue.toString();
       } else if (outputType === 'boolean') {
-        output.style.display = outputValue ? 'block' : 'none';
+        output.style.display = outputShow ? 'block' : 'none';
       } else {
         output.textContent = outputValue.toString();
       }
