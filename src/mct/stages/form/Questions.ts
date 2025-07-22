@@ -48,8 +48,8 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (this.getStateValue('initialName') !== 'Lender') return;
 
     try {
-      const lenders = await lendersAPI.getAll();
-      lenders
+      const response = await lendersAPI.getAll();
+      const lenders = response
         .filter((lender) => lender.LenderName !== '' && lender.LenderName !== null)
         .sort((a, b) => a.LenderName.localeCompare(b.LenderName));
 
