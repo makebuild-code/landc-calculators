@@ -35,11 +35,11 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs):
   const SchemePeriodsStringified = JSON.stringify(SchemePeriods);
   const SchemePeriodsText =
     SchemePeriodsStringified === SchemePeriodsENUM.TwoYears
-      ? '2 year'
+      ? '2-year'
       : SchemePeriodsStringified === SchemePeriodsENUM.ThreeYears
-        ? '3 year'
+        ? '3-year'
         : SchemePeriodsStringified === SchemePeriodsENUM.FiveYears
-          ? '5 year'
+          ? '5-year'
           : SchemePeriodsStringified === SchemePeriodsENUM.FivePlusYears
             ? '5+ year'
             : SchemePeriodsStringified === SchemePeriodsENUM.All
