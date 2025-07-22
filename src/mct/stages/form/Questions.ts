@@ -20,11 +20,13 @@ interface QuestionState extends StatefulInputGroupState {
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private formManager: FormManager;
+  private parent: HTMLElement;
 
   constructor(options: QuestionOptions) {
     super(options);
 
     this.formManager = options.formManager;
+    this.parent = this.element.parentElement as HTMLElement;
     this.onEnter = options.onEnter;
     this.debug = true;
   }
@@ -102,6 +104,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   public showQuestion(show: boolean): void {
     show ? this.show() : this.hide();
+    this.parent.style.display = show ? 'block' : 'none'; // Hide or show the parent too
     this.setStateValue('isVisible', show);
   }
 
