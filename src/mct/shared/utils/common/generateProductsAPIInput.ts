@@ -13,6 +13,7 @@ import {
   SchemePurposeENUM,
   SchemeTypesENUM,
   SortColumnENUM,
+  StageIDENUM,
   type InputsByEndOfForm,
   type ProductsOptions,
   type ProductsRequest,
@@ -89,9 +90,11 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const SchemePeriods = JSON.parse(getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM); // This returns an array as expected
   const SchemeTypes = JSON.parse(getValueAsLandC(InputKeysENUM.SchemeTypes) as SchemeTypesENUM); // This returns an array as expected
 
+  const currentStage = MCTManager.getCurrentStage();
   const filters = MCTManager.getFilters();
-  const SortColumn = filters.SortColumn ?? options.sortColumn ?? SortColumnENUM.Rate;
-  const NumberOfResults = options.numberOfResults ?? 1;
+  const miscValues = currentStage === StageIDENUM.Questions ? options : { ...options, ...filters };
+  const SortColumn = miscValues.SortColumn ?? SortColumnENUM.Rate;
+  const NumberOfResults = miscValues.NumberOfResults ?? 1;
 
   const endOfAnswersInput: ProductsRequest = {
     PropertyValue,
@@ -111,11 +114,11 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const NewBuild =
     SchemePurpose === SchemePurposeENUM.Remortgage
       ? undefined
-      : filters.NewBuild === 'true'
+      : miscValues.NewBuild === 'true'
         ? true
-        : filters.NewBuild === 'false'
+        : miscValues.NewBuild === 'false'
           ? false
-          : options.NewBuild ?? FILTERS_CONFIG.NewBuild === 'true'
+          : FILTERS_CONFIG.NewBuild === 'true'
             ? true
             : false;
 
@@ -127,12 +130,12 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   //     : SapValueENUM.Yes;
 
   const Features: ProductsRequestFeatures = {};
-  if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
-  if (options.Offset) Features.Offset = options.Offset;
-  if (options.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = options.EarlyRepaymentCharge;
+  // if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
+  if (miscValues.Offset) Features.Offset = miscValues.Offset;
+  if (miscValues.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = !miscValues.EarlyRepaymentCharge;
   if (NewBuild !== undefined) Features.NewBuild = NewBuild;
 
-  const IncludeRetention = (MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean) ?? false;
+  const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
 
   const input: ProductsRequest = {
     ...endOfAnswersInput,

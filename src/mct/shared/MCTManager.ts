@@ -32,6 +32,7 @@ import type {
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
+const VERSION = '16';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;
@@ -75,7 +76,7 @@ export const MCTManager = {
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
-    console.log('FORCING DIST v15');
+    console.log(`FORCING DIST v${VERSION}`);
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
@@ -271,6 +272,10 @@ export const MCTManager = {
 
   getLCID(): string | null {
     return stateManager.getLCID();
+  },
+
+  getCurrentStage(): StageIDENUM {
+    return stateManager.getCurrentStage();
   },
 
   setAnswer(answerData: InputData) {

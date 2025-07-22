@@ -11,6 +11,7 @@ import {
   ResiBtlENUM,
   SchemePeriodsENUM,
   SchemeTypesENUM,
+  StageIDENUM,
   type InputKey,
   type Inputs,
 } from '$mct/types';
@@ -32,7 +33,7 @@ type EnumMap = {
   RepaymentType: typeof RepaymentTypeENUM;
   SchemeTypes: typeof SchemeTypesENUM;
   SchemePeriods: typeof SchemePeriodsENUM;
-  EndOfTerm: typeof DatePlanToRemoENUM;
+  DatePlanToRemo: typeof DatePlanToRemoENUM;
   RemoChange: typeof RemoChangeENUM;
 };
 
@@ -43,17 +44,19 @@ type GetValueAsLandCReturnType<T extends AllKeys> = T extends keyof EnumMap
     ? ExtractValueType<Inputs, T>
     : never;
 
-// // Conditional type that returns the enum values
-// type GetValueAsLandCReturnType<T extends AllKeys> = T extends keyof EnumMap
-//   ? T extends 'SchemeTypes'
-//     ? SchemeTypesENUM[] // Special case for SchemeTypes which should return an array
-//     : EnumMap[T][keyof EnumMap[T]]
-//   : T extends keyof Inputs
-//     ? ExtractValueType<Inputs, T>
-//     : never;
-
 export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCReturnType<T> | undefined => {
-  const value = MCTManager.getAnswer(key as InputKey);
+  const answers = MCTManager.getAnswers();
+  const filters = MCTManager.getFilters();
+  const currentStage = MCTManager.getCurrentStage();
+
+  let values: Inputs;
+  if (currentStage === StageIDENUM.Questions) {
+    values = answers;
+  } else {
+    values = { ...answers, ...filters };
+  }
+
+  const value = values[key as InputKey];
 
   if (!value) return undefined;
 
@@ -72,7 +75,7 @@ export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCRetur
     RepaymentType: RepaymentTypeENUM,
     SchemeTypes: SchemeTypesENUM,
     SchemePeriods: SchemePeriodsENUM,
-    EndOfTerm: DatePlanToRemoENUM,
+    DatePlanToRemo: DatePlanToRemoENUM,
     RemoChange: RemoChangeENUM,
   };
 
