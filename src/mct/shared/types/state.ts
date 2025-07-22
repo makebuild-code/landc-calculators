@@ -106,8 +106,9 @@ export enum CalculationKeysENUM {
   IsProceedable = 'isProceedable',
   OfferAccepted = 'offerAccepted',
   LTV = 'LTV',
+  MortgageAmount = 'MortgageAmount',
   IncludeRetention = ProductsRequestENUM.IncludeRetention,
-  BorrowAmount = InputKeysENUM.BorrowAmount,
+  BorrowAmount = InputKeysENUM.BorrowAmount, // TODO: remove
   // InterestOnlyValue = InputKeysENUM.InterestOnlyValue,
 }
 
@@ -117,6 +118,7 @@ export type Calculations = {
   [CalculationKeysENUM.IsProceedable]?: boolean;
   [CalculationKeysENUM.OfferAccepted]?: OfferAcceptedENUM;
   [CalculationKeysENUM.LTV]?: number;
+  [CalculationKeysENUM.MortgageAmount]?: number;
   [CalculationKeysENUM.IncludeRetention]?: boolean;
   [CalculationKeysENUM.BorrowAmount]?: number;
   // [CalculationKeysENUM.InterestOnlyValue]?: number;
