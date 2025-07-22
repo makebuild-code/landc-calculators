@@ -8,7 +8,6 @@ import {
   PurchRemoENUM,
   RepaymentTypeENUM,
   ResiBtlENUM,
-  SapValueENUM,
   SchemePeriodsENUM,
   SchemePurposeENUM,
   SchemeTypesENUM,
@@ -144,8 +143,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     IncludeRetention,
   };
 
-  console.log('endOfAnswersInput', endOfAnswersInput);
-  console.log('input', input);
+  console.log('[generateProductsAPIInput]', { endOfAnswersInput, input });
 
   return input;
 };

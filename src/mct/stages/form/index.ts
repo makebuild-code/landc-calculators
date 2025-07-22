@@ -1,5 +1,4 @@
-import { StageIDENUM } from '$mct/types';
-import type { FormOptions } from '../../shared/types/common';
+import type { FormOptions } from '$mct/types';
 import { MainFormManager } from './Manager_Main';
 
 export const initForm = (component: HTMLElement, options: FormOptions): MainFormManager | null => {

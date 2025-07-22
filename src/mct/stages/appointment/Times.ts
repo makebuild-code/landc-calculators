@@ -1,6 +1,5 @@
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 import type { AppointmentSlot, Input } from '$mct/types';
-import { queryElement } from '$utils/dom';
 import { DOM_CONFIG } from '$mct/config';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 
