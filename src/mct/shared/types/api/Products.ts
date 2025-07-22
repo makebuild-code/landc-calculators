@@ -2,12 +2,12 @@ import type { BaseResponse, LenderNames } from './base';
 
 // Options for product requests
 export interface ProductsOptions {
-  numberOfResults?: number;
-  sortColumn?: SortColumnENUM;
+  NumberOfResults?: number;
+  SortColumn?: SortColumnENUM;
   HelpToBuy?: boolean;
   Offset?: boolean;
   EarlyRepaymentCharge?: boolean;
-  NewBuild?: boolean;
+  NewBuild?: boolean | 'true' | 'false';
   SapValue?: number;
 }
 

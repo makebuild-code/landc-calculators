@@ -71,9 +71,11 @@ export class CalculationManager {
 
   private purchRemo = (answers: Inputs): Partial<Calculations> => {
     return {
+      ...this.calculateIncludeRetention(answers),
       ...this.calculateIsProceedable(answers),
       ...this.calculateLoanToValue(answers),
       ...this.calculateMortgageAmount(answers),
+      ...this.calculateOfferAccepted(answers),
     };
   };
 
@@ -152,7 +154,9 @@ export class CalculationManager {
    * - If ReadinessToBuy is not OfferAccepted, OfferAccepted = false
    */
   private calculateOfferAccepted = (answers: Inputs): Partial<Calculations> => {
-    const { ReadinessToBuy } = answers;
+    const { PurchRemo, ReadinessToBuy } = answers;
+    if (PurchRemo !== getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase))
+      return { [CalculationKeysENUM.OfferAccepted]: undefined };
     if (!ReadinessToBuy) return { [CalculationKeysENUM.OfferAccepted]: OfferAcceptedENUM.No };
 
     const readinessToBuyValue = getEnumValue(ReadinessToBuyENUM, ReadinessToBuy);
@@ -169,7 +173,7 @@ export class CalculationManager {
    */
   private calculateLoanToValue = (answers: Inputs): Partial<Calculations> => {
     const { PurchRemo, PropertyValue, DepositAmount, BorrowAmount } = answers;
-    if (!PurchRemo || !PropertyValue) return { LTV: undefined };
+    if (!PurchRemo || !PropertyValue) return { [CalculationKeysENUM.LTV]: undefined };
 
     let LTV = undefined;
     if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase) && DepositAmount) {
@@ -178,7 +182,7 @@ export class CalculationManager {
       LTV = (BorrowAmount / PropertyValue) * 100;
     }
 
-    return { LTV };
+    return { [CalculationKeysENUM.LTV]: LTV };
   };
 
   /**
@@ -187,17 +191,21 @@ export class CalculationManager {
    * - If RemoChange is Change, IncludeRetention = false
    */
   private calculateIncludeRetention = (answers: Inputs): Partial<Calculations> => {
-    const { RemoChange } = answers;
-    if (!RemoChange) return { IncludeRetention: false };
+    console.log('[calculateIncludeRetention] answers', answers);
+
+    const { PurchRemo, RemoChange } = answers;
+    if (PurchRemo !== getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage))
+      return { [CalculationKeysENUM.IncludeRetention]: false };
+    if (!RemoChange) return { [CalculationKeysENUM.IncludeRetention]: false };
 
     const remoChangeValue = getEnumValue(RemoChangeENUM, RemoChange);
     const IncludeRetention = remoChangeValue === RemoChangeENUM.NoChange;
-    return { IncludeRetention };
+    return { [CalculationKeysENUM.IncludeRetention]: IncludeRetention };
   };
 
   private calculateMortgageAmount = (answers: Inputs): Partial<Calculations> => {
     const { PurchRemo, PropertyValue, DepositAmount, BorrowAmount } = answers;
-    if (!PurchRemo) return { MortgageAmount: undefined };
+    if (!PurchRemo) return { [CalculationKeysENUM.MortgageAmount]: undefined };
 
     let MortgageAmount = undefined;
     if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase) && DepositAmount && PropertyValue) {
@@ -206,7 +214,7 @@ export class CalculationManager {
       MortgageAmount = BorrowAmount;
     }
 
-    return { MortgageAmount };
+    return { [CalculationKeysENUM.MortgageAmount]: MortgageAmount };
   };
 
   // Public method to manually trigger calculations

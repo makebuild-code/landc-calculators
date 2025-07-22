@@ -52,6 +52,7 @@ const attr = DOM_CONFIG.attributes.results;
 export class ResultsManager {
   private component: HTMLElement;
   public id: StageIDENUM;
+  private state: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   private isInitialised: boolean = false;
   private isProceedable: boolean = false;
 
@@ -496,8 +497,8 @@ export class ResultsManager {
 
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput({
-      numberOfResults: 100,
-      sortColumn: this.getSortColumnValue(),
+      NumberOfResults: 100,
+      SortColumn: this.getSortColumnValue(),
     });
     if (!input) return null;
 
@@ -511,12 +512,14 @@ export class ResultsManager {
   }
 
   private async handleProductsAPI() {
+    this.state = 'loading';
     this.showListUI('loader', true);
     this.showListUI('pagination', false);
 
     const response = await this.fetchProducts();
     if (!response) {
       this.showListUI('loader', false);
+      this.state = 'error';
       return;
     }
 
@@ -529,6 +532,7 @@ export class ResultsManager {
 
     this.initiateResults();
     this.renderOutputs();
+    this.state = 'loaded';
     this.showListUI('loader', false);
   }
 
@@ -546,7 +550,16 @@ export class ResultsManager {
     show ? componentEl.style.removeProperty('display') : (componentEl.style.display = 'none');
 
     // Hide/Show the results list depending on the component being shown, always show for pagination
-    const showResultsList = component === 'loader' || component === 'empty' ? !show : true;
+    const showResultsList =
+      this.state === 'loaded'
+        ? true
+        : this.state === 'loading'
+          ? false
+          : component === 'loader' || component === 'empty'
+            ? !show
+            : true;
+
+    console.log('[showListUI]', { component, show, showResultsList });
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 
