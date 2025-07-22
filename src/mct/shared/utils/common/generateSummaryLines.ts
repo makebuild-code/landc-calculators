@@ -10,17 +10,23 @@ import {
   type SummaryLines,
 } from '$mct/types';
 import { generateProductsAPIInput } from './generateProductsAPIInput';
+import { MCTManager } from '$mct/manager';
 
 const classes = DOM_CONFIG.classes;
 
 export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs): SummaryLines | null => {
   const productsAPIInput = generateProductsAPIInput();
   if (!productsAPIInput) return null;
-  const { RepaymentValue, TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
+
+  const { TermYears, SchemePeriods, SchemeTypes } = productsAPIInput;
+
+  const { MortgageAmount } = MCTManager.getCalculations();
+  if (!MortgageAmount) return null;
+
   const { RepaymentType } = answers;
 
   // Get repayment and term years text
-  const RepaymentValueText = formatNumber(RepaymentValue, { type: 'currency' });
+  const MortgageAmountText = formatNumber(MortgageAmount, { type: 'currency' });
   const TermYearsText = `${TermYears} years`;
 
   // Get repayment type text
@@ -57,7 +63,7 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs):
 
   const SchemeTypesText = `${SchemeTypesPrefix} rate`;
 
-  const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${RepaymentValueText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
+  const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${MortgageAmountText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
   const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
   const ProductsAndLenders = `Great news. We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} mortgage products</span> from <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> different lenders. Click below to see your results.`;
   const DealsAndRates = `We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
