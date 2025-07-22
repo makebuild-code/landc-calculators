@@ -32,11 +32,11 @@ export class CalculationManager {
     this.calculationRules.set(InputKeysENUM.PurchRemo, this.purchRemo);
     this.calculationRules.set(InputKeysENUM.ReadinessToBuy, this.readinessToBuy);
     this.calculationRules.set(InputKeysENUM.CreditImpaired, this.creditImpaired);
-    this.calculationRules.set(InputKeysENUM.DatePlanToRemo, this.endOfTerm);
+    this.calculationRules.set(InputKeysENUM.DatePlanToRemo, this.datePlanToRemo);
     this.calculationRules.set(InputKeysENUM.PropertyValue, this.propertyValue);
     this.calculationRules.set(InputKeysENUM.DepositAmount, this.depositAmount);
     this.calculationRules.set(InputKeysENUM.RemoChange, this.remoChange);
-    this.calculationRules.set(InputKeysENUM.BorrowAmount, this.repaymentValue);
+    this.calculationRules.set(InputKeysENUM.BorrowAmount, this.borrowAmount);
   }
 
   private subscribeToStateChanges(): void {
@@ -70,7 +70,11 @@ export class CalculationManager {
   }
 
   private purchRemo = (answers: Inputs): Partial<Calculations> => {
-    return { ...this.calculateLoanToValue(answers), ...this.calculateIsProceedable(answers) };
+    return {
+      ...this.calculateIsProceedable(answers),
+      ...this.calculateLoanToValue(answers),
+      ...this.calculateMortgageAmount(answers),
+    };
   };
 
   private readinessToBuy = (answers: Inputs): Partial<Calculations> => {
@@ -81,24 +85,24 @@ export class CalculationManager {
     return this.calculateIsProceedable(answers);
   };
 
-  private endOfTerm = (answers: Inputs): Partial<Calculations> => {
+  private datePlanToRemo = (answers: Inputs): Partial<Calculations> => {
     return this.calculateIsProceedable(answers);
   };
 
   private propertyValue = (answers: Inputs): Partial<Calculations> => {
-    return this.calculateLoanToValue(answers);
+    return { ...this.calculateLoanToValue(answers), ...this.calculateMortgageAmount(answers) };
   };
 
   private depositAmount = (answers: Inputs): Partial<Calculations> => {
-    return this.calculateLoanToValue(answers);
+    return { ...this.calculateLoanToValue(answers), ...this.calculateMortgageAmount(answers) };
   };
 
   private remoChange = (answers: Inputs): Partial<Calculations> => {
     return this.calculateIncludeRetention(answers);
   };
 
-  private repaymentValue = (answers: Inputs): Partial<Calculations> => {
-    return this.calculateLoanToValue(answers);
+  private borrowAmount = (answers: Inputs): Partial<Calculations> => {
+    return { ...this.calculateLoanToValue(answers), ...this.calculateMortgageAmount(answers) };
   };
 
   /**
@@ -164,14 +168,14 @@ export class CalculationManager {
    * - If Remortgage, LTV = RepaymentValue / PropertyValue
    */
   private calculateLoanToValue = (answers: Inputs): Partial<Calculations> => {
-    const { PurchRemo, PropertyValue, DepositAmount, RepaymentValue } = answers;
+    const { PurchRemo, PropertyValue, DepositAmount, BorrowAmount } = answers;
     if (!PurchRemo || !PropertyValue) return { LTV: undefined };
 
     let LTV = undefined;
     if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase) && DepositAmount) {
       LTV = ((PropertyValue - DepositAmount) / PropertyValue) * 100;
-    } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage) && RepaymentValue) {
-      LTV = (RepaymentValue / PropertyValue) * 100;
+    } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage) && BorrowAmount) {
+      LTV = (BorrowAmount / PropertyValue) * 100;
     }
 
     return { LTV };
@@ -189,6 +193,20 @@ export class CalculationManager {
     const remoChangeValue = getEnumValue(RemoChangeENUM, RemoChange);
     const IncludeRetention = remoChangeValue === RemoChangeENUM.NoChange;
     return { IncludeRetention };
+  };
+
+  private calculateMortgageAmount = (answers: Inputs): Partial<Calculations> => {
+    const { PurchRemo, PropertyValue, DepositAmount, BorrowAmount } = answers;
+    if (!PurchRemo) return { MortgageAmount: undefined };
+
+    let MortgageAmount = undefined;
+    if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase) && DepositAmount && PropertyValue) {
+      MortgageAmount = PropertyValue - DepositAmount;
+    } else if (PurchRemo === getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage) && BorrowAmount) {
+      MortgageAmount = BorrowAmount;
+    }
+
+    return { MortgageAmount };
   };
 
   // Public method to manually trigger calculations

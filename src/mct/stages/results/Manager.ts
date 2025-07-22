@@ -335,7 +335,7 @@ export class ResultsManager {
         else if (type === 'progress-bar') output.style.width = `${ltv}%`;
         return;
       } else if (key === 'MortgageAmount') {
-        const mortgageAmount = calculations[CalculationKeysENUM.BorrowAmount];
+        const mortgageAmount = calculations[CalculationKeysENUM.MortgageAmount];
         if (!mortgageAmount) return;
 
         if (type === 'currency') output.textContent = formatNumber(mortgageAmount, { type: 'currency' });
@@ -570,18 +570,10 @@ export class ResultsManager {
     const answers = MCTManager.getAnswersAsLandC();
     const calculations = MCTManager.getCalculations();
 
-    const {
-      PurchRemo,
-      ResiBtl,
-      CreditImpaired,
-      PropertyValue,
-      RepaymentValue,
-      RepaymentType,
-      MortgageLength,
-      ReadinessToBuy,
-    } = answers;
+    const { PurchRemo, ResiBtl, CreditImpaired, PropertyValue, RepaymentType, MortgageLength, ReadinessToBuy } =
+      answers;
 
-    const { offerAccepted } = calculations;
+    const { offerAccepted, MortgageAmount } = calculations;
 
     const params: Record<string, string> = {};
 
@@ -591,7 +583,7 @@ export class ResultsManager {
     if (ResiBtl) params.ResidentialOrBuyToLet = ResiBtl;
     if (CreditImpaired) params.CreditIssues = CreditImpaired;
     if (PropertyValue) params.PropertyValue = PropertyValue.toString();
-    if (RepaymentValue) params.LoanAmount = calculations[CalculationKeysENUM.BorrowAmount]?.toString() || '';
+    if (MortgageAmount) params.LoanAmount = MortgageAmount.toString();
     if (MortgageLength) params.Term = MortgageLength.toString();
     if (RepaymentType)
       params.MortgageRepaymentType =
