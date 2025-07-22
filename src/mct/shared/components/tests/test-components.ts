@@ -1,5 +1,4 @@
 import { StatefulComponent, type StatefulComponentOptions } from '$mct/components';
-import type { FormEvents } from '$mct/types';
 
 // Test state interface
 interface TestComponentState {

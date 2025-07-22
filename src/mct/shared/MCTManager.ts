@@ -18,7 +18,6 @@ import type {
   Inputs,
   InputValue,
   AppState,
-  CalculationKey,
   Calculations,
   CalculationValue,
   GoToStageOptions,
@@ -32,7 +31,7 @@ import type {
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
-const VERSION = '16';
+const VERSION = '17';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;

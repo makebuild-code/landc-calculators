@@ -17,7 +17,6 @@ export class Slider {
 
   constructor(component: HTMLElement, options: SliderOptions) {
     this.component = component;
-    console.log('component', component);
     this.wrapper = options.wrapper;
     this.onThresholdReached = options.onThresholdReached;
     this.configManager = ConfigManager.getInstance();
@@ -41,15 +40,12 @@ export class Slider {
 
     // Add event listener for slider movement
     this.splide.on('moved', (newIndex: number, prevIndex: number) => {
-      console.log('Slider moved from index', prevIndex, 'to', newIndex);
-
       // Check if we're moving towards the end and need to load more days
       const totalSlides = this.splide.length;
       const slidesPerView = this.configManager.getDaysPerView();
       const threshold = totalSlides - slidesPerView * 2; // Load more when we're within one view of the end
 
       if (newIndex + 1 >= threshold) {
-        console.log('Approaching end of slider, loading more days...');
         this.onThresholdReached();
       }
     });

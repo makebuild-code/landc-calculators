@@ -1,14 +1,11 @@
-import { simulateEvent } from '@finsweet/ts-utils';
-
 import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { InputKey, InputValue, LogUserEventCustom, Profile, QuestionsStageOptions } from '$mct/types';
+import type { Profile } from '$mct/types';
 import { GroupNameENUM } from '$mct/types';
-import { StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';

@@ -11,10 +11,9 @@ import type { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
-import type { InputValue, ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
+import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { GroupNameENUM, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
-import globalEventBus from 'src/mct/shared/components/events/globalEventBus';
 import { MCTManager } from '$mct/manager';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -186,14 +185,12 @@ export class MainGroup extends QuestionGroup {
 
     // Show but do not scroll to the next question
     const nextIndex = this.getNextRequiredIndex(index);
-    console.log('nextIndex', nextIndex);
     if (nextIndex < this.questions.length) {
       // this.activeQuestionIndex = nextIndex;
       const nextQuestion = this.getQuestionByIndex(nextIndex);
       nextQuestion.activate();
       this.formManager.updateNavigation({ prevEnabled: true });
     } else if (this.name !== GroupNameENUM.CustomerIdentifier && this.name !== GroupNameENUM.Output) {
-      console.log('nextIndex is out of bounds, navigating to the Ouptut group');
       const outputGroup = this.formManager.getGroupByName(GroupNameENUM.Output) as OutputGroup;
       if (outputGroup) outputGroup.activate(false);
     }

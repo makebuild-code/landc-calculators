@@ -1,5 +1,5 @@
 import type { StateManager } from './StateManager';
-import type { Inputs, Calculations, InputKey, CalculationKey, EnquiryForm } from '$mct/types';
+import type { Inputs, Calculations, EnquiryForm } from '$mct/types';
 import { DOM_CONFIG } from '$mct/config';
 import { queryElements } from '$utils/dom';
 import { toggleElement } from '../utils/dom/visibility';
@@ -257,7 +257,6 @@ export class VisibilityManager {
    * Manually add an element to visibility management
    */
   public addElement(element: HTMLElement, condition: string): void {
-    console.log('[VISIBILITY_MANAGER] ADDING ELEMENT', element, condition);
     this.elements.set(element, condition);
     this.evaluateElementVisibility(element, condition);
   }

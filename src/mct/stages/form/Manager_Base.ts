@@ -7,8 +7,6 @@ import type {
   InputName,
   Inputs,
   InputValue,
-  LogUserEventCustom,
-  LogUserEventRequest,
   Profile,
   QuestionsStageOptions,
 } from '$mct/types';

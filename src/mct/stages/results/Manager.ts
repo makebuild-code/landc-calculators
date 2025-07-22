@@ -5,7 +5,6 @@ import {
   SortColumnENUM,
   type InputData,
   type InputKey,
-  type InputName,
   type Inputs,
   type InputValue,
   type LogUserEventCustom,
@@ -14,7 +13,7 @@ import {
   type ResultsStageOptions,
   type SummaryInfo,
 } from '$mct/types';
-import { InputKeysENUM, OutputTypeENUM, StageIDENUM } from '$mct/types';
+import { OutputTypeENUM, StageIDENUM } from '$mct/types';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { formatNumber } from '$utils/formatting';
 import { Result } from './Result';
@@ -238,7 +237,7 @@ export class ResultsManager {
         element,
         debug: true,
         indexInGroup: index,
-        onEnter: () => console.log('onEnter'),
+        onEnter: () => {},
         onChange: () => this.handleChange(),
         groupName: 'filterGroup',
       });
@@ -289,7 +288,6 @@ export class ResultsManager {
 
     // Reset UI on dialog close (but don't clear product - it may be needed for appointment booking)
     this.howToApplyDialog.addEventListener('close', () => {
-      console.log('closing howToApplyDialog');
       if (this.applyDirect) this.applyDirect.style.display = 'none';
     });
   }
@@ -559,7 +557,6 @@ export class ResultsManager {
             ? !show
             : true;
 
-    console.log('[showListUI]', { component, show, showResultsList });
     showResultsList ? this.resultsList.style.removeProperty('display') : (this.resultsList.style.display = 'none');
   }
 

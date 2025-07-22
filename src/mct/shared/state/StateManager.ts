@@ -9,8 +9,6 @@ import type {
   InputPrefill,
   StageIDENUM,
   Calculations,
-  Product,
-  Booking,
 } from '$mct/types';
 
 export interface StateChangeEvent {
@@ -107,7 +105,6 @@ export class StateManager {
 
   // Convenience methods for common state operations
   setLCID(lcid: string | null): void {
-    console.log('setting lcid', lcid);
     this.set('lcid', lcid);
   }
 

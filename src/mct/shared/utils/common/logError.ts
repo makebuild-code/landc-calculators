@@ -4,6 +4,6 @@ type LogErrorOptions = {
 };
 
 export function logError(message: string, options: LogErrorOptions = {}): false | null {
-  console.log(message, options.data || '');
+  console.error(message, options.data || '');
   return options.returnNull ? null : false;
 }

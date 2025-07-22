@@ -1,4 +1,4 @@
-import type { AllEvents, EventName, EventPayload } from '$mct/types';
+import type { AllEvents, EventName } from '$mct/types';
 
 export interface TypedEventHandler<T extends EventName> {
   (payload: AllEvents[T]): void;

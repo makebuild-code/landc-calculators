@@ -1,19 +1,14 @@
 import type {
   AppointmentStageOptions,
   AppointmentDay,
+  DatePlanToRemoENUM,
   ICID,
   LCID,
-  InputValue,
   LogUserEventCustom,
-  EnquiryForm,
   Inputs,
-  InputKey,
-  DatePlanToRemoENUM,
   EnquiryData,
 } from '$mct/types';
 import {
-  BuyerTypeENUM,
-  CalculationKeysENUM,
   CreditImpairedENUM,
   InputKeysENUM,
   OfferAcceptedENUM,
@@ -28,9 +23,9 @@ import { mortgageAppointmentSlotsAPI, createLeadAndBookingAPI, APIError } from '
 import { DOM_CONFIG, MCT_CONFIG } from '$mct/config';
 import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
-import { getOrdinalSuffix, getOrginalDate } from '$utils/formatting';
+import { getOrdinalSuffix } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
-import type { CreateLeadAndBookingRequest, EnquiryLead, Booking } from '$mct/types';
+import type { CreateLeadAndBookingRequest, EnquiryLead } from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
@@ -193,14 +188,8 @@ export class AppointmentManager {
   }
 
   private bindEvents(): void {
-    this.bookButton.addEventListener('click', () => {
-      console.log('bookButton clicked');
-      this.navigate('next');
-    });
-    this.backButtons.forEach((button) => {
-      button.addEventListener('click', () => this.handleBackButtons());
-    });
-
+    this.bookButton.addEventListener('click', () => this.navigate('next'));
+    this.backButtons.forEach((button) => button.addEventListener('click', () => this.handleBackButtons()));
     this.form.addEventListener('submit', (event) => this.onFormSubmit(event));
   }
 
@@ -217,7 +206,6 @@ export class AppointmentManager {
   private navigate(direction: 'next' | 'previous'): void {
     try {
       if (direction === 'next') {
-        console.log('navigateNext');
         this.navigateNext();
       } else if (direction === 'previous') {
         this.navigatePrevious();
@@ -479,11 +467,8 @@ export class AppointmentManager {
       this.setLoadingState(false);
       return;
     } else {
-      if (formData.Vulnerable === 'Yes') {
+      if (formData.Vulnerable === 'Yes')
         stateData.Notes = `Vulnerable: ${formData.Vulnerable} - Notes: ${formData.VulnerableMessage}`;
-      }
-      console.log('stateData', stateData);
-      console.log('MCTManager.getProduct()', MCTManager.getProduct());
       stateData.ChosenMCTProduct = MCTManager.getProduct() as number;
     }
 
@@ -509,8 +494,6 @@ export class AppointmentManager {
       booking: bookingData,
     };
 
-    console.log('request', request);
-
     try {
       // Call the API
       const response = await createLeadAndBookingAPI.createLeadAndBooking(request);
@@ -525,18 +508,18 @@ export class AppointmentManager {
 
       // Handle specific API errors
       if (error instanceof APIError) {
-        console.log('API Error Status:', error.status);
-        console.log('API Error Message:', error.message);
+        console.error('API Error Status:', error.status);
+        console.error('API Error Message:', error.message);
 
         if (error.status === 409) {
-          console.log('Booking error: 409 - Slot already taken');
+          console.error('Booking error: 409 - Slot already taken');
           this.tryAgainDialog.showModal();
           this.tryAgainButton.addEventListener('click', () => {
             this.tryAgainDialog.close();
             this.showCalendarPanel();
           });
         } else if (error.status === 400) {
-          console.log('Booking error: 400 - Bad request, try again');
+          console.error('Booking error: 400 - Bad request, try again');
           this.formError.style.display = 'block';
         } else {
           console.error('Booking failed with status:', error.status);

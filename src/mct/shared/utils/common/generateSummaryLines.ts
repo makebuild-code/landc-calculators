@@ -5,7 +5,6 @@ import {
   SchemePeriodsENUM,
   SchemeTypesENUM,
   type Inputs,
-  // type CheckboxList,
   type SummaryInfo,
   type SummaryLines,
 } from '$mct/types';

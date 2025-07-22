@@ -2,7 +2,6 @@ import type { StateManager } from './StateManager';
 import {
   type InputKey,
   type Calculations,
-  type CalculationKey,
   type CalculationValue,
   ReadinessToBuyENUM,
   CreditImpairedENUM,
@@ -191,8 +190,6 @@ export class CalculationManager {
    * - If RemoChange is Change, IncludeRetention = false
    */
   private calculateIncludeRetention = (answers: Inputs): Partial<Calculations> => {
-    console.log('[calculateIncludeRetention] answers', answers);
-
     const { PurchRemo, RemoChange } = answers;
     if (PurchRemo !== getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage))
       return { [CalculationKeysENUM.IncludeRetention]: false };
