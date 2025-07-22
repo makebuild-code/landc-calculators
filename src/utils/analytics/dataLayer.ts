@@ -24,7 +24,7 @@ export type DataLayerEvent = 'form_interaction';
  *   dataLayer('form_interaction', { event_category: 'MCTForm', event_label: 'MCT_Submit_${name}', event_value: '${value}' });
  */
 export function dataLayer(event: DataLayerEvent, params: DataLayerParams = {}): void {
-  console.log('PUSHING TO DATA LAYER', { event, ...params });
+  console.log('PUSHING_TO_DATA_LAYER', { event, ...params });
 
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({

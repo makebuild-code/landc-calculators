@@ -328,6 +328,7 @@ export class MainFormManager extends FormManager {
       dataLayer('form_interaction', {
         event_category: 'MCTForm',
         event_label: `MCT_Show_Summary`,
+        event_value: `MCT_BuyerType_${this.profile?.name}`,
       });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
