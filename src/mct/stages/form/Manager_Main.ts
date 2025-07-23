@@ -10,6 +10,7 @@ import { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
 import { globalEventBus } from '$mct/components';
+import { panelToWindow } from 'src/mct/shared/utils/ui';
 
 const attr = DOM_CONFIG.attributes.form;
 
@@ -52,6 +53,8 @@ export class MainFormManager extends FormManager {
   public init(): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
+
+    this.determinePanelOrWindow();
 
     this.showLoader(true);
     this.showHeader('static');
@@ -97,6 +100,7 @@ export class MainFormManager extends FormManager {
 
     this.prepareWrapper();
     window.addEventListener('resize', () => {
+      this.determinePanelOrWindow();
       this.prepareWrapper();
     });
 
@@ -122,6 +126,21 @@ export class MainFormManager extends FormManager {
 
   private showLoader(show: boolean): void {
     this.loader.style.display = show ? 'flex' : 'none';
+  }
+
+  private determinePanelOrWindow(): void {
+    panelToWindow(StageIDENUM.Questions, 'panel');
+
+    const headerRect = this.header.getBoundingClientRect();
+    const buttonContainerRect = this.buttonContainer.getBoundingClientRect();
+    const distance = buttonContainerRect.top - headerRect.bottom;
+    const minDistance = this.list.getBoundingClientRect().height;
+
+    if (distance < minDistance) {
+      panelToWindow(StageIDENUM.Questions, 'window');
+    } else {
+      panelToWindow(StageIDENUM.Questions, 'panel');
+    }
   }
 
   /**
