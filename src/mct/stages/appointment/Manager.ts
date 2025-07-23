@@ -30,6 +30,7 @@ import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
+import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -170,6 +171,8 @@ export class AppointmentManager {
 
     this.dates.initialise();
     this.times.initialise();
+
+    removeInitialStyles(this.component);
   }
 
   private handleInputChange(inputGroup: InputGroup): void {

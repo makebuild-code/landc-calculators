@@ -22,6 +22,7 @@ import { queryElements } from '$utils/dom/queryelements';
 import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
+import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -165,18 +166,6 @@ export class ResultsManager {
     const calculations = MCTManager.getCalculations();
     this.isProceedable = !!calculations.isProceedable;
 
-    // if (options?.exampleData) {
-    //   // Answers will be saved from prior stage, just temporary to avoid inputting every time
-    //   Object.entries(EXAMPLE_ANSWERS).forEach(([key, value]) => {
-    //     MCTManager.setAnswer({
-    //       key: key as AnswerKey,
-    //       name: key as AnswerName,
-    //       value: value as AnswerValue,
-    //       source: 'user',
-    //     });
-    //   });
-    // }
-
     this.handleUpdateAnswers();
     this.initFilters();
     this.initAppointmentDialog();
@@ -191,6 +180,7 @@ export class ResultsManager {
 
     this.handleButtons();
     this.handleShowIfProceedable();
+    // removeInitialStyles(this.component);
   }
 
   private handleProduct(action: 'set' | 'clear', product?: Product): void {
@@ -531,6 +521,7 @@ export class ResultsManager {
     this.initiateResults();
     this.renderOutputs();
     this.state = 'loaded';
+    removeInitialStyles(this.component);
     this.showListUI('loader', false);
   }
 
