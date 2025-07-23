@@ -73,7 +73,6 @@ export abstract class StatefulInputGroup<
   }
 
   protected init(): void {
-    console.log('[STATEFUL_INPUT_GROUP] init()');
     if (this.isInitialized) return;
     this.isInitialized = true;
 

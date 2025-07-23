@@ -18,7 +18,6 @@ export abstract class InteractiveComponent extends BaseComponent {
    * Override to add event binding logic
    */
   protected onInit(): void {
-    this.log('[INTERACTIVE_COMPONENT] onInit()');
     if (this.autoBindEvents) this.bindEvents();
   }
 
@@ -46,8 +45,6 @@ export abstract class InteractiveComponent extends BaseComponent {
     try {
       element.addEventListener(event, handler, options);
       this.eventListeners.push({ element, event, handler, options });
-
-      this.log(`Added event listener: ${event}`, { element, options });
     } catch (error) {
       this.logError('Error adding event listener:', error);
     }
@@ -67,7 +64,6 @@ export abstract class InteractiveComponent extends BaseComponent {
 
     if (index === -1) return;
     this.eventListeners.splice(index, 1);
-    this.log(`Removed event listener: ${event}`, { element });
   }
 
   /**
@@ -78,7 +74,6 @@ export abstract class InteractiveComponent extends BaseComponent {
       element.removeEventListener(event, handler, options);
     });
 
-    this.log(`Unbound ${this.eventListeners.length} event listeners`);
     this.eventListeners = [];
   }
 

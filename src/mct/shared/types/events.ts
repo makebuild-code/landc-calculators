@@ -39,7 +39,7 @@ export interface TrackedEventListener {
 }
 
 export enum MCTEventNames {
-  STAGE_GO_TO = 'mct:stage:goTo',
+  STAGE_COMPLETE = 'mct:stage:complete',
 }
 
 export enum FormEventNames {
@@ -84,7 +84,7 @@ export enum APIEventNames {
  */
 
 export interface MCTEvents {
-  [MCTEventNames.STAGE_GO_TO]: {
+  [MCTEventNames.STAGE_COMPLETE]: {
     stageId: StageIDENUM;
   };
 }

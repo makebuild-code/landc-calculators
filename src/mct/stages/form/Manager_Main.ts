@@ -5,10 +5,11 @@ import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { Profile } from '$mct/types';
-import { GroupNameENUM } from '$mct/types';
+import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
+import { globalEventBus } from '$mct/components';
 
 const attr = DOM_CONFIG.attributes.form;
 
@@ -329,7 +330,7 @@ export class MainFormManager extends FormManager {
       });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      activeGroup.navigateToResults();
+      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
     } else this.updateNavigation({ nextEnabled: true, prevEnabled: true });
 
     this.handleShowHideOnGroup();

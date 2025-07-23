@@ -2,6 +2,7 @@ import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/conf
 import {
   APIEventNames,
   CalculationKeysENUM,
+  MCTEventNames,
   RepaymentTypeENUM,
   SortColumnENUM,
   type InputData,
@@ -25,7 +26,6 @@ import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { EventBus, globalEventBus } from '$mct/components';
-import { API_ENDPOINTS } from 'src/constants';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -419,7 +419,7 @@ export class ResultsManager {
     this.goToAppointmentButtons.forEach((button) =>
       button.addEventListener('click', () => {
         this.howToApplyDialog.close();
-        MCTManager.goToStage(StageIDENUM.Appointment);
+        globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
       })
     );
 
@@ -480,7 +480,7 @@ export class ResultsManager {
       !!ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
       this.howToApplyDialog.showModal();
     } else if (this.isProceedable) {
-      MCTManager.goToStage(StageIDENUM.Appointment);
+      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
     } else if (!this.isProceedable) {
       this.handleDirectToBroker();
     }
@@ -526,7 +526,6 @@ export class ResultsManager {
 
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
-    MCTManager.getStateManager().setState({ summaryInfo: this.summaryInfo });
 
     // Force the modal to show
     this.allowApplyDirect = true;
@@ -566,7 +565,7 @@ export class ResultsManager {
 
   // private handleGetFreeAdvice(): void {
   //   this.howToApplyDialog.close();
-  //   MCTManager.goToStage(StageIDENUM.Appointment);
+  //   globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
   // }
 
   private async handleDirectToBroker(): Promise<void> {

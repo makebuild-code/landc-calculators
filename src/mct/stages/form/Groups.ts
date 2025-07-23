@@ -12,9 +12,10 @@ import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { GroupNameENUM, StageIDENUM } from '$mct/types';
+import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
+import { globalEventBus } from '$mct/components';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -418,6 +419,6 @@ export class OutputGroup extends BaseGroup {
       event_label: `MCT_Show_Results`,
     });
 
-    MCTManager.goToStage(StageIDENUM.Results);
+    globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
   }
 }

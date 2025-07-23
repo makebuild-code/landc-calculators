@@ -53,9 +53,9 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
     this.previousState = { ...this.state };
     this.state = { ...this.state, ...updates };
 
-    // Only log if state actually changed
-    if (this.debug && !this.shallowEqual(this.previousState, this.state))
-      this.log('State updated', { previous: this.previousState, current: this.state, changes: updates });
+    // // Only log if state actually changed
+    // if (this.debug && !this.shallowEqual(this.previousState, this.state))
+    //   this.log('State updated', { previous: this.previousState, current: this.state, changes: updates });
 
     // Notify subscribers
     this.notifyStateSubscribers();
