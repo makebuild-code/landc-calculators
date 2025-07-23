@@ -106,8 +106,8 @@ export const MCTManager = {
 
   initICID() {
     const icid = this.getICID();
-    const setAs = !icid || icid === 'default' ? 'mct' : icid;
-    this.setICID(setAs);
+    const newICID = !icid || icid === 'default' ? 'mct' : icid;
+    this.setICID(newICID);
   },
 
   async initLCID() {
