@@ -9,6 +9,7 @@ export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'pa
   const toWindow = to === 'window';
 
   const panelBackground = queryElement('.mct_panel_background_wrapper', component);
+  const header = queryElement('.mct_panel_header', component);
   const stickyHeader = queryElement('.mct_sticky-header_sticky', component);
   const panelButtons = queryElement('.mct_panel_buttons', component);
 
@@ -32,6 +33,8 @@ export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'pa
 
   if (panelBackground)
     toWindow ? (panelBackground.style.display = 'none') : panelBackground.style.removeProperty('display');
+
+  if (header) toWindow ? (header.style.paddingTop = '0px') : header.style.removeProperty('padding-top');
 
   if (stickyHeader) toWindow ? (stickyHeader.style.top = '0px') : stickyHeader.style.removeProperty('top');
 

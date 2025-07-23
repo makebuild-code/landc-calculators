@@ -289,15 +289,6 @@ export class MainGroup extends QuestionGroup {
     this.formManager.scrollTo(question);
     this.onInputChange(question.isValid());
   }
-
-  // private deactivateQuestion(question: QuestionComponent): void {
-  //   const required = question.getStateValue('isRequired');
-  //   if (!required) {
-  //     question.disable();
-  //     question.toggleActive(false);
-  //     question.showQuestion(false);
-  //   }
-  // }
 }
 
 // @description: Output group of questions
