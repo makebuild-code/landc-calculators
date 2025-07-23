@@ -54,8 +54,6 @@ export class MainFormManager extends FormManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
-    this.determinePanelOrWindow();
-
     this.showLoader(true);
     this.showHeader('static');
 
@@ -72,6 +70,8 @@ export class MainFormManager extends FormManager {
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
+
+    this.determinePanelOrWindow();
 
     this.handleShowHideOnGroup();
 
