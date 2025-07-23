@@ -9,7 +9,7 @@ import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
 import { globalEventBus, testComponents, testSimpleComponent } from '$mct/components';
-import { DOM_CONFIG } from '$mct/config';
+import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
 import type {
@@ -216,12 +216,27 @@ export const MCTManager = {
       this.goToStage(StageIDENUM.Questions);
     }
 
-    // this.goToStage(StageIDENUM.Results);
+    globalEventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
+      console.log('🔄 Stage complete', event);
+
+      let nextStageId;
+      switch (event.stageId) {
+        case StageIDENUM.Questions:
+          nextStageId = StageIDENUM.Results;
+          break;
+        case StageIDENUM.Results:
+          nextStageId = StageIDENUM.Appointment;
+          break;
+        default:
+          nextStageId = null;
+      }
+
+      if (nextStageId) this.goToStage(nextStageId);
+    });
   },
 
   goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
     console.log('🔄 Going to stage', stageId);
-    globalEventBus.emit(MCTEventNames.STAGE_GO_TO, { stageId });
 
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
@@ -464,14 +479,14 @@ export const MCTManager = {
     // Make event bus available globally for testing
     (window as any).globalEventBus = globalEventBus;
 
-    // Add some test event listeners
-    globalEventBus.on(FormEventNames.QUESTION_CHANGED, (payload) => {
-      console.log('📡 MCT Event: Question changed', payload);
-    });
+    // // Add some test event listeners
+    // globalEventBus.on(FormEventNames.QUESTION_CHANGED, (payload) => {
+    //   console.log('📡 MCT Event: Question changed', payload);
+    // });
 
-    globalEventBus.on(FormEventNames.NAVIGATION_UPDATE, (payload) => {
-      console.log('📡 MCT Event: Navigation updated', payload);
-    });
+    // globalEventBus.on(FormEventNames.NAVIGATION_UPDATE, (payload) => {
+    //   console.log('📡 MCT Event: Navigation updated', payload);
+    // });
 
     // Make component testing available
     (window as any).testComponents = testComponents;

@@ -5,10 +5,12 @@ import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { Profile } from '$mct/types';
-import { GroupNameENUM } from '$mct/types';
+import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
+import { globalEventBus } from '$mct/components';
+import { panelToWindow } from 'src/mct/shared/utils/ui';
 
 const attr = DOM_CONFIG.attributes.form;
 
@@ -69,6 +71,8 @@ export class MainFormManager extends FormManager {
       this.groups.push(group);
     });
 
+    this.determinePanelOrWindow();
+
     this.handleShowHideOnGroup();
 
     // Handle profile option if provided
@@ -96,6 +100,7 @@ export class MainFormManager extends FormManager {
 
     this.prepareWrapper();
     window.addEventListener('resize', () => {
+      this.determinePanelOrWindow();
       this.prepareWrapper();
     });
 
@@ -121,6 +126,21 @@ export class MainFormManager extends FormManager {
 
   private showLoader(show: boolean): void {
     this.loader.style.display = show ? 'flex' : 'none';
+  }
+
+  private determinePanelOrWindow(): void {
+    panelToWindow(StageIDENUM.Questions, 'panel');
+
+    const headerRect = this.header.getBoundingClientRect();
+    const buttonContainerRect = this.buttonContainer.getBoundingClientRect();
+    const distance = buttonContainerRect.top - headerRect.bottom;
+    const minDistance = this.list.getBoundingClientRect().height;
+
+    if (distance < minDistance) {
+      panelToWindow(StageIDENUM.Questions, 'window');
+    } else {
+      panelToWindow(StageIDENUM.Questions, 'panel');
+    }
   }
 
   /**
@@ -329,7 +349,7 @@ export class MainFormManager extends FormManager {
       });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      activeGroup.navigateToResults();
+      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
     } else this.updateNavigation({ nextEnabled: true, prevEnabled: true });
 
     this.handleShowHideOnGroup();

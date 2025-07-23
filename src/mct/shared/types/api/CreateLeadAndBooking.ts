@@ -86,7 +86,7 @@ export interface EnquiryData {
   FTB: boolean;
   NewBuild: boolean;
   DatePlanToRemo?: DatePlanToRemoENUM;
-  ChosenMCTProduct: number;
+  ChosenMCTProduct?: number;
 }
 
 export type EnquiryLead = Omit<EnquiryForm, 'Vulnerable' | 'VulnerableMessage'> & EnquiryData;
