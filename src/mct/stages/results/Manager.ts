@@ -426,7 +426,6 @@ export class ResultsManager {
     // Close the dialog and go to OEF
     this.goToOEFButtons.forEach((button) =>
       button.addEventListener('click', () => {
-        this.handleProduct('clear');
         this.howToApplyDialog.close();
         this.handleDirectToBroker();
       })
@@ -435,7 +434,6 @@ export class ResultsManager {
     // Close the dialog and go to lender
     this.goToLenderButtons.forEach((button) =>
       button.addEventListener('click', () => {
-        this.handleProduct('clear');
         this.howToApplyDialog.close();
         this.handleDirectToLender();
       })
@@ -628,11 +626,14 @@ export class ResultsManager {
 
       setTimeout(() => {
         window.open(this.product?.ApplyDirectLink || '', '_blank');
+        this.applyDirectDialog?.close();
       }, 3000);
     } catch (error) {
       console.error('Failed to log user events before redirect:', error);
       // Optionally, you could still redirect even if logging fails
       // Or handle the error differently based on your requirements
+      window.open(this.product?.ApplyDirectLink || '', '_blank');
+      this.applyDirectDialog?.close();
     }
   }
 
