@@ -5,7 +5,7 @@
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 
-import { DOM_CONFIG } from '$mct/config';
+import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
 import { QuestionComponent } from './Questions';
 import type { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
@@ -328,6 +328,10 @@ export class OutputGroup extends BaseGroup {
 
   public update(): void {
     if (!this.activated) return;
+    dataLayer('form_interaction', {
+      event_category: 'MCTForm',
+      event_label: `MCT_Show_Results`,
+    });
     this.handleProducts();
   }
 
@@ -354,6 +358,20 @@ export class OutputGroup extends BaseGroup {
   }
 
   public activate(scrollTo: boolean = true): void {
+    if (!this.activated) {
+      // Log user event for end of questions
+      MCTManager.logUserEvent({
+        EventName: EVENTS_CONFIG.questionsComplete,
+        EventValue: EVENTS_CONFIG.questionsComplete,
+      });
+
+      dataLayer('form_interaction', {
+        event_category: 'MCTForm',
+        event_label: `MCT_Show_Summary`,
+        event_value: `MCT_BuyerType_${this.formManager.profileName}`,
+      });
+    }
+
     this.activated = true;
     this.card.classList.add(classes.active);
     if (scrollTo) this.scrollTo();
