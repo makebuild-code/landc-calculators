@@ -67,7 +67,6 @@ export const MCTManager = {
     this.initLCID();
     this.initStages();
     this.route();
-    this.removeInitialStyles();
 
     // Setup event bus for testing (optional)
     this.setupEventBusDebug();
@@ -107,7 +106,8 @@ export const MCTManager = {
 
   initICID() {
     const icid = this.getICID();
-    this.setICID(icid ?? 'default');
+    const newICID = !icid || icid === 'default' ? 'mct' : icid;
+    this.setICID(newICID);
   },
 
   async initLCID() {
@@ -247,14 +247,6 @@ export const MCTManager = {
     if (nextStage.onEnter) nextStage.onEnter();
 
     return true;
-  },
-
-  removeInitialStyles() {
-    const elements = queryElements(`[${attr.initial}]`, this.getComponentDOM());
-    console.log('🔄 Removing initial styles', elements);
-    elements.forEach((element) => {
-      element.removeAttribute(attr.initial);
-    });
   },
 
   setICID(icid: string) {

@@ -36,7 +36,7 @@ export abstract class FormManager {
   public abstract hide(): void;
 
   protected onMount(): void {
-    removeInitialStyles(this.component);
+    removeInitialStyles(this.component, 1000);
   }
 
   protected prefill(answers: Inputs) {

@@ -1,5 +1,7 @@
 import { API_CONFIG } from '$mct/config';
 import { getBaseURLForAPI } from '$utils/environment/getBaseURLForAPI';
+import { globalEventBus } from '../../components/events/globalEventBus';
+import { APIEventNames } from '../../types/events';
 
 export interface RequestOptions extends RequestInit {
   timeout?: number;
@@ -73,12 +75,33 @@ export class APIClient {
 
     let lastError: Error | null = null;
 
+    // Emit API request start event
+    globalEventBus.emit(APIEventNames.REQUEST_START, {
+      endpoint: url,
+      method: requestOptions.method || 'GET',
+    });
+
     for (let attempt = 0; attempt <= this.retries; attempt++) {
       try {
         const response = await this.makeRequest<T>(url, requestOptions);
+
+        // Emit API request success event
+        globalEventBus.emit(APIEventNames.REQUEST_SUCCESS, {
+          endpoint: url,
+          method: requestOptions.method || 'GET',
+          response,
+        });
+
         return response;
       } catch (error) {
         lastError = error as Error;
+
+        // Emit API request error event
+        globalEventBus.emit(APIEventNames.REQUEST_ERROR, {
+          endpoint: url,
+          method: requestOptions.method || 'GET',
+          error: lastError,
+        });
 
         // Don't retry on client errors (4xx) except 429 (rate limit)
         if (error instanceof APIError && error.status >= 400 && error.status < 500 && error.status !== 429) {
