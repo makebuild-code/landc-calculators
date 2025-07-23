@@ -9,9 +9,9 @@ import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
 import { globalEventBus, testComponents, testSimpleComponent } from '$mct/components';
-import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
-import { FormEventNames, MCTEventNames, StageIDENUM } from '$mct/types';
+import { MCTEventNames, StageIDENUM } from '$mct/types';
 import type {
   InputData,
   InputKey,
