@@ -1,12 +1,13 @@
 import { MCTManager } from '$mct/manager';
 import type { StageIDENUM } from '$mct/types';
 import { queryElement } from '$utils/dom';
+import { getCurrentBreakpoint } from '$utils/environment/getCurrentBreakpoint';
 
 export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'panel') => {
   const component = MCTManager.getStageDOM(stageId);
   if (!component) return;
 
-  const toWindow = to === 'window';
+  const toWindow = to === 'window' && getCurrentBreakpoint() === 'desktop';
 
   const panelBackground = queryElement('.mct_panel_background_wrapper', component);
   const header = queryElement('.mct_panel_header', component);
