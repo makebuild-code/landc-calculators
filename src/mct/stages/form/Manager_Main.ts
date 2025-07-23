@@ -335,18 +335,18 @@ export class MainFormManager extends FormManager {
 
       this.updateNavigation({ nextEnabled: false, prevEnabled: true });
 
-      // Log user event for end of questions
-      MCTManager.logUserEvent({
-        EventName: EVENTS_CONFIG.questionsComplete,
-        EventValue: EVENTS_CONFIG.questionsComplete,
-      });
+      // // Log user event for end of questions
+      // MCTManager.logUserEvent({
+      //   EventName: EVENTS_CONFIG.questionsComplete,
+      //   EventValue: EVENTS_CONFIG.questionsComplete,
+      // });
 
-      // Push to dataLayer for showing summary
-      dataLayer('form_interaction', {
-        event_category: 'MCTForm',
-        event_label: `MCT_Show_Summary`,
-        event_value: `MCT_BuyerType_${this.profile?.name}`,
-      });
+      // // Push to dataLayer for showing summary
+      // dataLayer('form_interaction', {
+      //   event_category: 'MCTForm',
+      //   event_label: `MCT_Show_Summary`,
+      //   event_value: `MCT_BuyerType_${this.profileName}`,
+      // });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
       globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
@@ -448,6 +448,10 @@ export class MainFormManager extends FormManager {
     }
 
     this.prepareWrapper();
+  }
+
+  get profileName(): string | null {
+    return this.profile?.name || null;
   }
 
   // public reset() {
