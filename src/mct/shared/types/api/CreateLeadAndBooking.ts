@@ -78,8 +78,8 @@ export interface EnquiryData {
   // SourceId?: SourceID;
   CreditImpaired?: CreditImpairedENUM;
   // NEW
-  // MortgageType: MortgageTypeENUM;
-  CurrentLender?: string;
+  MortgageType?: MortgageTypeENUM;
+  CurrentLender?: LenderName;
   LoanAmount: number;
   InterestOnlyAmount: number;
   Notes?: string;
