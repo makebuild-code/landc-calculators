@@ -1,5 +1,6 @@
-import { DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/config';
+import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/config';
 import {
+  APIEventNames,
   CalculationKeysENUM,
   RepaymentTypeENUM,
   SortColumnENUM,
@@ -23,6 +24,8 @@ import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
+import { EventBus, globalEventBus } from '$mct/components';
+import { API_ENDPOINTS } from 'src/constants';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -52,6 +55,7 @@ const attr = DOM_CONFIG.attributes.results;
 export class ResultsManager {
   private component: HTMLElement;
   public id: StageIDENUM;
+  private eventBus: EventBus;
   private state: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   private isInitialised: boolean = false;
   private isProceedable: boolean = false;
@@ -99,6 +103,7 @@ export class ResultsManager {
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Results;
+    this.eventBus = globalEventBus;
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
@@ -157,6 +162,14 @@ export class ResultsManager {
     this.empty = queryElement(`[${attr.components}="empty"]`, this.component) as HTMLElement;
     this.pagination = queryElement(`[${attr.components}="pagination"]`, this.component) as HTMLElement;
     this.paginationButton = queryElement('button', this.pagination) as HTMLButtonElement;
+
+    this.eventBus.on(APIEventNames.REQUEST_SUCCESS, (event) => {
+      if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
+        console.log('🔄 [ResultsManager] API request success', event);
+        this.summaryInfo = event.response.result.SummaryInfo;
+        this.renderOutputs();
+      }
+    });
   }
 
   public init(options?: ResultsStageOptions): void {
@@ -180,7 +193,7 @@ export class ResultsManager {
 
     this.handleButtons();
     this.handleShowIfProceedable();
-    // removeInitialStyles(this.component);
+    removeInitialStyles(this.component);
   }
 
   private handleProduct(action: 'set' | 'clear', product?: Product): void {
@@ -513,6 +526,7 @@ export class ResultsManager {
 
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
+    MCTManager.getStateManager().setState({ summaryInfo: this.summaryInfo });
 
     // Force the modal to show
     this.allowApplyDirect = true;
@@ -521,7 +535,6 @@ export class ResultsManager {
     this.initiateResults();
     this.renderOutputs();
     this.state = 'loaded';
-    removeInitialStyles(this.component);
     this.showListUI('loader', false);
   }
 

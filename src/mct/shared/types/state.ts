@@ -22,6 +22,7 @@ import {
   type ResiBtlENUM,
   type SchemePeriodsENUM,
   type SchemeTypesENUM,
+  type SummaryInfo,
 } from './api';
 import type { CheckboxValues, NumberValue, RadioValue, SelectValue, TextValue } from './dom';
 
@@ -139,8 +140,8 @@ export interface AppState {
   inputs: Inputs;
   inputPrefill: InputPrefill;
   calculations: Calculations;
-  product: number | null;
   filters: Inputs;
+  product: number | null;
   booking: Booking | null;
   form: EnquiryForm | null;
 }
