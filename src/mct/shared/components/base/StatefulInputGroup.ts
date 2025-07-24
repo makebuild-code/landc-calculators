@@ -16,7 +16,7 @@ export interface StatefulInputGroupState {
   isValid: boolean;
   isInitialised: boolean;
   type: InputType;
-  location: string;
+  location?: string;
   groupName: string;
   indexInGroup: number;
   initialName: string;
@@ -29,7 +29,7 @@ export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = S
   initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
   onChange: () => void;
   onEnter: () => void;
-  location: string;
+  location?: string;
   groupName: string;
   indexInGroup: number;
 }
@@ -52,12 +52,13 @@ export abstract class StatefulInputGroup<
           isValid: false,
           isInitialised: false,
           type: 'text', // Will be set in init()
-          location: options.location,
           groupName: options.groupName,
           indexInGroup: options.indexInGroup,
           initialName: '', // Will be set in init()
           finalName: '', // Will be set in init()
         };
+
+        if (options.location) baseInitialState.location = options.location;
 
         // Merge base state with extended state
         return {
@@ -110,7 +111,11 @@ export abstract class StatefulInputGroup<
     const location = this.getStateValue('location');
     const groupName = this.getStateValue('groupName');
     const initialName = this.getStateValue('initialName');
-    const finalName = `${location}-${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
+    const indexInGroup = this.getStateValue('indexInGroup');
+    const finalName = location
+      ? `${location}-${groupName}-${initialName}-${indexInGroup}`
+      : `${groupName}-${initialName}-${indexInGroup}`;
+
     this.setStateValue('finalName', finalName);
 
     if (this.getStateValue('type') === 'radio' || this.getStateValue('type') === 'checkbox') {
