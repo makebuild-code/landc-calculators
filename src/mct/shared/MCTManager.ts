@@ -31,7 +31,7 @@ import type {
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
-const VERSION = 'DIST v24';
+const VERSION = '🔄 MCT DIST v24';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;
@@ -74,7 +74,7 @@ export const MCTManager = {
 
   initState() {
     console.log('🔄 Initializing hybrid MCTManager with new state management...');
-    console.log(`🔄 MCT ${VERSION}`);
+    console.log(VERSION);
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
