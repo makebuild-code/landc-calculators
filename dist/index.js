@@ -24309,7 +24309,7 @@
 
   // src/mct/shared/MCTManager.ts
   init_types();
-  var VERSION = "21";
+  var VERSION = "22";
   var attr15 = DOM_CONFIG.attributes;
   var numberOfStagesShown = 0;
   var stageManagers = {};
