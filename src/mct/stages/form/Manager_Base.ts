@@ -1,6 +1,7 @@
 import { PROFILES_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import type {
+  GroupNameENUM,
   InputData,
   InputKey,
   InputKeysENUM,
@@ -26,6 +27,8 @@ export abstract class FormManager {
   protected questions: Set<QuestionComponent> = new Set();
   protected isInitialised: boolean = false;
 
+  public activeGroupIndex: number = 0;
+
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Questions;
@@ -47,8 +50,6 @@ export abstract class FormManager {
      * - Set the value of the input(s)
      * - Evaluate the visibility of the input(s)
      */
-    // for (const [name, value] of Object.entries(answers)) {}
-    // this.groups.forEach((group) => group.evaluateVisibility());
   }
 
   public saveQuestion(question: QuestionComponent): void {
@@ -58,10 +59,6 @@ export abstract class FormManager {
   public removeQuestion(question: QuestionComponent): void {
     this.questions.delete(question);
   }
-
-  // public getQuestions(): Set<QuestionComponent> {
-  //   return this.questions;
-  // }
 
   public saveAnswersToMCT(): void {
     const answerDataArray: InputData[] = [];
@@ -87,7 +84,7 @@ export abstract class FormManager {
     return { ...MCTManager.getAnswers() };
   }
 
-  public determineProfile(): Profile | null {
+  protected determineProfile(): Profile | null {
     const answers = this.getAnswers();
     const profile: Profile | undefined = PROFILES.find((profile) => {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key as InputKeysENUM] === value);
@@ -95,5 +92,49 @@ export abstract class FormManager {
 
     this.profile = profile ? profile : null;
     return profile ? profile : null;
+  }
+
+  protected getLastVisibleGroup(): MainGroup | OutputGroup | undefined {
+    let lastVisibleGroup: MainGroup | OutputGroup | undefined;
+    this.groups.forEach((group) => {
+      if (group.isVisible) lastVisibleGroup = group;
+    });
+    return lastVisibleGroup;
+  }
+
+  protected getFirstEl(): HTMLElement | null {
+    const group = this.groups[0];
+    if (group instanceof MainGroup) return group.questions[0].getElement();
+    if (group instanceof OutputGroup) return group.getComponent();
+    return null;
+  }
+
+  protected getLastEl(): HTMLElement | undefined {
+    const group = this.groups.at(this.activeGroupIndex);
+    if (group instanceof MainGroup) {
+      // Find the last visible question
+      const visibleQuestions = group.getVisibleQuestions();
+      if (visibleQuestions.length === 0) return undefined;
+      return visibleQuestions.at(-1)?.getElement();
+    }
+    if (group instanceof OutputGroup) return group.getComponent();
+    return undefined;
+  }
+
+  protected getActiveGroup(): MainGroup | OutputGroup | undefined {
+    return this.groups[this.activeGroupIndex];
+  }
+
+  public getGroupByName(name: GroupNameENUM): MainGroup | OutputGroup | undefined {
+    return this.groups.find((group) => group.name === name);
+  }
+
+  public getPreviousGroupInSequence(): MainGroup | OutputGroup | undefined {
+    if (this.activeGroupIndex <= 0) return undefined;
+    return this.groups[0];
+  }
+
+  public get profileName(): string | null {
+    return this.profile?.name || null;
   }
 }
