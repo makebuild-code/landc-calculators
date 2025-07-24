@@ -18,6 +18,9 @@ export const DOM_CONFIG: CONFIG_DOM = {
       hideOnGroup: 'data-mct-questions-hide-on-group',
       showOnGroup: 'data-mct-questions-show-on-group',
     },
+    sidebar: {
+      components: 'data-mct-sidebar',
+    },
     results: {
       components: 'data-mct-results',
       element: 'data-mct-results-element',

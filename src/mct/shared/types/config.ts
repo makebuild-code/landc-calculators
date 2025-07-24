@@ -32,6 +32,7 @@ export interface CONFIG_DOM {
     initial: string;
     visibility: string;
     form: Record<string, string>;
+    sidebar: Record<string, string>;
     results: Record<string, string>;
     appointment: Record<string, string>;
   };

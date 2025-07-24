@@ -25,7 +25,6 @@ export class MainFormManager extends FormManager {
   private buttonContainer: HTMLElement;
   private nextButton: HTMLButtonElement;
   private prevButton: HTMLButtonElement;
-  private groupElements: HTMLElement[];
   private hideOnGroup: HTMLElement[];
   private showOnGroup: HTMLElement[];
   private loader: HTMLElement;
@@ -43,7 +42,6 @@ export class MainFormManager extends FormManager {
     this.buttonContainer = queryElement(`[${attr.components}="button-container"]`, this.component) as HTMLElement;
     this.nextButton = queryElement(`[${attr.components}="next"]`, this.buttonContainer) as HTMLButtonElement;
     this.prevButton = queryElement(`[${attr.components}="previous"]`, this.buttonContainer) as HTMLButtonElement;
-    this.groupElements = queryElements(`[${attr.group}]`, this.list) as HTMLElement[];
     this.hideOnGroup = queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[];
     this.showOnGroup = queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[];
     this.loader = queryElement(`[${attr.components}="loader"]`, component) as HTMLElement;
@@ -56,7 +54,8 @@ export class MainFormManager extends FormManager {
     this.showLoader(true);
     this.showHeader('static');
 
-    this.groupElements.forEach((groupEl, index) => {
+    const groupElements = queryElements(`[${attr.group}]`, this.list) as HTMLElement[];
+    groupElements.forEach((groupEl, index) => {
       const name = groupEl.getAttribute(attr.group) as GroupNameENUM;
       if (!name) return;
 
