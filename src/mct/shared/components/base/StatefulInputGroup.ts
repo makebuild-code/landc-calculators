@@ -16,6 +16,7 @@ export interface StatefulInputGroupState {
   isValid: boolean;
   isInitialised: boolean;
   type: InputType;
+  location: string;
   groupName: string;
   indexInGroup: number;
   initialName: string;
@@ -28,6 +29,7 @@ export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = S
   initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
   onChange: () => void;
   onEnter: () => void;
+  location: string;
   groupName: string;
   indexInGroup: number;
 }
@@ -50,6 +52,7 @@ export abstract class StatefulInputGroup<
           isValid: false,
           isInitialised: false,
           type: 'text', // Will be set in init()
+          location: options.location,
           groupName: options.groupName,
           indexInGroup: options.indexInGroup,
           initialName: '', // Will be set in init()
@@ -104,9 +107,10 @@ export abstract class StatefulInputGroup<
   protected abstract onInit(): void;
 
   protected formatInputNamesAndIDs(): void {
+    const location = this.getStateValue('location');
     const groupName = this.getStateValue('groupName');
     const initialName = this.getStateValue('initialName');
-    const finalName = `${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
+    const finalName = `${location}-${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
     this.setStateValue('finalName', finalName);
 
     if (this.getStateValue('type') === 'radio' || this.getStateValue('type') === 'checkbox') {

@@ -145,6 +145,7 @@ export class MainGroup extends QuestionGroup {
         formManager: this.formManager,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
+        location: 'questions',
         groupName: this.name as string,
         indexInGroup: index,
       });
