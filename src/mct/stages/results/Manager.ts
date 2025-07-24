@@ -396,11 +396,14 @@ export class ResultsManager {
      * & is not proceedable?
      * - use goToOEF text
      */
-    const buttonText = this.allowApplyDirect
-      ? this.resultsButtonText
-      : this.isProceedable
-        ? (this.goToAppointmentButtons[0].textContent as string)
-        : (this.goToOEFButtons[0].textContent as string);
+    const buttonText =
+      this.allowApplyDirect && this.isProceedable
+        ? this.resultsButtonText
+        : this.allowApplyDirect && !this.isProceedable
+          ? 'Continue online'
+          : this.isProceedable
+            ? (this.goToAppointmentButtons[0].textContent as string)
+            : (this.goToOEFButtons[0].textContent as string);
 
     this.results = this.products.map((product) => {
       return new Result(this.resultsList, {

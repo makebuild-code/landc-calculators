@@ -31,7 +31,7 @@ import type {
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 
-const VERSION = '22';
+const VERSION = '23';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;
