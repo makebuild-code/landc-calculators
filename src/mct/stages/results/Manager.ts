@@ -26,32 +26,10 @@ import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { EventBus } from '$mct/components';
+import { Sidebar } from './Sidebar';
 import { debugError, debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
-
-/**
- * @plan
- *
- * When initialised by MCTManager after completing the form:
- * - Render outputs to header
- *    - borrowOverTerm, dealsAndRates
- *    - purchase price
- *    - LTV (calculated)
- *    - borrowing
- *    - deposit
- * - Apply values to the filters
- * - Call products API based on the filters and the answers
- *
- * Misc:
- * - Initialise dialogs
- * - Initialise sidebar form
- * - Bind events:
- *    - on input change
- *    - on select change
- *    - pagination / load more
- *    - reset filters
- */
 
 export class ResultsManager {
   private component: HTMLElement;
@@ -60,6 +38,8 @@ export class ResultsManager {
   private state: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   private isInitialised: boolean = false;
   private isProceedable: boolean = false;
+
+  private sidebar: Sidebar;
 
   private products: Product[] = [];
   private product: Product | null = null;
@@ -105,6 +85,9 @@ export class ResultsManager {
     this.component = component;
     this.id = StageIDENUM.Results;
     this.eventBus = EventBus.getInstance();
+
+    this.sidebar = new Sidebar(this.component);
+    this.sidebar.init();
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
