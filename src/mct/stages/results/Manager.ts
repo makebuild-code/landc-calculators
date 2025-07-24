@@ -525,9 +525,8 @@ export class ResultsManager {
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
 
-    // Force the modal to show
-    this.allowApplyDirect = true;
-    // this.allowApplyDirect = !!this.products.find((product) => product.ApplyDirectLink);
+    // this.allowApplyDirect = true; // Force the modal to show
+    this.allowApplyDirect = !!this.applyDirect && !!this.products.find((product) => product.ApplyDirectLink); // Only show if apply direct exists and there are products with apply direct links
 
     this.initiateResults();
     this.renderOutputs();
