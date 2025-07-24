@@ -15,7 +15,6 @@ import { panelToWindow } from 'src/mct/shared/utils/ui';
 const attr = DOM_CONFIG.attributes.form;
 
 export class MainFormManager extends FormManager {
-  public activeGroupIndex: number = 0;
   private header: HTMLElement;
   private secondHeader: HTMLElement;
   private identifier: HTMLElement | null = null;
@@ -26,7 +25,6 @@ export class MainFormManager extends FormManager {
   private buttonContainer: HTMLElement;
   private nextButton: HTMLButtonElement;
   private prevButton: HTMLButtonElement;
-  private groupElements: HTMLElement[];
   private hideOnGroup: HTMLElement[];
   private showOnGroup: HTMLElement[];
   private loader: HTMLElement;
@@ -44,7 +42,6 @@ export class MainFormManager extends FormManager {
     this.buttonContainer = queryElement(`[${attr.components}="button-container"]`, this.component) as HTMLElement;
     this.nextButton = queryElement(`[${attr.components}="next"]`, this.buttonContainer) as HTMLButtonElement;
     this.prevButton = queryElement(`[${attr.components}="previous"]`, this.buttonContainer) as HTMLButtonElement;
-    this.groupElements = queryElements(`[${attr.group}]`, this.list) as HTMLElement[];
     this.hideOnGroup = queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[];
     this.showOnGroup = queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[];
     this.loader = queryElement(`[${attr.components}="loader"]`, component) as HTMLElement;
@@ -57,7 +54,8 @@ export class MainFormManager extends FormManager {
     this.showLoader(true);
     this.showHeader('static');
 
-    this.groupElements.forEach((groupEl, index) => {
+    const groupElements = queryElements(`[${attr.group}]`, this.list) as HTMLElement[];
+    groupElements.forEach((groupEl, index) => {
       const name = groupEl.getAttribute(attr.group) as GroupNameENUM;
       if (!name) return;
 
@@ -107,14 +105,6 @@ export class MainFormManager extends FormManager {
     this.showLoader(false);
   }
 
-  public getLastVisibleGroup(): MainGroup | OutputGroup | undefined {
-    let lastVisibleGroup: MainGroup | OutputGroup | undefined;
-    this.groups.forEach((group) => {
-      if (group.isVisible) lastVisibleGroup = group;
-    });
-    return lastVisibleGroup;
-  }
-
   public show(scrollTo: boolean = true): void {
     this.component.style.removeProperty('display');
     if (scrollTo) this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -143,11 +133,6 @@ export class MainFormManager extends FormManager {
     }
   }
 
-  /**
-   * @plan
-   *
-   * - for the top padding, we want the
-   */
   public prepareWrapper(): void {
     if (this.groups.length === 0) return;
 
@@ -224,25 +209,6 @@ export class MainFormManager extends FormManager {
     }
   }
 
-  private getFirstEl(): HTMLElement | null {
-    const group = this.groups[0];
-    if (group instanceof MainGroup) return group.questions[0].getElement();
-    if (group instanceof OutputGroup) return group.getComponent();
-    return null;
-  }
-
-  private getLastEl(): HTMLElement | undefined {
-    const group = this.groups.at(this.activeGroupIndex);
-    if (group instanceof MainGroup) {
-      // Find the last visible question
-      const visibleQuestions = group.getVisibleQuestions();
-      if (visibleQuestions.length === 0) return undefined;
-      return visibleQuestions.at(-1)?.getElement();
-    }
-    if (group instanceof OutputGroup) return group.getComponent();
-    return undefined;
-  }
-
   public updateNavigation(options: { nextEnabled?: boolean; prevEnabled?: boolean } = {}): void {
     if (typeof options.nextEnabled === 'boolean') this.nextButton.disabled = !options.nextEnabled;
     if (typeof options.prevEnabled === 'boolean') this.prevButton.disabled = !options.prevEnabled;
@@ -255,14 +221,6 @@ export class MainFormManager extends FormManager {
       const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
       if (outputGroup) outputGroup.update();
     }
-  }
-
-  private getActiveGroup(): MainGroup | OutputGroup | undefined {
-    return this.groups[this.activeGroupIndex];
-  }
-
-  public getGroupByName(name: GroupNameENUM): MainGroup | OutputGroup | undefined {
-    return this.groups.find((group) => group.name === name);
   }
 
   public updateGroupVisibility(): void {
@@ -289,11 +247,6 @@ export class MainFormManager extends FormManager {
     this.groups
       .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)
       .forEach((group) => group.hide());
-  }
-
-  public getPreviousGroupInSequence(): MainGroup | OutputGroup | undefined {
-    if (this.activeGroupIndex <= 0) return undefined;
-    return this.groups[0];
   }
 
   public navigateToNextGroup() {
@@ -448,10 +401,6 @@ export class MainFormManager extends FormManager {
     }
 
     this.prepareWrapper();
-  }
-
-  get profileName(): string | null {
-    return this.profile?.name || null;
   }
 
   // public reset() {

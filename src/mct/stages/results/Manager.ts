@@ -150,7 +150,8 @@ export class ResultsManager {
       ) as HTMLDialogElement;
     }
 
-    this.allowApplyDirect = !!this.applyDirect;
+    this.allowApplyDirect = true; // Force the modal to show
+    // this.allowApplyDirect = !!this.applyDirect; // Only show if apply direct exists
 
     this.resultsList = queryElement(`[${attr.components}="list"]`, this.component) as HTMLDivElement;
     this.resultsTemplate = queryElement(`[${attr.components}="template"]`, this.component) as HTMLDivElement;
@@ -395,11 +396,14 @@ export class ResultsManager {
      * & is not proceedable?
      * - use goToOEF text
      */
-    const buttonText = this.allowApplyDirect
-      ? this.resultsButtonText
-      : this.isProceedable
-        ? (this.goToAppointmentButtons[0].textContent as string)
-        : (this.goToOEFButtons[0].textContent as string);
+    const buttonText =
+      this.allowApplyDirect && this.isProceedable
+        ? this.resultsButtonText
+        : this.allowApplyDirect && !this.isProceedable
+          ? 'Continue online'
+          : this.isProceedable
+            ? (this.goToAppointmentButtons[0].textContent as string)
+            : (this.goToOEFButtons[0].textContent as string);
 
     this.results = this.products.map((product) => {
       return new Result(this.resultsList, {
@@ -474,8 +478,11 @@ export class ResultsManager {
     const { ApplyDirectLink } = product;
 
     // If apply direct is allowed, show the box
-    if (this.applyDirect && this.allowApplyDirect) {
-      !!ApplyDirectLink ? this.applyDirect.style.removeProperty('display') : (this.applyDirect.style.display = 'none');
+    if (this.allowApplyDirect) {
+      if (this.applyDirect)
+        !!ApplyDirectLink
+          ? this.applyDirect.style.removeProperty('display')
+          : (this.applyDirect.style.display = 'none');
       this.howToApplyDialog.showModal();
     } else if (this.isProceedable) {
       globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
@@ -525,8 +532,8 @@ export class ResultsManager {
     this.products = response.result.Products;
     this.summaryInfo = response.result.SummaryInfo;
 
-    // this.allowApplyDirect = true; // Force the modal to show
-    this.allowApplyDirect = !!this.applyDirect && !!this.products.find((product) => product.ApplyDirectLink); // Only show if apply direct exists and there are products with apply direct links
+    this.allowApplyDirect = true; // Force the modal to show
+    // this.allowApplyDirect = !!this.applyDirect && !!this.products.find((product) => product.ApplyDirectLink); // Only show if apply direct exists and there are products with apply direct links
 
     this.initiateResults();
     this.renderOutputs();
