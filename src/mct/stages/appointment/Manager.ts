@@ -1,12 +1,14 @@
-import type {
-  AppointmentStageOptions,
-  AppointmentDay,
-  DatePlanToRemoENUM,
-  ICID,
-  LCID,
-  LogUserEventCustom,
-  Inputs,
-  EnquiryData,
+import {
+  type AppointmentStageOptions,
+  type AppointmentDay,
+  type DatePlanToRemoENUM,
+  type ICID,
+  type LCID,
+  type LogUserEventCustom,
+  type Inputs,
+  type EnquiryData,
+  FTBENUM,
+  NewBuildENUM,
 } from '$mct/types';
 import {
   CreditImpairedENUM,
@@ -466,12 +468,8 @@ export class AppointmentManager {
       return;
     }
 
-    /**
-     * @todo
-     *
-     * - Take VulnerableMessage and add it to the notes
-     * - Remove Vulnerable and VulnerableMessage from the formData
-     */
+    // Remove Vulnerable and VulnerableMessage from formData
+    const { Vulnerable, VulnerableMessage, ...formDataWithoutVulnerable } = formData;
 
     // Get state data
     const stateData = this.getStateData();
@@ -480,8 +478,7 @@ export class AppointmentManager {
       this.setLoadingState(false);
       return;
     } else {
-      if (formData.Vulnerable === 'Yes')
-        stateData.Notes = `Vulnerable: ${formData.Vulnerable} - Notes: ${formData.VulnerableMessage}`;
+      if (Vulnerable === 'Yes') stateData.Notes = `Vulnerable: ${Vulnerable} - Notes: ${VulnerableMessage}`;
       stateData.ChosenMCTProduct = MCTManager.getProduct() as number;
     }
 
@@ -493,15 +490,10 @@ export class AppointmentManager {
       return;
     }
 
-    const enquiry: EnquiryLead = {
-      ...formData,
-      ...stateData,
-    };
-
     // Create the API request with default values for required fields
     const request: CreateLeadAndBookingRequest = {
       enquiry: {
-        ...formData,
+        ...formDataWithoutVulnerable,
         ...stateData,
       },
       booking: bookingData,
@@ -579,6 +571,8 @@ export class AppointmentManager {
     const answers = MCTManager.getAnswers();
     const calculations = MCTManager.getCalculations();
 
+    const newBuildValue = this.getBooleanAnswer(answers, InputKeysENUM.NewBuild);
+
     // Map state and answers to API fields
     const stateData: EnquiryData = {
       icid: state.icid as ICID,
@@ -588,23 +582,35 @@ export class AppointmentManager {
         RepaymentTypeENUM,
         this.getStringAnswer(answers, InputKeysENUM.RepaymentType)
       ) as RepaymentTypeENUM,
-      OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
       MortgageLength: this.getNumericAnswer(answers, InputKeysENUM.MortgageLength),
       ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, InputKeysENUM.ResiBtl)) as ResiBtlENUM,
-      Lender: this.getStringAnswer(answers, InputKeysENUM.Lender),
       ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, InputKeysENUM.ReadinessToBuy)),
-      PurchRemo: getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo)),
       PropertyValue: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
       DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
-      LTV: calculations.LTV as number,
-      CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)),
       LoanAmount: this.getNumericAnswer(answers, InputKeysENUM.BorrowAmount),
       InterestOnlyAmount: this.getNumericAnswer(answers, InputKeysENUM.InterestOnlyValue),
-      FTB: this.getBooleanAnswer(answers, InputKeysENUM.FTB),
-      NewBuild: this.getBooleanAnswer(answers, InputKeysENUM.NewBuild),
-      DatePlanToRemo: this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo) as DatePlanToRemoENUM,
-      ChosenMCTProduct: MCTManager.getProduct() as number,
+      FTB: getEnumValue(FTBENUM, this.getStringAnswer(answers, InputKeysENUM.FTB)) as FTBENUM,
+      NewBuild: getEnumValue(NewBuildENUM, this.getStringAnswer(answers, InputKeysENUM.NewBuild)) as NewBuildENUM,
     };
+
+    const OfferAccepted = calculations.offerAccepted as OfferAcceptedENUM;
+    const Lender = this.getStringAnswer(answers, InputKeysENUM.Lender);
+    const PurchRemo = getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo));
+    const LTV = calculations.LTV as number;
+    const CreditImpaired = getEnumValue(
+      CreditImpairedENUM,
+      this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)
+    );
+    const DatePlanToRemo = this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo) as DatePlanToRemoENUM;
+    const ChosenMCTProduct = MCTManager.getProduct() as number;
+
+    if (OfferAccepted) stateData.OfferAccepted = OfferAccepted;
+    if (Lender) stateData.Lender = Lender;
+    if (PurchRemo) stateData.PurchRemo = PurchRemo;
+    if (LTV) stateData.LTV = LTV;
+    if (CreditImpaired) stateData.CreditImpaired = CreditImpaired;
+    if (DatePlanToRemo) stateData.DatePlanToRemo = DatePlanToRemo;
+    if (ChosenMCTProduct) stateData.ChosenMCTProduct = ChosenMCTProduct;
 
     return stateData;
   }
