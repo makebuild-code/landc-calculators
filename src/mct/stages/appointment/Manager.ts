@@ -479,7 +479,7 @@ export class AppointmentManager {
       return;
     } else {
       if (Vulnerable === 'Yes') stateData.Notes = `Vulnerable: ${Vulnerable} - Notes: ${VulnerableMessage}`;
-      stateData.ChosenMCTProduct = MCTManager.getProduct() as number;
+      stateData.ChosenMCTProduct = MCTManager.getProduct()?.toString();
     }
 
     // Get appointment data
@@ -571,8 +571,6 @@ export class AppointmentManager {
     const answers = MCTManager.getAnswers();
     const calculations = MCTManager.getCalculations();
 
-    const newBuildValue = this.getBooleanAnswer(answers, InputKeysENUM.NewBuild);
-
     // Map state and answers to API fields
     const stateData: EnquiryData = {
       icid: state.icid as ICID,
@@ -602,7 +600,7 @@ export class AppointmentManager {
       this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)
     );
     const DatePlanToRemo = this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo) as DatePlanToRemoENUM;
-    const ChosenMCTProduct = MCTManager.getProduct() as number;
+    const ChosenMCTProduct = MCTManager.getProduct()?.toString();
 
     if (OfferAccepted) stateData.OfferAccepted = OfferAccepted;
     if (Lender) stateData.Lender = Lender;
