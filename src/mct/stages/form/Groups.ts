@@ -197,6 +197,7 @@ export class MainGroup extends QuestionGroup {
     }
 
     this.formManager.prepareWrapper();
+    this.formManager.handleOutputGroupUpdate(isValid);
   }
 
   public handleEnter(index: number): void {
@@ -288,6 +289,7 @@ export class MainGroup extends QuestionGroup {
     question.focus();
     this.formManager.scrollTo(question);
     this.onInputChange(question.isValid());
+    this.formManager.handleOutputGroupUpdate(question.isValid());
   }
 }
 
@@ -319,10 +321,6 @@ export class OutputGroup extends BaseGroup {
 
   public update(): void {
     if (!this.activated) return;
-    dataLayer('form_interaction', {
-      event_category: 'MCTForm',
-      event_label: `MCT_Show_Results`,
-    });
     this.handleProducts();
   }
 
@@ -366,7 +364,7 @@ export class OutputGroup extends BaseGroup {
     this.activated = true;
     this.card.classList.add(classes.active);
     if (scrollTo) this.scrollTo();
-    this.handleProducts();
+    this.update();
   }
 
   private async handleProducts(): Promise<void> {

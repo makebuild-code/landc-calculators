@@ -109,8 +109,6 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     SortColumn,
   };
 
-  console.log('[ProductAPI]', { options, filters, miscValues });
-
   // If remortgage, NewBuild is undefined. If in answers, use it. If not, use options. If not, use filters config.
   const NewBuild =
     SchemePurpose === SchemePurposeENUM.Remortgage
@@ -144,8 +142,6 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     Features,
     IncludeRetention,
   };
-
-  console.log('[generateProductsAPIInput]', { endOfAnswersInput, input });
 
   return input;
 };

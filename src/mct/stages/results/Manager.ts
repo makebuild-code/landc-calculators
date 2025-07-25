@@ -166,7 +166,6 @@ export class ResultsManager {
 
     this.eventBus.on(APIEventNames.REQUEST_SUCCESS, (event) => {
       if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
-        console.log('🔄 [ResultsManager] API request success', event);
         this.summaryInfo = event.response.result.SummaryInfo;
         this.renderOutputs();
       }
@@ -174,10 +173,7 @@ export class ResultsManager {
   }
 
   public init(options?: ResultsStageOptions): void {
-    if (this.isInitialised) {
-      console.log('🔄 [ResultsManager] Already initialised');
-      return;
-    }
+    if (this.isInitialised) return;
     this.isInitialised = true;
 
     const calculations = MCTManager.getCalculations();
@@ -209,11 +205,29 @@ export class ResultsManager {
     const calculations = MCTManager.getCalculations();
     this.isProceedable = !!calculations.isProceedable;
 
+    this.syncFiltersStateToQuestions();
     this.initAppointmentDialog();
     this.renderOutputs();
     this.renderFilters();
     this.handleProductsAPI();
     this.handleShowIfProceedable();
+  }
+
+  private syncFiltersStateToQuestions(): void {
+    const answers = MCTManager.getAnswers();
+
+    this.filters.forEach((filter) => {
+      const answer = answers[filter.getStateValue('initialName') as InputKey];
+      if (!answer) return;
+
+      filter.setValue(answer);
+      MCTManager.setFilter({
+        key: filter.getStateValue('initialName') as InputKey,
+        name: filter.getStateValue('finalName'),
+        value: answer,
+        source: 'user',
+      });
+    });
   }
 
   private handleProduct(action: 'set' | 'clear', product?: Product): void {
@@ -374,7 +388,7 @@ export class ResultsManager {
 
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
-    const filters = FILTERS_CONFIG;
+    const filters = { ...FILTERS_CONFIG, ...MCTManager.getFilters() };
 
     this.filters.forEach((filterGroup) => {
       const answer = (answers as any)[filterGroup.getStateValue('initialName')]; // @TODO: look into types here
@@ -519,6 +533,7 @@ export class ResultsManager {
     if (!input) return null;
 
     try {
+      console.log('🔄 [ResultsManager] fetchProducts', input);
       const response = await productsAPI.search(input);
       return response;
     } catch (error) {
