@@ -26,7 +26,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     super(options);
 
     this.formManager = options.formManager;
-    this.parent = this.element.parentElement as HTMLElement;
+    this.parent = this.rootElement.parentElement as HTMLElement;
     this.onEnter = options.onEnter;
     this.debug = true;
   }
@@ -70,7 +70,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public updateVisualState(isValid: boolean): void {
-    this.toggleClass(this.element, 'has-error', !isValid);
+    this.toggleClass(this.rootElement, 'has-error', !isValid);
   }
 
   public enable(): void {
@@ -109,7 +109,9 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public toggleActive(active?: boolean): void {
-    active ? this.toggleClass(this.element, classes.active, active) : this.toggleClass(this.element, classes.active);
+    active
+      ? this.toggleClass(this.rootElement, classes.active, active)
+      : this.toggleClass(this.rootElement, classes.active);
   }
 
   public activate(): void {

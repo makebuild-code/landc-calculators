@@ -194,9 +194,11 @@ export interface FormEvents {
 
 export interface StateEvents {
   [StateEventNames.CHANGED]: {
+    key: string;
     changes: Partial<AppState>;
-    previousState: AppState;
-    currentState: AppState;
+    previous: AppState;
+    current: AppState;
+    timestamp: number;
   };
 
   [StateEventNames.LOADED]: {

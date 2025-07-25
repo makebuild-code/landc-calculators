@@ -17,19 +17,19 @@ class TestComponent extends StatefulComponent<TestComponentState> {
   }
 
   protected onInit(): void {
-    this.log('TestComponent initialized');
+    this.logDebug('TestComponent initialized');
 
     // Find elements - add null checks
     try {
       this.input = this.queryElement('input');
       this.button = this.queryElement('button');
 
-      this.log('Found elements:', {
+      this.logDebug('Found elements:', {
         input: !!this.input,
         button: !!this.button,
       });
     } catch (error) {
-      this.log('Error finding elements:', error);
+      this.logDebug('Error finding elements:', error);
     }
 
     // Only bind events if elements exist
@@ -49,34 +49,34 @@ class TestComponent extends StatefulComponent<TestComponentState> {
   protected bindEvents(): void {
     try {
       if (this.input) {
-        this.addEventListener({ element: this.input, event: 'input', handler: this.handleInput.bind(this) });
-        this.log('Added input event listener');
+        this.on({ element: this.input, event: 'input', handler: this.handleInput.bind(this) });
+        this.logDebug('Added input event listener');
       }
 
       if (this.button) {
-        this.addEventListener({ element: this.button, event: 'click', handler: this.handleButtonClick.bind(this) });
-        this.log('Added button event listener');
+        this.on({ element: this.button, event: 'click', handler: this.handleButtonClick.bind(this) });
+        this.logDebug('Added button event listener');
       }
     } catch (error) {
-      this.log('Error binding events:', error);
+      this.logDebug('Error binding events:', error);
     }
   }
 
   protected onDestroy(): void {
-    this.log('TestComponent destroyed');
+    this.logDebug('TestComponent destroyed');
   }
 
   protected onStateChange(previousState: TestComponentState, currentState: TestComponentState): void {
-    this.log('State changed', { previous: previousState, current: currentState });
+    this.logDebug('State changed', { previous: previousState, current: currentState });
 
     // Update UI based on state changes
     if (this.hasStateChanged('isVisible')) {
-      this.toggleClass(this.element, 'hidden', !currentState.isVisible);
+      this.toggleClass(this.rootElement, 'hidden', !currentState.isVisible);
     }
 
     if (this.hasStateChanged('isValid')) {
-      this.toggleClass(this.element, 'valid', currentState.isValid);
-      this.toggleClass(this.element, 'invalid', !currentState.isValid);
+      this.toggleClass(this.rootElement, 'valid', currentState.isValid);
+      this.toggleClass(this.rootElement, 'invalid', !currentState.isValid);
     }
   }
 

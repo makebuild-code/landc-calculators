@@ -15,7 +15,7 @@ import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
-import { globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -28,6 +28,7 @@ export interface GroupOptions {
 
 // @description: Base class for all groups
 export abstract class BaseGroup {
+  protected eventBus: EventBus;
   protected component: HTMLElement;
   protected formManager: FormManager;
   public isVisible: boolean = false;
@@ -35,6 +36,7 @@ export abstract class BaseGroup {
   public index: number;
 
   constructor(options: GroupOptions) {
+    this.eventBus = EventBus.getInstance();
     this.component = options.component;
     this.formManager = options.formManager;
     this.index = options.index;
@@ -429,6 +431,6 @@ export class OutputGroup extends BaseGroup {
       event_label: `MCT_Show_Results`,
     });
 
-    globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+    this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
   }
 }

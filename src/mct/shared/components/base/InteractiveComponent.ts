@@ -1,151 +1,213 @@
-import { BaseComponent, type ComponentOptions } from './BaseComponent';
-import type { TrackedEventListener } from '$mct/types';
+import { BaseComponent } from './BaseComponent';
+import { EventBus } from '$mct/components';
+import type { AllEvents } from '$mct/types';
+import type { ComponentEventEmitter, InteractiveComponentConfig, ListenerConfig } from './types';
 
-export interface InteractiveComponentOptions extends ComponentOptions {
-  autoBindEvents?: boolean;
-}
+export abstract class InteractiveComponent extends BaseComponent implements ComponentEventEmitter {
+  protected readonly eventBus: EventBus;
+  protected listeners: Map<string, ListenerConfig> = new Map();
+  protected unsubscribers: Array<() => void> = [];
+  protected delegatedHandlers: Map<string, EventListener> = new Map();
 
-export abstract class InteractiveComponent extends BaseComponent {
-  protected eventListeners: TrackedEventListener[] = [];
-  protected autoBindEvents: boolean;
-
-  constructor(options: InteractiveComponentOptions) {
+  constructor(options: InteractiveComponentConfig) {
     super(options);
-    this.autoBindEvents = options.autoBindEvents ?? true;
+    this.eventBus = EventBus.getInstance();
   }
 
   /**
-   * Override to add event binding logic
+   * Initialize component and set up event listeners
    */
-  protected onInit(): void {
-    if (this.autoBindEvents) this.bindEvents();
-  }
+  protected async onInit(): Promise<void> {
+    await this.setupEventListeners();
 
-  /**
-   * Override to add event cleanup logic
-   */
-  protected onDestroy(): void {
-    this.unbindAllEvents();
-  }
-
-  /**
-   * Bind all event listeners
-   * Override in subclasses to add specific event bindings
-   */
-  protected abstract bindEvents(): void;
-
-  /**
-   * Add an event listener and track it for cleanup
-   */
-  protected addEventListener(config: TrackedEventListener): void {
-    const { element, event, handler, options } = config;
-    if (!element) return this.logError('Cannot add event listener: element is null');
-    if (!this.eventListeners) return this.logError('Cannot add event listener: eventListeners is null');
-
-    try {
-      element.addEventListener(event, handler, options);
-      this.eventListeners.push({ element, event, handler, options });
-    } catch (error) {
-      this.logError('Error adding event listener:', error);
+    // Initialize custom events if provided in config
+    if ((this.config as InteractiveComponentConfig).events) {
+      this.bindConfigEvents();
     }
+  }
+
+  /**
+   * Clean up all event listeners and subscriptions
+   */
+  protected async onDestroy(): Promise<void> {
+    this.removeListeners();
+    this.removeAllSubscriptions();
+    this.removeDelegatedHandlers();
+  }
+
+  /**
+   * Hook for child classes to set up event listeners
+   */
+  protected abstract setupEventListeners(): void | Promise<void>;
+
+  /**
+   * Add an event listener with automatic cleanup
+   */
+  protected on(
+    target: HTMLElement | Window | Document | string,
+    event: string,
+    handler: EventListener,
+    options?: AddEventListenerOptions
+  ): void {
+    let element: HTMLElement | Window | Document;
+    let key: string;
+
+    // Handle selector-based listeners (cached elements)
+    if (typeof target === 'string') {
+      const cached = this.getElement(target);
+      if (!cached) {
+        this.logWarn(`Cached element not found: ${target}`);
+        return;
+      }
+      element = cached;
+      key = `${target}-${event}`;
+    } else {
+      element = target;
+      key = `${element.constructor.name}-${event}-${Date.now()}`;
+    }
+
+    // Remove existing listener if present
+    if (this.listeners.has(key)) {
+      this.removeListener(key);
+    }
+
+    // Add the listener
+    element.addEventListener(event, handler, options);
+
+    // Store for cleanup
+    this.listeners.set(key, {
+      element,
+      event,
+      handler,
+      options: options || undefined,
+    });
+
+    this.logDebug(`Added listener: ${key}`);
   }
 
   /**
    * Remove a specific event listener
    */
-  protected removeEventListener(config: TrackedEventListener): void {
-    const { element, event, handler, options } = config;
-    element.removeEventListener(event, handler, options);
-
-    // Remove from tracking array
-    const index = this.eventListeners.findIndex((listener) => {
-      listener.element === element && listener.event === event && listener.handler === handler;
-    });
-
-    if (index === -1) return;
-    this.eventListeners.splice(index, 1);
+  protected removeListener(key: string): void {
+    const config = this.listeners.get(key);
+    if (config) {
+      config.element.removeEventListener(config.event, config.handler, config.options);
+      this.listeners.delete(key);
+      this.logDebug(`Removed listener: ${key}`);
+    }
   }
 
   /**
-   * Remove all tracked event listeners
+   * Remove all event listeners
    */
-  protected unbindAllEvents(): void {
-    this.eventListeners.forEach(({ element, event, handler, options }) => {
-      element.removeEventListener(event, handler, options);
-    });
-
-    this.eventListeners = [];
-  }
-
-  /**
-   * Get the number of active event listeners
-   */
-  public getEventListenerCount(): number {
-    return this.eventListeners.length;
-  }
-
-  /**
-   * Check if an element has a specific event listener
-   */
-  protected hasEventListener(config: TrackedEventListener): boolean {
-    const { element, event, handler } = config;
-    return this.eventListeners.some((listener) => {
-      listener.element === element && listener.event === event && listener.handler === handler;
+  protected removeListeners(): void {
+    this.listeners.forEach((_, key) => {
+      this.removeListener(key);
     });
   }
 
   /**
-   * Prevent default behavior and stop propagation
+   * Set up event delegation for dynamic content
    */
-  protected preventDefaultAndStop(event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
-  }
+  protected delegate(
+    event: string,
+    selector: string,
+    handler: (event: Event, target: HTMLElement) => void,
+    parent: HTMLElement | Document = document
+  ): void {
+    const delegatedHandler: EventListener = (e) => {
+      const target = e.target as HTMLElement;
+      const delegateTarget = target.closest(selector);
 
-  /**
-   * Prevent default behavior only
-   */
-  protected preventDefault(event: Event): void {
-    event.preventDefault();
-  }
-
-  /**
-   * Stop event propagation only
-   */
-  protected stopPropagation(event: Event): void {
-    event.stopPropagation();
-  }
-
-  /**
-   * Create a debounced event handler
-   */
-  protected createDebouncedHandler(handler: Function, delay: number = 300): Function {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    return (...args: any[]) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      timeoutId = setTimeout(() => {
-        handler.apply(this, args);
-      }, delay);
-    };
-  }
-
-  /**
-   * Create a throttled event handler
-   */
-  protected createThrottledHandler(handler: Function, delay: number = 300): Function {
-    let lastCall = 0;
-
-    return (...args: any[]) => {
-      const now = Date.now();
-
-      if (now - lastCall >= delay) {
-        lastCall = now;
-        handler.apply(this, args);
+      if (delegateTarget && parent.contains(delegateTarget)) {
+        handler.call(this, e, delegateTarget as HTMLElement);
       }
     };
+
+    const key = `${event}-${selector}`;
+
+    // Remove existing handler
+    if (this.delegatedHandlers.has(key)) {
+      parent.removeEventListener(event, this.delegatedHandlers.get(key)!);
+    }
+
+    // Add new handler
+    parent.addEventListener(event, delegatedHandler, true);
+    this.delegatedHandlers.set(key, delegatedHandler);
+  }
+
+  /**
+   * Remove delegated event handlers
+   */
+  protected removeDelegatedHandlers(): void {
+    this.delegatedHandlers.forEach((handler, key) => {
+      const [event] = key.split('-');
+      if (event) {
+        document.removeEventListener(event, handler, true);
+      }
+    });
+    this.delegatedHandlers.clear();
+  }
+
+  /**
+   * Subscribe to EventBus events
+   */
+  protected subscribe<K extends keyof AllEvents>(event: K, handler: (payload: AllEvents[K]) => void): void {
+    const unsubscribe = this.eventBus.on(event, handler);
+    this.unsubscribers.push(unsubscribe);
+  }
+
+  /**
+   * Remove all EventBus subscriptions
+   */
+  protected removeAllSubscriptions(): void {
+    this.unsubscribers.forEach((unsubscribe) => unsubscribe());
+    this.unsubscribers = [];
+  }
+
+  /**
+   * Emit an event through the EventBus
+   */
+  public emit<K extends keyof AllEvents>(event: K, payload: AllEvents[K]): void {
+    this.eventBus.emit(event, payload);
+  }
+
+  /**
+   * Emit a custom DOM event
+   */
+  public emitCustom(eventName: string, detail: unknown, target?: HTMLElement): void {
+    const element = target || this.rootElement || document.body;
+    const event = new CustomEvent(eventName, {
+      detail,
+      bubbles: true,
+      cancelable: true,
+    });
+    element.dispatchEvent(event);
+  }
+
+  /**
+   * Bind events from configuration
+   */
+  private bindConfigEvents(): void {
+    const config = this.config as InteractiveComponentConfig;
+    if (!config.events || !this.rootElement) return;
+
+    Object.entries(config.events).forEach(([eventName, handler]) => {
+      this.on(this.rootElement!, eventName, handler.bind(this));
+    });
+  }
+
+  /**
+   * Get all active listeners (for debugging)
+   */
+  protected getActiveListeners(): ReadonlyMap<string, ListenerConfig> {
+    return new Map(this.listeners);
+  }
+
+  /**
+   * Get listener count
+   */
+  protected getListenerCount(): number {
+    return this.listeners.size + this.unsubscribers.length;
   }
 }

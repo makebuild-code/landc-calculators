@@ -1,5 +1,5 @@
 import { StorageManager } from './StorageManager';
-import { StatePersistenceManager } from './persistence';
+import { PersistenceManager } from './PersistenceManager';
 import type {
   AppState,
   InputKey,
@@ -11,9 +11,18 @@ import type {
   Calculations,
 } from '$mct/types';
 
+// export interface StateChangeEvent {
+//   key: string;
+//   previous: StateValue;
+//   current: StateValue;
+//   component: string;
+// }
+
 export interface StateChangeEvent {
-  previousState: AppState;
-  currentState: AppState;
+  key: string;
+  component: string;
+  previous: AppState;
+  current: AppState;
   changes: Partial<AppState>;
 }
 
@@ -33,16 +42,24 @@ const defaultState: AppState = {
 };
 
 export class StateManager {
+  private static instance: StateManager;
   private state: AppState;
   private subscribers: Set<StateSubscriber>;
   private storage: StorageManager;
-  private persistence: StatePersistenceManager;
+  private persistence: PersistenceManager;
 
   constructor(initialState?: Partial<AppState>) {
     this.state = { ...defaultState, ...initialState };
     this.subscribers = new Set();
     this.storage = new StorageManager();
-    this.persistence = new StatePersistenceManager(this.storage);
+    this.persistence = new PersistenceManager(this.storage);
+  }
+
+  static getInstance(initialState?: Partial<AppState>): StateManager {
+    if (!StateManager.instance) {
+      StateManager.instance = new StateManager(initialState);
+    }
+    return StateManager.instance;
   }
 
   /**
@@ -68,8 +85,8 @@ export class StateManager {
 
     // Notify subscribers
     const event: StateChangeEvent = {
-      previousState,
-      currentState: this.state,
+      previous: previousState,
+      current: this.state,
       changes,
     };
 

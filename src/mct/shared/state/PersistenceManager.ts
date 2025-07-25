@@ -1,4 +1,4 @@
-import type { StorageConfig, StorageManager } from './StorageManager';
+import { StorageManager, type StorageConfig } from './StorageManager';
 import type { AppState } from '$mct/types';
 
 /**
@@ -60,11 +60,19 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
 /**
  * State persistence manager that handles saving and loading state
  */
-export class StatePersistenceManager {
+export class PersistenceManager {
+  private static instance: PersistenceManager;
   private storage: StorageManager;
 
   constructor(storage: StorageManager) {
     this.storage = storage;
+  }
+
+  static getInstance(): PersistenceManager {
+    if (!PersistenceManager.instance) {
+      PersistenceManager.instance = new PersistenceManager(StorageManager.getInstance());
+    }
+    return PersistenceManager.instance;
   }
 
   /**

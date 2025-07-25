@@ -7,12 +7,12 @@ class SimpleTestComponent extends BaseComponent {
   }
 
   protected onInit(): void {
-    this.log('SimpleTestComponent initialized');
+    this.logDebug('SimpleTestComponent initialized');
     console.log('✅ SimpleTestComponent works!');
   }
 
   protected onDestroy(): void {
-    this.log('SimpleTestComponent destroyed');
+    this.logDebug('SimpleTestComponent destroyed');
   }
 }
 

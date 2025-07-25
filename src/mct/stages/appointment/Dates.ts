@@ -65,7 +65,7 @@ export class DatesComponent extends StatefulInputGroup<DatesState> {
   }
 
   private createSlideTemplate(): HTMLElement {
-    const slide = queryElement(`[${attr.slider}="slide-template"]`, this.element) as HTMLElement;
+    const slide = queryElement(`[${attr.slider}="slide-template"]`, this.rootElement) as HTMLElement;
     if (!slide) throw new Error(`Slide template element with attribute [${attr.slider}="slide-template"] not found`);
 
     const template = slide.cloneNode(true) as HTMLElement;

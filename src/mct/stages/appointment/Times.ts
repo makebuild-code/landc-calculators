@@ -60,7 +60,7 @@ export class TimesComponent extends StatefulInputGroup<TimesState> {
     });
 
     this.list.appendChild(fragment);
-    this.element.style.removeProperty('display');
+    this.rootElement.style.removeProperty('display');
     this.onChange();
   }
 }

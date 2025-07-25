@@ -40,7 +40,7 @@ export class CalculationManager {
 
   private subscribeToStateChanges(): void {
     this.stateManager.subscribe((event) => {
-      if (event.changes.inputs) this.runCalculations(event.currentState.inputs);
+      if (event.changes.inputs) this.runCalculations(event.current.inputs);
     });
   }
 

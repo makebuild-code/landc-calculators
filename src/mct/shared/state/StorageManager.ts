@@ -21,6 +21,15 @@ export interface StorageConfig {
 const memoryStore: Record<string, any> = {};
 
 export class StorageManager {
+  private static instance: StorageManager;
+
+  static getInstance(): StorageManager {
+    if (!StorageManager.instance) {
+      StorageManager.instance = new StorageManager();
+    }
+    return StorageManager.instance;
+  }
+
   /**
    * Store data with specified configuration
    */

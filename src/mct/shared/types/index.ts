@@ -13,3 +13,4 @@ export * from './dom';
 export * from './events';
 export * from './stages';
 export * from './state';
+export * from './storage';

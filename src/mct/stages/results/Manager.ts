@@ -25,7 +25,7 @@ import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
-import { EventBus, globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -53,9 +53,9 @@ const attr = DOM_CONFIG.attributes.results;
  */
 
 export class ResultsManager {
+  protected eventBus: EventBus;
   private component: HTMLElement;
   public id: StageIDENUM;
-  private eventBus: EventBus;
   private state: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   private isInitialised: boolean = false;
   private isProceedable: boolean = false;
@@ -101,9 +101,9 @@ export class ResultsManager {
   private numberOfResults: number = 0;
 
   constructor(component: HTMLElement) {
+    this.eventBus = EventBus.getInstance();
     this.component = component;
     this.id = StageIDENUM.Results;
-    this.eventBus = globalEventBus;
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
@@ -423,7 +423,7 @@ export class ResultsManager {
     this.goToAppointmentButtons.forEach((button) =>
       button.addEventListener('click', () => {
         this.howToApplyDialog.close();
-        globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
+        this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
       })
     );
 
@@ -485,7 +485,7 @@ export class ResultsManager {
           : (this.applyDirect.style.display = 'none');
       this.howToApplyDialog.showModal();
     } else if (this.isProceedable) {
-      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
     } else if (!this.isProceedable) {
       this.handleDirectToBroker();
     }
@@ -569,7 +569,7 @@ export class ResultsManager {
 
   // private handleGetFreeAdvice(): void {
   //   this.howToApplyDialog.close();
-  //   globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
+  //   this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
   // }
 
   private async handleDirectToBroker(): Promise<void> {

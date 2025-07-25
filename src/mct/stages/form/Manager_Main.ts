@@ -1,15 +1,12 @@
-import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
-import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { Profile } from '$mct/types';
 import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
-import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
-import { globalEventBus } from '$mct/components';
 import { panelToWindow } from 'src/mct/shared/utils/ui';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -302,7 +299,7 @@ export class MainFormManager extends FormManager {
       // });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
     } else this.updateNavigation({ nextEnabled: true, prevEnabled: true });
 
     this.handleShowHideOnGroup();

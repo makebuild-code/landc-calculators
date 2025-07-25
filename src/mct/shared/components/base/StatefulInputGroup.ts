@@ -12,15 +12,15 @@ import {
 } from '$mct/types';
 
 export interface StatefulInputGroupState {
-  value: InputValue | null;
-  isValid: boolean;
   isInitialised: boolean;
-  type: InputType;
   location?: string;
   groupName: string;
   indexInGroup: number;
   initialName: string;
   finalName: string;
+  type: InputType;
+  value: InputValue | null;
+  isValid: boolean;
 }
 
 export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = StatefulInputGroupState>
@@ -28,7 +28,9 @@ export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = S
   extendedInitialState?: Partial<T>; // Additional state properties for extending classes
   initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
   onChange: () => void;
-  onEnter: () => void;
+  onEnter?: () => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   location?: string;
   groupName: string;
   indexInGroup: number;
@@ -38,7 +40,9 @@ export abstract class StatefulInputGroup<
   T extends StatefulInputGroupState = StatefulInputGroupState,
 > extends StatefulComponent<T> {
   protected onChange: () => void; // The function to call when the input group changes
-  protected onEnter: () => void; // The function to call when the user presses enter
+  protected onEnter?: () => void; // The function to call when the user presses enter
+  protected onFocus?: () => void; // The function to call when the input group gains focus
+  protected onBlur?: () => void; // The function to call when the input group loses focus
   protected inputs: Input[] = []; // The inputs in the input group
 
   constructor(options: StatefulInputGroupOptions<T>) {
@@ -73,7 +77,10 @@ export abstract class StatefulInputGroup<
     });
 
     this.onChange = options.onChange;
-    this.onEnter = options.onEnter;
+
+    if (options.onEnter) this.onEnter = options.onEnter;
+    if (options.onFocus) this.onFocus = options.onFocus;
+    if (options.onBlur) this.onBlur = options.onBlur;
   }
 
   protected init(): void {
@@ -142,8 +149,8 @@ export abstract class StatefulInputGroup<
   protected bindEvents(): void {
     this.inputs.forEach((input) => this.bindInputEvents(input));
 
-    this.addEventListener({
-      element: this.element,
+    this.on({
+      element: this.rootElement,
       event: 'keydown',
       handler: (event: Event) => {
         const ke = event as KeyboardEvent;
@@ -155,9 +162,9 @@ export abstract class StatefulInputGroup<
 
   protected bindInputEvents(input: Input): void {
     if (this.getStateValue('type') === 'text' || this.getStateValue('type') === 'number') {
-      this.addEventListener({ element: input, event: 'input', handler: () => this.handleChange() });
+      this.on({ element: input, event: 'input', handler: () => this.handleChange() });
     } else {
-      this.addEventListener({ element: input, event: 'change', handler: () => this.handleChange() });
+      this.on({ element: input, event: 'change', handler: () => this.handleChange() });
     }
   }
 
@@ -186,7 +193,7 @@ export abstract class StatefulInputGroup<
 
     // If the input is not valid, do not call the onEnter callback
     if (!this.isValid()) return;
-    this.onEnter();
+    if (this.onEnter) this.onEnter();
 
     // this.emit(FormEventNames.INPUT_ON_ENTER, {
     //   value,

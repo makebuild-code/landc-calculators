@@ -8,7 +8,7 @@ import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
-import { globalEventBus, testComponents, testSimpleComponent } from '$mct/components';
+import { EventBus, testComponents, testSimpleComponent } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { MCTEventNames, StageIDENUM } from '$mct/types';
@@ -43,6 +43,7 @@ interface Stage {
   onEnter?: () => void;
 }
 
+const eventBus = EventBus.getInstance();
 const stageManagers: Record<string, Stage> = {};
 
 interface DOM {
@@ -216,7 +217,7 @@ export const MCTManager = {
       this.goToStage(StageIDENUM.Questions);
     }
 
-    globalEventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
+    eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
       console.log('🔄 Stage complete', event);
 
       let nextStageId;
@@ -477,24 +478,15 @@ export const MCTManager = {
     if (typeof window === 'undefined') return;
 
     // Make event bus available globally for testing
-    (window as any).globalEventBus = globalEventBus;
-
-    // // Add some test event listeners
-    // globalEventBus.on(FormEventNames.QUESTION_CHANGED, (payload) => {
-    //   console.log('📡 MCT Event: Question changed', payload);
-    // });
-
-    // globalEventBus.on(FormEventNames.NAVIGATION_UPDATE, (payload) => {
-    //   console.log('📡 MCT Event: Navigation updated', payload);
-    // });
+    (window as any).testEventBus = eventBus;
 
     // Make component testing available
     (window as any).testComponents = testComponents;
     (window as any).testSimpleComponent = testSimpleComponent;
 
     console.log('🔧 Event Bus & Component Debug Tools Available!');
-    console.log('- globalEventBus - Access the global event bus');
-    console.log('- globalEventBus.emit("form:question:changed", {...}) - Test events');
+    console.log('- testEventBus - Access the global event bus');
+    console.log('- testEventBus.emit("form:question:changed", {...}) - Test events');
     console.log('- testSimpleComponent() - Test simple component (recommended first)');
     console.log('- testComponents() - Test full component system');
   },

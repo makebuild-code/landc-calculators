@@ -7,6 +7,7 @@ export interface TypedEventHandler<T extends EventName> {
 export type AnyEventHandler = TypedEventHandler<any>;
 
 export class EventBus {
+  private static instance: EventBus;
   private handlers: Map<EventName, Set<TypedEventHandler<any>>> = new Map();
   private debug: boolean = false;
   private globalHandlers: Set<TypedEventHandler<any>> = new Set();
@@ -14,6 +15,13 @@ export class EventBus {
   constructor(options: { debug?: boolean } = {}) {
     // this.debug = options.debug || false;
     this.debug = false;
+  }
+
+  static getInstance(options: { debug?: boolean } = {}): EventBus {
+    if (!EventBus.instance) {
+      EventBus.instance = new EventBus(options);
+    }
+    return EventBus.instance;
   }
 
   /**
