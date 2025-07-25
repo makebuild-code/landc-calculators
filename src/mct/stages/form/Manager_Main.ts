@@ -48,10 +48,7 @@ export class MainFormManager extends FormManager {
   }
 
   public init(): void {
-    if (this.isInitialised) {
-      console.log('🔄 [MainFormManager] Already initialised');
-      return;
-    }
+    if (this.isInitialised) return;
     this.isInitialised = true;
 
     this.showLoader(true);
@@ -245,11 +242,13 @@ export class MainFormManager extends FormManager {
 
   public handleInputChange(isValid: boolean) {
     this.updateNavigation({ nextEnabled: isValid });
+  }
 
-    if (isValid) {
-      const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-      if (outputGroup) outputGroup.update();
-    }
+  public handleOutputGroupUpdate(isValid: boolean) {
+    if (!isValid) return;
+
+    const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+    if (outputGroup) outputGroup.update();
   }
 
   public updateGroupVisibility(): void {

@@ -6,6 +6,7 @@ export class ProductsAPI {
   constructor(private client: APIClient) {}
 
   async search(request: ProductsRequest): Promise<ProductsResponse> {
+    console.log('🔄 [ProductsAPI] Request: ', request);
     return this.client.request<ProductsResponse>(API_CONFIG.endpoints.products, {
       method: 'POST',
       body: JSON.stringify({ input: request }),

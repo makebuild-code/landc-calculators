@@ -72,7 +72,7 @@ export const MCTManager = {
   },
 
   initState() {
-    console.log('🔄 Initializing hybrid MCTManager with new state management...');
+    console.log('🔄 Initializing MCTManager...');
     console.log(VERSION);
 
     // Subscribe to state changes for debugging
@@ -327,6 +327,10 @@ export const MCTManager = {
 
   recalculate(): void {
     calculationManager.recalculate();
+  },
+
+  setFilter(filterData: InputData): void {
+    stateManager.set('filters', { ...stateManager.get('filters'), [filterData.key]: filterData.value });
   },
 
   setFilters(filterDataArray: InputData[]): void {
