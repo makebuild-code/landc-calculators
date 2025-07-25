@@ -7,7 +7,6 @@ import { queryElements } from '$utils/dom/queryelements';
 import type { InputKeysENUM, Profile } from '$mct/types';
 import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
-import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
 import { globalEventBus } from '$mct/components';
 import { panelToWindow } from 'src/mct/shared/utils/ui';

@@ -30,13 +30,13 @@ import type {
   EnquiryForm,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
+import { dataLayer } from '$utils/analytics/dataLayer';
 
-const VERSION = '🔄 MCT DIST v28';
+const VERSION = '🔄 MCT DIST v29';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;
 interface Stage {
-  // id: StageIDENUM;
   start: (options?: any) => void;
   show: (scrollTo?: boolean) => void;
   hide: () => void;
@@ -221,9 +221,18 @@ export const MCTManager = {
       let nextStageId;
       switch (event.stageId) {
         case StageIDENUM.Questions:
+          dataLayer('form_interaction', {
+            event_category: 'MCTForm',
+            event_label: `MCT_Show_Results`,
+          });
+
           nextStageId = StageIDENUM.Results;
           break;
         case StageIDENUM.Results:
+          dataLayer('form_interaction', {
+            event_category: 'MCTForm',
+            event_label: `MCT_Show_Appointment`,
+          });
           nextStageId = StageIDENUM.Appointment;
           break;
         default:
