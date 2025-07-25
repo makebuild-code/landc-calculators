@@ -423,11 +423,6 @@ export class OutputGroup extends BaseGroup {
   }
 
   public navigateToResults(): void {
-    dataLayer('form_interaction', {
-      event_category: 'MCTForm',
-      event_label: `MCT_Show_Results`,
-    });
-
     globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
   }
 }
