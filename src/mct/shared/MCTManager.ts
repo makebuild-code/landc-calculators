@@ -40,7 +40,6 @@ interface Stage {
   start: (options?: any) => void;
   show: (scrollTo?: boolean) => void;
   hide: () => void;
-  onEnter?: () => void;
 }
 
 const stageManagers: Record<string, Stage> = {};
@@ -258,8 +257,6 @@ export const MCTManager = {
     } else {
       nextStage.start();
     }
-
-    if (nextStage.onEnter) nextStage.onEnter();
 
     return true;
   },

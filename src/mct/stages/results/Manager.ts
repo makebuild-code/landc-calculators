@@ -205,6 +205,15 @@ export class ResultsManager {
       this.init(options);
       return;
     }
+
+    const calculations = MCTManager.getCalculations();
+    this.isProceedable = !!calculations.isProceedable;
+
+    this.initAppointmentDialog();
+    this.renderOutputs();
+    this.renderFilters();
+    this.handleProductsAPI();
+    this.handleShowIfProceedable();
   }
 
   private handleProduct(action: 'set' | 'clear', product?: Product): void {
@@ -215,17 +224,6 @@ export class ResultsManager {
       MCTManager.clearProduct();
       this.product = null;
     }
-  }
-
-  public onEnter(): void {
-    const calculations = MCTManager.getCalculations();
-    this.isProceedable = !!calculations.isProceedable;
-
-    this.initAppointmentDialog();
-    this.renderOutputs();
-    this.renderFilters();
-    this.handleProductsAPI();
-    this.handleShowIfProceedable();
   }
 
   public show(scrollTo: boolean = true): void {
