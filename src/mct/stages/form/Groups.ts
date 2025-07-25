@@ -12,7 +12,7 @@ import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { globalEventBus } from '$mct/components';
@@ -326,11 +326,13 @@ export class OutputGroup extends BaseGroup {
 
   public show(): void {
     this.component.style.removeProperty('display');
+    globalEventBus.emit(FormEventNames.GROUP_SHOWN, { groupId: this.name as string });
     this.isVisible = true;
   }
 
   public hide(): void {
     this.component.style.display = 'none';
+    globalEventBus.emit(FormEventNames.GROUP_HIDDEN, { groupId: this.name as string });
     this.isVisible = false;
   }
 
