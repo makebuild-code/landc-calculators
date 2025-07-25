@@ -174,7 +174,10 @@ export class ResultsManager {
   }
 
   public init(options?: ResultsStageOptions): void {
-    if (this.isInitialised) return;
+    if (this.isInitialised) {
+      console.log('🔄 [ResultsManager] Already initialised');
+      return;
+    }
     this.isInitialised = true;
 
     const calculations = MCTManager.getCalculations();
@@ -195,6 +198,13 @@ export class ResultsManager {
     this.handleButtons();
     this.handleShowIfProceedable();
     removeInitialStyles(this.component);
+  }
+
+  public start(options?: ResultsStageOptions): void {
+    if (!this.isInitialised) {
+      this.init(options);
+      return;
+    }
   }
 
   private handleProduct(action: 'set' | 'clear', product?: Product): void {
@@ -257,7 +267,9 @@ export class ResultsManager {
       const name = filter.getStateValue('finalName');
       const value = filter.getStateValue('value') as InputValue;
 
-      return { key, name, value, source: 'user' };
+      const data: InputData = { key, name, value, source: 'user' };
+      MCTManager.setAnswer(data);
+      return data;
     });
 
     MCTManager.setFilters(filterDataArray);
