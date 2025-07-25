@@ -18973,10 +18973,12 @@
     }
     show() {
       this.component.style.removeProperty("display");
+      globalEventBus.emit("form:group:shown" /* GROUP_SHOWN */, { groupId: this.name });
       this.isVisible = true;
     }
     hide() {
       this.component.style.display = "none";
+      globalEventBus.emit("form:group:hidden" /* GROUP_HIDDEN */, { groupId: this.name });
       this.isVisible = false;
     }
     scrollTo() {
@@ -19216,8 +19218,12 @@
       this.track = queryElement(`[${attr9.components}="track"]`, this.container);
       this.list = queryElement(`[${attr9.components}="list"]`, this.track);
       this.buttonContainer = queryElement(`[${attr9.components}="button-container"]`, this.component);
-      this.nextButton = queryElement(`[${attr9.components}="next"]`, this.buttonContainer);
       this.prevButton = queryElement(`[${attr9.components}="previous"]`, this.buttonContainer);
+      this.nextButton = queryElement(`[${attr9.components}="next"]`, this.buttonContainer);
+      this.getResultsButton = queryElement(
+        `[${attr9.components}="get-results"]`,
+        this.buttonContainer
+      );
       this.hideOnGroup = queryElements(`[${attr9.hideOnGroup}]`, component);
       this.showOnGroup = queryElements(`[${attr9.showOnGroup}]`, component);
       this.loader = queryElement(`[${attr9.components}="loader"]`, component);
@@ -19245,6 +19251,14 @@
       this.determinePanelOrWindow();
       this.handleShowHideOnGroup();
       this.handleIdentifier(null);
+      this.prevButton.addEventListener("click", () => {
+        const currentGroup = this.getActiveGroup();
+        if (!currentGroup || currentGroup instanceof OutputGroup) {
+          this.navigateToPreviousGroup();
+        } else {
+          currentGroup.navigate("prev");
+        }
+      });
       this.nextButton.addEventListener("click", () => {
         const currentGroup = this.getActiveGroup();
         if (currentGroup instanceof OutputGroup) {
@@ -19253,12 +19267,20 @@
           currentGroup.navigate("next");
         }
       });
-      this.prevButton.addEventListener("click", () => {
-        const currentGroup = this.getActiveGroup();
-        if (!currentGroup || currentGroup instanceof OutputGroup) {
-          this.navigateToPreviousGroup();
-        } else {
-          currentGroup.navigate("prev");
+      this.toggleButton(this.getResultsButton, false);
+      this.getResultsButton.addEventListener("click", () => {
+        globalEventBus.emit("mct:stage:complete" /* STAGE_COMPLETE */, { stageId: "questions" /* Questions */ });
+      });
+      globalEventBus.on("form:group:shown" /* GROUP_SHOWN */, (event) => {
+        if (event.groupId === "output" /* Output */) {
+          this.toggleButton(this.nextButton, false);
+          this.toggleButton(this.getResultsButton, true);
+        }
+      });
+      globalEventBus.on("form:group:hidden" /* GROUP_HIDDEN */, (event) => {
+        if (event.groupId === "output" /* Output */) {
+          this.toggleButton(this.nextButton, true);
+          this.toggleButton(this.getResultsButton, false);
         }
       });
       this.onMount();
@@ -19268,6 +19290,10 @@
         this.prepareWrapper();
       });
       this.showLoader(false);
+    }
+    toggleButton(button, show) {
+      button.disabled = !show;
+      show ? button.style.removeProperty("display") : button.style.display = "none";
     }
     show(scrollTo = true) {
       this.component.style.removeProperty("display");
@@ -24379,7 +24405,7 @@
 
   // src/mct/shared/MCTManager.ts
   init_types();
-  var VERSION = "\u{1F504} MCT DIST v26";
+  var VERSION = "\u{1F504} MCT DIST v27";
   var attr15 = DOM_CONFIG.attributes;
   var numberOfStagesShown = 0;
   var stageManagers = {};
