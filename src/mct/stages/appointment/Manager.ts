@@ -129,7 +129,10 @@ export class AppointmentManager {
   }
 
   public init(options?: AppointmentStageOptions): void {
-    if (this.isInitialised) return;
+    if (this.isInitialised) {
+      console.log('🔄 [AppointmentManager] Already initialised');
+      return;
+    }
     this.isInitialised = true;
     this.setLoadingState(true);
 
@@ -173,6 +176,13 @@ export class AppointmentManager {
     this.times.initialise();
 
     removeInitialStyles(this.component);
+  }
+
+  public start(options?: AppointmentStageOptions): void {
+    if (!this.isInitialised) {
+      this.init(options);
+      return;
+    }
   }
 
   private handleInputChange(inputGroup: InputGroup): void {

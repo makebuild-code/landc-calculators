@@ -174,7 +174,10 @@ export class ResultsManager {
   }
 
   public init(options?: ResultsStageOptions): void {
-    if (this.isInitialised) return;
+    if (this.isInitialised) {
+      console.log('🔄 [ResultsManager] Already initialised');
+      return;
+    }
     this.isInitialised = true;
 
     const calculations = MCTManager.getCalculations();
@@ -197,17 +200,12 @@ export class ResultsManager {
     removeInitialStyles(this.component);
   }
 
-  private handleProduct(action: 'set' | 'clear', product?: Product): void {
-    if (action === 'set' && product) {
-      this.product = product;
-      MCTManager.setProduct(this.product.ProductId);
-    } else {
-      MCTManager.clearProduct();
-      this.product = null;
+  public start(options?: ResultsStageOptions): void {
+    if (!this.isInitialised) {
+      this.init(options);
+      return;
     }
-  }
 
-  public onEnter(): void {
     const calculations = MCTManager.getCalculations();
     this.isProceedable = !!calculations.isProceedable;
 
@@ -216,6 +214,16 @@ export class ResultsManager {
     this.renderFilters();
     this.handleProductsAPI();
     this.handleShowIfProceedable();
+  }
+
+  private handleProduct(action: 'set' | 'clear', product?: Product): void {
+    if (action === 'set' && product) {
+      this.product = product;
+      MCTManager.setProduct(this.product.ProductId);
+    } else {
+      MCTManager.clearProduct();
+      this.product = null;
+    }
   }
 
   public show(scrollTo: boolean = true): void {
@@ -257,7 +265,9 @@ export class ResultsManager {
       const name = filter.getStateValue('finalName');
       const value = filter.getStateValue('value') as InputValue;
 
-      return { key, name, value, source: 'user' };
+      const data: InputData = { key, name, value, source: 'user' };
+      MCTManager.setAnswer(data);
+      return data;
     });
 
     MCTManager.setFilters(filterDataArray);

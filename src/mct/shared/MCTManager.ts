@@ -37,10 +37,9 @@ const attr = DOM_CONFIG.attributes;
 let numberOfStagesShown: number = 0;
 interface Stage {
   // id: StageIDENUM;
-  init: (options?: any) => void;
+  start: (options?: any) => void;
   show: (scrollTo?: boolean) => void;
   hide: () => void;
-  onEnter?: () => void;
 }
 
 const stageManagers: Record<string, Stage> = {};
@@ -208,8 +207,8 @@ export const MCTManager = {
     } else if (numberOfStages === 1) {
       const onlyStage = Object.values(stageManagers)[0];
       if (onlyStage) {
+        onlyStage.start();
         onlyStage.show(numberOfStagesShown !== 0);
-        onlyStage.init();
         numberOfStagesShown += 1;
       }
     } else {
@@ -253,13 +252,11 @@ export const MCTManager = {
 
     // Pass stage-specific options to the init method
     const stageOptions = options[stageId];
-    if (stageOptions && typeof nextStage.init === 'function') {
-      nextStage.init(stageOptions);
+    if (stageOptions) {
+      nextStage.start(stageOptions);
     } else {
-      nextStage.init();
+      nextStage.start();
     }
-
-    if (nextStage.onEnter) nextStage.onEnter();
 
     return true;
   },

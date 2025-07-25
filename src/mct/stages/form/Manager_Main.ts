@@ -4,7 +4,7 @@ import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { Profile } from '$mct/types';
+import type { InputKeysENUM, Profile } from '$mct/types';
 import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { dataLayer } from '$utils/analytics/dataLayer';
@@ -48,7 +48,10 @@ export class MainFormManager extends FormManager {
   }
 
   public init(): void {
-    if (this.isInitialised) return;
+    if (this.isInitialised) {
+      console.log('🔄 [MainFormManager] Already initialised');
+      return;
+    }
     this.isInitialised = true;
 
     this.showLoader(true);
@@ -112,6 +115,32 @@ export class MainFormManager extends FormManager {
 
   public hide(): void {
     this.component.style.display = 'none';
+  }
+
+  public start(): void {
+    if (!this.isInitialised) {
+      this.init();
+      return;
+    }
+
+    /**
+     * If already initialised:
+     * - sync answers to the state
+     * - re-call the API
+     * - render the outputs
+     */
+
+    this.syncQuestionsToState();
+    const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+    if (outputGroup) outputGroup.update();
+  }
+
+  private syncQuestionsToState(): void {
+    const answers = MCTManager.getAnswers();
+    this.questions.forEach((question) => {
+      const answer = answers[question.getStateValue('initialName') as InputKeysENUM];
+      if (answer) question.setValue(answer);
+    });
   }
 
   private showLoader(show: boolean): void {

@@ -91,7 +91,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   const currentStage = MCTManager.getCurrentStage();
   const filters = MCTManager.getFilters();
-  const miscValues = currentStage === StageIDENUM.Questions ? options : { ...options, ...filters };
+  const miscValues = currentStage === StageIDENUM.Questions ? { ...filters, ...options } : { ...options, ...filters };
   const SortColumn = miscValues.SortColumn ?? SortColumnENUM.Rate;
   const NumberOfResults = miscValues.NumberOfResults ?? 1;
 
@@ -108,6 +108,8 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     NumberOfResults,
     SortColumn,
   };
+
+  console.log('[ProductAPI]', { options, filters, miscValues });
 
   // If remortgage, NewBuild is undefined. If in answers, use it. If not, use options. If not, use filters config.
   const NewBuild =
@@ -131,7 +133,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const Features: ProductsRequestFeatures = {};
   // if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
   if (miscValues.Offset) Features.Offset = miscValues.Offset;
-  if (miscValues.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = !miscValues.EarlyRepaymentCharge;
+  if (miscValues.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = miscValues.EarlyRepaymentCharge;
   if (NewBuild !== undefined) Features.NewBuild = NewBuild;
 
   const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
