@@ -43,6 +43,16 @@ export enum CreditImpairedENUM {
   No = 'N',
 }
 
+export enum FTBENUM {
+  Yes = 'Y',
+  No = 'N',
+}
+
+export enum NewBuildENUM {
+  Yes = 'Y',
+  No = 'N',
+}
+
 export interface EnquiryForm {
   FirstName: string;
   Surname: string;
@@ -83,8 +93,8 @@ export interface EnquiryData {
   LoanAmount: number;
   InterestOnlyAmount: number;
   Notes?: string;
-  FTB: boolean;
-  NewBuild: boolean;
+  FTB: FTBENUM;
+  NewBuild: NewBuildENUM;
   DatePlanToRemo?: DatePlanToRemoENUM;
   ChosenMCTProduct?: number;
 }
