@@ -60,8 +60,13 @@ const visibilityManager = new VisibilityManager(stateManager);
 
 export const MCTManager = {
   start() {
+    const dom = this.initDOM();
+    if (!dom) {
+      console.log('🔄 MCT component not found');
+      return;
+    }
+
     this.initState();
-    this.initDOM();
     this.initICID();
     this.initLCID();
     this.initStages();
@@ -87,9 +92,9 @@ export const MCTManager = {
     stateManager.enableAutoPersistence();
   },
 
-  initDOM(): DOM {
+  initDOM(): DOM | null {
     dom.component = queryElement(`[${attr.component}="component"]`) as HTMLElement;
-    if (!dom.component) throw new Error('MCT component not found');
+    if (!dom.component) return null;
 
     const stages = queryElements(`[${attr.stage}]`, dom.component);
     stages.forEach((stage) => {
