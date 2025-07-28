@@ -1,3 +1,4 @@
+import { debugError } from '$utils/debug';
 import { getFromCookie, setToCookie } from '$utils/storage';
 
 export type StorageType = 'localStorage' | 'sessionStorage' | 'cookie' | 'memory';
@@ -45,7 +46,7 @@ export class StorageManager {
           break;
       }
     } catch (error) {
-      console.error(`Failed to store data in ${config.type}:`, error);
+      debugError(`Failed to store data in ${config.type}:`, error);
     }
   }
 
@@ -80,7 +81,7 @@ export class StorageManager {
       if (shouldDeserialize) return JSON.parse(data) as T;
       return data as T;
     } catch (error) {
-      console.error(`Failed to retrieve data from ${config.type}:`, error);
+      debugError(`Failed to retrieve data from ${config.type}:`, error);
       return null;
     }
   }
@@ -106,7 +107,7 @@ export class StorageManager {
           break;
       }
     } catch (error) {
-      console.error(`Failed to remove data from ${config.type}:`, error);
+      debugError(`Failed to remove data from ${config.type}:`, error);
     }
   }
 
@@ -126,7 +127,7 @@ export class StorageManager {
           return false;
       }
     } catch (error) {
-      console.error(`Failed to check data existence in ${config.type}:`, error);
+      debugError(`Failed to check data existence in ${config.type}:`, error);
       return false;
     }
   }
@@ -154,7 +155,7 @@ export class StorageManager {
   //         break;
   //     }
   //   } catch (error) {
-  //     console.error(`Failed to clear ${type}:`, error);
+  //     debugError(`Failed to clear ${type}:`, error);
   //   }
   // }
 }
