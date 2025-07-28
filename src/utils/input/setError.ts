@@ -1,7 +1,7 @@
 import type { Input } from 'src/types';
 
-import { getWrapper } from './getWrapper';
-import { queryElement } from './queryElement';
+import { getWrapper } from '../dom/getWrapper';
+import { queryElement } from '../dom/queryElement';
 
 export function setError(input: Input, text?: string): void {
   const wrapper = getWrapper(input);

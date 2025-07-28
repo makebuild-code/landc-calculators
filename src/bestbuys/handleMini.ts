@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse } from 'src/types';
 
-import { isStaging } from '$utils/isStaging';
-import { numberToCurrency } from '$utils/numberToCurrency';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { setSearchParameter } from '$utils/setSearchParameter';
+import { isStaging } from '$utils/environment/isStaging';
+import { numberToCurrency } from '$utils/formatting/numberToCurrency';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
+import { setSearchParameter } from '$utils/storage/setSearchParameter';
 
 import type {
   BestBuyResult,
@@ -109,12 +109,7 @@ export class HandleMini {
       const result = await this.makeAzureRequest();
       this.result = result.result as unknown as BestBuyResult;
       if (isStaging) console.log(result);
-      if (
-        !this.result ||
-        this.result === null ||
-        !this.result.success ||
-        this.result.data.length === 0
-      ) {
+      if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
         this.toggleLoading(false);
       } else {
         this.displayResults();
@@ -136,6 +131,9 @@ export class HandleMini {
     headers.append('Content-Type', 'application/json');
 
     const body = JSON.stringify({ input: this.values });
+
+    console.log(headers);
+    console.log(body);
 
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',

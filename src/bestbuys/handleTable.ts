@@ -3,15 +3,11 @@ import { dialogs } from 'src/components/dialogs';
 import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse, Input } from 'src/types';
 
-import { checkInputValidity } from '$utils/checkInputValidity';
-import { formatInput } from '$utils/formatInput';
-import { getInputValue } from '$utils/getInputValue';
-import { isStaging } from '$utils/isStaging';
-import { numberToCurrency } from '$utils/numberToCurrency';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { setError } from '$utils/setError';
-import { setSearchParameter } from '$utils/setSearchParameter';
+import { checkInputValidity, formatInput, getInputValue, setError } from '$utils/input';
+import { isStaging } from '$utils/environment';
+import { numberToCurrency } from '$utils/formatting';
+import { queryElement, queryElements } from '$utils/dom';
+import { setSearchParameter } from '$utils/storage';
 
 import type { BestBuyResult, Inputs, PropertyType, SortColumn } from './types';
 
@@ -58,18 +54,9 @@ export class HandleTable {
     this.isLoading = false;
     this.loadMoreWrapper = queryElement(`[${attr}-el="load-more"]`, component) as HTMLDivElement;
     this.loadMore = queryElement('button', this.loadMoreWrapper) as HTMLButtonElement;
-    this.scaffoldWrapper = queryElement(
-      `[${attr}-el="scaffold-wrapper"]`,
-      component
-    ) as HTMLDivElement;
-    this.scaffoldCover = queryElement(
-      `[${attr}-el="scaffold-cover"]`,
-      this.scaffoldWrapper
-    ) as HTMLDivElement;
-    this.scaffoldResult = queryElement(
-      `[${attr}-el="scaffold-result"]`,
-      this.scaffoldWrapper
-    ) as HTMLDivElement;
+    this.scaffoldWrapper = queryElement(`[${attr}-el="scaffold-wrapper"]`, component) as HTMLDivElement;
+    this.scaffoldCover = queryElement(`[${attr}-el="scaffold-cover"]`, this.scaffoldWrapper) as HTMLDivElement;
+    this.scaffoldResult = queryElement(`[${attr}-el="scaffold-result"]`, this.scaffoldWrapper) as HTMLDivElement;
     this.numberOfResultsShown = 0;
 
     const url = new URL(window.location.href);
@@ -271,12 +258,7 @@ export class HandleTable {
       const result = await this.makeAzureRequest();
       this.result = result.result as unknown as BestBuyResult;
       if (isStaging) console.log(result);
-      if (
-        !this.result ||
-        this.result === null ||
-        !this.result.success ||
-        this.result.data.length === 0
-      ) {
+      if (!this.result || this.result === null || !this.result.success || this.result.data.length === 0) {
         this.toggleLoading(false);
       } else {
         this.clearResults();
@@ -326,7 +308,7 @@ export class HandleTable {
 
       const clone = this.clone.cloneNode(true) as HTMLDivElement;
       clone.style.removeProperty('display');
-      clone.setAttribute('data-productId', item.ProductId);
+      clone.setAttribute('data-productId', item.ProductId as string);
 
       const outputs = queryElements(`[${attr}-output]`, clone) as HTMLDivElement[];
       outputs.forEach((output) => {
@@ -396,10 +378,7 @@ export class HandleTable {
     if (!productId) {
       component = queryElement('.best-buy_main');
     } else {
-      component = queryElement(
-        `.bb-result_component[data-productId="${productId}"]`,
-        this.resultsList
-      );
+      component = queryElement(`.bb-result_component[data-productId="${productId}"]`, this.resultsList);
       const moreToggle = queryElement(`[${attr}-el="more-toggle"]`, component);
       if (!moreToggle) return;
       simulateEvent(moreToggle, 'click');

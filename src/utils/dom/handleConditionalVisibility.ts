@@ -1,7 +1,7 @@
 import type { Input } from 'src/types';
 
-import { getInputValue } from './getInputValue';
-import { queryElement } from './queryElement';
+import { queryElement } from '$utils/dom';
+import { getInputValue } from '$utils/input';
 
 export function handleConditionalVisibility(item: HTMLElement, inputs: Input[]): void {
   const { condition } = item.dataset;

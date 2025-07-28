@@ -1,1 +1,6 @@
-{ "extends": ["@finsweet"] }
+{
+  "extends": ["@finsweet"],
+  "rules": {
+    "printWidth": 120
+  }
+}

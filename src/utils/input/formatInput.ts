@@ -1,6 +1,6 @@
 import type { Input } from 'src/types';
 
-import { queryElements } from './queryelements';
+import { queryElements } from '$utils/dom';
 
 export function formatInput(input: Input): void {
   if (input instanceof HTMLInputElement) {

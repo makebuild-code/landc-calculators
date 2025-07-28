@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from 'src/constants';
 import type { APIResponse, Result } from 'src/types';
 
-import { handleEnterInInputs } from '$utils/handleEnterInInputs';
-import { isStaging } from '$utils/isStaging';
-import { queryElement } from '$utils/queryElement';
-import { queryElements } from '$utils/queryelements';
-import { syncSlider } from '$utils/syncSlider';
+import { handleEnterInInputs } from '$utils/input/handleEnterInInputs';
+import { isStaging } from '$utils/environment/isStaging';
+import { queryElement } from '$utils/dom/queryElement';
+import { queryElements } from '$utils/dom/queryelements';
+import { syncSlider } from '$utils/input/syncSlider';
 
 import { type CalculatorConfig, calculatorConfig } from './calculatorConfig';
 import { HandleInputs } from './handleInputs';
@@ -110,9 +110,7 @@ export class HandleCalculator {
 
       if (resultsId && calcName === 'residentialborrowinglimit') {
         // Find the calculator with `data-calc="mortgagecost"` and trigger calculation
-        const mortgageCalcComponent = document.querySelector(
-          '[data-calc="mortgagecost"]'
-        ) as HTMLDivElement;
+        const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]') as HTMLDivElement;
         if (mortgageCalcComponent) {
           const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
           mortgageCalc.submit();
@@ -232,9 +230,7 @@ export class HandleCalculator {
     const borrowValue = values['RepaymentValue'];
     const borrowAmount = parseFloat(typeof borrowValue === 'string' ? borrowValue : '0');
     const depositSliderValue = values['DepositAmountSlider'];
-    const depositSliderAmount = parseFloat(
-      typeof depositSliderValue === 'string' ? depositSliderValue : '0'
-    );
+    const depositSliderAmount = parseFloat(typeof depositSliderValue === 'string' ? depositSliderValue : '0');
 
     const body = JSON.stringify({ calculator: this.name, input: values });
 
@@ -256,8 +252,7 @@ export class HandleCalculator {
       if (result.result.BorrowingAmountLower) {
         //monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, 25, 4.65)
         result.result.DepositAmount = depositAmount;
-        result.result.PropertyValue =
-          parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
+        result.result.PropertyValue = parseFloat(result.result.BorrowingAmountHigher) + depositAmount;
         result.result.RepaymentValue = parseFloat(result.result.BorrowingAmountHigher);
         result.result.TermYears = 25;
         //result.result.FutureMonthlyPayment = monthlyRepayment
@@ -265,11 +260,7 @@ export class HandleCalculator {
     }
 
     if (result.result.TotalOverTerm) {
-      monthlyRepayment = this.calculateMonthlyPayment(
-        borrowAmount,
-        values['TermYears'],
-        values['Rate']
-      );
+      monthlyRepayment = this.calculateMonthlyPayment(borrowAmount, values['TermYears'], values['Rate']);
 
       result.result.TotalOverTerm = Math.round(result.result.TotalOverTerm);
       result.result.DepositAmount = depositSliderAmount;
@@ -338,9 +329,7 @@ export class HandleCalculator {
     const result = await response.json();
 
     if (result.result.data[0].FutureMonthlyPayment) {
-      result.result.data[0].FutureMonthlyPayment = Math.round(
-        result.result.data[0].FutureMonthlyPayment
-      );
+      result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
       result.result.data[0].InitialRate = result.result.data[0].Rate;
       result.result.data[0].TermYears = result.result.data[0].TermYears;
     }

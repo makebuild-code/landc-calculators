@@ -1,0 +1,218 @@
+# website middle layer - Create Lead and Booking http endpoint
+
+Last Updated Date : 26/06/2025
+Created Date : 09/05/2025
+
+## Contents
+
+- [website middle layer - Create Lead and Booking http endpoint](#website-middle-layer---create-lead-and-booking-http-endpoint)
+  - [Contents](#contents)
+  - [Base URLs](#base-urls)
+  - [Authentication](#authentication)
+  - [Security](#security)
+  - [\[POST\] api/CreateLeadAndBookingHttpTrigger](#post-apicreateleadandbookinghttptrigger)
+    - [parameters](#parameters)
+    - [Example Payloads](#example-payloads)
+    - [Data validation Rules](#data-validation-rules)
+    - [Responses](#responses)
+      - [HTTP 202 Accepted](#http-202-accepted)
+      - [HTTP 409 Conflict](#http-409-conflict)
+
+---
+
+## Base URLs
+
+| Environment | Url                           |
+| ----------- | ----------------------------- |
+| Dev:        | https://dev.landc.co.uk/api/  |
+| UAT:        | https://test.landc.co.uk/api/ |
+| Production  | https://www.landc.co.uk/api/  |
+
+## Authentication
+
+none
+
+## Security
+
+Auth token / IP white list
+
+<small>^ [Back to Top](#website-middle-layer---create-lead-and-booking-http-endpoint)</small>
+
+---
+
+## [POST] api/CreateLeadAndBookingHttpTrigger
+
+Calls internal endpoints:
+
+`/Enquiry/ByLcidAndIcid`
+`/Enquiry/CreateLead`
+`/Booking/Link/Token`
+`/Booking/Book`
+
+### parameters
+
+ByLcidAndIcid:
+
+```ts
+{
+	"LCID": GUID,
+	"ICID": STRING
+}
+```
+
+CreateLead:
+
+```ts
+{
+	"EnquiryLead:"
+	{
+		"EnquiryId": LONG,
+		"Icid": STRING,
+		"PartnerId": STRING,
+		"FirstName": STRING,
+		"Surname": STRING,
+		"Email": STRING,
+		"Mobile": STRING,
+		"PurchasePrice": INT,
+		"RepaymentType": CHAR,
+		"OfferAccepted": CHAR,
+		"MortgageLength": INT,
+		"MaximumBudget": INT,
+		"BuyerType": STRING,
+		"ResiBtl": CHAR,
+		"Lender" : STRING,
+		"ReadinessToBuy": CHAR,
+		"PurchRemo": CHAR,
+		"PropertyValue" : INT,
+		"DepositAmount": INT,
+		"LTV": INT,
+		"Source": CHAR,
+		"SourceId": INT,
+		"CreditImpaired": CHAR,
+		"IsEmailMarketingPermitted": BOOL,
+		"IsPhoneMarketingPermitted": BOOL,
+		"IsSMSMarketingPermitted": BOOL,
+		"IsPostMarketingPermitted": BOOL,
+		"IsSocialMessageMarketingPermitted": BOOL,
+    "MortgageType": "M",
+    "CurrentLender": STRING,
+    "LoanAmount": INT,
+    "InterestOnlyAmount": INT,
+    "Notes": STRING,
+    "FTB": BOOL,
+    "NewBuild": BOOL,
+    "DatePlanToRemo": STRING,
+    "ChosenMCTProduct": STRING,
+	}
+
+}
+```
+
+Booking/Link/Token:
+
+```ts
+{
+	"EnquiryId": GUID
+}
+```
+
+Booking/Link/Book:
+
+```ts
+{
+	"Source": STRING,
+	"bookingDate": DATETIME,
+	"BookingStart": STRING,
+	"BookingEnd": STRING,
+	"BookingProfile": STRING,
+	"BookingProfileId": INT,
+}
+```
+
+### Example Payloads
+
+Create Lead and Booking
+
+```json
+{
+  "input": {
+    "enquiry": {
+      "lcid": "0FFA8FAE-1D74-45BE-9CDC-9FAF7783CA07",
+      "icid": "G437",
+      "PartnerId": 33,
+      "FirstName": "FirstName",
+      "Surname": "Surname",
+      "Email": "Email",
+      "Mobile": "Mobile",
+      "PurchasePrice": 250000,
+      "RepaymentType": "Repayment", // Accepted Values: "Repayment" / "Interest Only" / "Both"
+      "OfferAccepted": "Y", // Will be "Y" if ReadinessToBuy = A
+      "MortgageLength": 25,
+      "MaximumBudget": 250000,
+      "BuyerType": "BuyerType", // Accepted Values: 'Buy-to-let purchase' / 'Buy-to-let remortgage' / 'Downsizer' / 'First Time Buyer' / 'Investor' / 'Mover' / 'Residential purchase' / 'Residential remortgage' / Second Stepper'
+      "ResiBtl": "R",
+      "Lender": "Lender",
+      "ReadinessToBuy": "A", // Accepted Values: 'R' = Just Researching / 'V' = Viewing Properties / 'M' = Made an Offer / 'A' = Offer Accepted
+      "PurchRemo": "P",
+      "PropertyValue": 250000,
+      "DepositAmount": 80000,
+      "LTV": "99", // Loan To Value - So on 100K property, if you borrow 50K your LTV is 50%
+      "Source": "S", // Source is wherever they have come from i.e. "Compare The Market / Used Us Before / Andrew Grant"
+      "SourceId": 77, // SourceID is internal to us, we may need a further discussion around this
+      "CreditImpaired": "N", // "Y" or "N"
+      "IsEmailMarketingPermitted": true,
+      "IsPhoneMarketingPermitted": true,
+      "IsSMSMarketingPermitted": true,
+      "IsPostMarketingPermitted": true,
+      "IsSocialMessageMarketingPermitted": true,
+      "MortgageType": "M",
+      "CurrentLender": "HSBC",
+      "LoanAmount": 100000,
+      "InterestOnlyAmount": 0,
+      "Notes": "Some Sample Notes",
+      "FTB": true,
+      "NewBuild": true,
+      "DatePlanToRemo": null,
+      "ChosenMCTProduct": "An MCT Product"
+    },
+    "booking": {
+      "source": "SYSTEM",
+      "bookingDate": "2025-05-12T15:15:58.163Z",
+      "bookingStart": "10:00",
+      "bookingEnd": "11:00",
+      "bookingProfile": "DEFAULT",
+      "bookingProfileId": 0
+    }
+  }
+}
+```
+
+### Data validation Rules
+
+`LCID`, `ICID`, `Booking` MUST be supplied
+
+### Responses
+
+#### HTTP 202 Accepted
+
+```json
+{
+  "url": "https://integrationdev.landc.co.uk/booking/book",
+  "body": "{\"source\":\"SYSTEM\",\"bookingDate\":\"2025-05-12T15:15:58.163Z\",\"bookingStart\":\"10:00\",\"bookingEnd\":\"11:00\",\"bookingProfile\":\"DEFAULT\",\"bookingProfileId\":0}",
+  "result": ""
+}
+```
+
+#### HTTP 409 Conflict
+
+```json
+{
+  "url": "https://integrationdev.landc.co.uk/booking/book",
+  "body": "{\"source\":\"SYSTEM\",\"bookingDate\":\"2025-04-12T15:15:58.163Z\",\"bookingStart\":\"10:00\",\"bookingEnd\":\"11:00\",\"bookingProfile\":\"DEFAULT\",\"bookingProfileId\":0}",
+  "error": "Timeslot fully booked"
+}
+```
+
+<small>^ [Back to Top](#website-middle-layer---create-lead-and-booking-http-endpoint)</small>
+
+---
