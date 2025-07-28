@@ -44,6 +44,7 @@ import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
+import { debugError, debugLog, debugWarn } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -143,7 +144,7 @@ export class AppointmentManager {
 
   public init(options?: AppointmentStageOptions): void {
     if (this.isInitialised) {
-      console.log('🔄 [AppointmentManager] Already initialised');
+      debugLog('🔄 [AppointmentManager] Already initialised');
       return;
     }
     this.isInitialised = true;
@@ -237,7 +238,7 @@ export class AppointmentManager {
         this.navigatePrevious();
       }
     } catch (error) {
-      console.error('Navigation error:', error);
+      debugError('Navigation error:', error);
     }
   }
 
@@ -250,7 +251,7 @@ export class AppointmentManager {
         this.handleFormSubmission();
         break;
       default:
-        console.warn('Unknown panel state:', this.currentPanel);
+        debugWarn('Unknown panel state:', this.currentPanel);
     }
   }
 
@@ -263,7 +264,7 @@ export class AppointmentManager {
         this.showCalendarPanel();
         break;
       default:
-        console.warn('Unknown panel state:', this.currentPanel);
+        debugWarn('Unknown panel state:', this.currentPanel);
     }
   }
 
@@ -337,7 +338,7 @@ export class AppointmentManager {
       const appointmentDays = await this.fetchAppointmentSlots(apiStartDate, apiEndDate);
       this.processAppointmentDays(appointmentDays, isInit);
     } catch (error) {
-      console.error('Error fetching appointment slots:', error);
+      debugError('Error fetching appointment slots:', error);
       this.hasError = true;
     } finally {
       this.setLoadingState(false);
@@ -474,7 +475,7 @@ export class AppointmentManager {
     // Get form data
     const formData = MCTManager.getForm();
     if (!formData) {
-      console.error('Failed to get form data');
+      debugError('Failed to get form data');
       this.setLoadingState(false);
       return;
     }
@@ -485,7 +486,7 @@ export class AppointmentManager {
     // Get state data
     const stateData = this.getStateData();
     if (!stateData) {
-      console.error('Failed to get state data');
+      debugError('Failed to get state data');
       this.setLoadingState(false);
       return;
     } else {
@@ -495,7 +496,7 @@ export class AppointmentManager {
     // Get appointment data
     const bookingData = MCTManager.getBooking();
     if (!bookingData) {
-      console.error('Failed to get booking data');
+      debugError('Failed to get booking data');
       this.setLoadingState(false);
       return;
     }
@@ -519,31 +520,31 @@ export class AppointmentManager {
 
       this.logUserEvent(); // No await, just log the event and handle separately
     } catch (error: unknown) {
-      console.error('Error submitting booking:', error);
+      debugError('Error submitting booking:', error);
 
       // Handle specific API errors
       if (error instanceof APIError) {
-        console.error('API Error Status:', error.status);
-        console.error('API Error Message:', error.message);
+        debugError('API Error Status:', error.status);
+        debugError('API Error Message:', error.message);
 
         if (error.status === 409) {
-          console.error('Booking error: 409 - Slot already taken');
+          debugError('Booking error: 409 - Slot already taken');
           this.tryAgainDialog.showModal();
           this.tryAgainButton.addEventListener('click', () => {
             this.tryAgainDialog.close();
             this.showCalendarPanel();
           });
         } else if (error.status === 400) {
-          console.error('Booking error: 400 - Bad request, try again');
+          debugError('Booking error: 400 - Bad request, try again');
           this.formError.style.display = 'block';
         } else {
-          console.error('Booking failed with status:', error.status);
+          debugError('Booking failed with status:', error.status);
           alert('An error occurred while booking your appointment. Please try again.');
           this.formError.style.display = 'block';
         }
       } else {
         // Handle other types of errors
-        console.error('Unexpected error:', error);
+        debugError('Unexpected error:', error);
         alert('An unexpected error occurred. Please try again.');
       }
     } finally {
@@ -560,7 +561,7 @@ export class AppointmentManager {
     try {
       MCTManager.logUserEvent(event);
     } catch (error) {
-      console.error('Error logging user event:', error);
+      debugError('Error logging user event:', error);
     }
   }
 

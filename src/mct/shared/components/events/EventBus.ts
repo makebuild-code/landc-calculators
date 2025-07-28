@@ -1,4 +1,5 @@
 import type { AllEvents, EventName } from '$mct/types';
+import { debugError, debugLog } from '$utils/debug';
 
 export interface TypedEventHandler<T extends EventName> {
   (payload: AllEvents[T]): void;
@@ -28,13 +29,13 @@ export class EventBus {
     this.handlers.get(event)!.add(handler);
 
     if (this.debug) {
-      console.log(`📡 EventBus: Subscribed to "${event}"`);
+      debugLog(`📡 EventBus: Subscribed to "${event}"`);
     }
 
     return () => {
       this.handlers.get(event)?.delete(handler);
       if (this.debug) {
-        console.log(`📡 EventBus: Unsubscribed from "${event}"`);
+        debugLog(`📡 EventBus: Unsubscribed from "${event}"`);
       }
     };
   }
@@ -55,7 +56,7 @@ export class EventBus {
    */
   emit<T extends EventName>(event: T, payload: AllEvents[T]): void {
     if (this.debug) {
-      console.log(`📡 EventBus: Emitting "${event}"`, payload);
+      debugLog(`📡 EventBus: Emitting "${event}"`, payload);
     }
 
     // Notify global handlers first
@@ -63,7 +64,7 @@ export class EventBus {
       try {
         handler(payload);
       } catch (error) {
-        console.error(`Error in global event handler for ${event}:`, error);
+        debugError(`Error in global event handler for ${event}:`, error);
       }
     });
 
@@ -74,7 +75,7 @@ export class EventBus {
         try {
           handler(payload);
         } catch (error) {
-          console.error(`Error in event handler for ${event}:`, error);
+          debugError(`Error in event handler for ${event}:`, error);
         }
       });
     }
@@ -100,7 +101,7 @@ export class EventBus {
   clearEvent(event: EventName): void {
     this.handlers.delete(event);
     if (this.debug) {
-      console.log(`📡 EventBus: Cleared all handlers for "${event}"`);
+      debugLog(`📡 EventBus: Cleared all handlers for "${event}"`);
     }
   }
 
@@ -111,7 +112,7 @@ export class EventBus {
     this.handlers.clear();
     this.globalHandlers.clear();
     if (this.debug) {
-      console.log(`📡 EventBus: Cleared all handlers`);
+      debugLog(`📡 EventBus: Cleared all handlers`);
     }
   }
 }

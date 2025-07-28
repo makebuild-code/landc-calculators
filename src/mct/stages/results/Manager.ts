@@ -26,6 +26,7 @@ import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { EventBus, globalEventBus } from '$mct/components';
+import { debugError, debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -533,11 +534,11 @@ export class ResultsManager {
     if (!input) return null;
 
     try {
-      console.log('🔄 [ResultsManager] fetchProducts', input);
+      debugLog('🔄 [ResultsManager] fetchProducts', input);
       const response = await productsAPI.search(input);
       return response;
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      debugError('🔄 [ResultsManager] fetchProducts', error);
       return null;
     }
   }
@@ -660,7 +661,7 @@ export class ResultsManager {
         this.applyDirectDialog?.close();
       }, 3000);
     } catch (error) {
-      console.error('Failed to log user events before redirect:', error);
+      debugError('🔄 [ResultsManager] handleDirectToLender', error);
       // Optionally, you could still redirect even if logging fails
       // Or handle the error differently based on your requirements
       window.open(this.product?.ApplyDirectLink || '', '_blank');

@@ -2,6 +2,7 @@ import { lendersAPI } from '$mct/api';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { InputKeysENUM, type Inputs, type SelectOption } from '$mct/types';
+import { debugError } from '$utils/debug';
 import type { FormManager } from './Manager_Base';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -65,7 +66,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
       this.setSelectOptions(lenderOptions);
     } catch (error) {
-      console.error('Failed to fetch lenders:', error);
+      debugError('Failed to fetch lenders:', error);
     }
   }
 
