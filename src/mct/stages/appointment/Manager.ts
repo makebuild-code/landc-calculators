@@ -1,14 +1,18 @@
 import {
   type AppointmentStageOptions,
   type AppointmentDay,
-  type DatePlanToRemoENUM,
+  DatePlanToRemoENUM,
   type ICID,
   type LCID,
   type LogUserEventCustom,
   type Inputs,
   type EnquiryData,
+  type EnquiryBase,
+  type EnquiryPurchase,
+  type EnquiryRemortgage,
   FTBENUM,
   NewBuildENUM,
+  CalculationKeysENUM,
 } from '$mct/types';
 import {
   CreditImpairedENUM,
@@ -27,7 +31,14 @@ import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
 import { getOrdinalSuffix } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
-import type { CreateLeadAndBookingRequest, EnquiryLead } from '$mct/types';
+import type {
+  AppState,
+  BuyerTypeENUM,
+  Calculations,
+  CreateLeadAndBookingRequest,
+  EnquiryLead,
+  ProfileNameENUM,
+} from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
@@ -479,7 +490,6 @@ export class AppointmentManager {
       return;
     } else {
       if (Vulnerable === 'Yes') stateData.Notes = `Vulnerable: ${Vulnerable} - Notes: ${VulnerableMessage}`;
-      stateData.ChosenMCTProduct = MCTManager.getProduct()?.toString();
     }
 
     // Get appointment data
@@ -571,62 +581,76 @@ export class AppointmentManager {
     const answers = MCTManager.getAnswers();
     const calculations = MCTManager.getCalculations();
 
-    // Map state and answers to API fields
-    const stateData: EnquiryData = {
-      icid: state.icid as ICID,
+    // Get the PurchRemo value to determine the type
+    const PurchRemo = getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo));
+    if (!PurchRemo) throw new Error('PurchRemo is required');
+
+    // Return the appropriate type based on PurchRemo
+    if (PurchRemo === PurchRemoENUM.Purchase) {
+      return this.createPurchaseEnquiry(state, answers, calculations);
+    } else {
+      return this.createRemortgageEnquiry(state, answers, calculations);
+    }
+  }
+
+  private createBaseEnquiry(
+    state: AppState,
+    answers: Inputs,
+    calculations: Calculations,
+    PurchRemo: PurchRemoENUM
+  ): EnquiryBase {
+    const ChosenMCTProduct = MCTManager.getProduct()?.toString();
+
+    return {
       lcid: state.lcid as LCID,
-      PurchasePrice: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
+      icid: state.icid as ICID,
+      BuyerType: calculations[CalculationKeysENUM.BuyerType] as BuyerTypeENUM,
+      PurchRemo,
+      ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, InputKeysENUM.ResiBtl)) as ResiBtlENUM,
+      PropertyValue: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
       RepaymentType: getEnumValue(
         RepaymentTypeENUM,
         this.getStringAnswer(answers, InputKeysENUM.RepaymentType)
       ) as RepaymentTypeENUM,
       MortgageLength: this.getNumericAnswer(answers, InputKeysENUM.MortgageLength),
-      ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, InputKeysENUM.ResiBtl)) as ResiBtlENUM,
-      ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, InputKeysENUM.ReadinessToBuy)),
-      PropertyValue: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
-      DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
-      LoanAmount: this.getNumericAnswer(answers, InputKeysENUM.BorrowAmount),
+      LTV: calculations.LTV as number,
+      CreditImpaired: getEnumValue(
+        CreditImpairedENUM,
+        this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)
+      ) as CreditImpairedENUM,
+      LoanAmount: calculations.MortgageAmount as number,
       InterestOnlyAmount: this.getNumericAnswer(answers, InputKeysENUM.InterestOnlyValue),
-      FTB: getEnumValue(FTBENUM, this.getStringAnswer(answers, InputKeysENUM.FTB)) as FTBENUM,
-      NewBuild: getEnumValue(NewBuildENUM, this.getStringAnswer(answers, InputKeysENUM.NewBuild)) as NewBuildENUM,
+      ...(ChosenMCTProduct && { ChosenMCTProduct }),
     };
-
-    const OfferAccepted = calculations.offerAccepted as OfferAcceptedENUM;
-    const Lender = this.getStringAnswer(answers, InputKeysENUM.Lender);
-    const PurchRemo = getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo));
-    const LTV = calculations.LTV as number;
-    const CreditImpaired = getEnumValue(
-      CreditImpairedENUM,
-      this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)
-    );
-    const DatePlanToRemo = this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo) as DatePlanToRemoENUM;
-    const ChosenMCTProduct = MCTManager.getProduct()?.toString();
-
-    if (OfferAccepted) stateData.OfferAccepted = OfferAccepted;
-    if (Lender) stateData.Lender = Lender;
-    if (PurchRemo) stateData.PurchRemo = PurchRemo;
-    if (LTV) stateData.LTV = LTV;
-    if (CreditImpaired) stateData.CreditImpaired = CreditImpaired;
-    if (DatePlanToRemo) stateData.DatePlanToRemo = DatePlanToRemo;
-    if (ChosenMCTProduct) stateData.ChosenMCTProduct = ChosenMCTProduct;
-
-    return stateData;
   }
 
-  // /**
-  //  * Get appointment data including date and time
-  //  */
-  // private getAppointmentData(): Booking | null {
-  //   try {
-  //     const booking = MCTManager.getBooking();
-  //     if (!booking) return null;
+  private createPurchaseEnquiry(state: AppState, answers: Inputs, calculations: Calculations): EnquiryPurchase {
+    return {
+      ...this.createBaseEnquiry(state, answers, calculations, PurchRemoENUM.Purchase),
+      PurchasePrice: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
+      OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
+      ReadinessToBuy: getEnumValue(
+        ReadinessToBuyENUM,
+        this.getStringAnswer(answers, InputKeysENUM.ReadinessToBuy)
+      ) as ReadinessToBuyENUM,
+      DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
+      FTB: (getEnumValue(FTBENUM, this.getStringAnswer(answers, InputKeysENUM.FTB)) as FTBENUM) ?? FTBENUM.No,
+      NewBuild:
+        (getEnumValue(NewBuildENUM, this.getStringAnswer(answers, InputKeysENUM.NewBuild)) as NewBuildENUM) ??
+        NewBuildENUM.No,
+    };
+  }
 
-  //     return booking;
-  //   } catch (error) {
-  //     console.error('Error getting appointment data:', error);
-  //     return null;
-  //   }
-  // }
+  private createRemortgageEnquiry(state: AppState, answers: Inputs, calculations: Calculations): EnquiryRemortgage {
+    return {
+      ...this.createBaseEnquiry(state, answers, calculations, PurchRemoENUM.Remortgage),
+      DatePlanToRemo: getEnumValue(
+        DatePlanToRemoENUM,
+        this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo)
+      ) as DatePlanToRemoENUM,
+      CurrentLender: this.getStringAnswer(answers, InputKeysENUM.Lender),
+    };
+  }
 
   /**
    * Helper method to get string answer from answers object

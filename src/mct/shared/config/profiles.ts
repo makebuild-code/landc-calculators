@@ -1,11 +1,11 @@
 import type { CONFIG_PROFILES } from '$mct/types';
-import { ProfileNameENUM } from '$mct/types';
+import { BuyerTypeENUM, ProfileNameENUM } from '$mct/types';
 
 export const PROFILES_CONFIG: CONFIG_PROFILES = {
   profiles: [
     {
       name: ProfileNameENUM.ResidentialPurchase,
-      display: 'Residential Purchase',
+      display: BuyerTypeENUM.ResidentialPurchase,
       requirements: {
         PurchRemo: 'Purchase',
         FTB: 'No',
@@ -14,7 +14,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
     },
     {
       name: ProfileNameENUM.BtlPurchase,
-      display: 'Buy to Let - Purchase',
+      display: BuyerTypeENUM.BtlPurchase,
       requirements: {
         PurchRemo: 'Purchase',
         FTB: 'No',
@@ -23,7 +23,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
     },
     {
       name: ProfileNameENUM.FtbResidentialPurchase,
-      display: 'First Time Buyer - Purchase',
+      display: BuyerTypeENUM.FtbResidentialPurchase,
       requirements: {
         PurchRemo: 'Purchase',
         FTB: 'Yes',
@@ -32,7 +32,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
     },
     {
       name: ProfileNameENUM.FtbBtlPurchase,
-      display: 'First Time Buyer - Buy to Let - Purchase',
+      display: BuyerTypeENUM.FtbBtlPurchase,
       requirements: {
         PurchRemo: 'Purchase',
         FTB: 'Yes',
@@ -41,7 +41,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
     },
     {
       name: ProfileNameENUM.ResidentialRemortgage,
-      display: 'Residential - Remortgage',
+      display: BuyerTypeENUM.ResidentialRemortgage,
       requirements: {
         PurchRemo: 'Remortgage',
         ResiBtl: 'Residential',
@@ -49,7 +49,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
     },
     {
       name: ProfileNameENUM.BtlRemortgage,
-      display: 'Buy to Let - Remortgage',
+      display: BuyerTypeENUM.BtlRemortgage,
       requirements: {
         PurchRemo: 'Remortgage',
         ResiBtl: 'Btl',

@@ -1,4 +1,4 @@
-import { BuyerTypeENUM, MortgageTypeENUM } from '$mct/types';
+import { BuyerTypeENUM } from '$mct/types';
 import { type LCID, type ICID, type LenderName, DatePlanToRemoENUM } from './base';
 
 export type PartnerId = number | 'default';
@@ -67,39 +67,65 @@ export interface EnquiryForm {
   IsSocialMessageMarketingPermitted: boolean;
 }
 
-export interface EnquiryData {
+export interface EnquiryBase {
   lcid: LCID;
   icid: ICID;
-  // PartnerId?: PartnerId;
-  PurchasePrice: number;
-  RepaymentType: RepaymentTypeENUM;
-  OfferAccepted?: OfferAcceptedENUM;
-  MortgageLength: number;
-  MaximumBudget?: number;
-  BuyerType?: BuyerTypeENUM;
+  BuyerType: BuyerTypeENUM;
+  PurchRemo: PurchRemoENUM;
   ResiBtl: ResiBtlENUM;
-  Lender?: LenderName;
-  ReadinessToBuy?: ReadinessToBuyENUM;
-  PurchRemo?: PurchRemoENUM;
   PropertyValue: number;
-  DepositAmount: number;
-  LTV?: number;
-  // Source?: Source;
-  // SourceId?: SourceID;
-  CreditImpaired?: CreditImpairedENUM;
-  // NEW
-  MortgageType?: MortgageTypeENUM;
-  CurrentLender?: LenderName;
+  RepaymentType: RepaymentTypeENUM;
+  MortgageLength: number;
+  LTV: number;
+  CreditImpaired: CreditImpairedENUM;
   LoanAmount: number;
   InterestOnlyAmount: number;
   Notes?: string;
-  FTB: FTBENUM;
-  NewBuild: NewBuildENUM;
-  DatePlanToRemo?: DatePlanToRemoENUM;
   ChosenMCTProduct?: string;
+  // PartnerId?: PartnerId;
+  // Source?: Source;
+  // SourceId?: SourceID;
 }
 
+export interface EnquiryPurchase extends EnquiryBase {
+  PurchasePrice: number;
+  OfferAccepted: OfferAcceptedENUM;
+  ReadinessToBuy: ReadinessToBuyENUM;
+  DepositAmount: number;
+  FTB: FTBENUM;
+  NewBuild: NewBuildENUM;
+}
+
+export interface EnquiryRemortgage extends EnquiryBase {
+  DatePlanToRemo: DatePlanToRemoENUM;
+  // Lender?: LenderName;
+  CurrentLender: LenderName;
+}
+
+// Union type that can be either purchase or remortgage enquiry
+export type EnquiryData = EnquiryPurchase | EnquiryRemortgage;
+
+// Helper type to extract the correct enquiry type based on PurchRemo
+export type EnquiryDataForPurchRemo<T extends PurchRemoENUM> = T extends PurchRemoENUM.Purchase
+  ? EnquiryPurchase
+  : T extends PurchRemoENUM.Remortgage
+    ? EnquiryRemortgage
+    : never;
+
+// Utility type to get the correct enquiry type when you have an object with PurchRemo
+export type EnquiryDataFromObject<T extends { PurchRemo?: PurchRemoENUM }> =
+  T['PurchRemo'] extends PurchRemoENUM.Purchase
+    ? EnquiryPurchase
+    : T['PurchRemo'] extends PurchRemoENUM.Remortgage
+      ? EnquiryRemortgage
+      : EnquiryData; // fallback to union type if PurchRemo is undefined
+
+// Basic union type for general use
 export type EnquiryLead = Omit<EnquiryForm, 'Vulnerable' | 'VulnerableMessage'> & EnquiryData;
+
+// Type-safe version when you know the PurchRemo value
+export type EnquiryLeadForPurchRemo<T extends PurchRemoENUM> = Omit<EnquiryForm, 'Vulnerable' | 'VulnerableMessage'> &
+  EnquiryDataForPurchRemo<T>;
 
 export interface Booking {
   source: 'SYSTEM';
@@ -121,3 +147,19 @@ export interface CreateLeadAndBookingResponse {
   result: string;
   error?: string;
 }
+
+/*
+ * Usage Examples:
+ *
+ * // When you know the PurchRemo value at compile time:
+ * type PurchaseEnquiry = EnquiryDataForPurchRemo<PurchRemoENUM.Purchase>; // EnquiryPurchase
+ * type RemortgageEnquiry = EnquiryDataForPurchRemo<PurchRemoENUM.Remortgage>; // EnquiryRemortgage
+ *
+ * // When you have an object with PurchRemo and want type safety:
+ * const data: { PurchRemo: PurchRemoENUM.Purchase } = { PurchRemo: PurchRemoENUM.Purchase };
+ * type TypedEnquiry = EnquiryDataFromObject<typeof data>; // EnquiryPurchase
+ *
+ * // For the lead with form data:
+ * type PurchaseLead = EnquiryLeadForPurchRemo<PurchRemoENUM.Purchase>; // EnquiryForm + EnquiryPurchase
+ * type RemortgageLead = EnquiryLeadForPurchRemo<PurchRemoENUM.Remortgage>; // EnquiryForm + EnquiryRemortgage
+ */

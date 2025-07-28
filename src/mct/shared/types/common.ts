@@ -25,8 +25,9 @@ export enum ProfileNameENUM {
 // LandC BuyerTypes
 export enum BuyerTypeENUM {
   ResidentialPurchase = 'Residential purchase',
-  FtbResidentialPurchase = 'First Time Buyer',
   BtlPurchase = 'Buy-to-let purchase',
+  FtbResidentialPurchase = 'First Time Buyer',
+  FtbBtlPurchase = 'Buy-to-left FTB',
   ResidentialRemortgage = 'Residential remortgage',
   BtlRemortgage = 'Buy-to-let remortgage',
 }
@@ -43,7 +44,7 @@ export enum GroupNameENUM {
 
 export interface Profile {
   name: ProfileNameENUM;
-  display: string;
+  display: BuyerTypeENUM;
   requirements: {
     [key: string]: string;
   };

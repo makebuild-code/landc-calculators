@@ -11,7 +11,7 @@ import type {
   Profile,
   QuestionsStageOptions,
 } from '$mct/types';
-import { StageIDENUM } from '$mct/types';
+import { CalculationKeysENUM, StageIDENUM } from '$mct/types';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeInitialStyles';
 
 import { MainGroup, OutputGroup } from './Groups';
@@ -84,14 +84,16 @@ export abstract class FormManager {
     return { ...MCTManager.getAnswers() };
   }
 
-  protected determineProfile(): Profile | null {
+  protected determineProfile(): Profile | undefined {
     const answers = this.getAnswers();
     const profile: Profile | undefined = PROFILES.find((profile) => {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key as InputKeysENUM] === value);
     });
 
     this.profile = profile ? profile : null;
-    return profile ? profile : null;
+
+    MCTManager.setCalculation(CalculationKeysENUM.BuyerType, profile?.display || undefined);
+    return profile ? profile : undefined;
   }
 
   protected getLastVisibleGroup(): MainGroup | OutputGroup | undefined {
