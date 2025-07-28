@@ -1,4 +1,5 @@
 export * from './analytics';
+export * from './debug';
 export * from './dom';
 export * from './environment';
 export * from './events';

@@ -1,4 +1,5 @@
 import { logError } from '$mct/utils';
+import { debugWarn } from '$utils/debug';
 import { APIError } from './APIClient';
 
 export class APIErrorHandler {
@@ -53,6 +54,6 @@ export class APIErrorHandler {
     }
 
     // You could integrate this with a toast notification system
-    console.warn('User message:', message);
+    debugWarn('User message:', message);
   }
 }
