@@ -1,5 +1,6 @@
 import { DOM_CONFIG } from '$mct/config';
 import { GroupNameENUM } from '$mct/types';
+import { debugLog } from '$utils/debug';
 import { queryElement, queryElements } from '$utils/dom';
 import { MainGroup, type GroupOptions } from '../form/Groups';
 import { FormManager } from '../form/Manager_Base';
@@ -61,7 +62,7 @@ export class Sidebar extends FormManager {
   }
 
   private update(): void {
-    console.log('update');
+    debugLog('update');
   }
 
   private close(): void {

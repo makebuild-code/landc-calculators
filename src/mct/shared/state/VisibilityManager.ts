@@ -3,6 +3,7 @@ import type { Inputs, Calculations, EnquiryForm } from '$mct/types';
 import { DOM_CONFIG } from '$mct/config';
 import { queryElements } from '$utils/dom';
 import { toggleElement } from '../utils/dom/visibility';
+import { debugWarn } from '$utils/debug';
 
 /**
  * Visibility condition parser and evaluator
@@ -109,7 +110,7 @@ export class VisibilityManager {
 
       return this.evaluateParsedCondition(parsedCondition);
     } catch (error) {
-      console.warn('Visibility condition evaluation failed:', condition, error);
+      debugWarn('Visibility condition evaluation failed:', condition, error);
       return true; // Default to visible on error
     }
   }

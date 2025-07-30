@@ -387,7 +387,8 @@ export abstract class StatefulInputGroup<
         this.setRadioValue(value);
         break;
       case 'checkbox':
-        if (!Array.isArray(value)) throw new Error('Value for checkbox question must be an array');
+        if (typeof value !== 'boolean' || !Array.isArray(value))
+          throw new Error('Value for checkbox question must be boolean or an array');
         this.setCheckboxValues(value);
         break;
       case 'text':

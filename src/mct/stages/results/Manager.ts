@@ -26,7 +26,8 @@ import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { EventBus, globalEventBus } from '$mct/components';
-import { Sidebar } from './sidebar';
+import { Sidebar } from './Sidebar';
+import { debugError, debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
 
@@ -149,7 +150,6 @@ export class ResultsManager {
 
     this.eventBus.on(APIEventNames.REQUEST_SUCCESS, (event) => {
       if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
-        console.log('🔄 [ResultsManager] API request success', event);
         this.summaryInfo = event.response.result.SummaryInfo;
         this.renderOutputs();
       }
@@ -180,6 +180,40 @@ export class ResultsManager {
     removeInitialStyles(this.component);
   }
 
+  public start(options?: ResultsStageOptions): void {
+    if (!this.isInitialised) {
+      this.init(options);
+      return;
+    }
+
+    const calculations = MCTManager.getCalculations();
+    this.isProceedable = !!calculations.isProceedable;
+
+    this.syncFiltersStateToQuestions();
+    this.initAppointmentDialog();
+    this.renderOutputs();
+    this.renderFilters();
+    this.handleProductsAPI();
+    this.handleShowIfProceedable();
+  }
+
+  private syncFiltersStateToQuestions(): void {
+    const answers = MCTManager.getAnswers();
+
+    this.filters.forEach((filter) => {
+      const answer = answers[filter.getStateValue('initialName') as InputKey];
+      if (!answer) return;
+
+      filter.setValue(answer);
+      MCTManager.setFilter({
+        key: filter.getStateValue('initialName') as InputKey,
+        name: filter.getStateValue('finalName'),
+        value: answer,
+        source: 'user',
+      });
+    });
+  }
+
   private handleProduct(action: 'set' | 'clear', product?: Product): void {
     if (action === 'set' && product) {
       this.product = product;
@@ -188,17 +222,6 @@ export class ResultsManager {
       MCTManager.clearProduct();
       this.product = null;
     }
-  }
-
-  public onEnter(): void {
-    const calculations = MCTManager.getCalculations();
-    this.isProceedable = !!calculations.isProceedable;
-
-    this.initAppointmentDialog();
-    this.renderOutputs();
-    this.renderFilters();
-    this.handleProductsAPI();
-    this.handleShowIfProceedable();
   }
 
   public show(scrollTo: boolean = true): void {
@@ -240,7 +263,9 @@ export class ResultsManager {
       const name = filter.getStateValue('finalName');
       const value = filter.getStateValue('value') as InputValue;
 
-      return { key, name, value, source: 'user' };
+      const data: InputData = { key, name, value, source: 'user' };
+      MCTManager.setAnswer(data);
+      return data;
     });
 
     MCTManager.setFilters(filterDataArray);
@@ -347,7 +372,7 @@ export class ResultsManager {
 
   private renderFilters(): void {
     const answers = MCTManager.getAnswers();
-    const filters = FILTERS_CONFIG;
+    const filters = { ...FILTERS_CONFIG, ...MCTManager.getFilters() };
 
     this.filters.forEach((filterGroup) => {
       const answer = (answers as any)[filterGroup.getStateValue('initialName')]; // @TODO: look into types here
@@ -492,10 +517,11 @@ export class ResultsManager {
     if (!input) return null;
 
     try {
+      debugLog('🔄 [ResultsManager] fetchProducts', input);
       const response = await productsAPI.search(input);
       return response;
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      debugError('🔄 [ResultsManager] fetchProducts', error);
       return null;
     }
   }
@@ -618,7 +644,7 @@ export class ResultsManager {
         this.applyDirectDialog?.close();
       }, 3000);
     } catch (error) {
-      console.error('Failed to log user events before redirect:', error);
+      debugError('🔄 [ResultsManager] handleDirectToLender', error);
       // Optionally, you could still redirect even if logging fails
       // Or handle the error differently based on your requirements
       window.open(this.product?.ApplyDirectLink || '', '_blank');

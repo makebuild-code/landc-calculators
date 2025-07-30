@@ -1,12 +1,18 @@
-import type {
-  AppointmentStageOptions,
-  AppointmentDay,
+import {
+  type AppointmentStageOptions,
+  type AppointmentDay,
   DatePlanToRemoENUM,
-  ICID,
-  LCID,
-  LogUserEventCustom,
-  Inputs,
-  EnquiryData,
+  type ICID,
+  type LCID,
+  type LogUserEventCustom,
+  type Inputs,
+  type EnquiryData,
+  type EnquiryBase,
+  type EnquiryPurchase,
+  type EnquiryRemortgage,
+  FTBENUM,
+  NewBuildENUM,
+  CalculationKeysENUM,
 } from '$mct/types';
 import {
   CreditImpairedENUM,
@@ -25,12 +31,20 @@ import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
 import { getOrdinalSuffix } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
-import type { CreateLeadAndBookingRequest, EnquiryLead } from '$mct/types';
+import type {
+  AppState,
+  BuyerTypeENUM,
+  Calculations,
+  CreateLeadAndBookingRequest,
+  EnquiryLead,
+  ProfileNameENUM,
+} from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
+import { debugError, debugLog, debugWarn } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -129,7 +143,10 @@ export class AppointmentManager {
   }
 
   public init(options?: AppointmentStageOptions): void {
-    if (this.isInitialised) return;
+    if (this.isInitialised) {
+      debugLog('🔄 [AppointmentManager] Already initialised');
+      return;
+    }
     this.isInitialised = true;
     this.setLoadingState(true);
 
@@ -175,6 +192,13 @@ export class AppointmentManager {
     removeInitialStyles(this.component);
   }
 
+  public start(options?: AppointmentStageOptions): void {
+    if (!this.isInitialised) {
+      this.init(options);
+      return;
+    }
+  }
+
   private handleInputChange(inputGroup: InputGroup): void {
     const key = inputGroup.getStateValue('initialName');
     const value = inputGroup.getStateValue('value');
@@ -214,7 +238,7 @@ export class AppointmentManager {
         this.navigatePrevious();
       }
     } catch (error) {
-      console.error('Navigation error:', error);
+      debugError('Navigation error:', error);
     }
   }
 
@@ -227,7 +251,7 @@ export class AppointmentManager {
         this.handleFormSubmission();
         break;
       default:
-        console.warn('Unknown panel state:', this.currentPanel);
+        debugWarn('Unknown panel state:', this.currentPanel);
     }
   }
 
@@ -240,7 +264,7 @@ export class AppointmentManager {
         this.showCalendarPanel();
         break;
       default:
-        console.warn('Unknown panel state:', this.currentPanel);
+        debugWarn('Unknown panel state:', this.currentPanel);
     }
   }
 
@@ -314,7 +338,7 @@ export class AppointmentManager {
       const appointmentDays = await this.fetchAppointmentSlots(apiStartDate, apiEndDate);
       this.processAppointmentDays(appointmentDays, isInit);
     } catch (error) {
-      console.error('Error fetching appointment slots:', error);
+      debugError('Error fetching appointment slots:', error);
       this.hasError = true;
     } finally {
       this.setLoadingState(false);
@@ -451,47 +475,36 @@ export class AppointmentManager {
     // Get form data
     const formData = MCTManager.getForm();
     if (!formData) {
-      console.error('Failed to get form data');
+      debugError('Failed to get form data');
       this.setLoadingState(false);
       return;
     }
 
-    /**
-     * @todo
-     *
-     * - Take VulnerableMessage and add it to the notes
-     * - Remove Vulnerable and VulnerableMessage from the formData
-     */
+    // Remove Vulnerable and VulnerableMessage from formData
+    const { Vulnerable, VulnerableMessage, ...formDataWithoutVulnerable } = formData;
 
     // Get state data
     const stateData = this.getStateData();
     if (!stateData) {
-      console.error('Failed to get state data');
+      debugError('Failed to get state data');
       this.setLoadingState(false);
       return;
     } else {
-      if (formData.Vulnerable === 'Yes')
-        stateData.Notes = `Vulnerable: ${formData.Vulnerable} - Notes: ${formData.VulnerableMessage}`;
-      stateData.ChosenMCTProduct = MCTManager.getProduct() as number;
+      if (Vulnerable === 'Yes') stateData.Notes = `Vulnerable: ${Vulnerable} - Notes: ${VulnerableMessage}`;
     }
 
     // Get appointment data
     const bookingData = MCTManager.getBooking();
     if (!bookingData) {
-      console.error('Failed to get booking data');
+      debugError('Failed to get booking data');
       this.setLoadingState(false);
       return;
     }
 
-    const enquiry: EnquiryLead = {
-      ...formData,
-      ...stateData,
-    };
-
     // Create the API request with default values for required fields
     const request: CreateLeadAndBookingRequest = {
       enquiry: {
-        ...formData,
+        ...formDataWithoutVulnerable,
         ...stateData,
       },
       booking: bookingData,
@@ -507,31 +520,31 @@ export class AppointmentManager {
 
       this.logUserEvent(); // No await, just log the event and handle separately
     } catch (error: unknown) {
-      console.error('Error submitting booking:', error);
+      debugError('Error submitting booking:', error);
 
       // Handle specific API errors
       if (error instanceof APIError) {
-        console.error('API Error Status:', error.status);
-        console.error('API Error Message:', error.message);
+        debugError('API Error Status:', error.status);
+        debugError('API Error Message:', error.message);
 
         if (error.status === 409) {
-          console.error('Booking error: 409 - Slot already taken');
+          debugError('Booking error: 409 - Slot already taken');
           this.tryAgainDialog.showModal();
           this.tryAgainButton.addEventListener('click', () => {
             this.tryAgainDialog.close();
             this.showCalendarPanel();
           });
         } else if (error.status === 400) {
-          console.error('Booking error: 400 - Bad request, try again');
+          debugError('Booking error: 400 - Bad request, try again');
           this.formError.style.display = 'block';
         } else {
-          console.error('Booking failed with status:', error.status);
+          debugError('Booking failed with status:', error.status);
           alert('An error occurred while booking your appointment. Please try again.');
           this.formError.style.display = 'block';
         }
       } else {
         // Handle other types of errors
-        console.error('Unexpected error:', error);
+        debugError('Unexpected error:', error);
         alert('An unexpected error occurred. Please try again.');
       }
     } finally {
@@ -548,7 +561,7 @@ export class AppointmentManager {
     try {
       MCTManager.logUserEvent(event);
     } catch (error) {
-      console.error('Error logging user event:', error);
+      debugError('Error logging user event:', error);
     }
   }
 
@@ -569,50 +582,76 @@ export class AppointmentManager {
     const answers = MCTManager.getAnswers();
     const calculations = MCTManager.getCalculations();
 
-    // Map state and answers to API fields
-    const stateData: EnquiryData = {
-      icid: state.icid as ICID,
+    // Get the PurchRemo value to determine the type
+    const PurchRemo = getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo));
+    if (!PurchRemo) throw new Error('PurchRemo is required');
+
+    // Return the appropriate type based on PurchRemo
+    if (PurchRemo === PurchRemoENUM.Purchase) {
+      return this.createPurchaseEnquiry(state, answers, calculations);
+    } else {
+      return this.createRemortgageEnquiry(state, answers, calculations);
+    }
+  }
+
+  private createBaseEnquiry(
+    state: AppState,
+    answers: Inputs,
+    calculations: Calculations,
+    PurchRemo: PurchRemoENUM
+  ): EnquiryBase {
+    const ChosenMCTProduct = MCTManager.getProduct()?.toString();
+
+    return {
       lcid: state.lcid as LCID,
-      PurchasePrice: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
+      icid: state.icid as ICID,
+      BuyerType: calculations[CalculationKeysENUM.BuyerType] as BuyerTypeENUM,
+      PurchRemo,
+      ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, InputKeysENUM.ResiBtl)) as ResiBtlENUM,
+      PropertyValue: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
       RepaymentType: getEnumValue(
         RepaymentTypeENUM,
         this.getStringAnswer(answers, InputKeysENUM.RepaymentType)
       ) as RepaymentTypeENUM,
-      OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
       MortgageLength: this.getNumericAnswer(answers, InputKeysENUM.MortgageLength),
-      ResiBtl: getEnumValue(ResiBtlENUM, this.getStringAnswer(answers, InputKeysENUM.ResiBtl)) as ResiBtlENUM,
-      Lender: this.getStringAnswer(answers, InputKeysENUM.Lender),
-      ReadinessToBuy: getEnumValue(ReadinessToBuyENUM, this.getStringAnswer(answers, InputKeysENUM.ReadinessToBuy)),
-      PurchRemo: getEnumValue(PurchRemoENUM, this.getStringAnswer(answers, InputKeysENUM.PurchRemo)),
-      PropertyValue: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
-      DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
       LTV: calculations.LTV as number,
-      CreditImpaired: getEnumValue(CreditImpairedENUM, this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)),
-      LoanAmount: this.getNumericAnswer(answers, InputKeysENUM.BorrowAmount),
+      CreditImpaired: getEnumValue(
+        CreditImpairedENUM,
+        this.getStringAnswer(answers, InputKeysENUM.CreditImpaired)
+      ) as CreditImpairedENUM,
+      LoanAmount: calculations.MortgageAmount as number,
       InterestOnlyAmount: this.getNumericAnswer(answers, InputKeysENUM.InterestOnlyValue),
-      FTB: this.getBooleanAnswer(answers, InputKeysENUM.FTB),
-      NewBuild: this.getBooleanAnswer(answers, InputKeysENUM.NewBuild),
-      DatePlanToRemo: this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo) as DatePlanToRemoENUM,
-      ChosenMCTProduct: MCTManager.getProduct() as number,
+      ...(ChosenMCTProduct && { ChosenMCTProduct }),
     };
-
-    return stateData;
   }
 
-  // /**
-  //  * Get appointment data including date and time
-  //  */
-  // private getAppointmentData(): Booking | null {
-  //   try {
-  //     const booking = MCTManager.getBooking();
-  //     if (!booking) return null;
+  private createPurchaseEnquiry(state: AppState, answers: Inputs, calculations: Calculations): EnquiryPurchase {
+    return {
+      ...this.createBaseEnquiry(state, answers, calculations, PurchRemoENUM.Purchase),
+      PurchasePrice: this.getNumericAnswer(answers, InputKeysENUM.PropertyValue),
+      OfferAccepted: calculations.offerAccepted as OfferAcceptedENUM,
+      ReadinessToBuy: getEnumValue(
+        ReadinessToBuyENUM,
+        this.getStringAnswer(answers, InputKeysENUM.ReadinessToBuy)
+      ) as ReadinessToBuyENUM,
+      DepositAmount: this.getNumericAnswer(answers, InputKeysENUM.DepositAmount),
+      FTB: (getEnumValue(FTBENUM, this.getStringAnswer(answers, InputKeysENUM.FTB)) as FTBENUM) ?? FTBENUM.No,
+      NewBuild:
+        (getEnumValue(NewBuildENUM, this.getStringAnswer(answers, InputKeysENUM.NewBuild)) as NewBuildENUM) ??
+        NewBuildENUM.No,
+    };
+  }
 
-  //     return booking;
-  //   } catch (error) {
-  //     console.error('Error getting appointment data:', error);
-  //     return null;
-  //   }
-  // }
+  private createRemortgageEnquiry(state: AppState, answers: Inputs, calculations: Calculations): EnquiryRemortgage {
+    return {
+      ...this.createBaseEnquiry(state, answers, calculations, PurchRemoENUM.Remortgage),
+      DatePlanToRemo: getEnumValue(
+        DatePlanToRemoENUM,
+        this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo)
+      ) as DatePlanToRemoENUM,
+      CurrentLender: this.getStringAnswer(answers, InputKeysENUM.Lender),
+    };
+  }
 
   /**
    * Helper method to get string answer from answers object

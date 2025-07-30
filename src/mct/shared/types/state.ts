@@ -15,15 +15,14 @@ import {
   type DatePlanToRemoENUM,
   type EnquiryForm,
   type FirstTimeBuyerENUM,
-  type PropertyTypeENUM,
   type ReadinessToBuyENUM,
   type RemoChangeENUM,
   type RepaymentTypeENUM,
   type ResiBtlENUM,
   type SchemePeriodsENUM,
   type SchemeTypesENUM,
-  type SummaryInfo,
 } from './api';
+import type { BuyerTypeENUM } from './common';
 import type { CheckboxValues, NumberValue, RadioValue, SelectValue, TextValue } from './dom';
 
 // Input-related types
@@ -104,25 +103,23 @@ export type InputsByEndOfForm = {
 
 // Calculation-related types
 export enum CalculationKeysENUM {
-  IsProceedable = 'isProceedable',
-  OfferAccepted = 'offerAccepted',
+  BuyerType = 'BuyerType',
   LTV = 'LTV',
-  MortgageAmount = 'MortgageAmount',
   IncludeRetention = ProductsRequestENUM.IncludeRetention,
-  BorrowAmount = InputKeysENUM.BorrowAmount, // TODO: remove
-  // InterestOnlyValue = InputKeysENUM.InterestOnlyValue,
+  IsProceedable = 'isProceedable',
+  MortgageAmount = 'MortgageAmount',
+  OfferAccepted = 'offerAccepted',
 }
 
 export type CalculationKey = keyof typeof CalculationKeysENUM;
-export type CalculationValue = string | number | boolean;
+export type CalculationValue = string | number | boolean | undefined;
 export type Calculations = {
-  [CalculationKeysENUM.IsProceedable]?: boolean;
-  [CalculationKeysENUM.OfferAccepted]?: OfferAcceptedENUM;
+  [CalculationKeysENUM.BuyerType]?: BuyerTypeENUM;
   [CalculationKeysENUM.LTV]?: number;
-  [CalculationKeysENUM.MortgageAmount]?: number;
   [CalculationKeysENUM.IncludeRetention]?: boolean;
-  [CalculationKeysENUM.BorrowAmount]?: number;
-  // [CalculationKeysENUM.InterestOnlyValue]?: number;
+  [CalculationKeysENUM.IsProceedable]?: boolean;
+  [CalculationKeysENUM.MortgageAmount]?: number;
+  [CalculationKeysENUM.OfferAccepted]?: OfferAcceptedENUM;
 };
 
 export interface InputData {

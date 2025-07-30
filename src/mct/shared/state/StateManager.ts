@@ -10,6 +10,7 @@ import type {
   StageIDENUM,
   Calculations,
 } from '$mct/types';
+import { debugError } from '$utils/debug';
 
 export interface StateChangeEvent {
   previousState: AppState;
@@ -77,7 +78,7 @@ export class StateManager {
       try {
         callback(event);
       } catch (error) {
-        console.error('State subscriber error:', error);
+        debugError('State subscriber error:', error);
       }
     });
   }

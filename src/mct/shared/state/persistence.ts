@@ -36,9 +36,9 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     serialize: true,
   },
   filters: {
-    type: 'sessionStorage',
+    type: 'memory',
     key: 'mct_filters',
-    serialize: true,
+    serialize: false,
   },
   product: {
     type: 'sessionStorage',

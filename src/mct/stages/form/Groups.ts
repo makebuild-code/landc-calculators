@@ -12,7 +12,7 @@ import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { globalEventBus } from '$mct/components';
@@ -197,6 +197,7 @@ export class MainGroup extends QuestionGroup {
     }
 
     this.formManager.prepareWrapper();
+    this.formManager.handleOutputGroupUpdate(isValid);
   }
 
   public handleEnter(index: number): void {
@@ -288,6 +289,7 @@ export class MainGroup extends QuestionGroup {
     question.focus();
     this.formManager.scrollTo(question);
     this.onInputChange(question.isValid());
+    this.formManager.handleOutputGroupUpdate(question.isValid());
   }
 }
 
@@ -319,20 +321,18 @@ export class OutputGroup extends BaseGroup {
 
   public update(): void {
     if (!this.activated) return;
-    dataLayer('form_interaction', {
-      event_category: 'MCTForm',
-      event_label: `MCT_Show_Results`,
-    });
     this.handleProducts();
   }
 
   public show(): void {
     this.component.style.removeProperty('display');
+    globalEventBus.emit(FormEventNames.GROUP_SHOWN, { groupId: this.name as string });
     this.isVisible = true;
   }
 
   public hide(): void {
     this.component.style.display = 'none';
+    globalEventBus.emit(FormEventNames.GROUP_HIDDEN, { groupId: this.name as string });
     this.isVisible = false;
   }
 
@@ -366,7 +366,7 @@ export class OutputGroup extends BaseGroup {
     this.activated = true;
     this.card.classList.add(classes.active);
     if (scrollTo) this.scrollTo();
-    this.handleProducts();
+    this.update();
   }
 
   private async handleProducts(): Promise<void> {
@@ -423,11 +423,6 @@ export class OutputGroup extends BaseGroup {
   }
 
   public navigateToResults(): void {
-    dataLayer('form_interaction', {
-      event_category: 'MCTForm',
-      event_label: `MCT_Show_Results`,
-    });
-
     globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
   }
 }

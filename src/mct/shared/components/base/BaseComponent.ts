@@ -1,6 +1,7 @@
 import { globalEventBus } from '../events/globalEventBus';
 import type { TypedEventHandler } from '../events/EventBus';
 import type { EventName, AllEvents } from '$mct/types';
+import { debugError, debugLog } from '$utils/debug';
 
 export interface ComponentOptions {
   element: HTMLElement;
@@ -58,14 +59,14 @@ export abstract class BaseComponent {
    * Log messages when debug is enabled
    */
   protected log(message: string, data?: any): void {
-    if (this.debug) console.log(`[${this.constructor.name}] ${message}`, data);
+    debugLog(`[${this.constructor.name}] ${message}`, data);
   }
 
   /**
    * Log error messages when debug is enabled
    */
   protected logError(message: string, data?: any): void {
-    if (this.debug) console.error(`[${this.constructor.name}] ${message}`, data);
+    debugError(`[${this.constructor.name}] ${message}`, data);
   }
 
   /**

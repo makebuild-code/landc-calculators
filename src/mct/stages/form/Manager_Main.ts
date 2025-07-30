@@ -4,10 +4,9 @@ import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { Profile } from '$mct/types';
-import { GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import type { InputKeysENUM, Profile } from '$mct/types';
+import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
-import { dataLayer } from '$utils/analytics/dataLayer';
 import { QuestionComponent } from './Questions';
 import { globalEventBus } from '$mct/components';
 import { panelToWindow } from 'src/mct/shared/utils/ui';
@@ -23,8 +22,9 @@ export class MainFormManager extends FormManager {
   public track: HTMLElement;
   private list: HTMLElement;
   private buttonContainer: HTMLElement;
-  private nextButton: HTMLButtonElement;
   private prevButton: HTMLButtonElement;
+  private nextButton: HTMLButtonElement;
+  private getResultsButton: HTMLButtonElement;
   private hideOnGroup: HTMLElement[];
   private showOnGroup: HTMLElement[];
   private loader: HTMLElement;
@@ -40,8 +40,12 @@ export class MainFormManager extends FormManager {
     this.track = queryElement(`[${attr.components}="track"]`, this.container) as HTMLElement;
     this.list = queryElement(`[${attr.components}="list"]`, this.track) as HTMLElement;
     this.buttonContainer = queryElement(`[${attr.components}="button-container"]`, this.component) as HTMLElement;
-    this.nextButton = queryElement(`[${attr.components}="next"]`, this.buttonContainer) as HTMLButtonElement;
     this.prevButton = queryElement(`[${attr.components}="previous"]`, this.buttonContainer) as HTMLButtonElement;
+    this.nextButton = queryElement(`[${attr.components}="next"]`, this.buttonContainer) as HTMLButtonElement;
+    this.getResultsButton = queryElement(
+      `[${attr.components}="get-results"]`,
+      this.buttonContainer
+    ) as HTMLButtonElement;
     this.hideOnGroup = queryElements(`[${attr.hideOnGroup}]`, component) as HTMLElement[];
     this.showOnGroup = queryElements(`[${attr.showOnGroup}]`, component) as HTMLElement[];
     this.loader = queryElement(`[${attr.components}="loader"]`, component) as HTMLElement;
@@ -76,6 +80,15 @@ export class MainFormManager extends FormManager {
     // Handle profile option if provided
     this.handleIdentifier(null);
 
+    this.prevButton.addEventListener('click', () => {
+      const currentGroup = this.getActiveGroup();
+      if (!currentGroup || currentGroup instanceof OutputGroup) {
+        this.navigateToPreviousGroup();
+      } else {
+        currentGroup.navigate('prev');
+      }
+    });
+
     this.nextButton.addEventListener('click', () => {
       const currentGroup = this.getActiveGroup();
       if (currentGroup instanceof OutputGroup) {
@@ -85,12 +98,22 @@ export class MainFormManager extends FormManager {
       }
     });
 
-    this.prevButton.addEventListener('click', () => {
-      const currentGroup = this.getActiveGroup();
-      if (!currentGroup || currentGroup instanceof OutputGroup) {
-        this.navigateToPreviousGroup();
-      } else {
-        currentGroup.navigate('prev');
+    this.toggleButton(this.getResultsButton, false);
+    this.getResultsButton.addEventListener('click', () => {
+      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+    });
+
+    globalEventBus.on(FormEventNames.GROUP_SHOWN, (event) => {
+      if (event.groupId === GroupNameENUM.Output) {
+        this.toggleButton(this.nextButton, false);
+        this.toggleButton(this.getResultsButton, true);
+      }
+    });
+
+    globalEventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
+      if (event.groupId === GroupNameENUM.Output) {
+        this.toggleButton(this.nextButton, true);
+        this.toggleButton(this.getResultsButton, false);
       }
     });
 
@@ -105,6 +128,11 @@ export class MainFormManager extends FormManager {
     this.showLoader(false);
   }
 
+  private toggleButton(button: HTMLButtonElement, show: boolean): void {
+    button.disabled = !show;
+    show ? button.style.removeProperty('display') : (button.style.display = 'none');
+  }
+
   public show(scrollTo: boolean = true): void {
     this.component.style.removeProperty('display');
     if (scrollTo) this.component.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -112,6 +140,32 @@ export class MainFormManager extends FormManager {
 
   public hide(): void {
     this.component.style.display = 'none';
+  }
+
+  public start(): void {
+    if (!this.isInitialised) {
+      this.init();
+      return;
+    }
+
+    /**
+     * If already initialised:
+     * - sync answers to the state
+     * - re-call the API
+     * - render the outputs
+     */
+
+    this.syncQuestionsToState();
+    const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+    if (outputGroup) outputGroup.update();
+  }
+
+  private syncQuestionsToState(): void {
+    const answers = MCTManager.getAnswers();
+    this.questions.forEach((question) => {
+      const answer = answers[question.getStateValue('initialName') as InputKeysENUM];
+      if (answer) question.setValue(answer);
+    });
   }
 
   private showLoader(show: boolean): void {
@@ -216,11 +270,13 @@ export class MainFormManager extends FormManager {
 
   public handleInputChange(isValid: boolean) {
     this.updateNavigation({ nextEnabled: isValid });
+  }
 
-    if (isValid) {
-      const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-      if (outputGroup) outputGroup.update();
-    }
+  public handleOutputGroupUpdate(isValid: boolean) {
+    if (!isValid) return;
+
+    const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+    if (outputGroup) outputGroup.update();
   }
 
   public updateGroupVisibility(): void {

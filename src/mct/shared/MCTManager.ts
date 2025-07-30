@@ -30,17 +30,17 @@ import type {
   EnquiryForm,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
+import { dataLayer } from '$utils/analytics/dataLayer';
+import { debugError, debugLog } from '$utils/debug';
 
-const VERSION = '🔄 MCT DIST v24';
+const VERSION = '🔄 MCT DIST v31';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;
 interface Stage {
-  // id: StageIDENUM;
-  init: (options?: any) => void;
+  start: (options?: any) => void;
   show: (scrollTo?: boolean) => void;
   hide: () => void;
-  onEnter?: () => void;
 }
 
 const stageManagers: Record<string, Stage> = {};
@@ -61,8 +61,13 @@ const visibilityManager = new VisibilityManager(stateManager);
 
 export const MCTManager = {
   start() {
+    const dom = this.initDOM();
+    if (!dom) {
+      debugLog('🔄 MCT component not found');
+      return;
+    }
+
     this.initState();
-    this.initDOM();
     this.initICID();
     this.initLCID();
     this.initStages();
@@ -73,12 +78,12 @@ export const MCTManager = {
   },
 
   initState() {
-    console.log('🔄 Initializing hybrid MCTManager with new state management...');
-    console.log(VERSION);
+    debugLog('🔄 Initializing MCTManager...');
+    debugLog(VERSION);
 
     // Subscribe to state changes for debugging
     stateManager.subscribe((event) => {
-      console.log('🔄 State changed via new manager:', {
+      debugLog('🔄 State changed via new manager:', {
         changes: event.changes,
         timestamp: new Date().toISOString(),
       });
@@ -88,9 +93,9 @@ export const MCTManager = {
     stateManager.enableAutoPersistence();
   },
 
-  initDOM(): DOM {
+  initDOM(): DOM | null {
     dom.component = queryElement(`[${attr.component}="component"]`) as HTMLElement;
-    if (!dom.component) throw new Error('MCT component not found');
+    if (!dom.component) return null;
 
     const stages = queryElements(`[${attr.stage}]`, dom.component);
     stages.forEach((stage) => {
@@ -118,7 +123,7 @@ export const MCTManager = {
       const lcid = await lcidAPI.generate(currentLCID, icid);
       this.setLCID(lcid);
     } catch {
-      console.error('Failed to generate LCID');
+      debugError('Failed to generate LCID');
     }
   },
 
@@ -203,13 +208,13 @@ export const MCTManager = {
 
     const numberOfStages = Object.keys(stageManagers).length;
     if (numberOfStages === 0) {
-      console.error('🔄 No stage managers initialised');
+      debugError('🔄 No stage managers initialised');
       return;
     } else if (numberOfStages === 1) {
       const onlyStage = Object.values(stageManagers)[0];
       if (onlyStage) {
+        onlyStage.start();
         onlyStage.show(numberOfStagesShown !== 0);
-        onlyStage.init();
         numberOfStagesShown += 1;
       }
     } else {
@@ -217,14 +222,23 @@ export const MCTManager = {
     }
 
     globalEventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
-      console.log('🔄 Stage complete', event);
+      debugLog('🔄 Stage complete', event);
 
       let nextStageId;
       switch (event.stageId) {
         case StageIDENUM.Questions:
+          dataLayer('form_interaction', {
+            event_category: 'MCTForm',
+            event_label: `MCT_Show_Results`,
+          });
+
           nextStageId = StageIDENUM.Results;
           break;
         case StageIDENUM.Results:
+          dataLayer('form_interaction', {
+            event_category: 'MCTForm',
+            event_label: `MCT_Show_Appointment`,
+          });
           nextStageId = StageIDENUM.Appointment;
           break;
         default:
@@ -236,7 +250,7 @@ export const MCTManager = {
   },
 
   goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
-    console.log('🔄 Going to stage', stageId);
+    debugLog('🔄 Going to stage', stageId);
 
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
@@ -253,13 +267,11 @@ export const MCTManager = {
 
     // Pass stage-specific options to the init method
     const stageOptions = options[stageId];
-    if (stageOptions && typeof nextStage.init === 'function') {
-      nextStage.init(stageOptions);
+    if (stageOptions) {
+      nextStage.start(stageOptions);
     } else {
-      nextStage.init();
+      nextStage.start();
     }
-
-    if (nextStage.onEnter) nextStage.onEnter();
 
     return true;
   },
@@ -330,6 +342,10 @@ export const MCTManager = {
 
   recalculate(): void {
     calculationManager.recalculate();
+  },
+
+  setFilter(filterData: InputData): void {
+    stateManager.set('filters', { ...stateManager.get('filters'), [filterData.key]: filterData.value });
   },
 
   setFilters(filterDataArray: InputData[]): void {
@@ -405,9 +421,9 @@ export const MCTManager = {
 
     try {
       const response = await logUserEventsAPI.logEvent(payload);
-      console.log('LogUserEvent: ', response);
+      debugLog('LogUserEvent: ', response);
     } catch (error) {
-      console.error('error', error);
+      debugError('error', error);
     }
   },
 
@@ -481,21 +497,21 @@ export const MCTManager = {
 
     // // Add some test event listeners
     // globalEventBus.on(FormEventNames.QUESTION_CHANGED, (payload) => {
-    //   console.log('📡 MCT Event: Question changed', payload);
+    //   debugLog('📡 MCT Event: Question changed', payload);
     // });
 
     // globalEventBus.on(FormEventNames.NAVIGATION_UPDATE, (payload) => {
-    //   console.log('📡 MCT Event: Navigation updated', payload);
+    //   debugLog('📡 MCT Event: Navigation updated', payload);
     // });
 
     // Make component testing available
     (window as any).testComponents = testComponents;
     (window as any).testSimpleComponent = testSimpleComponent;
 
-    console.log('🔧 Event Bus & Component Debug Tools Available!');
-    console.log('- globalEventBus - Access the global event bus');
-    console.log('- globalEventBus.emit("form:question:changed", {...}) - Test events');
-    console.log('- testSimpleComponent() - Test simple component (recommended first)');
-    console.log('- testComponents() - Test full component system');
+    debugLog('🔧 Event Bus & Component Debug Tools Available!');
+    debugLog('- globalEventBus - Access the global event bus');
+    debugLog('- globalEventBus.emit("form:question:changed", {...}) - Test events');
+    debugLog('- testSimpleComponent() - Test simple component (recommended first)');
+    debugLog('- testComponents() - Test full component system');
   },
 };

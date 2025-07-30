@@ -1,3 +1,4 @@
+import { debugError } from '$utils/debug';
 import { InteractiveComponent, type InteractiveComponentOptions } from './InteractiveComponent';
 
 export interface StatefulComponentOptions<T = any> extends InteractiveComponentOptions {
@@ -89,7 +90,7 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
       try {
         callback(this.state, this.previousState);
       } catch (error) {
-        console.error('Error in state subscriber:', error);
+        debugError('Error in state subscriber:', error);
       }
     });
   }

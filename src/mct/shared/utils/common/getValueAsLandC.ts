@@ -51,7 +51,7 @@ export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCRetur
 
   let values: Inputs;
   if (currentStage === StageIDENUM.Questions) {
-    values = answers;
+    values = { ...filters, ...answers };
   } else {
     values = { ...answers, ...filters };
   }

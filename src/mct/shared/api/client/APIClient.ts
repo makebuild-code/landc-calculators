@@ -1,4 +1,5 @@
 import { API_CONFIG } from '$mct/config';
+import { debugError, debugLog } from '$utils/debug';
 import { getBaseURLForAPI } from '$utils/environment/getBaseURLForAPI';
 import { globalEventBus } from '../../components/events/globalEventBus';
 import { APIEventNames } from '../../types/events';
@@ -62,8 +63,8 @@ export class APIClient {
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    console.log('🔄 Request URL: ', url);
-    console.log('🔄 Request Options: ', options);
+    debugLog('🔄 Request URL: ', url);
+    debugLog('🔄 Request Options: ', options);
     const headers = { ...this.defaultHeaders, ...options.headers };
 
     const requestOptions: RequestInit = {
@@ -71,7 +72,7 @@ export class APIClient {
       headers,
     };
 
-    console.log('🔄 Request Options: ', requestOptions);
+    debugLog('🔄 Request Options: ', requestOptions);
 
     let lastError: Error | null = null;
 
@@ -145,10 +146,10 @@ export class APIClient {
             errorDetails = errorData.error as APIErrorResponse;
 
             // Log the complete error object for debugging
-            console.error('❌ Complete API Error Object:', errorData);
+            debugError('❌ Complete API Error Object:', errorData);
 
             // Log the structured error details
-            console.error('❌ API Error Response:', {
+            debugError('❌ API Error Response:', {
               title: errorDetails.title,
               status: errorDetails.status,
               detail: errorDetails.detail,
@@ -157,7 +158,7 @@ export class APIClient {
 
             // Check for additional errors array
             if (errorData.errors && Array.isArray(errorData.errors)) {
-              console.error('❌ API Validation Errors:', {
+              debugError('❌ API Validation Errors:', {
                 count: errorData.errors.length,
                 errors: errorData.errors.map((err: APIErrorItem) => ({
                   field: err.field || 'unknown',
@@ -169,7 +170,7 @@ export class APIClient {
             }
           } else {
             // Fallback for non-structured error responses
-            console.error('❌ API Error Response:', {
+            debugError('❌ API Error Response:', {
               status: response.status,
               statusText: response.statusText,
               data: errorData,
@@ -178,7 +179,7 @@ export class APIClient {
           }
         } catch {
           errorData = await response.text();
-          console.error('❌ API Error Response (text):', {
+          debugError('❌ API Error Response (text):', {
             status: response.status,
             statusText: response.statusText,
             data: errorData,
@@ -195,7 +196,7 @@ export class APIClient {
 
       // Log successful responses for debugging
       const responseData = await response.json();
-      console.log('✅ API Success Response:', {
+      debugLog('✅ API Success Response:', {
         status: response.status,
         url: url,
         data: responseData,
@@ -210,11 +211,11 @@ export class APIClient {
       }
 
       if (error instanceof Error && error.name === 'AbortError') {
-        console.error('⏰ Request timeout:', { url });
+        debugError('⏰ Request timeout:', { url });
         throw new APIError('Request timeout', 408, url);
       }
 
-      console.error('🌐 Network error:', {
+      debugError('🌐 Network error:', {
         url,
         error: error instanceof Error ? error.message : 'Unknown error',
       });

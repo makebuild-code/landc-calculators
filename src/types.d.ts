@@ -3,7 +3,10 @@ export interface Endpoints {
   test: string;
 }
 
+export type EnvironmentName = 'prod' | 'test' | 'dev';
+
 export interface Environment {
+  name: EnvironmentName;
   host?: string;
   api: string;
 }
