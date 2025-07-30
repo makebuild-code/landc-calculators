@@ -17,6 +17,7 @@ import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
 import { QuestionFactory } from './QuestionFactory';
+import { debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -429,11 +430,12 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
   }
 
   protected onInit(): void {
-    super.onInit();
     this.card = queryElement(`[${attr.element}="output-card"]`, this.element) as HTMLElement;
     this.loader = queryElement(`[${attr.element}="output-loader"]`, this.element) as HTMLElement;
     this.outputs = queryElements(`[${attr.output}]`, this.element) as HTMLDivElement[];
     this.button = queryElement(`[${attr.element}="get-results"]`, this.element) as HTMLButtonElement;
+
+    super.onInit();
   }
 
   protected bindEvents(): void {

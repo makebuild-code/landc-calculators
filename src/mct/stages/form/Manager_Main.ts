@@ -68,6 +68,7 @@ export class MainFormManager extends FormManager {
         index,
       };
       const group = name === GroupNameENUM.Output ? new OutputGroup(options) : new MainGroup(options);
+      group.initialise(); // Initialize the component to call onInit() and bindEvents()
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
