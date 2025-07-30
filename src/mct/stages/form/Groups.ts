@@ -15,7 +15,7 @@ import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
-import { globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -30,6 +30,7 @@ export interface GroupOptions {
 export abstract class BaseGroup {
   protected component: HTMLElement;
   protected formManager: FormManager;
+  protected eventBus: EventBus;
   public isVisible: boolean = false;
   public name: GroupNameENUM | null = null;
   public index: number;
@@ -37,6 +38,7 @@ export abstract class BaseGroup {
   constructor(options: GroupOptions) {
     this.component = options.component;
     this.formManager = options.formManager;
+    this.eventBus = EventBus.getInstance();
     this.index = options.index;
     this.name = options.component.getAttribute(attr.group) as GroupNameENUM | null;
   }
@@ -326,13 +328,13 @@ export class OutputGroup extends BaseGroup {
 
   public show(): void {
     this.component.style.removeProperty('display');
-    globalEventBus.emit(FormEventNames.GROUP_SHOWN, { groupId: this.name as string });
+    this.eventBus.emit(FormEventNames.GROUP_SHOWN, { groupId: this.name as string });
     this.isVisible = true;
   }
 
   public hide(): void {
     this.component.style.display = 'none';
-    globalEventBus.emit(FormEventNames.GROUP_HIDDEN, { groupId: this.name as string });
+    this.eventBus.emit(FormEventNames.GROUP_HIDDEN, { groupId: this.name as string });
     this.isVisible = false;
   }
 
@@ -425,6 +427,6 @@ export class OutputGroup extends BaseGroup {
   }
 
   public navigateToResults(): void {
-    globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+    this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
   }
 }

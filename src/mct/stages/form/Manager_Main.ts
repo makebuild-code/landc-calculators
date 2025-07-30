@@ -8,7 +8,6 @@ import type { InputKeysENUM, Profile } from '$mct/types';
 import { APIEventNames, FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
-import { globalEventBus } from '$mct/components';
 import { panelToWindow } from 'src/mct/shared/utils/ui';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -100,20 +99,21 @@ export class MainFormManager extends FormManager {
 
     this.toggleButton(this.getResultsButton, false);
     this.getResultsButton.addEventListener('click', () => {
-      const isOutputGroup = this.getActiveGroup()?.name === GroupNameENUM.Output;
-      if (isOutputGroup) {
-        globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
-      } else {
-        const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-        if (outputGroup) outputGroup.activate();
-        this.activeGroupIndex = this.groups.indexOf(outputGroup);
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+    });
+
+    this.eventBus.on(FormEventNames.GROUP_SHOWN, (event) => {
+      if (event.groupId === GroupNameENUM.Output) {
+        this.toggleButton(this.nextButton, false);
+        this.toggleButton(this.getResultsButton, true);
       }
     });
 
-    globalEventBus.on(FormEventNames.GROUP_CHANGED, (event) => {
-      const isOutputGroup = event.groupId === GroupNameENUM.Output;
-      this.toggleButton(this.nextButton, !isOutputGroup);
-      this.toggleButton(this.getResultsButton, isOutputGroup);
+    this.eventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
+      if (event.groupId === GroupNameENUM.Output) {
+        this.toggleButton(this.nextButton, true);
+        this.toggleButton(this.getResultsButton, false);
+      }
     });
 
     // globalEventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
@@ -360,7 +360,7 @@ export class MainFormManager extends FormManager {
       // });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
     } else this.updateNavigation({ nextEnabled: true, prevEnabled: true });
 
     this.handleShowHideOnGroup();

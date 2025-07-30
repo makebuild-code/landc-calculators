@@ -8,7 +8,7 @@ import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
-import { globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { MCTEventNames, StageIDENUM } from '$mct/types';
@@ -35,6 +35,7 @@ import { debugError, debugLog } from '$utils/debug';
 
 const VERSION = '🔄 MCT DIST v32';
 const attr = DOM_CONFIG.attributes;
+const eventBus = EventBus.getInstance();
 
 let numberOfStagesShown: number = 0;
 interface Stage {
@@ -218,7 +219,7 @@ export const MCTManager = {
       this.goToStage(StageIDENUM.Questions);
     }
 
-    globalEventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
+    eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
       debugLog('🔄 Stage complete', event);
 
       let nextStageId;
