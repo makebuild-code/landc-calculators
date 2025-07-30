@@ -179,21 +179,21 @@ export class QuestionRegistry {
   /**
    * Get an object of question values with filtering capabilities.
    * This method is optimized for performance by using a single iteration.
-   * 
+   *
    * @param options - Filtering options
    * @returns An object with question names as keys and their values
-   * 
+   *
    * @example
    * ```typescript
    * // Get all visible question values
    * const visibleValues = registry.getValues({ visibleOnly: true });
-   * 
+   *
    * // Get values from a specific group
-   * const residentialValues = registry.getValues({ 
+   * const residentialValues = registry.getValues({
    *   groupName: GroupNameENUM.Residential,
-   *   validOnly: true 
+   *   validOnly: true
    * });
-   * 
+   *
    * // Get values from main context only
    * const mainValues = registry.getValues({ context: 'main' });
    * ```
@@ -251,10 +251,8 @@ export class QuestionRegistry {
       if (selectedQuestion) {
         const value = selectedQuestion.getValue();
         if (value !== null) {
-          const keyName = useFinalNames 
-            ? selectedQuestion.getFinalName() 
-            : selectedQuestion.getInitialName();
-          
+          const keyName = useFinalNames ? selectedQuestion.getFinalName() : selectedQuestion.getInitialName();
+
           // Ensure we don't overwrite values if multiple questions have the same key
           if (!processedNames.has(keyName)) {
             values[keyName as InputKeysENUM] = value as any;
@@ -270,16 +268,16 @@ export class QuestionRegistry {
   /**
    * Get values for a specific journey or use case.
    * This is a convenience method that wraps getValues with common filter presets.
-   * 
+   *
    * @param preset - The preset name for common filtering scenarios
    * @param additionalOptions - Additional filtering options to apply
    * @returns An object with question values
-   * 
+   *
    * @example
    * ```typescript
    * // Get values for form submission
    * const submitValues = registry.getValuesByPreset('formSubmit');
-   * 
+   *
    * // Get values for sidebar save
    * const sidebarValues = registry.getValuesByPreset('sidebarSave');
    * ```

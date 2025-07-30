@@ -201,7 +201,7 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
     const currentAnswers = MCTManager.getAnswers();
 
     this.questions.forEach((question, index) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.getIsVisible());
       if (index === 0 && shouldBeVisible) question.activate();
 
       const isValid = question.isValid();

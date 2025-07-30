@@ -217,4 +217,33 @@ export abstract class BaseComponent {
   protected hide(element: HTMLElement = this.element): void {
     this.addStyle(element, 'display', 'none');
   }
+
+  /**
+   * Check if element is visible
+   */
+  protected hasDimensions(element: HTMLElement = this.element): boolean {
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  /**
+   * Get element's bounding client rect
+   */
+  protected getBoundingClientRect(element: HTMLElement = this.element): DOMRect {
+    return element.getBoundingClientRect();
+  }
+
+  /**
+   * Scroll element into view
+   */
+  protected scrollIntoView(options?: ScrollIntoViewOptions, element: HTMLElement = this.element): void {
+    element.scrollIntoView(options);
+  }
+
+  /**
+   * Get computed style of element
+   */
+  protected getComputedStyle(element: HTMLElement = this.element): CSSStyleDeclaration {
+    return window.getComputedStyle(element);
+  }
 }
