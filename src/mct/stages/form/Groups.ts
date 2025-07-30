@@ -17,6 +17,7 @@ import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
 import { QuestionFactory } from './QuestionFactory';
+import { debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
