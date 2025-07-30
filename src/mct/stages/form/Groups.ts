@@ -144,7 +144,6 @@ export class MainGroup extends QuestionGroup {
         element,
         debug: true,
         autoBindEvents: true,
-        formManager: this.formManager,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         groupName: this.name as string,
