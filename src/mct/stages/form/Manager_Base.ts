@@ -11,7 +11,7 @@ import type {
   Profile,
   QuestionsStageOptions,
 } from '$mct/types';
-import { CalculationKeysENUM, StageIDENUM } from '$mct/types';
+import { CalculationKeysENUM, FormEventNames, StageIDENUM } from '$mct/types';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeInitialStyles';
 import { globalEventBus } from '$mct/components';
 import { FormEventNames } from '$mct/types';
@@ -37,6 +37,8 @@ export abstract class FormManager {
     this.component = component;
     this.id = StageIDENUM.Questions;
     this.eventBus = EventBus.getInstance();
+
+    this.bindEvents();
   }
 
   /**
@@ -80,6 +82,16 @@ export abstract class FormManager {
     removeInitialStyles(this.component, 1000);
   }
 
+  protected bindEvents(): void {
+    this.eventBus.on(FormEventNames.QUESTION_REQUIRED, ({ question }) => {
+      this.saveQuestion(question);
+    });
+
+    this.eventBus.on(FormEventNames.QUESTION_UNREQUIRED, ({ question }) => {
+      this.removeQuestion(question);
+    });
+  }
+
   protected prefill(answers: Inputs) {
     /**
      * @todo:
@@ -90,11 +102,11 @@ export abstract class FormManager {
      */
   }
 
-  public saveQuestion(question: QuestionComponent): void {
+  protected saveQuestion(question: QuestionComponent): void {
     this.questions.add(question);
   }
 
-  public removeQuestion(question: QuestionComponent): void {
+  protected removeQuestion(question: QuestionComponent): void {
     this.questions.delete(question);
   }
 
@@ -102,15 +114,13 @@ export abstract class FormManager {
     const answerDataArray: InputData[] = [];
 
     [...this.questions].forEach((question) => {
-      const value = question.getValue();
-      const valid = question.isValid();
-
-      if (!valid) return;
-
+      if (!question.isValid()) return;
       answerDataArray.push({
         key: question.getStateValue('initialName') as InputKey,
         name: question.getStateValue('finalName') as InputName,
-        value: value as InputValue,
+        value: question.getValue() as InputValue,
+        valid: question.isValid(),
+        location: 'form',
         source: 'user',
       });
     });
