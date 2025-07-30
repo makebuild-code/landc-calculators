@@ -226,6 +226,8 @@ export class ResultsManager {
         key: filter.getStateValue('initialName') as InputKey,
         name: filter.getStateValue('finalName'),
         value: answer,
+        valid: filter.isValid(),
+        location: 'filter',
         source: 'user',
       });
     });
@@ -280,7 +282,7 @@ export class ResultsManager {
       const name = filter.getStateValue('finalName');
       const value = filter.getStateValue('value') as InputValue;
 
-      const data: InputData = { key, name, value, source: 'user' };
+      const data: InputData = { key, name, value, source: 'user', valid: filter.isValid(), location: 'filter' };
       MCTManager.setAnswer(data);
       return data;
     });

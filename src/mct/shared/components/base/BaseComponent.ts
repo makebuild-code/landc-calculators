@@ -1,23 +1,18 @@
-import { EventBus } from '../events/EventBus';
-import type { TypedEventHandler } from '../events/EventBus';
-import type { EventName, AllEvents } from '$mct/types';
 import { debugError, debugLog } from '$utils/debug';
 
-export interface ComponentOptions {
+export interface BaseComponentConfig {
   element: HTMLElement;
   debug?: boolean;
 }
 
 export abstract class BaseComponent {
   protected element: HTMLElement;
-  protected eventBus: EventBus;
   protected debug: boolean;
   protected isInitialized: boolean = false;
   protected isDestroyed: boolean = false;
 
-  constructor(options: ComponentOptions) {
+  constructor(options: BaseComponentConfig) {
     this.element = options.element;
-    this.eventBus = EventBus.getInstance();
     this.debug = options.debug || false;
   }
 
@@ -93,23 +88,6 @@ export abstract class BaseComponent {
 
     this.isDestroyed = true;
     this.isInitialized = false;
-  }
-
-  /**
-   * Emit an event through the event bus
-   */
-  protected emit<T extends EventName>(event: T, payload: AllEvents[T]): void {
-    if (this.isDestroyed) return;
-
-    this.eventBus.emit(event, payload);
-  }
-
-  /**
-   * Subscribe to an event
-   * @returns Unsubscribe function
-   */
-  protected on<T extends EventName>(event: T, handler: TypedEventHandler<T>): () => void {
-    return this.eventBus.on(event, handler);
   }
 
   /**
@@ -238,5 +216,34 @@ export abstract class BaseComponent {
    */
   protected hide(element: HTMLElement = this.element): void {
     this.addStyle(element, 'display', 'none');
+  }
+
+  /**
+   * Check if element is visible
+   */
+  protected isVisible(element: HTMLElement = this.element): boolean {
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  /**
+   * Get element's bounding client rect
+   */
+  protected getBoundingClientRect(element: HTMLElement = this.element): DOMRect {
+    return element.getBoundingClientRect();
+  }
+
+  /**
+   * Scroll element into view
+   */
+  protected scrollIntoView(options?: ScrollIntoViewOptions, element: HTMLElement = this.element): void {
+    element.scrollIntoView(options);
+  }
+
+  /**
+   * Get computed style of element
+   */
+  protected getComputedStyle(element: HTMLElement = this.element): CSSStyleDeclaration {
+    return window.getComputedStyle(element);
   }
 }

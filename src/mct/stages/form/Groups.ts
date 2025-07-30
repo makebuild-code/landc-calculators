@@ -148,6 +148,7 @@ export class MainGroup extends QuestionGroup {
         onEnter: () => this.handleEnter(index),
         groupName: this.name as string,
         indexInGroup: index,
+        source: 'main', // This is the main form
       });
 
       // Initialize the component
