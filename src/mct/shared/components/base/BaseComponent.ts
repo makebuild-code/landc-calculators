@@ -1,6 +1,3 @@
-import { EventBus } from '../events/EventBus';
-import type { TypedEventHandler } from '../events/EventBus';
-import type { EventName, AllEvents } from '$mct/types';
 import { debugError, debugLog } from '$utils/debug';
 
 export interface BaseComponentConfig {
@@ -10,14 +7,12 @@ export interface BaseComponentConfig {
 
 export abstract class BaseComponent {
   protected element: HTMLElement;
-  protected eventBus: EventBus;
   protected debug: boolean;
   protected isInitialized: boolean = false;
   protected isDestroyed: boolean = false;
 
   constructor(options: BaseComponentConfig) {
     this.element = options.element;
-    this.eventBus = EventBus.getInstance();
     this.debug = options.debug || false;
   }
 
@@ -221,34 +216,5 @@ export abstract class BaseComponent {
    */
   protected hide(element: HTMLElement = this.element): void {
     this.addStyle(element, 'display', 'none');
-  }
-
-  /**
-   * Check if element is visible
-   */
-  protected hasDimensions(element: HTMLElement = this.element): boolean {
-    const rect = element.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
-  }
-
-  /**
-   * Get element's bounding client rect
-   */
-  protected getBoundingClientRect(element: HTMLElement = this.element): DOMRect {
-    return element.getBoundingClientRect();
-  }
-
-  /**
-   * Scroll element into view
-   */
-  protected scrollIntoView(options?: ScrollIntoViewOptions, element: HTMLElement = this.element): void {
-    element.scrollIntoView(options);
-  }
-
-  /**
-   * Get computed style of element
-   */
-  protected getComputedStyle(element: HTMLElement = this.element): CSSStyleDeclaration {
-    return window.getComputedStyle(element);
   }
 }
