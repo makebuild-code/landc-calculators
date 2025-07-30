@@ -1,4 +1,4 @@
-import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
