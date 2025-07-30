@@ -120,7 +120,7 @@ export abstract class FormManager {
   protected getFirstEl(): HTMLElement | null {
     const group = this.groups[0];
     if (group instanceof MainGroup) return group.questions[0].getElement();
-    if (group instanceof OutputGroup) return group.getComponent();
+    if (group instanceof OutputGroup) return group.getElement();
     return null;
   }
 
@@ -132,7 +132,7 @@ export abstract class FormManager {
       if (visibleQuestions.length === 0) return undefined;
       return visibleQuestions.at(-1)?.getElement();
     }
-    if (group instanceof OutputGroup) return group.getComponent();
+    if (group instanceof OutputGroup) return group.getElement();
     return undefined;
   }
 

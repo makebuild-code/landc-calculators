@@ -17,7 +17,7 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
   constructor(config: StatefulComponentConfig, initialState: T) {
     super(config);
     this.stateSubscribers = new Set();
-    
+
     // Load from localStorage if persistence enabled
     if (config.persistState && config.persistKey) {
       const saved = localStorage.getItem(config.persistKey);
@@ -25,7 +25,7 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
     } else {
       this.state = initialState;
     }
-    
+
     this.previousState = { ...this.state };
     this.persistConfig = config.persistState ? config : null;
   }
@@ -63,28 +63,28 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
    */
   protected setState(updates: Partial<T>): void {
     if (this.isDestroyed) return;
-    
+
     // Ensure state is initialized
     if (!this.state) {
       this.logError('Cannot setState before state is initialized');
       return;
     }
-    
+
     const newState = { ...this.state, ...updates };
-    
+
     if (!this.validateState(newState)) {
       this.logError('Invalid state update blocked', { updates, currentState: this.state });
       return;
     }
-    
+
     this.previousState = { ...this.state };
     this.state = newState;
-    
+
     // Persist if enabled
     if (this.persistConfig?.persistState && this.persistConfig.persistKey) {
       localStorage.setItem(this.persistConfig.persistKey, JSON.stringify(this.state));
     }
-    
+
     // Notify subscribers and call lifecycle
     this.notifyStateSubscribers();
     this.onStateChange(this.previousState, this.state);
@@ -105,7 +105,7 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
    */
   private notifyStateSubscribers(): void {
     if (!this.stateSubscribers) return;
-    
+
     this.stateSubscribers.forEach((callback) => {
       try {
         callback(this.state, this.previousState);
@@ -179,7 +179,7 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
    */
   protected batchUpdate(updates: Partial<T>): void {
     this.pendingUpdates.push(updates);
-    
+
     if (!this.updateScheduled) {
       this.updateScheduled = true;
       requestAnimationFrame(() => {
@@ -194,12 +194,10 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
   /**
    * Create a computed property based on state
    */
-  protected createComputed<K>(
-    computeFn: (state: T) => K
-  ): () => K {
+  protected createComputed<K>(computeFn: (state: T) => K): () => K {
     let cachedValue: K;
     let cachedState: T | null = null;
-    
+
     return () => {
       if (cachedState !== this.state) {
         cachedValue = computeFn(this.state);
