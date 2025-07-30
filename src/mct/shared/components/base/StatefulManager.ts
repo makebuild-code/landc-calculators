@@ -14,19 +14,16 @@ export interface StatefulManagerConfig extends StatefulComponentConfig {
 export abstract class StatefulManager<
   T extends StatefulManagerState = StatefulManagerState,
 > extends StatefulComponent<T> {
-  constructor(
-    config: StatefulManagerConfig,
-    customState?: Partial<T>
-  ) {
+  constructor(config: StatefulManagerConfig, customState?: Partial<T>) {
     const initialState: T = {
       // Base state
       id: config.id,
       isVisible: false,
       isComplete: false,
       // Custom state extensions
-      ...customState
+      ...customState,
     } as T;
-    
+
     super(config, initialState);
   }
 

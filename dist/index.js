@@ -18965,11 +18965,11 @@
      * Create a new QuestionComponent from an existing HTML element.
      * This method wraps the existing Webflow HTML with component behavior,
      * rather than creating new HTML elements.
-     * 
+     *
      * @param element - The existing HTML element from Webflow
      * @param options - Configuration options for the question
      * @returns The initialized QuestionComponent
-     * 
+     *
      * @example
      * ```typescript
      * const webflowElement = document.querySelector('[data-question="property-price"]');
@@ -19007,11 +19007,11 @@
     /**
      * Create multiple QuestionComponents from a NodeList or array of elements.
      * Useful for initializing all questions in a group at once.
-     * 
+     *
      * @param elements - NodeList or array of HTML elements
      * @param baseOptions - Common options for all questions (indexInGroup will be auto-incremented)
      * @returns Array of initialized QuestionComponents
-     * 
+     *
      * @example
      * ```typescript
      * const questionElements = document.querySelectorAll('[data-group="residential"] [data-form-question]');
@@ -19036,7 +19036,7 @@
     /**
      * Create a QuestionComponent and set up bidirectional sync with its counterpart.
      * This is useful when creating sidebar questions that need to stay in sync with main form questions.
-     * 
+     *
      * @param element - The HTML element for the new question
      * @param options - Configuration options
      * @param syncWithQuestionId - The ID of the question to sync with
@@ -19058,7 +19058,7 @@
     /**
      * Destroy a question component and unregister it from the registry.
      * This should be called when removing questions from the DOM.
-     * 
+     *
      * @param question - The question component to destroy
      */
     static destroy(question) {
@@ -19067,7 +19067,7 @@
     }
     /**
      * Destroy multiple question components.
-     * 
+     *
      * @param questions - Array of question components to destroy
      */
     static destroyMultiple(questions) {
@@ -19079,7 +19079,7 @@
      * Get or create a question component from an element.
      * If a question already exists for the element, return it.
      * Otherwise, create a new one with the provided options.
-     * 
+     *
      * This prevents duplicate initialization of the same element.
      */
     static getOrCreate(element, options) {
@@ -19114,11 +19114,8 @@
     get index() {
       return this.state.index;
     }
-    getIsVisible() {
+    get isVisible() {
       return this.state.isVisible;
-    }
-    getComponent() {
-      return this.element;
     }
     /**
      * Initialize the group component
@@ -19217,9 +19214,9 @@
      */
     updateActiveQuestions() {
       this.formManager.saveAnswersToMCT();
-      const currentAnswers = this.formManager.getAnswers();
+      const currentAnswers = MCTManager.getAnswers();
       this.questions.forEach((question, index2) => {
-        const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.getIsVisible());
+        const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
         if (index2 === 0 && shouldBeVisible)
           question.activate();
         const isValid = question.isValid();
@@ -19486,7 +19483,7 @@
       if (!this.state.summaryInfo)
         return;
       const hasProducts = this.state.summaryInfo.NumberOfProducts > 0;
-      const summaryLines = generateSummaryLines(this.state.summaryInfo, this.formManager.getAnswers());
+      const summaryLines = generateSummaryLines(this.state.summaryInfo, MCTManager.getAnswers());
       if (!summaryLines)
         return;
       this.outputs.forEach((output) => {
@@ -19600,7 +19597,7 @@
       if (group instanceof MainGroup)
         return group.questions[0].getElement();
       if (group instanceof OutputGroup)
-        return group.getComponent();
+        return group.getElement();
       return null;
     }
     getLastEl() {
@@ -19612,7 +19609,7 @@
         return visibleQuestions.at(-1)?.getElement();
       }
       if (group instanceof OutputGroup)
-        return group.getComponent();
+        return group.getElement();
       return void 0;
     }
     getActiveGroup() {
@@ -19804,7 +19801,7 @@
       const topMargin = Math.max(desiredTop - actualDistanceFromTop + parseInt(currentMarginTop || "0"), 0);
       firstQuestionEl.style.marginTop = `${topMargin}px`;
       const lastGroup = this.getLastVisibleGroup();
-      const lastItem = lastGroup instanceof MainGroup ? lastGroup.getVisibleQuestions().at(-1)?.getElement() : lastGroup?.getComponent();
+      const lastItem = lastGroup instanceof MainGroup ? lastGroup.getVisibleQuestions().at(-1)?.getElement() : lastGroup?.getElement();
       if (!lastItem)
         return;
       const lastItemRect = lastItem?.getBoundingClientRect();

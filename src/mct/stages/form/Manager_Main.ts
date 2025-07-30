@@ -214,7 +214,7 @@ export class MainFormManager extends FormManager {
     // Get the last visible group and last visible item within
     const lastGroup = this.getLastVisibleGroup();
     const lastItem =
-      lastGroup instanceof MainGroup ? lastGroup.getVisibleQuestions().at(-1)?.getElement() : lastGroup?.getComponent();
+      lastGroup instanceof MainGroup ? lastGroup.getVisibleQuestions().at(-1)?.getElement() : lastGroup?.getElement();
     if (!lastItem) return;
 
     const lastItemRect = lastItem?.getBoundingClientRect();

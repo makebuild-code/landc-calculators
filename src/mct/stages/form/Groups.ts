@@ -17,7 +17,6 @@ import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
 import { QuestionFactory } from './QuestionFactory';
-import { debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -61,12 +60,8 @@ export abstract class BaseGroup<T extends GroupState = GroupState> extends State
     return this.state.index;
   }
 
-  public getIsVisible(): boolean {
+  public get isVisible(): boolean {
     return this.state.isVisible;
-  }
-
-  public getComponent(): HTMLElement {
-    return this.element;
   }
 
   /**
@@ -203,10 +198,10 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
      */
 
     this.formManager.saveAnswersToMCT();
-    const currentAnswers = this.formManager.getAnswers();
+    const currentAnswers = MCTManager.getAnswers();
 
     this.questions.forEach((question, index) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.getIsVisible());
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
       if (index === 0 && shouldBeVisible) question.activate();
 
       const isValid = question.isValid();
@@ -351,7 +346,6 @@ export class MainGroup extends QuestionGroup {
     const activeQuestion = this.getQuestionByIndex(indexToUse);
 
     if (direction === 'next') {
-      // this.formManager.showHeader('sticky');
       dataLayer('form_interaction', {
         event_category: 'MCTForm',
         event_label: `MCT_Submit_${activeQuestion.getStateValue('finalName')}`,
@@ -537,7 +531,7 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
     if (!this.state.summaryInfo) return;
     const hasProducts = this.state.summaryInfo.NumberOfProducts > 0;
 
-    const summaryLines = generateSummaryLines(this.state.summaryInfo, this.formManager.getAnswers());
+    const summaryLines = generateSummaryLines(this.state.summaryInfo, MCTManager.getAnswers());
     if (!summaryLines) return;
 
     this.outputs.forEach((output) => {
