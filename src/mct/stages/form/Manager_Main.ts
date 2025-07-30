@@ -63,7 +63,7 @@ export class MainFormManager extends FormManager {
       if (!name) return;
 
       const options: GroupOptions = {
-        component: groupEl,
+        element: groupEl,
         formManager: this,
         index,
       };

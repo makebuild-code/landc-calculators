@@ -221,7 +221,7 @@ export abstract class BaseComponent {
   /**
    * Check if element is visible
    */
-  protected isVisible(element: HTMLElement = this.element): boolean {
+  protected hasDimensions(element: HTMLElement = this.element): boolean {
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   }
