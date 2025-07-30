@@ -17,7 +17,6 @@ import type { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
 import { QuestionFactory } from './QuestionFactory';
-import { debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -202,7 +201,7 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
     const currentAnswers = MCTManager.getAnswers();
 
     this.questions.forEach((question, index) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.getIsVisible());
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
       if (index === 0 && shouldBeVisible) question.activate();
 
       const isValid = question.isValid();
