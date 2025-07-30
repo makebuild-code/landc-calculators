@@ -19396,11 +19396,11 @@
       this.formManager = options.formManager;
     }
     onInit() {
-      super.onInit();
       this.card = queryElement(`[${attr8.element}="output-card"]`, this.element);
       this.loader = queryElement(`[${attr8.element}="output-loader"]`, this.element);
       this.outputs = queryElements(`[${attr8.output}]`, this.element);
       this.button = queryElement(`[${attr8.element}="get-results"]`, this.element);
+      super.onInit();
     }
     bindEvents() {
       this.addEventListener({
@@ -19698,6 +19698,7 @@
           index: index2
         };
         const group = name === "output" /* Output */ ? new OutputGroup(options) : new MainGroup(options);
+        group.initialise();
         index2 === 0 ? group.show() : group.hide();
         this.groups.push(group);
       });
