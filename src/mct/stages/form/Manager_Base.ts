@@ -16,12 +16,14 @@ import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeI
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
+import { EventBus } from '$mct/components';
 
 const PROFILES = PROFILES_CONFIG.profiles;
 
 export abstract class FormManager {
   protected component: HTMLElement;
   public id: StageIDENUM;
+  protected eventBus: EventBus;
   protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
   protected questions: Set<QuestionComponent> = new Set();
@@ -32,6 +34,7 @@ export abstract class FormManager {
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Questions;
+    this.eventBus = EventBus.getInstance();
   }
 
   public abstract init(options?: QuestionsStageOptions): void;

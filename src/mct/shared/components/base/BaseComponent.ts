@@ -1,4 +1,4 @@
-import { globalEventBus } from '../events/globalEventBus';
+import { EventBus } from '../events/EventBus';
 import type { TypedEventHandler } from '../events/EventBus';
 import type { EventName, AllEvents } from '$mct/types';
 import { debugError, debugLog } from '$utils/debug';
@@ -6,19 +6,18 @@ import { debugError, debugLog } from '$utils/debug';
 export interface ComponentOptions {
   element: HTMLElement;
   debug?: boolean;
-  customEventBus?: typeof globalEventBus;
 }
 
 export abstract class BaseComponent {
   protected element: HTMLElement;
-  protected eventBus: typeof globalEventBus;
+  protected eventBus: EventBus;
   protected debug: boolean;
   protected isInitialized: boolean = false;
   protected isDestroyed: boolean = false;
 
   constructor(options: ComponentOptions) {
     this.element = options.element;
-    this.eventBus = options.customEventBus || globalEventBus;
+    this.eventBus = EventBus.getInstance();
     this.debug = options.debug || false;
   }
 
