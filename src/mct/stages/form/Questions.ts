@@ -1,16 +1,13 @@
 import { lendersAPI } from '$mct/api';
 import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
-import { InputKeysENUM, type Inputs, type SelectOption } from '$mct/types';
+import { FormEventNames, InputKeysENUM, type Inputs, type SelectOption } from '$mct/types';
 import { debugError } from '$utils/debug';
-import type { FormManager } from './Manager_Base';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
 
-interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
-  formManager: FormManager;
-}
+interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {}
 
 interface QuestionState extends StatefulInputGroupState {
   isVisible: boolean;
@@ -20,13 +17,11 @@ interface QuestionState extends StatefulInputGroupState {
 }
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
-  private formManager: FormManager;
   private parent: HTMLElement;
 
   constructor(options: QuestionOptions) {
     super(options);
 
-    this.formManager = options.formManager;
     this.parent = this.element.parentElement as HTMLElement;
     this.onEnter = options.onEnter;
     this.debug = true;
@@ -94,12 +89,13 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   public require(): void {
     this.setStateValue('isRequired', true);
-    this.formManager.saveQuestion(this);
+    this.eventBus.emit(FormEventNames.QUESTION_REQUIRED, { question: this });
   }
 
   public unrequire(): void {
     this.setStateValue('isRequired', false);
-    this.formManager.removeQuestion(this);
+    this.eventBus.emit(FormEventNames.QUESTION_UNREQUIRED, { question: this });
+
     this.showQuestion(false);
   }
 
