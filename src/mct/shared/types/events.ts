@@ -1,4 +1,4 @@
-import type { InputData, AppState, StageIDENUM } from '$mct/types';
+import type { InputData, AppState, StageIDENUM, InputValue } from '$mct/types';
 import type { QuestionComponent } from 'src/mct/stages/form/Questions';
 
 /**
@@ -47,6 +47,8 @@ export enum FormEventNames {
   QUESTION_VALIDATED = 'form:question:validated',
   QUESTION_REQUIRED = 'form:question:required',
   QUESTION_UNREQUIRED = 'form:question:unrequired',
+  QUESTIONS_SAVE_REQUESTED = 'form:questions:save:requested',
+  QUESTIONS_SYNC_REQUESTED = 'form:questions:sync:requested',
   INPUT_CHANGED = 'input:changed',
   INPUT_ON_ENTER = 'input:on-enter',
   GROUP_CHANGED = 'form:group:changed',
@@ -93,18 +95,38 @@ export interface FormEvents {
   // Question-related events
   [FormEventNames.QUESTION_CHANGED]: {
     question: QuestionComponent;
+    questionId: string;
+    groupName: string;
+    value: InputValue;
+    source: 'main' | 'sidebar';
   };
 
   [FormEventNames.QUESTION_VALIDATED]: {
     question: QuestionComponent;
+    questionId: string;
+    isValid: boolean;
   };
 
   [FormEventNames.QUESTION_REQUIRED]: {
     question: QuestionComponent;
+    questionId: string;
+    groupName: string;
   };
 
   [FormEventNames.QUESTION_UNREQUIRED]: {
     question: QuestionComponent;
+    questionId: string;
+    groupName: string;
+  };
+
+  [FormEventNames.QUESTIONS_SAVE_REQUESTED]: {
+    source: 'main' | 'sidebar';
+  };
+
+  [FormEventNames.QUESTIONS_SYNC_REQUESTED]: {
+    targetQuestionId: string;
+    value: InputValue;
+    source: 'main' | 'sidebar';
   };
 
   // // Input-related events
@@ -165,6 +187,7 @@ export interface FormEvents {
   // Answer-related events
   [FormEventNames.ANSWERS_SAVED]: {
     answers: InputData[];
+    source?: 'main' | 'sidebar';
   };
 
   [FormEventNames.ANSWERS_LOADED]: {

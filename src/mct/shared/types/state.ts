@@ -127,7 +127,7 @@ export interface InputData {
   name: InputName;
   value: InputValue;
   valid: boolean;
-  location: 'form' | 'sidebar';
+  location: 'form' | 'sidebar' | 'filter';
   source?: 'user' | 'prefill' | 'param';
 }
 

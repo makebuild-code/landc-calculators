@@ -1,16 +1,21 @@
-import { BaseComponent, type ComponentOptions } from './BaseComponent';
-import type { TrackedEventListener } from '$mct/types';
+import { BaseComponent, type BaseComponentConfig } from './BaseComponent';
+import { EventBus } from '../events/EventBus';
+import type { TypedEventHandler } from '../events/EventBus';
+import type { EventName, AllEvents, TrackedEventListener } from '$mct/types';
 
-export interface InteractiveComponentOptions extends ComponentOptions {
+export interface InteractiveComponentConfig extends BaseComponentConfig {
   autoBindEvents?: boolean;
+  eventNamespace?: string; // For debugging event sources
 }
 
 export abstract class InteractiveComponent extends BaseComponent {
+  protected eventBus: EventBus;
   protected eventListeners: TrackedEventListener[] = [];
   protected autoBindEvents: boolean;
 
-  constructor(options: InteractiveComponentOptions) {
+  constructor(options: InteractiveComponentConfig) {
     super(options);
+    this.eventBus = EventBus.getInstance();
     this.autoBindEvents = options.autoBindEvents ?? true;
   }
 
@@ -147,5 +152,97 @@ export abstract class InteractiveComponent extends BaseComponent {
         handler.apply(this, args);
       }
     };
+  }
+
+  /**
+   * Emit an event through the event bus
+   */
+  protected emit<T extends EventName>(event: T, payload: AllEvents[T]): void {
+    if (this.isDestroyed) return;
+    this.eventBus.emit(event, payload);
+  }
+
+  /**
+   * Subscribe to an event
+   * @returns Unsubscribe function
+   */
+  protected on<T extends EventName>(event: T, handler: TypedEventHandler<T>): () => void {
+    return this.eventBus.on(event, handler);
+  }
+
+  /**
+   * Subscribe to an event once
+   * @returns Unsubscribe function
+   */
+  protected once<T extends EventName>(event: T, handler: TypedEventHandler<T>): () => void {
+    const unsubscribe = this.eventBus.on(event, (payload) => {
+      handler(payload);
+      unsubscribe();
+    });
+    return unsubscribe;
+  }
+
+  /**
+   * Check if Enter key was pressed
+   */
+  protected isEnterKey(event: KeyboardEvent): boolean {
+    return event.key === 'Enter' || event.keyCode === 13;
+  }
+
+  /**
+   * Check if Escape key was pressed
+   */
+  protected isEscapeKey(event: KeyboardEvent): boolean {
+    return event.key === 'Escape' || event.keyCode === 27;
+  }
+
+  /**
+   * Check if Space key was pressed
+   */
+  protected isSpaceKey(event: KeyboardEvent): boolean {
+    return event.key === ' ' || event.keyCode === 32;
+  }
+
+  /**
+   * Check if Arrow key was pressed
+   */
+  protected isArrowKey(event: KeyboardEvent): boolean {
+    return ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+  }
+
+  /**
+   * Focus first element matching selector
+   */
+  protected focusFirst(selector: string, container: HTMLElement = this.element): void {
+    const element = this.queryElement<HTMLElement>(selector, container);
+    element?.focus();
+  }
+
+  /**
+   * Trap focus within a container
+   * @returns Cleanup function to remove focus trap
+   */
+  protected trapFocus(container: HTMLElement = this.element): () => void {
+    const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusables = Array.from(container.querySelectorAll(focusableElements)) as HTMLElement[];
+    
+    const firstFocusable = focusables[0];
+    const lastFocusable = focusables[focusables.length - 1];
+    
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      
+      if (e.shiftKey && document.activeElement === firstFocusable) {
+        lastFocusable?.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+        firstFocusable?.focus();
+        e.preventDefault();
+      }
+    };
+    
+    container.addEventListener('keydown', handleTabKey);
+    
+    return () => container.removeEventListener('keydown', handleTabKey);
   }
 }

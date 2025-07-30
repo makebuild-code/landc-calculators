@@ -1,20 +1,33 @@
 import { debugError } from '$utils/debug';
-import { InteractiveComponent, type InteractiveComponentOptions } from './InteractiveComponent';
+import { InteractiveComponent, type InteractiveComponentConfig } from './InteractiveComponent';
 
-export interface StatefulComponentOptions<T = any> extends InteractiveComponentOptions {
-  initialState: T;
+export interface StatefulComponentConfig extends InteractiveComponentConfig {
+  persistState?: boolean;
+  persistKey?: string;
 }
 
 export abstract class StatefulComponent<T = any> extends InteractiveComponent {
   protected state: T;
   protected previousState: T;
   protected stateSubscribers: Set<(currentState: T, previousState: T) => void>;
+  private persistConfig: StatefulComponentConfig | null = null;
+  private pendingUpdates: Partial<T>[] = [];
+  private updateScheduled = false;
 
-  constructor(options: StatefulComponentOptions<T>) {
-    super(options);
+  constructor(config: StatefulComponentConfig, initialState: T) {
+    super(config);
     this.stateSubscribers = new Set();
-    this.state = options.initialState;
-    this.previousState = options.initialState;
+    
+    // Load from localStorage if persistence enabled
+    if (config.persistState && config.persistKey) {
+      const saved = localStorage.getItem(config.persistKey);
+      this.state = saved ? JSON.parse(saved) : initialState;
+    } else {
+      this.state = initialState;
+    }
+    
+    this.previousState = { ...this.state };
+    this.persistConfig = config.persistState ? config : null;
   }
 
   /**
@@ -50,25 +63,30 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
    */
   protected setState(updates: Partial<T>): void {
     if (this.isDestroyed) return;
-
+    
+    // Ensure state is initialized
+    if (!this.state) {
+      this.logError('Cannot setState before state is initialized');
+      return;
+    }
+    
+    const newState = { ...this.state, ...updates };
+    
+    if (!this.validateState(newState)) {
+      this.logError('Invalid state update blocked', { updates, currentState: this.state });
+      return;
+    }
+    
     this.previousState = { ...this.state };
-    this.state = { ...this.state, ...updates };
-
-    // // Only log if state actually changed
-    // if (this.debug && !this.shallowEqual(this.previousState, this.state))
-    //   this.log('State updated', { previous: this.previousState, current: this.state, changes: updates });
-
-    // Notify subscribers
+    this.state = newState;
+    
+    // Persist if enabled
+    if (this.persistConfig?.persistState && this.persistConfig.persistKey) {
+      localStorage.setItem(this.persistConfig.persistKey, JSON.stringify(this.state));
+    }
+    
+    // Notify subscribers and call lifecycle
     this.notifyStateSubscribers();
-
-    // // Emit state change event
-    // this.emit('state:changed', {
-    //   changes: updates,
-    //   previousState: this.previousState,
-    //   currentState: this.state,
-    // });
-
-    // Call the state change handler
     this.onStateChange(this.previousState, this.state);
   }
 
@@ -86,6 +104,8 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
    * Notify all state subscribers
    */
   private notifyStateSubscribers(): void {
+    if (!this.stateSubscribers) return;
+    
     this.stateSubscribers.forEach((callback) => {
       try {
         callback(this.state, this.previousState);
@@ -143,5 +163,49 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
   protected onDestroy(): void {
     super.onDestroy();
     this.stateSubscribers.clear();
+  }
+
+  /**
+   * Validate state before applying updates
+   * Override in subclasses to add validation logic
+   */
+  protected validateState(state: T): boolean {
+    // Override in subclasses
+    return true;
+  }
+
+  /**
+   * Batch multiple state updates
+   */
+  protected batchUpdate(updates: Partial<T>): void {
+    this.pendingUpdates.push(updates);
+    
+    if (!this.updateScheduled) {
+      this.updateScheduled = true;
+      requestAnimationFrame(() => {
+        const merged = this.pendingUpdates.reduce((acc, update) => ({ ...acc, ...update }), {});
+        this.setState(merged);
+        this.pendingUpdates = [];
+        this.updateScheduled = false;
+      });
+    }
+  }
+
+  /**
+   * Create a computed property based on state
+   */
+  protected createComputed<K>(
+    computeFn: (state: T) => K
+  ): () => K {
+    let cachedValue: K;
+    let cachedState: T | null = null;
+    
+    return () => {
+      if (cachedState !== this.state) {
+        cachedValue = computeFn(this.state);
+        cachedState = this.state;
+      }
+      return cachedValue;
+    };
   }
 }

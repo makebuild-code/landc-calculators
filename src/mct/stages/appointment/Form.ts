@@ -1,10 +1,11 @@
-import { StatefulInputGroup, type StatefulInputGroupOptions } from '$mct/components';
+import { StatefulInputGroup, type StatefulInputGroupConfig } from '$mct/components';
 
-export interface InputGroupOptions extends StatefulInputGroupOptions {}
+export interface InputGroupConfig extends StatefulInputGroupConfig {}
 
 export class InputGroup extends StatefulInputGroup {
-  constructor(options: InputGroupOptions) {
-    super(options);
+  constructor(config: InputGroupConfig) {
+    // No custom state extensions needed for InputGroup
+    super(config);
   }
 
   protected onInit(): void {}

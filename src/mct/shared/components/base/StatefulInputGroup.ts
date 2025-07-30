@@ -1,4 +1,4 @@
-import { StatefulComponent, type StatefulComponentOptions } from './StatefulComponent';
+import { StatefulComponent, type StatefulComponentConfig } from './StatefulComponent';
 import {
   type CheckboxValues,
   type Input,
@@ -22,10 +22,7 @@ export interface StatefulInputGroupState {
   finalName: string;
 }
 
-export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = StatefulInputGroupState>
-  extends Omit<StatefulComponentOptions<T>, 'initialState'> {
-  extendedInitialState?: Partial<T>; // Additional state properties for extending classes
-  initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
+export interface StatefulInputGroupConfig extends StatefulComponentConfig {
   onChange: () => void;
   onEnter: () => void;
   groupName: string;
@@ -39,37 +36,28 @@ export abstract class StatefulInputGroup<
   protected onEnter: () => void; // The function to call when the user presses enter
   protected inputs: Input[] = []; // The inputs in the input group
 
-  constructor(options: StatefulInputGroupOptions<T>) {
-    // Use provided initialState or generate from base + extended
-    const finalInitialState =
-      options.initialState ||
-      (() => {
-        // Create base initialState
-        const baseInitialState: StatefulInputGroupState = {
-          value: null,
-          isValid: false,
-          isInitialised: false,
-          type: 'text', // Will be set in init()
-          groupName: options.groupName,
-          indexInGroup: options.indexInGroup,
-          initialName: '', // Will be set in init()
-          finalName: '', // Will be set in init()
-        };
-
-        // Merge base state with extended state
-        return {
-          ...baseInitialState,
-          ...options.extendedInitialState,
-        } as T;
-      })();
-
-    super({
-      ...options,
-      initialState: finalInitialState,
-    });
-
-    this.onChange = options.onChange;
-    this.onEnter = options.onEnter;
+  constructor(
+    config: StatefulInputGroupConfig,
+    customState?: Partial<T>
+  ) {
+    const initialState: T = {
+      // Base state
+      value: null,
+      isValid: false,
+      isInitialised: false,
+      type: 'text',
+      groupName: config.groupName,
+      indexInGroup: config.indexInGroup,
+      initialName: '',
+      finalName: '',
+      // Custom state extensions
+      ...customState
+    } as T;
+    
+    super(config, initialState);
+    
+    this.onChange = config.onChange;
+    this.onEnter = config.onEnter;
   }
 
   protected init(): void {

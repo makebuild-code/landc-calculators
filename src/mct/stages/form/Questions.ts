@@ -1,13 +1,15 @@
 import { lendersAPI } from '$mct/api';
-import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
+import { StatefulInputGroup, type StatefulInputGroupConfig, type StatefulInputGroupState } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
-import { FormEventNames, InputKeysENUM, type Inputs, type SelectOption } from '$mct/types';
+import { FormEventNames, InputKeysENUM, type Inputs, type SelectOption, type InputValue } from '$mct/types';
 import { debugError } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
 
-interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {}
+interface QuestionConfig extends StatefulInputGroupConfig {
+  source?: 'main' | 'sidebar';
+}
 
 interface QuestionState extends StatefulInputGroupState {
   isVisible: boolean;
@@ -18,23 +20,41 @@ interface QuestionState extends StatefulInputGroupState {
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private parent: HTMLElement;
+  private questionId: string = '';
+  private source: 'main' | 'sidebar' = 'main';
 
-  constructor(options: QuestionOptions) {
-    super(options);
+  constructor(config: QuestionConfig) {
+    // Define the custom state extensions for QuestionComponent
+    const customState: Partial<QuestionState> = {
+      isVisible: false,
+      isRequired: false,
+      dependsOn: null,
+      dependsOnValue: null,
+    };
+
+    super(config, customState);
 
     this.parent = this.element.parentElement as HTMLElement;
-    this.onEnter = options.onEnter;
+    this.source = config.source || 'main';
     this.debug = true;
   }
 
   protected onInit(): void {
-    this.setStateValue('isVisible', false);
-    this.setStateValue('isRequired', false);
+    // Generate unique ID for cross-context identification
+    this.questionId = `${this.getStateValue('groupName')}-${this.getStateValue('initialName')}`;
 
+    // Set dependency attributes from DOM
     const dependsOn = this.getAttribute(attr.dependsOn) || null;
     const dependsOnValue = this.getAttribute(attr.dependsOnValue) || null;
     this.setStateValue('dependsOn', dependsOn);
     this.setStateValue('dependsOnValue', dependsOnValue);
+
+    // Listen for sync requests
+    this.on(FormEventNames.QUESTIONS_SYNC_REQUESTED, (event) => {
+      if (event.targetQuestionId === this.questionId && event.source !== this.source) {
+        this.syncValue(event.value);
+      }
+    });
 
     // Call the lender select handler
     if (this.getStateValue('initialName') === 'Lender') this.handleLenderSelect();
@@ -89,12 +109,20 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   public require(): void {
     this.setStateValue('isRequired', true);
-    this.eventBus.emit(FormEventNames.QUESTION_REQUIRED, { question: this });
+    this.emit(FormEventNames.QUESTION_REQUIRED, {
+      question: this,
+      questionId: this.questionId,
+      groupName: this.getStateValue('groupName'),
+    });
   }
 
   public unrequire(): void {
     this.setStateValue('isRequired', false);
-    this.eventBus.emit(FormEventNames.QUESTION_UNREQUIRED, { question: this });
+    this.emit(FormEventNames.QUESTION_UNREQUIRED, {
+      question: this,
+      questionId: this.questionId,
+      groupName: this.getStateValue('groupName'),
+    });
 
     this.showQuestion(false);
   }
@@ -126,5 +154,59 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (!dependsOn) return true; // question depends on nothing
     if (!dependsOnValue) return answers[dependsOn as InputKeysENUM] !== null; // question depends on a prior question being answered, no specific value
     return answers[dependsOn as InputKeysENUM] === dependsOnValue; // question depends on a prior question being answered, with a specific value
+  }
+
+  // Override handleChange to emit events
+  protected handleChange(): void {
+    this.saveValueAndValidity();
+
+    // Emit enhanced QUESTION_CHANGED event
+    const currentValue = this.getValue();
+    if (currentValue !== null) {
+      this.emit(FormEventNames.QUESTION_CHANGED, {
+        question: this,
+        questionId: this.questionId,
+        groupName: this.getStateValue('groupName'),
+        value: currentValue,
+        source: this.source,
+      });
+    }
+
+    // Still call onChange if provided (for backward compatibility)
+    if (this.onChange) {
+      this.onChange();
+    }
+  }
+
+  // Method to sync value from another context
+  private syncValue(value: InputValue | null): void {
+    if (value !== null) {
+      this.setValue(value);
+    }
+  }
+
+  // Getters for event-driven communication
+  public getQuestionId(): string {
+    return this.questionId;
+  }
+
+  public getSource(): 'main' | 'sidebar' {
+    return this.source;
+  }
+
+  public getGroupName(): string {
+    return this.getStateValue('groupName');
+  }
+
+  public getInitialName(): string {
+    return this.getStateValue('initialName');
+  }
+
+  public getFinalName(): string {
+    return this.getStateValue('finalName');
+  }
+
+  public isRequired(): boolean {
+    return this.getStateValue('isRequired');
   }
 }
