@@ -108,16 +108,22 @@ export class HandleCalculator {
       const resultsId = this.component.getAttribute('data-results');
       const calcName = this.component.getAttribute('data-calc');
 
+      console.log('resultsId', resultsId);
+      console.log('calcName', calcName);
+
       if (resultsId && calcName === 'residentialborrowinglimit') {
         // Find the calculator with `data-calc="mortgagecost"` and trigger calculation
         const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]') as HTMLDivElement;
+        console.log('mortgageCalcComponent', mortgageCalcComponent);
         if (mortgageCalcComponent) {
           const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
-          mortgageCalc.submit();
 
           // To return single product
           const mortInputs = mortgageCalc.inputs.getValues();
           const calcInputs = this.inputs.getValues();
+
+          console.log('mortInputs', mortInputs);
+          console.log('calcInputs', calcInputs);
 
           const DepositAmount = parseFloat((calcInputs['DepositAmount'] as string) || '0');
           const RepaymentValue = parseFloat((mortInputs['RepaymentValue'] as string) || '0');
@@ -151,6 +157,10 @@ export class HandleCalculator {
                 (mortPickArea as HTMLElement).style.display = 'none';
               }
             }
+
+            setTimeout(() => {
+              mortgageCalc.submit();
+            }, 250);
           }
         }
       }
@@ -163,7 +173,7 @@ export class HandleCalculator {
       }
       if (resultsId && calcName === 'residentialborrowinglimit') {
         if (this.result) {
-          this.scrollToDiv(resultsId);
+          this.scrollToDiv('results');
         }
       }
     } catch (error) {
@@ -179,6 +189,7 @@ export class HandleCalculator {
 
   private scrollToDiv(id: string): void {
     const targetElement = document.querySelector('#' + id);
+    targetElement?.removeAttribute('data-calcs-initial');
 
     if (targetElement) {
       targetElement.scrollIntoView({
@@ -271,6 +282,8 @@ export class HandleCalculator {
         ? Math.round(monthlyRepayment)
         : Math.round(result.result.FutureMonthlyPayment);
     }
+
+    console.log(result);
 
     return result;
   }
