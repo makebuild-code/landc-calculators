@@ -1,6 +1,5 @@
 import { API_CONFIG } from '$mct/config';
 import { debugError, debugLog } from '$utils/debug';
-import { getBaseURLForAPI } from '$utils/environment/getBaseURLForAPI';
 import { globalEventBus } from '../../components/events/globalEventBus';
 import { APIEventNames } from '../../types/events';
 
