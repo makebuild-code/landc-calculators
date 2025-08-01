@@ -8,7 +8,7 @@ import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
-import { globalEventBus, testComponents, testSimpleComponent } from '$mct/components';
+import { globalEventBus } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { MCTEventNames, StageIDENUM } from '$mct/types';
@@ -72,9 +72,6 @@ export const MCTManager = {
     this.initLCID();
     this.initStages();
     this.route();
-
-    // Setup event bus for testing (optional)
-    this.setupEventBusDebug();
   },
 
   initState() {
@@ -487,31 +484,5 @@ export const MCTManager = {
 
   getVisibilityManager(): VisibilityManager {
     return visibilityManager;
-  },
-
-  setupEventBusDebug() {
-    if (typeof window === 'undefined') return;
-
-    // Make event bus available globally for testing
-    (window as any).globalEventBus = globalEventBus;
-
-    // // Add some test event listeners
-    // globalEventBus.on(FormEventNames.QUESTION_CHANGED, (payload) => {
-    //   debugLog('📡 MCT Event: Question changed', payload);
-    // });
-
-    // globalEventBus.on(FormEventNames.NAVIGATION_UPDATE, (payload) => {
-    //   debugLog('📡 MCT Event: Navigation updated', payload);
-    // });
-
-    // Make component testing available
-    (window as any).testComponents = testComponents;
-    (window as any).testSimpleComponent = testSimpleComponent;
-
-    debugLog('🔧 Event Bus & Component Debug Tools Available!');
-    debugLog('- globalEventBus - Access the global event bus');
-    debugLog('- globalEventBus.emit("form:question:changed", {...}) - Test events');
-    debugLog('- testSimpleComponent() - Test simple component (recommended first)');
-    debugLog('- testComponents() - Test full component system');
   },
 };
