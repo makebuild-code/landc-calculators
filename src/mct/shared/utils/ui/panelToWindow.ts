@@ -14,22 +14,8 @@ export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'pa
   const stickyHeader = queryElement('.mct_sticky-header_sticky', component);
   const panelButtons = queryElement('.mct_panel_buttons', component);
 
-  /**
-   * component:
-   * - background-color: var(--_mtc---surface--background);
-   *
-   * panelBackground:
-   * - display: none;
-   *
-   * stickyHeader:
-   * - top: 0px;
-   *
-   * panelButtons:
-   * - bottom: 0px;
-   */
-
   toWindow
-    ? (component.style.backgroundColor = 'var(--_mtc---surface--background)')
+    ? (component.style.backgroundColor = 'var(--_mct-themes---surface--background)')
     : component.style.removeProperty('background-color');
 
   if (panelBackground)
