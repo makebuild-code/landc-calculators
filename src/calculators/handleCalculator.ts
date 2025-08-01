@@ -28,6 +28,7 @@ export class HandleCalculator {
   private isLoading: boolean;
   private result?: Result;
   private isSyncing: boolean;
+  private mortgageCalc: HandleCalculator | null = null;
 
   constructor(component: HTMLDivElement) {
     this.name = component.dataset.calc as string;
@@ -116,10 +117,10 @@ export class HandleCalculator {
         const mortgageCalcComponent = document.querySelector('[data-calc="mortgagecost"]') as HTMLDivElement;
         console.log('mortgageCalcComponent', mortgageCalcComponent);
         if (mortgageCalcComponent) {
-          const mortgageCalc = new HandleCalculator(mortgageCalcComponent);
+          if (!this.mortgageCalc) this.mortgageCalc = new HandleCalculator(mortgageCalcComponent);
 
           // To return single product
-          const mortInputs = mortgageCalc.inputs.getValues();
+          const mortInputs = this.mortgageCalc.inputs.getValues();
           const calcInputs = this.inputs.getValues();
 
           console.log('mortInputs', mortInputs);
@@ -131,7 +132,12 @@ export class HandleCalculator {
 
           syncSlider('DepositAmountSlider', DepositAmount);
           syncSlider('RepaymentValue', RepaymentValue);
-          // Get Product Update
+
+          console.log('residentialborrowinglimit', {
+            DepositAmount,
+            RepaymentValue,
+            PropertyValue,
+          });
 
           const prodresult = await this.makeAzureRequestProduct({
             PropertyValue,
@@ -159,8 +165,48 @@ export class HandleCalculator {
             }
 
             setTimeout(() => {
-              mortgageCalc.submit();
+              this.mortgageCalc?.submit();
             }, 250);
+          }
+        }
+      } else if (resultsId && calcName === 'mortgagecost') {
+        const DepositAmount = parseFloat((this.inputs.getValues()['DepositAmountSlider'] as string) || '0');
+        const RepaymentValue = parseFloat((this.inputs.getValues()['RepaymentValue'] as string) || '0');
+        const PropertyValue = RepaymentValue + DepositAmount;
+
+        syncSlider('DepositAmountSlider', DepositAmount);
+        syncSlider('RepaymentValue', RepaymentValue);
+
+        console.log('mortgagecost', {
+          values: this.inputs.getValues(),
+          DepositAmount,
+          RepaymentValue,
+          PropertyValue,
+        });
+
+        const prodresult = await this.makeAzureRequestProduct({
+          PropertyValue,
+          RepaymentValue,
+          TermYears: parseFloat((this.inputs.getValues()['TermYears'] as string) || '0'),
+          PropertyType: 1,
+          MortgageType: 1,
+        });
+
+        if (prodresult) {
+          this.populateProductCard(prodresult.result);
+
+          const mortPickTitle = document.querySelector('#mortPickTitle');
+          const mortPickArea = document.querySelector('#mortPickArea');
+          if (prodresult.result.success) {
+            if (mortPickTitle && mortPickArea) {
+              (mortPickTitle as HTMLElement).style.display = 'flex';
+              (mortPickArea as HTMLElement).style.display = 'flex';
+            }
+          } else {
+            if (mortPickTitle && mortPickArea) {
+              (mortPickTitle as HTMLElement).style.display = 'none';
+              (mortPickArea as HTMLElement).style.display = 'none';
+            }
           }
         }
       }
@@ -294,7 +340,7 @@ export class HandleCalculator {
     MortgageType = 1,
     RepaymentValue,
     TermYears,
-    NumberOfResults = 1,
+    NumberOfResults = 100,
   }: {
     PropertyValue: number;
     PropertyType?: number;
@@ -340,11 +386,14 @@ export class HandleCalculator {
     }
 
     const result = await response.json();
+    console.log('Product Result', result);
 
-    if (result.result.data[0].FutureMonthlyPayment) {
-      result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
-      result.result.data[0].InitialRate = result.result.data[0].Rate;
-      result.result.data[0].TermYears = result.result.data[0].TermYears;
+    if (result.result.data.length > 0) {
+      if (result.result.data[0].FutureMonthlyPayment) {
+        result.result.data[0].FutureMonthlyPayment = Math.round(result.result.data[0].FutureMonthlyPayment);
+        result.result.data[0].InitialRate = result.result.data[0].Rate;
+        result.result.data[0].TermYears = result.result.data[0].TermYears;
+      }
     }
 
     const rateSlider = document.querySelector('[data-input="Rate"]') as HTMLInputElement | null;
