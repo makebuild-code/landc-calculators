@@ -78,7 +78,7 @@ export class MainFormManager extends FormManager {
     this.handleShowHideOnGroup();
 
     // Handle profile option if provided
-    this.handleIdentifier(null);
+    this.handleIdentifier(undefined);
 
     this.prevButton.addEventListener('click', () => {
       const currentGroup = this.getActiveGroup();
@@ -434,7 +434,7 @@ export class MainFormManager extends FormManager {
     this.handleShowHideOnGroup();
   }
 
-  private handleIdentifier(profile: Profile | null) {
+  private handleIdentifier(profile: Profile | undefined) {
     if (!this.identifier) return;
     if (!profile) {
       this.identifier.style.display = 'none';
