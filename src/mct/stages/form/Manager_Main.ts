@@ -1,11 +1,11 @@
-import { DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
+import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { InputKeysENUM, Profile } from '$mct/types';
-import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { APIEventNames, FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
 import { globalEventBus } from '$mct/components';
@@ -24,7 +24,7 @@ export class MainFormManager extends FormManager {
   private buttonContainer: HTMLElement;
   private prevButton: HTMLButtonElement;
   private nextButton: HTMLButtonElement;
-  private getResultsButton: HTMLButtonElement;
+  public getResultsButton: HTMLButtonElement;
   private hideOnGroup: HTMLElement[];
   private showOnGroup: HTMLElement[];
   private loader: HTMLElement;
@@ -117,6 +117,12 @@ export class MainFormManager extends FormManager {
       }
     });
 
+    globalEventBus.on(APIEventNames.REQUEST_START, (event) => {
+      if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
+        this.toggleButton(this.getResultsButton, false);
+      }
+    });
+
     this.onMount();
 
     this.prepareWrapper();
@@ -128,7 +134,7 @@ export class MainFormManager extends FormManager {
     this.showLoader(false);
   }
 
-  private toggleButton(button: HTMLButtonElement, show: boolean): void {
+  public toggleButton(button: HTMLButtonElement, show: boolean): void {
     button.disabled = !show;
     show ? button.style.removeProperty('display') : (button.style.display = 'none');
   }
