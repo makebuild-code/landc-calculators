@@ -380,6 +380,8 @@ export class OutputGroup extends BaseGroup {
 
     this.summaryInfo = this.response.result.SummaryInfo;
 
+    this.formManager.toggleButton(this.formManager.getResultsButton, this.summaryInfo.NumberOfProducts > 0);
+
     this.updateOutputs();
     this.showLoader(false);
 

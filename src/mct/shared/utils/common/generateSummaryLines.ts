@@ -64,7 +64,7 @@ export const generateSummaryLines = (summaryInfo: SummaryInfo, answers: Inputs):
 
   const BorrowOverTerm = `Looks like you want to borrow <span class="${classes.highlight}">${MortgageAmountText}</span> over <span class="${classes.highlight}">${TermYearsText}</span>`;
   const SchemeAndType = `<span class="${classes.highlight}">${SchemePeriodsText} ${SchemeTypesText} ${RepaymentTypeText}</span> mortgage`;
-  const ProductsAndLenders = `Great news. We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} mortgage products</span> from <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> different lenders. Click below to see your results.`;
+  const ProductsAndLenders = `Great news. We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} mortgage ${summaryInfo.NumberOfProducts === 1 ? 'product' : 'products'}</span> from <span class="${classes.highlight}">${summaryInfo.NumberOfLenders}</span> ${summaryInfo.NumberOfLenders === 1 ? 'lender' : 'different lenders'}. Click below to see your results.`;
   const DealsAndRates = `We’ve found <span class="${classes.highlight}">${summaryInfo.NumberOfProducts} deals</span> starting from <span class="${classes.highlight}">${summaryInfo.LowestRate}%</span>.`;
   const Summary = `${BorrowOverTerm} with a ${SchemeAndType}`;
   return {
