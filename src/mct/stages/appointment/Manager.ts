@@ -303,16 +303,14 @@ export class AppointmentManager {
     this.calendarPanel.style.display = 'none';
     this.formPanel.style.removeProperty('display');
     this.currentPanel = PANEL_ENUM.FORM;
-    this.formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.show();
   }
 
   private showCalendarPanel(): void {
     this.calendarPanel.style.removeProperty('display');
     this.formPanel.style.display = 'none';
     this.currentPanel = PANEL_ENUM.CALENDAR;
-    this.calendarPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // refresh the dates and slots?
+    this.show();
   }
 
   private navigateToResults(): void {
@@ -517,6 +515,7 @@ export class AppointmentManager {
       // Handle successful booking
       this.form.style.display = 'none';
       this.formSuccess.style.removeProperty('display');
+      this.show();
 
       this.logUserEvent(); // No await, just log the event and handle separately
     } catch (error: unknown) {
