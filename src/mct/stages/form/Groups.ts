@@ -249,8 +249,8 @@ export class MainGroup extends QuestionGroup {
         debug: true,
       });
 
-      // Initialize the component
-      question.initialise();
+      // // Initialize the component
+      // question.initialise();
 
       if (index !== 0) question.disable();
       if (question.getStateValue('dependsOn')) question.unrequire();

@@ -58,6 +58,8 @@ export class QuestionFactory {
       question.setValue(initialValue);
     }
 
+    question.initialise();
+
     QuestionRegistry.getInstance().register(question);
 
     return question;

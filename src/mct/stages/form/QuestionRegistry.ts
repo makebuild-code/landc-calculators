@@ -4,7 +4,7 @@ import type { QuestionComponent } from './Questions';
  * Central registry for tracking all Question components across the application.
  * Acts like a library catalog, keeping track of questions in both main form and sidebar.
  * Enables finding questions by ID or group and allows cross-form communication.
- * 
+ *
  * Implements singleton pattern to ensure only one registry exists.
  */
 export class QuestionRegistry {
@@ -29,9 +29,7 @@ export class QuestionRegistry {
    */
   public register(question: QuestionComponent): void {
     const id = question.getQuestionId();
-    if (!this.questions.has(id)) {
-      this.questions.set(id, new Set());
-    }
+    if (!this.questions.has(id)) this.questions.set(id, new Set());
     this.questions.get(id)!.add(question);
   }
 
@@ -44,9 +42,7 @@ export class QuestionRegistry {
     const questionSet = this.questions.get(id);
     if (questionSet) {
       questionSet.delete(question);
-      if (questionSet.size === 0) {
-        this.questions.delete(id);
-      }
+      if (questionSet.size === 0) this.questions.delete(id);
     }
   }
 
@@ -144,7 +140,7 @@ export class QuestionRegistry {
     questionMap: Record<string, { main?: boolean; sidebar?: boolean }>;
   } {
     const questionMap: Record<string, { main?: boolean; sidebar?: boolean }> = {};
-    
+
     this.questions.forEach((questionSet, id) => {
       questionMap[id] = {};
       questionSet.forEach((question) => {

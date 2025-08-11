@@ -20,7 +20,7 @@ interface QuestionState extends StatefulInputGroupState {
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   private parent: HTMLElement;
-  private questionId: string = '';
+  private name: string = '';
   private source: 'main' | 'sidebar' = 'main';
 
   constructor(config: QuestionConfig) {
@@ -41,7 +41,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   protected onInit(): void {
     // Generate unique ID for cross-context identification
-    this.questionId = `${this.getStateValue('groupName')}-${this.getStateValue('initialName')}`;
+    this.name = this.getStateValue('initialName');
 
     // Set dependency attributes from DOM
     const dependsOn = this.getAttribute(attr.dependsOn) || null;
@@ -51,7 +51,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
     // Listen for sync requests
     this.on(FormEventNames.QUESTIONS_SYNC_REQUESTED, (event) => {
-      if (event.targetQuestionId === this.questionId && event.source !== this.source) {
+      if (event.targetQuestionId === this.name && event.source !== this.source) {
         this.syncValue(event.value);
       }
     });
@@ -111,7 +111,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     this.setStateValue('isRequired', true);
     this.emit(FormEventNames.QUESTION_REQUIRED, {
       question: this,
-      questionId: this.questionId,
+      questionId: this.name,
       groupName: this.getStateValue('groupName'),
     });
   }
@@ -120,7 +120,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     this.setStateValue('isRequired', false);
     this.emit(FormEventNames.QUESTION_UNREQUIRED, {
       question: this,
-      questionId: this.questionId,
+      questionId: this.name,
       groupName: this.getStateValue('groupName'),
     });
 
@@ -165,7 +165,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (currentValue !== null) {
       this.emit(FormEventNames.QUESTION_CHANGED, {
         question: this,
-        questionId: this.questionId,
+        questionId: this.name,
         groupName: this.getStateValue('groupName'),
         value: currentValue,
         source: this.source,
@@ -187,7 +187,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   // Getters for event-driven communication
   public getQuestionId(): string {
-    return this.questionId;
+    return this.name;
   }
 
   public getSource(): 'main' | 'sidebar' {
