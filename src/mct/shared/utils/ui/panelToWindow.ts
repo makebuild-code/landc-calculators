@@ -3,7 +3,7 @@ import type { StageIDENUM } from '$mct/types';
 import { queryElement } from '$utils/dom';
 import { getCurrentBreakpoint } from '$utils/environment/getCurrentBreakpoint';
 
-export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'panel') => {
+export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'panel'): void => {
   const component = MCTManager.getStageDOM(stageId);
   if (!component) return;
 
@@ -17,13 +17,9 @@ export const panelToWindow = (stageId: StageIDENUM, to: 'panel' | 'window' = 'pa
   toWindow
     ? (component.style.backgroundColor = 'var(--_mct-themes---surface--background)')
     : component.style.removeProperty('background-color');
-
   if (panelBackground)
     toWindow ? (panelBackground.style.display = 'none') : panelBackground.style.removeProperty('display');
-
   if (header) toWindow ? (header.style.paddingTop = '0px') : header.style.removeProperty('padding-top');
-
   if (stickyHeader) toWindow ? (stickyHeader.style.top = '0px') : stickyHeader.style.removeProperty('top');
-
   if (panelButtons) toWindow ? (panelButtons.style.bottom = '0px') : panelButtons.style.removeProperty('bottom');
 };

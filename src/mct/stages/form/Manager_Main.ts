@@ -179,18 +179,8 @@ export class MainFormManager extends FormManager {
   }
 
   private determinePanelOrWindow(): void {
-    panelToWindow(StageIDENUM.Questions, 'panel');
-
-    const headerRect = this.header.getBoundingClientRect();
-    const buttonContainerRect = this.buttonContainer.getBoundingClientRect();
-    const distance = buttonContainerRect.top - headerRect.bottom;
-    const minDistance = this.list.getBoundingClientRect().height;
-
-    if (distance < minDistance) {
-      panelToWindow(StageIDENUM.Questions, 'window');
-    } else {
-      panelToWindow(StageIDENUM.Questions, 'panel');
-    }
+    const isWindow = this.container.offsetHeight <= this.list.offsetHeight;
+    isWindow ? panelToWindow(StageIDENUM.Questions, 'window') : panelToWindow(StageIDENUM.Questions, 'panel');
   }
 
   public prepareWrapper(): void {
