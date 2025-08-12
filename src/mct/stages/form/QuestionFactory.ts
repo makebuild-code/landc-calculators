@@ -52,68 +52,11 @@ export class QuestionFactory {
       debug: debug ?? false,
     });
 
-    if (initialValue !== undefined) {
-      question.setValue(initialValue);
-    }
+    if (initialValue !== undefined) question.setValue(initialValue);
 
     question.initialise();
 
-    QuestionRegistry.getInstance().register(question);
-
-    return question;
-  }
-
-  /**
-   * Create multiple QuestionComponents from a NodeList or array of elements.
-   * Useful for initializing all questions in a group at once.
-   *
-   * @param elements - NodeList or array of HTML elements
-   * @param baseOptions - Common options for all questions (indexInGroup will be auto-incremented)
-   * @returns Array of initialized QuestionComponents
-   *
-   * @example
-   * ```typescript
-   * const questionElements = document.querySelectorAll('[data-group="residential"] [data-form-question]');
-   * const questions = QuestionFactory.createMultiple(questionElements, {
-   *   groupName: 'residential',
-   *   source: 'main'
-   * });
-   * ```
-   */
-  public static createMultiple(
-    elements: NodeListOf<HTMLElement> | HTMLElement[],
-    baseOptions: Omit<QuestionFactoryOptions, 'indexInGroup'>
-  ): QuestionComponent[] {
-    const questions: QuestionComponent[] = [];
-    const elementsArray = Array.from(elements);
-
-    elementsArray.forEach((element, index) => {
-      const question = QuestionFactory.create(element, {
-        ...baseOptions,
-        indexInGroup: index,
-      });
-      questions.push(question);
-    });
-
-    return questions;
-  }
-
-  /**
-   * Create a QuestionComponent and set up bidirectional sync with its counterpart.
-   * This is useful when creating sidebar questions that need to stay in sync with main form questions.
-   *
-   * @param element - The HTML element for the new question
-   * @param options - Configuration options
-   * @param syncWithQuestionId - The ID of the question to sync with
-   * @returns The initialized QuestionComponent with sync enabled
-   */
-  public static createWithSync(
-    element: HTMLElement,
-    options: QuestionFactoryOptions,
-    syncWithQuestionId: string
-  ): QuestionComponent {
-    const question = QuestionFactory.create(element, options);
-
+    // Register the question
     const registry = QuestionRegistry.getInstance();
     registry.register(question);
 
