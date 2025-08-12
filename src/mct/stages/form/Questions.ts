@@ -14,7 +14,7 @@ interface QuestionConfig extends StatefulInputGroupConfig {
 interface QuestionState extends StatefulInputGroupState {
   isVisible: boolean;
   isRequired: boolean;
-  dependsOn: string | null;
+  dependsOn: InputKeysENUM | null;
   dependsOnValue: string | null;
 }
 
@@ -44,7 +44,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     this.name = this.getStateValue('initialName');
 
     // Set dependency attributes from DOM
-    const dependsOn = this.getAttribute(attr.dependsOn) || null;
+    const dependsOn = this.getAttribute(attr.dependsOn) as InputKeysENUM | null;
     const dependsOnValue = this.getAttribute(attr.dependsOnValue) || null;
     this.setStateValue('dependsOn', dependsOn);
     this.setStateValue('dependsOnValue', dependsOnValue);
@@ -152,8 +152,8 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     const dependsOnValue = this.getStateValue('dependsOnValue');
 
     if (!dependsOn) return true; // question depends on nothing
-    if (!dependsOnValue) return answers[dependsOn as InputKeysENUM] !== null; // question depends on a prior question being answered, no specific value
-    return answers[dependsOn as InputKeysENUM] === dependsOnValue; // question depends on a prior question being answered, with a specific value
+    if (!dependsOnValue) return answers[dependsOn] !== null; // question depends on a prior question being answered, no specific value
+    return answers[dependsOn] === dependsOnValue; // question depends on a prior question being answered, with a specific value
   }
 
   // Override handleChange to emit events
@@ -165,7 +165,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (currentValue !== null) {
       this.emit(FormEventNames.QUESTION_CHANGED, {
         question: this,
-        questionId: this.name,
+        name: this.name,
         groupName: this.getStateValue('groupName'),
         value: currentValue,
         source: this.source,
@@ -186,7 +186,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   // Getters for event-driven communication
-  public getQuestionId(): string {
+  public getQuestionName(): string {
     return this.name;
   }
 
@@ -208,5 +208,9 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
   public isRequired(): boolean {
     return this.getStateValue('isRequired');
+  }
+
+  public getStateValue<K extends keyof QuestionState>(key: K): QuestionState[K] {
+    return this.state[key];
   }
 }

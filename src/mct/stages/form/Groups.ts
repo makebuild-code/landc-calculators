@@ -118,14 +118,14 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
   protected bindEvents(): void {
     // Listen to question changes
     this.on(FormEventNames.QUESTION_CHANGED, (event) => {
-      if (this.questions.some((q) => q.getQuestionId && q.getQuestionId() === event.questionId)) {
+      if (this.questions.some((q) => q.getQuestionName && q.getQuestionName() === event.name)) {
         this.updateGroupState();
       }
     });
 
     // Listen to question validation
     this.on(FormEventNames.QUESTION_VALIDATED, (event) => {
-      if (this.questions.some((q) => q.getQuestionId && q.getQuestionId() === event.questionId)) {
+      if (this.questions.some((q) => q.getQuestionName && q.getQuestionName() === event.name)) {
         this.updateGroupState();
       }
     });
@@ -137,8 +137,8 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
     let isComplete = true;
 
     this.questions.forEach((q) => {
-      if (q.getQuestionId) {
-        const questionId = q.getQuestionId();
+      if (q.getQuestionName) {
+        const questionId = q.getQuestionName();
         if (q.isValid()) {
           validQuestions.add(questionId);
           completedQuestions++;

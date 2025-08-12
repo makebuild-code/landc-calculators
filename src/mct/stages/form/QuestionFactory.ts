@@ -1,6 +1,6 @@
 import { QuestionComponent } from './Questions';
 import { QuestionRegistry } from './QuestionRegistry';
-import type { InputValue } from '$mct/types';
+import { FormEventNames, InputKeysENUM, type InputValue } from '$mct/types';
 
 export interface QuestionFactoryOptions {
   groupName: string;
@@ -38,9 +38,7 @@ export class QuestionFactory {
    * ```
    */
   public static create(element: HTMLElement, options: QuestionFactoryOptions): QuestionComponent {
-    if (!element) {
-      throw new Error('QuestionFactory.create: element is required');
-    }
+    if (!element) throw new Error('QuestionFactory.create: element is required');
 
     const { groupName, indexInGroup, source, onChange, onEnter, initialValue, debug } = options;
 
@@ -54,78 +52,16 @@ export class QuestionFactory {
       debug: debug ?? false,
     });
 
-    if (initialValue !== undefined) {
-      question.setValue(initialValue);
-    }
+    if (initialValue !== undefined) question.setValue(initialValue);
 
     question.initialise();
 
-    QuestionRegistry.getInstance().register(question);
-
-    return question;
-  }
-
-  /**
-   * Create multiple QuestionComponents from a NodeList or array of elements.
-   * Useful for initializing all questions in a group at once.
-   *
-   * @param elements - NodeList or array of HTML elements
-   * @param baseOptions - Common options for all questions (indexInGroup will be auto-incremented)
-   * @returns Array of initialized QuestionComponents
-   *
-   * @example
-   * ```typescript
-   * const questionElements = document.querySelectorAll('[data-group="residential"] [data-form-question]');
-   * const questions = QuestionFactory.createMultiple(questionElements, {
-   *   groupName: 'residential',
-   *   source: 'main'
-   * });
-   * ```
-   */
-  public static createMultiple(
-    elements: NodeListOf<HTMLElement> | HTMLElement[],
-    baseOptions: Omit<QuestionFactoryOptions, 'indexInGroup'>
-  ): QuestionComponent[] {
-    const questions: QuestionComponent[] = [];
-    const elementsArray = Array.from(elements);
-
-    elementsArray.forEach((element, index) => {
-      const question = QuestionFactory.create(element, {
-        ...baseOptions,
-        indexInGroup: index,
-      });
-      questions.push(question);
-    });
-
-    return questions;
-  }
-
-  /**
-   * Create a QuestionComponent and set up bidirectional sync with its counterpart.
-   * This is useful when creating sidebar questions that need to stay in sync with main form questions.
-   *
-   * @param element - The HTML element for the new question
-   * @param options - Configuration options
-   * @param syncWithQuestionId - The ID of the question to sync with
-   * @returns The initialized QuestionComponent with sync enabled
-   */
-  public static createWithSync(
-    element: HTMLElement,
-    options: QuestionFactoryOptions,
-    syncWithQuestionId: string
-  ): QuestionComponent {
-    const question = QuestionFactory.create(element, options);
-
+    // Register the question
     const registry = QuestionRegistry.getInstance();
-    const counterpartContext = options.source === 'main' ? 'sidebar' : 'main';
-    const counterpart = registry.getByContext(syncWithQuestionId, counterpartContext);
+    registry.register(question);
 
-    if (counterpart) {
-      const currentValue = counterpart.getValue();
-      if (currentValue !== null) {
-        question.setValue(currentValue);
-      }
-    }
+    // Set up automatic synchronization with other questions of the same name
+    QuestionFactory.setupAutoSync(question);
 
     return question;
   }
@@ -137,6 +73,12 @@ export class QuestionFactory {
    * @param question - The question component to destroy
    */
   public static destroy(question: QuestionComponent): void {
+    // Clean up auto-sync listener if it exists
+    const unsubscribe = (question as any)._autoSyncUnsubscribe;
+    if (unsubscribe && typeof unsubscribe === 'function') {
+      unsubscribe();
+    }
+
     QuestionRegistry.getInstance().unregister(question);
     question.destroy();
   }
@@ -153,22 +95,43 @@ export class QuestionFactory {
   }
 
   /**
-   * Get or create a question component from an element.
-   * If a question already exists for the element, return it.
-   * Otherwise, create a new one with the provided options.
+   * Set up automatic synchronization between questions with the same initialName.
+   * When one question changes, all other questions with the same name will be updated.
    *
-   * This prevents duplicate initialization of the same element.
+   * @param question - The question component to set up sync for
    */
-  public static getOrCreate(element: HTMLElement, options: QuestionFactoryOptions): QuestionComponent {
-    const registry = QuestionRegistry.getInstance();
+  private static setupAutoSync(question: QuestionComponent): void {
+    // We need to wait for the question to be initialized to get its ID
+    // The onInit method will set the name from initialName
+    const checkAndSetup = () => {
+      const questionName = question.getQuestionName();
+      if (!questionName) {
+        // If not ready yet, try again after a short delay
+        setTimeout(checkAndSetup, 10);
+        return;
+      }
 
-    const questionId = `${options.groupName}-${element.getAttribute('data-form-name') || element.getAttribute('name') || ''}`;
-    const existing = registry.getByContext(questionId, options.source);
+      // Listen for changes on this question
+      const unsubscribe = (question as any).on(FormEventNames.QUESTION_CHANGED, (event: any) => {
+        // Get all questions with the same initialName
+        const registry = QuestionRegistry.getInstance();
+        const allQuestionsWithSameName = registry.getAllByName(event.name);
 
-    if (existing && existing.getElement() === element) {
-      return existing;
-    }
+        // Update all other questions with the same name
+        allQuestionsWithSameName.forEach((otherQuestion) => {
+          // Don't update the question that triggered the change
+          if (otherQuestion !== question) {
+            // Use the value from the event directly
+            otherQuestion.setValue(event.value);
+          }
+        });
+      });
 
-    return QuestionFactory.create(element, options);
+      // Store the unsubscribe function on the question for cleanup
+      (question as any)._autoSyncUnsubscribe = unsubscribe;
+    };
+
+    // Start the setup process
+    checkAndSetup();
   }
 }

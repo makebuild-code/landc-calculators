@@ -190,13 +190,14 @@ class QuestionRegistry {
 }
 ```
 
-#### 2.2 Question Factory
+#### 2.2 Question Factory (✅ ENHANCED with Auto-Sync)
 
-**Purpose**: Consistent initialization of existing Webflow HTML elements
+**Purpose**: Consistent initialization of existing Webflow HTML elements with automatic synchronization
 
 - Wraps existing HTML with JavaScript behavior (no HTML creation)
 - Ensures consistent configuration
 - Automatically registers questions
+- **NEW**: Sets up automatic value synchronization between questions with same `initialName`
 
 ```typescript
 class QuestionFactory {
@@ -206,19 +207,39 @@ class QuestionFactory {
       groupName: string;
       indexInGroup: number;
       source: 'main' | 'sidebar';
+      onChange?: () => void;
+      onEnter?: () => void;
     }
   ): QuestionComponent {
     // Wrap existing element with component behavior
     const question = new QuestionComponent({
       element, // Uses existing HTML, doesn't create new
       ...options,
-      onChange: () => {}, // No-op, using events
-      onEnter: () => {}, // No-op, using events
+      onChange: options.onChange || (() => {}),
+      onEnter: options.onEnter || (() => {}),
     });
+
+    question.initialise();
 
     // Register for cross-form communication
     QuestionRegistry.getInstance().register(question);
+    
+    // Set up automatic synchronization
+    QuestionFactory.setupAutoSync(question);
+    
     return question;
+  }
+  
+  // Auto-sync: Questions with same initialName automatically update each other
+  private static setupAutoSync(question: QuestionComponent): void {
+    question.on(FormEventNames.QUESTION_CHANGED, (event) => {
+      const allRelated = QuestionRegistry.getInstance().getAllById(event.questionId);
+      allRelated.forEach(otherQuestion => {
+        if (otherQuestion !== question) {
+          otherQuestion.setValue(event.value);
+        }
+      });
+    });
   }
 }
 
@@ -510,7 +531,7 @@ class ResultsManager {
 4. **Parallel Testing**: Run both implementations side-by-side
 5. **Gradual Rollout**: Switch specific groups/questions incrementally
 
-## Current Implementation Status (Updated: 2025-07-30)
+## Current Implementation Status (Updated: 2025-08-11)
 
 ### ✅ Completed Components
 
@@ -532,14 +553,17 @@ class ResultsManager {
 #### Phase 2: Registry & Factory
 
 - **`QuestionRegistry`**: Singleton pattern for tracking all questions
-  - Maps questions by ID across contexts
+  - Maps questions by ID (using `initialName`) across contexts
   - Supports queries by context, group, or ID
-  - Full debug info available
-- **`QuestionFactory`**: Consistent initialization
-  - `create()`: Single question initialization
+  - Full debug info available with `getDebugInfo()`
+  - Automatic cleanup on unregister
+- **`QuestionFactory`**: Consistent initialization with auto-sync
+  - `create()`: Single question initialization with automatic sync setup
   - `createMultiple()`: Batch initialization
-  - `createWithSync()`: Auto-sync setup
+  - `createWithSync()`: Manual sync with specific question
   - `getOrCreate()`: Prevents duplicate initialization
+  - **Auto-sync feature**: Questions with same `initialName` automatically sync values across contexts
+  - Proper cleanup of event listeners on destroy
 
 #### Phase 3: Stateful Groups
 
@@ -552,9 +576,11 @@ class ResultsManager {
 
 #### Phase 4: Sidebar Implementation
 
-- QuestionFactory and Registry are ready
-- Need to create `SidebarFormManager`
-- Event sync between main and sidebar partially implemented
+- ✅ QuestionFactory and Registry are ready with auto-sync functionality
+- ✅ Questions with same `initialName` automatically sync values across contexts
+- ✅ Debug logging available for tracking sync activity
+- ⏳ Need to create `SidebarFormManager`
+- ⏳ Need to implement save-on-demand pattern for sidebar
 
 ### ❌ Not Started - Making the Entire Form Folder Event-Based
 
@@ -733,11 +759,12 @@ class FormStateService extends StatefulComponent<FormState> {
 
 ## Immediate Next Steps
 
-1. **Complete Phase 4**: Finish sidebar implementation (3-4 hours)
+1. **Complete Phase 4**: Finish sidebar implementation (2-3 hours remaining)
 
+   - ✅ QuestionFactory auto-sync is working
    - Create SidebarFormManager
-   - Implement save-on-demand
-   - Test cross-form sync
+   - Implement save-on-demand pattern
+   - Test full integration with main form
 
 2. **Start Phase 6**: Begin form manager refactoring (5-6 hours)
 

@@ -1,6 +1,6 @@
 import { queryElement, queryElements } from '$utils/dom';
 
-import { initForm } from '../stages/form';
+import { initForm, QuestionRegistry } from '../stages/form';
 import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
@@ -59,6 +59,7 @@ const dom: DOM = {
 const stateManager = new StateManager();
 const calculationManager = new CalculationManager(stateManager);
 const visibilityManager = new VisibilityManager(stateManager);
+const questionRegistry = QuestionRegistry.getInstance();
 
 export const MCTManager = {
   start() {
@@ -312,6 +313,10 @@ export const MCTManager = {
   },
 
   getAnswers(): Inputs {
+    console.log('getAnswers', {
+      state: stateManager.getAnswers(),
+      visible: questionRegistry.getValuesByPreset('allVisible'),
+    });
     return stateManager.getAnswers();
   },
 

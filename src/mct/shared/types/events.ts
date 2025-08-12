@@ -95,7 +95,7 @@ export interface FormEvents {
   // Question-related events
   [FormEventNames.QUESTION_CHANGED]: {
     question: QuestionComponent;
-    questionId: string;
+    name: string;
     groupName: string;
     value: InputValue;
     source: 'main' | 'sidebar';
@@ -103,7 +103,7 @@ export interface FormEvents {
 
   [FormEventNames.QUESTION_VALIDATED]: {
     question: QuestionComponent;
-    questionId: string;
+    name: string;
     isValid: boolean;
   };
 
