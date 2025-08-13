@@ -118,9 +118,9 @@ export interface FormEvents {
 
   // Group-related events
   [FormEventNames.GROUP_CHANGED]: {
+    previousIndex: number;
+    currentIndex: number;
     groupId: string;
-    activeQuestionIndex: number;
-    totalQuestions: number;
   };
 
   [FormEventNames.GROUP_SHOWN]: {
