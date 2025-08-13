@@ -223,18 +223,18 @@ class QuestionFactory {
 
     // Register for cross-form communication
     QuestionRegistry.getInstance().register(question);
-    
+
     // Set up automatic synchronization
     QuestionFactory.setupAutoSync(question);
-    
+
     return question;
   }
-  
+
   // Auto-sync: Questions with same initialName automatically update each other
   private static setupAutoSync(question: QuestionComponent): void {
     question.on(FormEventNames.QUESTION_CHANGED, (event) => {
       const allRelated = QuestionRegistry.getInstance().getAllById(event.questionId);
-      allRelated.forEach(otherQuestion => {
+      allRelated.forEach((otherQuestion) => {
         if (otherQuestion !== question) {
           otherQuestion.setValue(event.value);
         }
