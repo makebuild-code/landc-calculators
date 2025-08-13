@@ -117,7 +117,7 @@ export class MainFormManager extends FormManager {
       }
     });
 
-    // globalEventBus.on(APIEventNames.REQUEST_START, (event) => {
+    // this.eventBus.on(APIEventNames.REQUEST_START, (event) => {
     //   if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
     //     this.toggleButton(this.getResultsButton, false);
     //   }
