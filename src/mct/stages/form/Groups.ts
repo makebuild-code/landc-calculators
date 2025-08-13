@@ -504,7 +504,7 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
       summaryInfo: response.result.SummaryInfo,
     });
 
-    this.formManager.toggleButton(this.formManager.getResultsButton, this.summaryInfo.NumberOfProducts > 0);
+    this.formManager.toggleButton(this.formManager.getResultsButton, response.result.SummaryInfo.NumberOfProducts > 0);
 
     this.updateOutputs();
     this.showLoader(false);
