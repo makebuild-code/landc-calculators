@@ -65,9 +65,7 @@ export class EventBus {
    * Emit an event to all subscribers with full type safety
    */
   emit<T extends EventName>(event: T, payload: AllEvents[T]): void {
-    if (this.debug) {
-      debugLog(`📡 EventBus: Emitting "${event}"`, payload);
-    }
+    debugLog(`📡 EventBus: Emitting "${event}"`, payload);
 
     // Notify global handlers first
     this.globalHandlers.forEach((handler) => {
