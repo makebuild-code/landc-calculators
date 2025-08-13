@@ -13,6 +13,8 @@ import type {
 } from '$mct/types';
 import { CalculationKeysENUM, StageIDENUM } from '$mct/types';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeInitialStyles';
+import { globalEventBus } from '$mct/components';
+import { FormEventNames } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
@@ -27,11 +29,44 @@ export abstract class FormManager {
   protected questions: Set<QuestionComponent> = new Set();
   protected isInitialised: boolean = false;
 
-  public activeGroupIndex: number = 0;
+  private _activeGroupIndex: number = 0;
 
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Questions;
+  }
+
+  /**
+   * Get the current active group index
+   */
+  public get activeGroupIndex(): number {
+    return this._activeGroupIndex;
+  }
+
+  /**
+   * Set the active group index and emit change event
+   */
+  public set activeGroupIndex(value: number) {
+    console.log('activeGroupIndex', value);
+    if (this._activeGroupIndex !== value) {
+      const previousIndex = this._activeGroupIndex;
+      this._activeGroupIndex = value;
+
+      const activeGroup = this.getActiveGroup();
+
+      // Emit specific event for active group index changes
+      globalEventBus.emit(FormEventNames.GROUP_CHANGED, {
+        previousIndex,
+        currentIndex: value,
+        groupId: activeGroup?.name || 'unknown',
+      });
+
+      console.log('GROUP_CHANGED', {
+        previousIndex,
+        currentIndex: value,
+        groupId: activeGroup?.name || 'unknown',
+      });
+    }
   }
 
   public abstract init(options?: QuestionsStageOptions): void;

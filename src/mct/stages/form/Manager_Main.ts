@@ -100,28 +100,34 @@ export class MainFormManager extends FormManager {
 
     this.toggleButton(this.getResultsButton, false);
     this.getResultsButton.addEventListener('click', () => {
-      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
-    });
-
-    globalEventBus.on(FormEventNames.GROUP_SHOWN, (event) => {
-      if (event.groupId === GroupNameENUM.Output) {
-        this.toggleButton(this.nextButton, false);
-        this.toggleButton(this.getResultsButton, true);
+      const isOutputGroup = this.getActiveGroup()?.name === GroupNameENUM.Output;
+      if (isOutputGroup) {
+        globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+      } else {
+        const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
+        if (outputGroup) outputGroup.activate();
+        this.activeGroupIndex = this.groups.indexOf(outputGroup);
       }
     });
 
-    globalEventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
-      if (event.groupId === GroupNameENUM.Output) {
-        this.toggleButton(this.nextButton, true);
-        this.toggleButton(this.getResultsButton, false);
-      }
+    globalEventBus.on(FormEventNames.GROUP_CHANGED, (event) => {
+      const isOutputGroup = event.groupId === GroupNameENUM.Output;
+      this.toggleButton(this.nextButton, !isOutputGroup);
+      this.toggleButton(this.getResultsButton, isOutputGroup);
     });
 
-    globalEventBus.on(APIEventNames.REQUEST_START, (event) => {
-      if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
-        this.toggleButton(this.getResultsButton, false);
-      }
-    });
+    // globalEventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
+    //   if (event.groupId === GroupNameENUM.Output) {
+    //     this.toggleButton(this.nextButton, true);
+    //     this.toggleButton(this.getResultsButton, false);
+    //   }
+    // });
+
+    // globalEventBus.on(APIEventNames.REQUEST_START, (event) => {
+    //   if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
+    //     this.toggleButton(this.getResultsButton, false);
+    //   }
+    // });
 
     this.onMount();
 
