@@ -117,19 +117,6 @@ export class MainFormManager extends FormManager {
       }
     });
 
-    // globalEventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
-    //   if (event.groupId === GroupNameENUM.Output) {
-    //     this.toggleButton(this.nextButton, true);
-    //     this.toggleButton(this.getResultsButton, false);
-    //   }
-    // });
-
-    // globalEventBus.on(APIEventNames.REQUEST_START, (event) => {
-    //   if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
-    //     this.toggleButton(this.getResultsButton, false);
-    //   }
-    // });
-
     this.onMount();
 
     this.prepareWrapper();

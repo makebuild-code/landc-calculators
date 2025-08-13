@@ -13,8 +13,6 @@ import type {
 } from '$mct/types';
 import { CalculationKeysENUM, FormEventNames, StageIDENUM } from '$mct/types';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeInitialStyles';
-import { globalEventBus } from '$mct/components';
-import { FormEventNames } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
@@ -60,13 +58,7 @@ export abstract class FormManager {
       const activeGroup = this.getActiveGroup();
 
       // Emit specific event for active group index changes
-      globalEventBus.emit(FormEventNames.GROUP_CHANGED, {
-        previousIndex,
-        currentIndex: value,
-        groupId: activeGroup?.name || 'unknown',
-      });
-
-      console.log('GROUP_CHANGED', {
+      this.eventBus.emit(FormEventNames.GROUP_CHANGED, {
         previousIndex,
         currentIndex: value,
         groupId: activeGroup?.name || 'unknown',
