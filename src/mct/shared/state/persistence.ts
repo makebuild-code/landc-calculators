@@ -16,22 +16,22 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     serialize: false,
   },
   currentStageId: {
-    type: 'sessionStorage',
+    type: 'memory',
     key: 'mct_current_stage',
     serialize: false,
   },
   inputs: {
-    type: 'localStorage',
+    type: 'memory',
     key: 'mct_inputs',
     serialize: true,
   },
   inputPrefill: {
-    type: 'sessionStorage',
+    type: 'memory',
     key: 'mct_inputs_prefill',
     serialize: true,
   },
   calculations: {
-    type: 'localStorage',
+    type: 'memory',
     key: 'mct_calculations',
     serialize: true,
   },
@@ -41,17 +41,17 @@ export const PERSISTENCE_CONFIG: Record<keyof AppState, StorageConfig> = {
     serialize: false,
   },
   product: {
-    type: 'sessionStorage',
+    type: 'memory',
     key: 'mct_product',
     serialize: false,
   },
   booking: {
-    type: 'sessionStorage',
+    type: 'memory',
     key: 'mct_appointment',
     serialize: true,
   },
   form: {
-    type: 'sessionStorage',
+    type: 'memory',
     key: 'mct_form',
     serialize: true,
   },
