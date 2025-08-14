@@ -17,6 +17,7 @@ import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeI
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
 import { EventBus } from '$mct/components';
+import { QuestionRegistry } from './QuestionRegistry';
 
 const PROFILES = PROFILES_CONFIG.profiles;
 
@@ -36,7 +37,7 @@ export abstract class FormManager {
     this.id = StageIDENUM.Questions;
     this.eventBus = EventBus.getInstance();
 
-    this.bindEvents();
+    // this.bindEvents();
   }
 
   /**

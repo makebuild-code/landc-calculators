@@ -13,10 +13,11 @@ import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/u
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
 import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
-import type { MainFormManager } from './Manager_Main';
+import { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
 import { QuestionFactory } from './QuestionFactory';
+import type { Sidebar } from '../results/Sidebar';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -190,14 +191,7 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
    */
 
   public updateActiveQuestions(): void {
-    /**
-     * Update:
-     * - Don't save answers to MCT here
-     * - This will show the questions that should be visible based on the storage
-     * - Answers will need to be rendered on page load for this to display nicely
-     */
-
-    this.formManager.saveAnswersToMCT();
+    if (this.formManager instanceof MainFormManager) this.formManager.saveAnswersToMCT();
     const currentAnswers = MCTManager.getAnswers();
 
     this.questions.forEach((question, index) => {
@@ -223,7 +217,7 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
 
 // @description: Class for managing a main group of questions
 export class MainGroup extends QuestionGroup {
-  protected formManager: MainFormManager;
+  protected formManager: MainFormManager | Sidebar;
 
   constructor(options: GroupOptions) {
     super(options);
@@ -263,6 +257,8 @@ export class MainGroup extends QuestionGroup {
    * @param index - the index of the question that changed
    */
   public handleChange(index: number): void {
+    if (!(this.formManager instanceof MainFormManager)) return;
+
     this.activeQuestionIndex = index;
     this.formManager.activeGroupIndex = this.state.index;
     this.formManager.updateNavigation({
@@ -305,6 +301,7 @@ export class MainGroup extends QuestionGroup {
   }
 
   public onInputChange(isValid: boolean) {
+    if (!(this.formManager instanceof MainFormManager)) return;
     this.formManager.handleInputChange(isValid);
   }
 
@@ -384,6 +381,7 @@ export class MainGroup extends QuestionGroup {
   }
 
   public activateQuestion(question: QuestionComponent): void {
+    if (!(this.formManager instanceof MainFormManager)) return;
     question.activate();
     question.focus();
     this.formManager.scrollTo(question);

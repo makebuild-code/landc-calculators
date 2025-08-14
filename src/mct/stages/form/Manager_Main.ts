@@ -54,6 +54,8 @@ export class MainFormManager extends FormManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
+    this.bindEvents();
+
     this.showLoader(true);
     this.showHeader('static');
 
@@ -265,6 +267,7 @@ export class MainFormManager extends FormManager {
   }
 
   public handleInputChange(isValid: boolean) {
+    console.log('handleInputChange: ', isValid);
     this.updateNavigation({ nextEnabled: isValid });
   }
 
@@ -292,9 +295,9 @@ export class MainFormManager extends FormManager {
     const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
     profileGroup.show();
 
-    // Show output group if it exists
+    // Show output group if it exists and profile is complete
     const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-    profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
+    if (outputGroup) profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
 
     this.groups
       .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)

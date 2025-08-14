@@ -30,6 +30,7 @@ import { Sidebar } from './Sidebar';
 import { debugError, debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
+const sidebarAttr = DOM_CONFIG.attributes.sidebar;
 
 export class ResultsManager {
   private component: HTMLElement;
@@ -86,7 +87,8 @@ export class ResultsManager {
     this.id = StageIDENUM.Results;
     this.eventBus = EventBus.getInstance();
 
-    this.sidebar = new Sidebar(this.component);
+    const sidebar = queryElement(`[${sidebarAttr.components}="component"]`, this.component) as HTMLElement;
+    this.sidebar = Sidebar.getInstance(sidebar);
     this.sidebar.init();
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
@@ -238,7 +240,8 @@ export class ResultsManager {
 
   private handleUpdateAnswers(): void {
     this.updateAnswersButton.addEventListener('click', () => {
-      MCTManager.goToStage(StageIDENUM.Questions);
+      console.log('handleUpdateAnswers: ', this.sidebar);
+      this.sidebar.show();
     });
   }
 

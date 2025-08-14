@@ -1,4 +1,4 @@
-import type { GroupNameENUM, InputKeysENUM, InputValue, Inputs } from '$mct/types';
+import type { GroupNameENUM, InputData, InputKeysENUM, InputValue, Inputs } from '$mct/types';
 import type { QuestionComponent } from './Questions';
 
 /**
