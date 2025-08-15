@@ -356,10 +356,14 @@ export class MainGroup extends QuestionGroup {
         this.activeQuestionIndex = nextIndex;
         const nextQuestion = this.getActiveQuestion();
         this.activateQuestion(nextQuestion);
-        this.formManager.updateNavigation({ prevEnabled: true });
+        if (this.formManager instanceof MainFormManager) {
+          this.formManager.updateNavigation({ prevEnabled: true });
+        }
       } else {
         // If we're at the end of this group, try the next group
-        this.formManager.navigateToNextGroup();
+        if (this.formManager instanceof MainFormManager) {
+          this.formManager.navigateToNextGroup();
+        }
       }
     } else if (direction === 'prev') {
       const prevIndex = this.getPrevVisibleIndex(this.state.activeQuestionIndex);
@@ -369,13 +373,17 @@ export class MainGroup extends QuestionGroup {
         this.activeQuestionIndex = prevIndex;
         const prevItem = this.getActiveQuestion();
         this.activateQuestion(prevItem);
-        this.formManager.updateNavigation({
-          prevEnabled: !(this.formManager.activeGroupIndex === 0 && prevIndex === 0),
-        });
+        if (this.formManager instanceof MainFormManager) {
+          this.formManager.updateNavigation({
+            prevEnabled: !(this.formManager.activeGroupIndex === 0 && prevIndex === 0),
+          });
+        }
       } else {
         // If we're at the start of this group, try the previous group
         const prevGroup = this.formManager.getPreviousGroupInSequence();
-        if (prevGroup) this.formManager.navigateToPreviousGroup();
+        if (prevGroup && this.formManager instanceof MainFormManager) {
+          this.formManager.navigateToPreviousGroup();
+        }
       }
     }
   }
