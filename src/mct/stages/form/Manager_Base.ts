@@ -121,12 +121,13 @@ export abstract class FormManager {
     MCTManager.setAnswers(answerDataArray);
   }
 
-  public getAnswers(): Inputs {
-    return { ...MCTManager.getAnswers() };
+  public getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
+    return { ...MCTManager.getAnswers(context) };
   }
 
-  protected determineProfile(): Profile | undefined {
-    const answers = this.getAnswers();
+  protected determineProfile(context: 'main' | 'sidebar' = 'main'): Profile | undefined {
+    const answers = this.getAnswers(context);
+    console.log('determineProfile', { answers, context });
     const profile: Profile | undefined = PROFILES.find((profile) => {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key as InputKeysENUM] === value);
     });

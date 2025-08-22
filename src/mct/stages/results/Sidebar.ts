@@ -4,18 +4,15 @@ import { debugLog } from '$utils/debug';
 import { queryElement, queryElements } from '$utils/dom';
 import { MainGroup, type GroupOptions } from '../form/Groups';
 import { FormManager } from '../form/Manager_Base';
-import { QuestionFactory } from '../form/QuestionFactory';
-import type { QuestionComponent } from '../form/Questions';
-import { MCTManager } from '$mct/manager';
 
 const sidebarAttr = DOM_CONFIG.attributes.sidebar;
 const questionAttr = DOM_CONFIG.attributes.form;
 
 export class Sidebar extends FormManager {
-  private static instance: Sidebar;
   private list: HTMLElement;
   private updateButton: HTMLButtonElement;
   private closeButtons: HTMLButtonElement[];
+  protected groups: SidebarGroup[] = [];
 
   constructor(component: HTMLElement) {
     super(component);
@@ -24,19 +21,11 @@ export class Sidebar extends FormManager {
     this.closeButtons = queryElements(`[${sidebarAttr.components}="close"]`, component) as HTMLButtonElement[];
   }
 
-  /**
-   * Get the instance of the Sidebar
-   * @param component The component element
-   * @returns The instance of the Sidebar
-   */
-  public static getInstance(component: HTMLElement): Sidebar {
-    if (!Sidebar.instance) Sidebar.instance = new Sidebar(component);
-    return Sidebar.instance;
-  }
-
   public init(): void {
     if (this.isInitialised) return;
     this.isInitialised = true;
+
+    this.bindEvents();
 
     const groupElements = queryElements(`[${questionAttr.group}]`, this.list) as HTMLElement[];
     groupElements.forEach((groupEl, index) => {
@@ -51,16 +40,32 @@ export class Sidebar extends FormManager {
 
       // Create a custom sidebar group that initializes questions with 'sidebar' source
       const group = new SidebarGroup(options);
-      // const group = name !== GroupNameENUM.Output ? new MainGroup(options) : null;
-      index === 0 ? group.show() : group.hide();
+      group.initialise();
       this.groups.push(group);
-      group.questions.forEach((q) => this.questions.add(q));
+      group.questions.forEach((q) => {
+        this.questions.add(q); // @todo: is this needed?
+        q.updateVisualState(q.isValid());
+      });
     });
 
-    this.bindEvents();
+    this.onMount();
+
+    this.groups.forEach((group) => group.updateActiveQuestions());
+    this.updateGroupVisibility();
+
+    this.eventBus.on(FormEventNames.QUESTION_CHANGED, (event) => {
+      if (event.source !== 'sidebar') return;
+      this.handleQuestionChange();
+
+      setTimeout(() => {
+        this.handleQuestionChange();
+      }, 1000);
+    });
   }
 
   public show(): void {
+    this.groups.forEach((group) => group.updateActiveQuestions());
+    this.updateGroupVisibility();
     this.component.style.setProperty('display', 'flex');
     document.body.style.overflow = 'hidden';
   }
@@ -79,6 +84,13 @@ export class Sidebar extends FormManager {
     this.closeButtons.forEach((button) => {
       button.addEventListener('click', () => this.close());
     });
+  }
+
+  private handleQuestionChange(): void {
+    const requiredQuestions = [...this.questions].filter((q) => q.isRequired());
+    const allValid = requiredQuestions.every((q) => q.isValid());
+
+    console.log('[sidebar] handleQuestionChange: ', { requiredQuestions, allValid });
   }
 
   private update(): void {
@@ -118,12 +130,13 @@ export class Sidebar extends FormManager {
   }
 
   public updateGroupVisibility(): void {
+    console.log('sidebar updateGroupVisibility: ', this.groups);
     // Always show customer-identifier
     const identifierGroup = this.getGroupByName(GroupNameENUM.CustomerIdentifier) as MainGroup;
     identifierGroup.show();
 
     // Get the profile and update the tag (update text or remove tag)
-    const profile = this.determineProfile();
+    const profile = this.determineProfile('sidebar');
     if (!profile) {
       this.groups.filter((group) => group !== identifierGroup).forEach((group) => group.hide());
       return;
@@ -142,58 +155,37 @@ class SidebarGroup extends MainGroup {
   // Override the private method by creating our own initialization
   constructor(options: GroupOptions) {
     super(options);
-    // Re-initialize questions with sidebar source
-    this.formManager = Sidebar.getInstance(this.element) as Sidebar;
-    this.questions = this.initSidebarQuestions();
-    this.updateActiveQuestions();
-  }
-
-  private initSidebarQuestions(): QuestionComponent[] {
-    const questionEls = queryElements(`[${DOM_CONFIG.attributes.form.question}]`, this.element) as HTMLElement[];
-    return questionEls.map((element, index) => {
-      const question = QuestionFactory.create(element, {
-        groupName: this.state.name as string,
-        indexInGroup: index,
-        source: 'sidebar', // Important: mark as sidebar source
-        onChange: () => this.handleChange(index),
-        onEnter: () => this.handleEnter(index),
-        debug: true,
-      });
-
-      // Initialize question state
-      if (index !== 0) question.disable();
-      if (question.getStateValue('dependsOn')) question.unrequire();
-      return question;
-    });
+    // // Re-initialize questions with sidebar source
+    // this.formManager = options.formManager as Sidebar;
+    // this.questions = this.initQuestions('sidebar');
+    // this.updateActiveQuestions();
   }
 
   // Override handleChange to not save to MCT on every change (sidebar pattern)
   public handleChange(index: number): void {
+    if (!(this.formManager instanceof Sidebar)) return;
+
     this.activeQuestionIndex = index;
     this.formManager.activeGroupIndex = this.state.index;
 
     // Check if the question is valid and update visual state
     const question = this.questions[index];
     const isValid = question.isValid();
+
+    console.log('[sidebar] handleChange: ', { question, isValid });
     question.updateVisualState(isValid);
     this.onInputChange(isValid);
     if (!isValid) return;
 
     // Update active questions without saving to MCT
     this.updateActiveQuestions();
-
-    // Show but do not scroll to the next question
-    const nextIndex = this.getNextRequiredIndex(index);
-    if (nextIndex < this.questions.length) {
-      const nextQuestion = this.getQuestionByIndex(nextIndex);
-      nextQuestion.activate();
-    }
+    this.formManager.updateGroupVisibility();
   }
 
   // // Override updateActiveQuestions to not save to MCT
   // public updateActiveQuestions(): void {
   //   // Don't save to MCT in sidebar
-  //   const currentAnswers = MCTManager.getAnswers();
+  //   const currentAnswers = MCTManager.getAnswers('sidebar');
 
   //   this.questions.forEach((question, index) => {
   //     const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
@@ -206,10 +198,10 @@ class SidebarGroup extends MainGroup {
   //   });
   // }
 
-  // Override to prevent automatic scrolling in sidebar
-  public activateQuestion(question: QuestionComponent): void {
-    question.activate();
-    question.focus();
-    // No scrolling in sidebar
-  }
+  // // Override to prevent automatic scrolling in sidebar
+  // public activateQuestion(question: QuestionComponent): void {
+  //   question.activate();
+  //   question.focus();
+  //   // No scrolling in sidebar
+  // }
 }

@@ -312,12 +312,12 @@ export const MCTManager = {
     stateManager.setAnswers(answerDataArray);
   },
 
-  getAnswers(): Inputs {
+  getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
     console.log('getAnswers', {
       state: stateManager.getAnswers(),
-      visible: questionRegistry.getValuesByPreset('allVisible'),
+      visible: questionRegistry.getValuesByPreset('sidebarSave'),
     });
-    return stateManager.getAnswers();
+    return context === 'main' ? stateManager.getAnswers() : questionRegistry.getValuesByPreset('sidebarSave');
   },
 
   getAnswersAsLandC(): Inputs {

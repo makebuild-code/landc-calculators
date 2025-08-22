@@ -16,6 +16,7 @@ export interface StatefulInputGroupState {
   isValid: boolean;
   isInitialised: boolean;
   type: InputType;
+  context: string | undefined;
   groupName: string;
   indexInGroup: number;
   initialName: string;
@@ -25,6 +26,7 @@ export interface StatefulInputGroupState {
 export interface StatefulInputGroupConfig extends StatefulComponentConfig {
   onChange: () => void;
   onEnter: () => void;
+  context?: string;
   groupName: string;
   indexInGroup: number;
 }
@@ -36,26 +38,24 @@ export abstract class StatefulInputGroup<
   protected onEnter: () => void; // The function to call when the user presses enter
   protected inputs: Input[] = []; // The inputs in the input group
 
-  constructor(
-    config: StatefulInputGroupConfig,
-    customState?: Partial<T>
-  ) {
+  constructor(config: StatefulInputGroupConfig, customState?: Partial<T>) {
     const initialState: T = {
       // Base state
       value: null,
       isValid: false,
       isInitialised: false,
       type: 'text',
+      context: config.context,
       groupName: config.groupName,
       indexInGroup: config.indexInGroup,
       initialName: '',
       finalName: '',
       // Custom state extensions
-      ...customState
+      ...customState,
     } as T;
-    
+
     super(config, initialState);
-    
+
     this.onChange = config.onChange;
     this.onEnter = config.onEnter;
   }
@@ -92,9 +92,10 @@ export abstract class StatefulInputGroup<
   protected abstract onInit(): void;
 
   protected formatInputNamesAndIDs(): void {
+    const context = this.getStateValue('context');
     const groupName = this.getStateValue('groupName');
     const initialName = this.getStateValue('initialName');
-    const finalName = `${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
+    const finalName = `${context ? `${context}-` : ''}${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
     this.setStateValue('finalName', finalName);
 
     if (this.getStateValue('type') === 'radio' || this.getStateValue('type') === 'checkbox') {

@@ -191,15 +191,19 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
    */
 
   public updateActiveQuestions(): void {
+    const context = this.formManager instanceof MainFormManager ? 'main' : 'sidebar';
     if (this.formManager instanceof MainFormManager) this.formManager.saveAnswersToMCT();
-    const currentAnswers = MCTManager.getAnswers();
+    const currentAnswers = MCTManager.getAnswers(context);
 
     this.questions.forEach((question, index) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
       if (index === 0 && shouldBeVisible) question.activate();
 
       const isValid = question.isValid();
-      if (shouldBeVisible && isValid) question.activate();
+      if (shouldBeVisible && context === 'sidebar') {
+        question.updateVisualState(isValid);
+        question.activate();
+      } else if (shouldBeVisible && isValid) question.activate();
       else if (shouldBeVisible) question.require();
       else question.unrequire();
     });
@@ -222,7 +226,9 @@ export class MainGroup extends QuestionGroup {
   constructor(options: GroupOptions) {
     super(options);
     this.formManager = options.formManager as MainFormManager;
-    this.questions = this.initQuestions();
+
+    const source = options.formManager instanceof MainFormManager ? 'main' : 'sidebar';
+    this.questions = this.initQuestions(source);
     this.updateActiveQuestions();
   }
 
@@ -231,20 +237,19 @@ export class MainGroup extends QuestionGroup {
     this.setState({ totalQuestions: this.questions.length });
   }
 
-  private initQuestions(): QuestionComponent[] {
+  protected initQuestions(source: 'main' | 'sidebar' = 'main'): QuestionComponent[] {
     const questionEls = queryElements(`[${attr.question}]`, this.element) as HTMLElement[];
     return questionEls.map((element, index) => {
       const question = QuestionFactory.create(element, {
         groupName: this.state.name as string,
         indexInGroup: index,
-        source: 'main',
+        source,
         onChange: () => this.handleChange(index),
         onEnter: () => this.handleEnter(index),
         debug: true,
       });
 
-      // // Initialize the component
-      // question.initialise();
+      console.log('initQuestions: ', { source, question });
 
       if (index !== 0) question.disable();
       if (question.getStateValue('dependsOn')) question.unrequire();
@@ -283,7 +288,6 @@ export class MainGroup extends QuestionGroup {
     // Show but do not scroll to the next question
     const nextIndex = this.getNextRequiredIndex(index);
     if (nextIndex < this.questions.length) {
-      // this.activeQuestionIndex = nextIndex;
       const nextQuestion = this.getQuestionByIndex(nextIndex);
       nextQuestion.activate();
       this.formManager.updateNavigation({ prevEnabled: true });
@@ -389,9 +393,9 @@ export class MainGroup extends QuestionGroup {
   }
 
   public activateQuestion(question: QuestionComponent): void {
-    if (!(this.formManager instanceof MainFormManager)) return;
     question.activate();
     question.focus();
+    if (!(this.formManager instanceof MainFormManager)) return;
     this.formManager.scrollTo(question);
     this.onInputChange(question.isValid());
     this.formManager.handleOutputGroupUpdate(question.isValid());

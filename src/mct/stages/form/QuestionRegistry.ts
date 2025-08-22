@@ -294,6 +294,7 @@ export class QuestionRegistry {
       },
       sidebarSave: {
         context: 'sidebar',
+        visibleOnly: true,
         validOnly: true,
       },
       allVisible: {

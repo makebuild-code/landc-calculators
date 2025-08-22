@@ -30,6 +30,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
       isRequired: false,
       dependsOn: null,
       dependsOnValue: null,
+      context: config.source,
     };
 
     super(config, customState);
@@ -86,6 +87,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public updateVisualState(isValid: boolean): void {
+    console.log('[question] updateVisualState: ', { isValid });
     this.toggleClass(this.element, 'has-error', !isValid);
   }
 
@@ -159,6 +161,8 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   // Override handleChange to emit events
   protected handleChange(): void {
     this.saveValueAndValidity();
+
+    this.updateVisualState(this.isValid());
 
     // Emit enhanced QUESTION_CHANGED event
     const currentValue = this.getValue();

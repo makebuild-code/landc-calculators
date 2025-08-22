@@ -88,7 +88,7 @@ export class ResultsManager {
     this.eventBus = EventBus.getInstance();
 
     const sidebar = queryElement(`[${sidebarAttr.components}="component"]`, this.component) as HTMLElement;
-    this.sidebar = Sidebar.getInstance(sidebar);
+    this.sidebar = new Sidebar(sidebar);
     this.sidebar.init();
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
