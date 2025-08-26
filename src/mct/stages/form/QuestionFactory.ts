@@ -1,6 +1,6 @@
 import { QuestionComponent } from './Questions';
 import { QuestionRegistry } from './QuestionRegistry';
-import { FormEventNames, InputKeysENUM, type InputValue } from '$mct/types';
+import { FormEventNames, type InputValue } from '$mct/types';
 
 export interface QuestionFactoryOptions {
   groupName: string;

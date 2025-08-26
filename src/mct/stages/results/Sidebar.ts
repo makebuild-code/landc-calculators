@@ -104,7 +104,9 @@ export class Sidebar extends FormManager {
     const allValid = requiredQuestions.every((q) => q.isValid());
 
     // Check if the sidebar answers are the same as the main answers
-    const isSame = Object.keys(sidebarAnswers).every((key) => sidebarAnswers[key] === mainAnswers[key]);
+    const isSame = Object.keys(sidebarAnswers).every(
+      (key) => sidebarAnswers[key as InputKeysENUM] === mainAnswers[key as InputKeysENUM]
+    );
     const allowUpdate = allValid && !isSame;
 
     this.updateButton.disabled = !allowUpdate;

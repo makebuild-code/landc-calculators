@@ -1,10 +1,9 @@
 import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
-import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { InputKeysENUM, Profile } from '$mct/types';
+import type { Profile } from '$mct/types';
 import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
@@ -334,19 +333,6 @@ export class MainFormManager extends FormManager {
       outputGroup.activate();
 
       this.updateNavigation({ nextEnabled: false, prevEnabled: true });
-
-      // // Log user event for end of questions
-      // MCTManager.logUserEvent({
-      //   EventName: EVENTS_CONFIG.questionsComplete,
-      //   EventValue: EVENTS_CONFIG.questionsComplete,
-      // });
-
-      // // Push to dataLayer for showing summary
-      // dataLayer('form_interaction', {
-      //   event_category: 'MCTForm',
-      //   event_label: `MCT_Show_Summary`,
-      //   event_value: `MCT_BuyerType_${this.profileName}`,
-      // });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
       this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });

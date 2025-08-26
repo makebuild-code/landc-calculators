@@ -36,8 +36,6 @@ export abstract class FormManager {
     this.component = component;
     this.id = StageIDENUM.Questions;
     this.eventBus = EventBus.getInstance();
-
-    // this.bindEvents();
   }
 
   /**
