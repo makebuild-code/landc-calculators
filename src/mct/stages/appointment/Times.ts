@@ -1,4 +1,4 @@
-import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
+import { StatefulInputGroup, type StatefulInputGroupConfig, type StatefulInputGroupState } from '$mct/components';
 import type { AppointmentSlot, Input } from '$mct/types';
 import { DOM_CONFIG } from '$mct/config';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
@@ -6,7 +6,7 @@ import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 const mctAttr = DOM_CONFIG.attributes.component;
 const attr = DOM_CONFIG.attributes.appointment;
 
-interface TimesOptions extends StatefulInputGroupOptions<TimesState> {}
+interface TimesConfig extends StatefulInputGroupConfig {}
 
 interface TimesState extends StatefulInputGroupState {}
 
@@ -14,9 +14,11 @@ export class TimesComponent extends StatefulInputGroup<TimesState> {
   private list: HTMLElement;
   private template: HTMLElement;
 
-  constructor(options: TimesOptions) {
-    super(options);
+  constructor(config: TimesConfig) {
+    // No custom state extensions needed for TimesComponent
+    super(config);
 
+    // Set the type after construction since it's part of base state
     this.setStateValue('type', 'radio');
 
     this.list = this.queryElement(`[${attr.components}="times-list"]`) as HTMLElement;

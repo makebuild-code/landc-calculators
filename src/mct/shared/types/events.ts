@@ -1,4 +1,4 @@
-import type { InputData, AppState, StageIDENUM } from '$mct/types';
+import type { InputData, AppState, StageIDENUM, InputValue } from '$mct/types';
 import type { QuestionComponent } from 'src/mct/stages/form/Questions';
 
 /**
@@ -43,39 +43,41 @@ export enum MCTEventNames {
 }
 
 export enum FormEventNames {
-  QUESTION_CHANGED = 'form:question:changed',
-  QUESTION_VALIDATED = 'form:question:validated',
-  QUESTION_REQUIRED = 'form:question:required',
-  QUESTION_UNREQUIRED = 'form:question:unrequired',
-  INPUT_CHANGED = 'input:changed',
-  INPUT_ON_ENTER = 'input:on-enter',
-  GROUP_CHANGED = 'form:group:changed',
-  GROUP_SHOWN = 'form:group:shown',
-  GROUP_HIDDEN = 'form:group:hidden',
-  GROUP_INITIALIZED = 'form:group:initialized',
-  GROUP_COMPLETED = 'form:group:completed',
-  GROUP_READY = 'form:group:ready',
-  NAVIGATION_UPDATE = 'form:navigation:update',
-  NAVIGATION_NEXT = 'form:navigation:next',
-  NAVIGATION_PREV = 'form:navigation:prev',
-  ANSWERS_SAVED = 'form:answers:saved',
-  ANSWERS_LOADED = 'form:answers:loaded',
-  INITIALIZED = 'form:initialized',
-  COMPLETED = 'form:completed',
-  HEADER_UPDATE = 'form:header:update',
-  RESULTS_READY = 'form:results:ready',
+  QUESTION_CHANGED = 'mct:form:question:changed',
+  QUESTION_VALIDATED = 'mct:form:question:validated',
+  QUESTION_REQUIRED = 'mct:form:question:required',
+  QUESTION_UNREQUIRED = 'mct:form:question:unrequired',
+  QUESTIONS_SAVE_REQUESTED = 'mct:form:questions:save:requested',
+  QUESTIONS_SYNC_REQUESTED = 'mct:form:questions:sync:requested',
+  INPUT_CHANGED = 'mct:input:changed',
+  INPUT_ON_ENTER = 'mct:input:on-enter',
+  GROUP_CHANGED = 'mct:form:group:changed',
+  GROUP_SHOWN = 'mct:form:group:shown',
+  GROUP_HIDDEN = 'mct:form:group:hidden',
+  GROUP_INITIALIZED = 'mct:form:group:initialized',
+  GROUP_COMPLETED = 'mct:form:group:completed',
+  GROUP_READY = 'mct:form:group:ready',
+  NAVIGATION_UPDATE = 'mct:form:navigation:update',
+  NAVIGATION_NEXT = 'mct:form:navigation:next',
+  NAVIGATION_PREV = 'mct:form:navigation:prev',
+  ANSWERS_SAVED = 'mct:form:answers:saved',
+  ANSWERS_LOADED = 'mct:form:answers:loaded',
+  INITIALIZED = 'mct:form:initialized',
+  COMPLETED = 'mct:form:completed',
+  HEADER_UPDATE = 'mct:form:header:update',
+  RESULTS_READY = 'mct:form:results:ready',
 }
 
 export enum StateEventNames {
-  CHANGED = 'state:changed',
-  LOADED = 'state:loaded',
-  SAVED = 'state:saved',
+  CHANGED = 'mct:state:changed',
+  LOADED = 'mct:state:loaded',
+  SAVED = 'mct:state:saved',
 }
 
 export enum APIEventNames {
-  REQUEST_START = 'api:request:start',
-  REQUEST_SUCCESS = 'api:request:success',
-  REQUEST_ERROR = 'api:request:error',
+  REQUEST_START = 'mct:api:request:start',
+  REQUEST_SUCCESS = 'mct:api:request:success',
+  REQUEST_ERROR = 'mct:api:request:error',
 }
 
 /**
@@ -93,18 +95,38 @@ export interface FormEvents {
   // Question-related events
   [FormEventNames.QUESTION_CHANGED]: {
     question: QuestionComponent;
+    name: string;
+    groupName: string;
+    value: InputValue;
+    source: 'main' | 'sidebar';
   };
 
   [FormEventNames.QUESTION_VALIDATED]: {
     question: QuestionComponent;
+    name: string;
+    isValid: boolean;
   };
 
   [FormEventNames.QUESTION_REQUIRED]: {
     question: QuestionComponent;
+    questionId: string;
+    groupName: string;
   };
 
   [FormEventNames.QUESTION_UNREQUIRED]: {
     question: QuestionComponent;
+    questionId: string;
+    groupName: string;
+  };
+
+  [FormEventNames.QUESTIONS_SAVE_REQUESTED]: {
+    source: 'main' | 'sidebar';
+  };
+
+  [FormEventNames.QUESTIONS_SYNC_REQUESTED]: {
+    targetQuestionId: string;
+    value: InputValue;
+    source: 'main' | 'sidebar';
   };
 
   // // Input-related events
@@ -165,6 +187,7 @@ export interface FormEvents {
   // Answer-related events
   [FormEventNames.ANSWERS_SAVED]: {
     answers: InputData[];
+    source?: 'main' | 'sidebar';
   };
 
   [FormEventNames.ANSWERS_LOADED]: {
@@ -237,9 +260,9 @@ export type EventPayload<T extends EventName> = AllEvents[T];
 // Event categories for easier filtering
 export const EVENT_CATEGORIES = {
   MCT: 'mct:',
-  FORM: 'form:',
-  RESULTS: 'results:',
-  APPOINTMENT: 'appointment:',
-  STATE: 'state:',
-  API: 'api:',
+  FORM: 'mct:form:',
+  RESULTS: 'mct:results:',
+  APPOINTMENT: 'mct:appointment:',
+  STATE: 'mct:state:',
+  API: 'mct:api:',
 } as const;

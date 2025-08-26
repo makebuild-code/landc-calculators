@@ -1,4 +1,4 @@
-import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
+import { StatefulInputGroup, type StatefulInputGroupConfig, type StatefulInputGroupState } from '$mct/components';
 import type { AppointmentDay, Input } from '$mct/types';
 import { queryElement } from '$utils/dom';
 import { DOM_CONFIG } from '$mct/config';
@@ -7,7 +7,7 @@ import { Slider } from './Slider';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
-interface DatesOptions extends StatefulInputGroupOptions<DatesState> {
+interface DatesConfig extends StatefulInputGroupConfig {
   wrapper: HTMLElement;
   onLoadMore: () => void;
 }
@@ -23,15 +23,20 @@ export class DatesComponent extends StatefulInputGroup<DatesState> {
   private slider!: Slider;
   private slideTemplate!: HTMLElement;
 
-  constructor(options: DatesOptions) {
-    super(options);
+  constructor(config: DatesConfig) {
+    // Define the custom state extensions for DatesComponent
+    const customState: Partial<DatesState> = {
+      appointmentDays: [],
+      selectedDate: null,
+    };
 
-    this.wrapper = options.wrapper;
-    this.onLoadMore = options.onLoadMore;
+    super(config, customState);
 
+    this.wrapper = config.wrapper;
+    this.onLoadMore = config.onLoadMore;
+
+    // Set the type after construction since it's part of base state
     this.setStateValue('type', 'radio');
-    this.setStateValue('appointmentDays', []);
-    this.setStateValue('selectedDate', null);
   }
 
   protected onInit(): void {

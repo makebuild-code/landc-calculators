@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Sync Test</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f5f5f5;
+        }
+        .question {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+        }
+        .log {
+            background: #222;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Question Sync Test</h1>
+        
+        <div class="section">
+            <h2>Main Form Context</h2>
+            <div class="question" data-form-question data-form-name="PropertyPrice">
+                <label>Property Price</label>
+                <input type="number" name="PropertyPrice" placeholder="Enter property price">
+            </div>
+            <div class="question" data-form-question data-form-name="LoanAmount">
+                <label>Loan Amount</label>
+                <input type="number" name="LoanAmount" placeholder="Enter loan amount">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Sidebar Context</h2>
+            <div class="question" data-form-question data-form-name="PropertyPrice">
+                <label>Property Price (Sidebar)</label>
+                <input type="number" name="PropertyPrice" placeholder="Enter property price">
+            </div>
+            <div class="question" data-form-question data-form-name="LoanAmount">
+                <label>Loan Amount (Sidebar)</label>
+                <input type="number" name="LoanAmount" placeholder="Enter loan amount">
+            </div>
+        </div>
+
+        <div class="log" id="log">
+            <div>Console log will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        // Mock console.log to display in the page
+        const logDiv = document.getElementById('log');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+            ).join(' ');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toTimeString().split(' ')[0]}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        // Instructions for testing
+        console.log('Test Instructions:');
+        console.log('1. Import QuestionFactory and QuestionRegistry in your dev console');
+        console.log('2. Initialize questions using QuestionFactory.create()');
+        console.log('3. Type in any input field to see sync in action');
+        console.log('4. Check QuestionRegistry.getInstance().getDebugInfo()');
+    </script>
+</body>
+</html>

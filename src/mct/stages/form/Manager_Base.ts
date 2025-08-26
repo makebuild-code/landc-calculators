@@ -11,29 +11,33 @@ import type {
   Profile,
   QuestionsStageOptions,
 } from '$mct/types';
-import { CalculationKeysENUM, StageIDENUM } from '$mct/types';
+import { CalculationKeysENUM, FormEventNames, StageIDENUM } from '$mct/types';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeInitialStyles';
-import { globalEventBus } from '$mct/components';
-import { FormEventNames } from '$mct/types';
 
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
+import { EventBus } from '$mct/components';
 
 const PROFILES = PROFILES_CONFIG.profiles;
 
 export abstract class FormManager {
   protected component: HTMLElement;
   public id: StageIDENUM;
+  protected eventBus: EventBus;
   protected profile: Profile | null = null;
   protected groups: (MainGroup | OutputGroup)[] = [];
   protected questions: Set<QuestionComponent> = new Set();
   protected isInitialised: boolean = false;
+  protected source: 'form' | 'sidebar' = 'form';
 
   private _activeGroupIndex: number = 0;
 
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Questions;
+    this.eventBus = EventBus.getInstance();
+
+    // this.bindEvents();
   }
 
   /**
@@ -47,7 +51,6 @@ export abstract class FormManager {
    * Set the active group index and emit change event
    */
   public set activeGroupIndex(value: number) {
-    console.log('activeGroupIndex', value);
     if (this._activeGroupIndex !== value) {
       const previousIndex = this._activeGroupIndex;
       this._activeGroupIndex = value;
@@ -55,13 +58,7 @@ export abstract class FormManager {
       const activeGroup = this.getActiveGroup();
 
       // Emit specific event for active group index changes
-      globalEventBus.emit(FormEventNames.GROUP_CHANGED, {
-        previousIndex,
-        currentIndex: value,
-        groupId: activeGroup?.name || 'unknown',
-      });
-
-      console.log('GROUP_CHANGED', {
+      this.eventBus.emit(FormEventNames.GROUP_CHANGED, {
         previousIndex,
         currentIndex: value,
         groupId: activeGroup?.name || 'unknown',
@@ -77,6 +74,24 @@ export abstract class FormManager {
     removeInitialStyles(this.component, 1000);
   }
 
+  protected bindEvents(): void {
+    this.eventBus.on(FormEventNames.QUESTION_REQUIRED, ({ question }) => {
+      this.saveQuestion(question);
+    });
+
+    this.eventBus.on(FormEventNames.QUESTION_UNREQUIRED, ({ question }) => {
+      this.removeQuestion(question);
+    });
+  }
+
+  protected syncQuestionsToState(): void {
+    const answers = MCTManager.getAnswers();
+    this.questions.forEach((question) => {
+      const answer = answers[question.getStateValue('initialName') as InputKeysENUM];
+      if (answer) question.setValue(answer);
+    });
+  }
+
   protected prefill(answers: Inputs) {
     /**
      * @todo:
@@ -87,40 +102,46 @@ export abstract class FormManager {
      */
   }
 
-  public saveQuestion(question: QuestionComponent): void {
+  protected saveQuestion(question: QuestionComponent): void {
     this.questions.add(question);
   }
 
-  public removeQuestion(question: QuestionComponent): void {
+  protected removeQuestion(question: QuestionComponent): void {
     this.questions.delete(question);
   }
 
-  public saveAnswersToMCT(): void {
+  public saveAnswersToMCT(override: boolean = false): InputData[] {
     const answerDataArray: InputData[] = [];
 
     [...this.questions].forEach((question) => {
-      const value = question.getValue();
-      const valid = question.isValid();
+      const isValid = question.isValid();
+      const isRequired = question.isRequired();
 
-      if (!valid) return;
+      if (!(isValid && isRequired)) return;
 
       answerDataArray.push({
         key: question.getStateValue('initialName') as InputKey,
         name: question.getStateValue('finalName') as InputName,
-        value: value as InputValue,
+        value: question.getValue() as InputValue,
+        valid: question.isValid(),
+        location: this.source,
         source: 'user',
       });
     });
 
-    MCTManager.setAnswers(answerDataArray);
+    MCTManager.overrideAnswers(answerDataArray);
+    // if (override) MCTManager.overrideAnswers(answerDataArray);
+    // else MCTManager.setAnswers(answerDataArray);
+
+    return answerDataArray;
   }
 
-  public getAnswers(): Inputs {
-    return { ...MCTManager.getAnswers() };
+  public getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
+    return { ...MCTManager.getAnswers(context) };
   }
 
-  protected determineProfile(): Profile | undefined {
-    const answers = this.getAnswers();
+  protected determineProfile(context: 'main' | 'sidebar' = 'main'): Profile | undefined {
+    const answers = this.getAnswers(context);
     const profile: Profile | undefined = PROFILES.find((profile) => {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key as InputKeysENUM] === value);
     });
@@ -142,7 +163,7 @@ export abstract class FormManager {
   protected getFirstEl(): HTMLElement | null {
     const group = this.groups[0];
     if (group instanceof MainGroup) return group.questions[0].getElement();
-    if (group instanceof OutputGroup) return group.getComponent();
+    if (group instanceof OutputGroup) return group.getElement();
     return null;
   }
 
@@ -154,7 +175,7 @@ export abstract class FormManager {
       if (visibleQuestions.length === 0) return undefined;
       return visibleQuestions.at(-1)?.getElement();
     }
-    if (group instanceof OutputGroup) return group.getComponent();
+    if (group instanceof OutputGroup) return group.getElement();
     return undefined;
   }
 

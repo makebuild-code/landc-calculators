@@ -1,14 +1,13 @@
-import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { InputKeysENUM, Profile } from '$mct/types';
-import { APIEventNames, FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
-import { globalEventBus } from '$mct/components';
 import { panelToWindow } from 'src/mct/shared/utils/ui';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -55,6 +54,8 @@ export class MainFormManager extends FormManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
+    this.bindEvents();
+
     this.showLoader(true);
     this.showHeader('static');
 
@@ -64,11 +65,13 @@ export class MainFormManager extends FormManager {
       if (!name) return;
 
       const options: GroupOptions = {
-        component: groupEl,
+        element: groupEl,
         formManager: this,
         index,
       };
+
       const group = name === GroupNameENUM.Output ? new OutputGroup(options) : new MainGroup(options);
+      group.initialise(); // Initialize the component to call onInit() and bindEvents()
       index === 0 ? group.show() : group.hide();
       this.groups.push(group);
     });
@@ -100,30 +103,24 @@ export class MainFormManager extends FormManager {
 
     this.toggleButton(this.getResultsButton, false);
     this.getResultsButton.addEventListener('click', () => {
-      const isOutputGroup = this.getActiveGroup()?.name === GroupNameENUM.Output;
-      if (isOutputGroup) {
-        globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
-      } else {
-        const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-        if (outputGroup) outputGroup.activate();
-        this.activeGroupIndex = this.groups.indexOf(outputGroup);
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+    });
+
+    this.eventBus.on(FormEventNames.GROUP_SHOWN, (event) => {
+      if (event.groupId === GroupNameENUM.Output) {
+        this.toggleButton(this.nextButton, false);
+        this.toggleButton(this.getResultsButton, true);
       }
     });
 
-    globalEventBus.on(FormEventNames.GROUP_CHANGED, (event) => {
-      const isOutputGroup = event.groupId === GroupNameENUM.Output;
-      this.toggleButton(this.nextButton, !isOutputGroup);
-      this.toggleButton(this.getResultsButton, isOutputGroup);
+    this.eventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
+      if (event.groupId === GroupNameENUM.Output) {
+        this.toggleButton(this.nextButton, true);
+        this.toggleButton(this.getResultsButton, false);
+      }
     });
 
-    // globalEventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
-    //   if (event.groupId === GroupNameENUM.Output) {
-    //     this.toggleButton(this.nextButton, true);
-    //     this.toggleButton(this.getResultsButton, false);
-    //   }
-    // });
-
-    // globalEventBus.on(APIEventNames.REQUEST_START, (event) => {
+    // this.eventBus.on(APIEventNames.REQUEST_START, (event) => {
     //   if (event.endpoint.includes(API_CONFIG.endpoints.products)) {
     //     this.toggleButton(this.getResultsButton, false);
     //   }
@@ -172,14 +169,6 @@ export class MainFormManager extends FormManager {
     if (outputGroup) outputGroup.update();
   }
 
-  private syncQuestionsToState(): void {
-    const answers = MCTManager.getAnswers();
-    this.questions.forEach((question) => {
-      const answer = answers[question.getStateValue('initialName') as InputKeysENUM];
-      if (answer) question.setValue(answer);
-    });
-  }
-
   private showLoader(show: boolean): void {
     this.loader.style.display = show ? 'flex' : 'none';
   }
@@ -213,7 +202,7 @@ export class MainFormManager extends FormManager {
     // Get the last visible group and last visible item within
     const lastGroup = this.getLastVisibleGroup();
     const lastItem =
-      lastGroup instanceof MainGroup ? lastGroup.getVisibleQuestions().at(-1)?.getElement() : lastGroup?.getComponent();
+      lastGroup instanceof MainGroup ? lastGroup.getVisibleQuestions().at(-1)?.getElement() : lastGroup?.getElement();
     if (!lastItem) return;
 
     const lastItemRect = lastItem?.getBoundingClientRect();
@@ -298,9 +287,9 @@ export class MainFormManager extends FormManager {
     const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
     profileGroup.show();
 
-    // Show output group if it exists
+    // Show output group if it exists and profile is complete
     const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-    profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
+    if (outputGroup) profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
 
     this.groups
       .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)
@@ -360,7 +349,7 @@ export class MainFormManager extends FormManager {
       // });
     } else if (name === GroupNameENUM.Output && activeGroup instanceof OutputGroup) {
       // end of form, determine next step
-      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
     } else this.updateNavigation({ nextEnabled: true, prevEnabled: true });
 
     this.handleShowHideOnGroup();
