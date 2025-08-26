@@ -249,8 +249,6 @@ export class MainGroup extends QuestionGroup {
         debug: true,
       });
 
-      console.log('initQuestions: ', { source, question });
-
       if (index !== 0) question.disable();
       if (question.getStateValue('dependsOn')) question.unrequire();
       return question;

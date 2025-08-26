@@ -17,7 +17,6 @@ import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility/removeI
 import { MainGroup, OutputGroup } from './Groups';
 import type { QuestionComponent } from './Questions';
 import { EventBus } from '$mct/components';
-import { QuestionRegistry } from './QuestionRegistry';
 
 const PROFILES = PROFILES_CONFIG.profiles;
 
@@ -29,6 +28,7 @@ export abstract class FormManager {
   protected groups: (MainGroup | OutputGroup)[] = [];
   protected questions: Set<QuestionComponent> = new Set();
   protected isInitialised: boolean = false;
+  protected source: 'form' | 'sidebar' = 'form';
 
   private _activeGroupIndex: number = 0;
 
@@ -51,7 +51,6 @@ export abstract class FormManager {
    * Set the active group index and emit change event
    */
   public set activeGroupIndex(value: number) {
-    console.log('activeGroupIndex', value);
     if (this._activeGroupIndex !== value) {
       const previousIndex = this._activeGroupIndex;
       this._activeGroupIndex = value;
@@ -85,6 +84,14 @@ export abstract class FormManager {
     });
   }
 
+  protected syncQuestionsToState(): void {
+    const answers = MCTManager.getAnswers();
+    this.questions.forEach((question) => {
+      const answer = answers[question.getStateValue('initialName') as InputKeysENUM];
+      if (answer) question.setValue(answer);
+    });
+  }
+
   protected prefill(answers: Inputs) {
     /**
      * @todo:
@@ -103,22 +110,30 @@ export abstract class FormManager {
     this.questions.delete(question);
   }
 
-  public saveAnswersToMCT(): void {
+  public saveAnswersToMCT(override: boolean = false): InputData[] {
     const answerDataArray: InputData[] = [];
 
     [...this.questions].forEach((question) => {
-      if (!question.isValid()) return;
+      const isValid = question.isValid();
+      const isRequired = question.isRequired();
+
+      if (!(isValid && isRequired)) return;
+
       answerDataArray.push({
         key: question.getStateValue('initialName') as InputKey,
         name: question.getStateValue('finalName') as InputName,
         value: question.getValue() as InputValue,
         valid: question.isValid(),
-        location: 'form',
+        location: this.source,
         source: 'user',
       });
     });
 
-    MCTManager.setAnswers(answerDataArray);
+    MCTManager.overrideAnswers(answerDataArray);
+    // if (override) MCTManager.overrideAnswers(answerDataArray);
+    // else MCTManager.setAnswers(answerDataArray);
+
+    return answerDataArray;
   }
 
   public getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
@@ -127,7 +142,6 @@ export abstract class FormManager {
 
   protected determineProfile(context: 'main' | 'sidebar' = 'main'): Profile | undefined {
     const answers = this.getAnswers(context);
-    console.log('determineProfile', { answers, context });
     const profile: Profile | undefined = PROFILES.find((profile) => {
       return Object.entries(profile.requirements).every(([key, value]) => answers[key as InputKeysENUM] === value);
     });

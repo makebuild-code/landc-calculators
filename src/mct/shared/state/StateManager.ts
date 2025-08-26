@@ -104,6 +104,30 @@ export class StateManager {
     this.setState({ [key]: value } as Partial<AppState>);
   }
 
+  /**
+   * Set a specific piece of state without spreading the previous value
+   * Useful for completely replacing complex state like answers or calculations
+   */
+  setOverride<K extends keyof AppState>(key: K, value: AppState[K]): void {
+    const previousState = { ...this.state };
+    this.state[key] = value;
+
+    // Notify subscribers
+    const event: StateChangeEvent = {
+      previousState,
+      currentState: this.state,
+      changes: { [key]: value } as Partial<AppState>,
+    };
+
+    this.subscribers.forEach((callback) => {
+      try {
+        callback(event);
+      } catch (error) {
+        debugError('State subscriber error:', error);
+      }
+    });
+  }
+
   // Convenience methods for common state operations
   setLCID(lcid: string | null): void {
     this.set('lcid', lcid);
@@ -161,6 +185,24 @@ export class StateManager {
 
   getAnswers(): Inputs {
     return { ...this.state.inputs };
+  }
+
+  /**
+   * Override all answers with new values (does not merge with existing)
+   */
+  overrideAnswers(answerDataArray: InputData[]): void {
+    const answers = answerDataArray.reduce<Partial<Inputs>>((acc, answer) => {
+      acc[answer.key] = answer.value as any;
+      return acc;
+    }, {} as Inputs);
+
+    const prefillAnswers = answerDataArray.reduce((acc, answer) => {
+      acc[answer.name] = answer.value;
+      return acc;
+    }, {} as InputPrefill);
+
+    this.setOverride('inputs', answers);
+    this.setOverride('inputPrefill', prefillAnswers);
   }
 
   setPrefillValues(prefillData: InputPrefill): void {

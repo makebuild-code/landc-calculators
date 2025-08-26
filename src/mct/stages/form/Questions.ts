@@ -87,7 +87,6 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public updateVisualState(isValid: boolean): void {
-    console.log('[question] updateVisualState: ', { isValid });
     this.toggleClass(this.element, 'has-error', !isValid);
   }
 

@@ -1,11 +1,11 @@
-import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG } from '$mct/config';
+import { DOM_CONFIG } from '$mct/config';
 import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { MCTManager } from 'src/mct/shared/MCTManager';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { InputKeysENUM, Profile } from '$mct/types';
-import { APIEventNames, FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
 import { panelToWindow } from 'src/mct/shared/utils/ui';
@@ -169,14 +169,6 @@ export class MainFormManager extends FormManager {
     if (outputGroup) outputGroup.update();
   }
 
-  private syncQuestionsToState(): void {
-    const answers = MCTManager.getAnswers();
-    this.questions.forEach((question) => {
-      const answer = answers[question.getStateValue('initialName') as InputKeysENUM];
-      if (answer) question.setValue(answer);
-    });
-  }
-
   private showLoader(show: boolean): void {
     this.loader.style.display = show ? 'flex' : 'none';
   }
@@ -268,7 +260,6 @@ export class MainFormManager extends FormManager {
   }
 
   public handleInputChange(isValid: boolean) {
-    console.log('handleInputChange: ', isValid);
     this.updateNavigation({ nextEnabled: isValid });
   }
 

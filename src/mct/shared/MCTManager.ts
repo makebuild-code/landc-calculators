@@ -256,7 +256,8 @@ export const MCTManager = {
     if (!nextStage) return false;
 
     // hide the current stage
-    const currentStage = stageManagers[stateManager.getCurrentStage() as StageIDENUM] ?? null;
+    const currentStageId = stateManager.getCurrentStage();
+    const currentStage = stageManagers[currentStageId as StageIDENUM] ?? null;
     if (currentStage) currentStage.hide();
 
     // update the state, init and show the next stage
@@ -312,11 +313,11 @@ export const MCTManager = {
     stateManager.setAnswers(answerDataArray);
   },
 
+  overrideAnswers(answerDataArray: InputData[]): void {
+    stateManager.overrideAnswers(answerDataArray);
+  },
+
   getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
-    console.log('getAnswers', {
-      state: stateManager.getAnswers(),
-      visible: questionRegistry.getValuesByPreset('sidebarSave'),
-    });
     return context === 'main' ? stateManager.getAnswers() : questionRegistry.getValuesByPreset('sidebarSave');
   },
 

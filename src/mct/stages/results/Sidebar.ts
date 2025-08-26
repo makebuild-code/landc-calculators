@@ -1,6 +1,6 @@
 import { DOM_CONFIG } from '$mct/config';
-import { GroupNameENUM, FormEventNames, type InputData, type InputKey, type InputName } from '$mct/types';
-import { debugLog } from '$utils/debug';
+import { MCTManager } from '$mct/manager';
+import { GroupNameENUM, FormEventNames, InputKeysENUM } from '$mct/types';
 import { queryElement, queryElements } from '$utils/dom';
 import { MainGroup, type GroupOptions } from '../form/Groups';
 import { FormManager } from '../form/Manager_Base';
@@ -13,6 +13,7 @@ export class Sidebar extends FormManager {
   private updateButton: HTMLButtonElement;
   private closeButtons: HTMLButtonElement[];
   protected groups: SidebarGroup[] = [];
+  protected source: 'sidebar' = 'sidebar';
 
   constructor(component: HTMLElement) {
     super(component);
@@ -25,6 +26,7 @@ export class Sidebar extends FormManager {
     if (this.isInitialised) return;
     this.isInitialised = true;
 
+    this.updateButton.disabled = true;
     this.bindEvents();
 
     const groupElements = queryElements(`[${questionAttr.group}]`, this.list) as HTMLElement[];
@@ -53,17 +55,18 @@ export class Sidebar extends FormManager {
     this.groups.forEach((group) => group.updateActiveQuestions());
     this.updateGroupVisibility();
 
-    this.eventBus.on(FormEventNames.QUESTION_CHANGED, (event) => {
-      if (event.source !== 'sidebar') return;
-      this.handleQuestionChange();
+    // this.eventBus.on(FormEventNames.QUESTION_CHANGED, (event) => {
+    //   if (event.source !== 'sidebar') return;
+    //   this.handleQuestionChange();
 
-      setTimeout(() => {
-        this.handleQuestionChange();
-      }, 1000);
-    });
+    //   setTimeout(() => {
+    //     this.handleQuestionChange();
+    //   }, 1000);
+    // });
   }
 
   public show(): void {
+    this.syncQuestionsToFilters();
     this.groups.forEach((group) => group.updateActiveQuestions());
     this.updateGroupVisibility();
     this.component.style.setProperty('display', 'flex');
@@ -76,7 +79,6 @@ export class Sidebar extends FormManager {
   }
 
   protected bindEvents(): void {
-    console.log('bindEvents: ', { updateButton: this.updateButton, closeButtons: this.closeButtons });
     this.updateButton.addEventListener('click', () => {
       this.update();
     });
@@ -86,38 +88,34 @@ export class Sidebar extends FormManager {
     });
   }
 
-  private handleQuestionChange(): void {
+  protected syncQuestionsToFilters(): void {
+    const filters = MCTManager.getFilters();
+    this.questions.forEach((question) => {
+      const answer = filters[question.getStateValue('initialName') as InputKeysENUM];
+      if (answer) question.setValue(answer);
+    });
+  }
+
+  public handleQuestionChange(): void {
+    const mainAnswers = MCTManager.getAnswers('main');
+    const sidebarAnswers = MCTManager.getAnswers('sidebar');
+
     const requiredQuestions = [...this.questions].filter((q) => q.isRequired());
     const allValid = requiredQuestions.every((q) => q.isValid());
 
-    console.log('[sidebar] handleQuestionChange: ', { requiredQuestions, allValid });
+    // Check if the sidebar answers are the same as the main answers
+    const isSame = Object.keys(sidebarAnswers).every((key) => sidebarAnswers[key] === mainAnswers[key]);
+    const allowUpdate = allValid && !isSame;
+
+    this.updateButton.disabled = !allowUpdate;
   }
 
   private update(): void {
-    debugLog('Saving sidebar answers to MCT');
-
     // Save all question answers to MCT
-    this.saveAnswersToMCT();
+    const answerDataArray = this.saveAnswersToMCT(true);
 
-    // Get answers as InputData array
-    const answers: InputData[] = [];
-    this.questions.forEach((question) => {
-      const value = question.getValue();
-      if (question.isValid() && value !== null) {
-        answers.push({
-          key: question.getInitialName() as InputKey,
-          name: question.getFinalName() as InputName,
-          value: value,
-          valid: true,
-          location: 'sidebar',
-          source: 'user',
-        });
-      }
-    });
-
-    // Emit event to notify that sidebar has been saved
     this.eventBus.emit(FormEventNames.ANSWERS_SAVED, {
-      answers,
+      answers: answerDataArray,
       source: 'sidebar',
     });
 
@@ -130,7 +128,6 @@ export class Sidebar extends FormManager {
   }
 
   public updateGroupVisibility(): void {
-    console.log('sidebar updateGroupVisibility: ', this.groups);
     // Always show customer-identifier
     const identifierGroup = this.getGroupByName(GroupNameENUM.CustomerIdentifier) as MainGroup;
     identifierGroup.show();
@@ -172,7 +169,6 @@ class SidebarGroup extends MainGroup {
     const question = this.questions[index];
     const isValid = question.isValid();
 
-    console.log('[sidebar] handleChange: ', { question, isValid });
     question.updateVisualState(isValid);
     this.onInputChange(isValid);
     if (!isValid) return;
@@ -180,6 +176,8 @@ class SidebarGroup extends MainGroup {
     // Update active questions without saving to MCT
     this.updateActiveQuestions();
     this.formManager.updateGroupVisibility();
+
+    this.formManager.handleQuestionChange();
   }
 
   // // Override updateActiveQuestions to not save to MCT

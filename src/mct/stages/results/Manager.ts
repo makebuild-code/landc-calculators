@@ -2,6 +2,7 @@ import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/conf
 import {
   APIEventNames,
   CalculationKeysENUM,
+  FormEventNames,
   MCTEventNames,
   RepaymentTypeENUM,
   SortColumnENUM,
@@ -180,6 +181,13 @@ export class ResultsManager {
     this.handleButtons();
     this.handleShowIfProceedable();
     removeInitialStyles(this.component);
+
+    this.eventBus.on(FormEventNames.ANSWERS_SAVED, (event) => {
+      if (event.source === 'sidebar') {
+        this.syncFiltersStateToQuestions();
+        this.handleProductsAPI();
+      }
+    });
   }
 
   public start(options?: ResultsStageOptions): void {
