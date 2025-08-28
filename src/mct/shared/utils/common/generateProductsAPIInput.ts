@@ -136,11 +136,16 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
 
+  console.log('[generateProductsAPIInput] filters', { filters });
+
+  const ShowSharedOwnership = filters.ShowSharedOwnership ?? FILTERS_CONFIG.ShowSharedOwnership;
+
   const input: ProductsRequest = {
     ...endOfAnswersInput,
     SapValue: 100,
     Features,
     IncludeRetention,
+    ShowSharedOwnership,
   };
 
   return input;
