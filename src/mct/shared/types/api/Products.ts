@@ -105,6 +105,7 @@ export enum ProductsRequestENUM {
   Lenders = 'Lenders',
   IncludeRetention = 'IncludeRetention',
   RetentionLenderId = 'RetentionLenderId',
+  ShowSharedOwnership = 'ShowSharedOwnership',
 }
 
 // Product request structure
@@ -126,6 +127,7 @@ export interface ProductsRequest {
   [ProductsRequestENUM.Lenders]?: LenderNames;
   [ProductsRequestENUM.IncludeRetention]?: boolean;
   [ProductsRequestENUM.RetentionLenderId]?: number;
+  [ProductsRequestENUM.ShowSharedOwnership]?: boolean;
 }
 
 // Summary information
