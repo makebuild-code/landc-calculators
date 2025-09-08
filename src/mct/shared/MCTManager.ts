@@ -33,7 +33,7 @@ import { getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog } from '$utils/debug';
 
-const VERSION = '🔄 MCT DIST v32';
+const VERSION = '🔄 MCT DIST v33';
 const attr = DOM_CONFIG.attributes;
 
 let numberOfStagesShown: number = 0;
