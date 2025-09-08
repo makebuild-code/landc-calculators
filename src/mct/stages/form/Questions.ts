@@ -1,7 +1,18 @@
 import { lendersAPI } from '$mct/api';
 import { StatefulInputGroup, type StatefulInputGroupConfig, type StatefulInputGroupState } from '$mct/components';
-import { DOM_CONFIG } from '$mct/config';
-import { FormEventNames, InputKeysENUM, type Inputs, type SelectOption, type InputValue } from '$mct/types';
+import { DOM_CONFIG, PROFILES_CONFIG } from '$mct/config';
+import {
+  FormEventNames,
+  InputKeysENUM,
+  type Inputs,
+  type SelectOption,
+  type InputValue,
+  ResiBtlENUM,
+  GroupNameENUM,
+  type Profile,
+  ProfileNameENUM,
+} from '$mct/types';
+import { getEnumKey, getEnumValue } from '$mct/utils';
 import { debugError } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -61,8 +72,23 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (this.getStateValue('initialName') === 'Lender') this.handleLenderSelect();
   }
 
+  private getProfile(): Profile | undefined {
+    const groupName = this.getStateValue('groupName') as ProfileNameENUM;
+    const profile = PROFILES_CONFIG.profiles.find((profile) => profile.name === groupName);
+    return profile;
+  }
+
+  private getResiBtl(): ResiBtlENUM | undefined {
+    const profile = this.getProfile();
+    const requirements = profile?.requirements;
+    const resiBtl = requirements?.ResiBtl;
+    if (!resiBtl) return undefined;
+    return getEnumValue(ResiBtlENUM, resiBtl);
+  }
+
   private async handleLenderSelect(): Promise<void> {
     if (this.getStateValue('initialName') !== 'Lender') return;
+    const resiBtl = this.getResiBtl();
 
     try {
       const response = await lendersAPI.getAll();
@@ -72,12 +98,21 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
 
       const lenderOptions: SelectOption[] = [
         { label: 'Select a lender...' },
-        ...lenders.map(
-          (lender): SelectOption => ({
-            value: lender.MasterLenderId.toString(),
+        ...lenders.map((lender): SelectOption => {
+          // const value =
+          //   resiBtl === ResiBtlENUM.Residential
+          //     ? lender.ResidentialLenderId?.toString()
+          //     : resiBtl === ResiBtlENUM.Btl
+          //       ? lender.BTLLenderId?.toString()
+          //       : lender.MasterLenderId.toString();
+
+          const value = `MasterLenderID:${lender.MasterLenderId}|ResidentialLenderID:${lender.ResidentialLenderId}|BTLLenderID:${lender.BTLLenderId}`;
+
+          return {
+            value,
             label: lender.LenderName,
-          })
-        ),
+          };
+        }),
       ];
 
       this.setSelectOptions(lenderOptions);
