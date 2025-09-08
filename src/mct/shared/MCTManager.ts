@@ -1,6 +1,6 @@
 import { queryElement, queryElements } from '$utils/dom';
 
-import { initForm } from '../stages/form';
+import { initForm, QuestionRegistry } from '../stages/form';
 import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
@@ -8,7 +8,7 @@ import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
-import { globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { MCTEventNames, StageIDENUM } from '$mct/types';
@@ -35,6 +35,7 @@ import { debugError, debugLog } from '$utils/debug';
 
 const VERSION = '🔄 MCT DIST v33';
 const attr = DOM_CONFIG.attributes;
+const eventBus = EventBus.getInstance();
 
 let numberOfStagesShown: number = 0;
 interface Stage {
@@ -58,6 +59,7 @@ const dom: DOM = {
 const stateManager = new StateManager();
 const calculationManager = new CalculationManager(stateManager);
 const visibilityManager = new VisibilityManager(stateManager);
+const questionRegistry = QuestionRegistry.getInstance();
 
 export const MCTManager = {
   start() {
@@ -218,7 +220,7 @@ export const MCTManager = {
       this.goToStage(StageIDENUM.Questions);
     }
 
-    globalEventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
+    eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
       debugLog('🔄 Stage complete', event);
 
       let nextStageId;
@@ -254,7 +256,8 @@ export const MCTManager = {
     if (!nextStage) return false;
 
     // hide the current stage
-    const currentStage = stageManagers[stateManager.getCurrentStage() as StageIDENUM] ?? null;
+    const currentStageId = stateManager.getCurrentStage();
+    const currentStage = stageManagers[currentStageId as StageIDENUM] ?? null;
     if (currentStage) currentStage.hide();
 
     // update the state, init and show the next stage
@@ -310,8 +313,12 @@ export const MCTManager = {
     stateManager.setAnswers(answerDataArray);
   },
 
-  getAnswers(): Inputs {
-    return stateManager.getAnswers();
+  overrideAnswers(answerDataArray: InputData[]): void {
+    stateManager.overrideAnswers(answerDataArray);
+  },
+
+  getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
+    return context === 'main' ? stateManager.getAnswers() : questionRegistry.getValuesByPreset('sidebarSave');
   },
 
   getAnswersAsLandC(): Inputs {

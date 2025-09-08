@@ -2,6 +2,7 @@ import { API_CONFIG, DOM_CONFIG, EVENTS_CONFIG, FILTERS_CONFIG } from '$mct/conf
 import {
   APIEventNames,
   CalculationKeysENUM,
+  FormEventNames,
   MCTEventNames,
   RepaymentTypeENUM,
   SortColumnENUM,
@@ -25,33 +26,12 @@ import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
 import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
-import { EventBus, globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
+import { Sidebar } from './Sidebar';
 import { debugError, debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
-
-/**
- * @plan
- *
- * When initialised by MCTManager after completing the form:
- * - Render outputs to header
- *    - borrowOverTerm, dealsAndRates
- *    - purchase price
- *    - LTV (calculated)
- *    - borrowing
- *    - deposit
- * - Apply values to the filters
- * - Call products API based on the filters and the answers
- *
- * Misc:
- * - Initialise dialogs
- * - Initialise sidebar form
- * - Bind events:
- *    - on input change
- *    - on select change
- *    - pagination / load more
- *    - reset filters
- */
+const sidebarAttr = DOM_CONFIG.attributes.sidebar;
 
 export class ResultsManager {
   private component: HTMLElement;
@@ -60,6 +40,8 @@ export class ResultsManager {
   private state: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   private isInitialised: boolean = false;
   private isProceedable: boolean = false;
+
+  private sidebar: Sidebar;
 
   private products: Product[] = [];
   private product: Product | null = null;
@@ -104,7 +86,11 @@ export class ResultsManager {
   constructor(component: HTMLElement) {
     this.component = component;
     this.id = StageIDENUM.Results;
-    this.eventBus = globalEventBus;
+    this.eventBus = EventBus.getInstance();
+
+    const sidebar = queryElement(`[${sidebarAttr.components}="component"]`, this.component) as HTMLElement;
+    this.sidebar = new Sidebar(sidebar);
+    this.sidebar.init();
 
     this.header = queryElement(`[${attr.components}="header"]`, this.component) as HTMLDivElement;
     this.outputs = queryElements(`[${attr.output}]`, this.header) as HTMLDivElement[];
@@ -195,6 +181,13 @@ export class ResultsManager {
     this.handleButtons();
     this.handleShowIfProceedable();
     removeInitialStyles(this.component);
+
+    this.eventBus.on(FormEventNames.ANSWERS_SAVED, (event) => {
+      if (event.source === 'sidebar') {
+        this.syncFiltersStateToQuestions();
+        this.handleProductsAPI();
+      }
+    });
   }
 
   public start(options?: ResultsStageOptions): void {
@@ -226,6 +219,8 @@ export class ResultsManager {
         key: filter.getStateValue('initialName') as InputKey,
         name: filter.getStateValue('finalName'),
         value: answer,
+        valid: filter.isValid(),
+        location: 'filter',
         source: 'user',
       });
     });
@@ -253,7 +248,8 @@ export class ResultsManager {
 
   private handleUpdateAnswers(): void {
     this.updateAnswersButton.addEventListener('click', () => {
-      MCTManager.goToStage(StageIDENUM.Questions);
+      console.log('handleUpdateAnswers: ', this.sidebar);
+      this.sidebar.show();
     });
   }
 
@@ -280,7 +276,7 @@ export class ResultsManager {
       const name = filter.getStateValue('finalName');
       const value = filter.getStateValue('value') as InputValue;
 
-      const data: InputData = { key, name, value, source: 'user' };
+      const data: InputData = { key, name, value, source: 'user', valid: filter.isValid(), location: 'filter' };
       MCTManager.setAnswer(data);
       return data;
     });
@@ -448,7 +444,7 @@ export class ResultsManager {
     this.goToAppointmentButtons.forEach((button) =>
       button.addEventListener('click', () => {
         this.howToApplyDialog.close();
-        globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
+        this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
       })
     );
 
@@ -510,7 +506,7 @@ export class ResultsManager {
           : (this.applyDirect.style.display = 'none');
       this.howToApplyDialog.showModal();
     } else if (this.isProceedable) {
-      globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
+      this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
     } else if (!this.isProceedable) {
       this.handleDirectToBroker();
     }
@@ -595,7 +591,7 @@ export class ResultsManager {
 
   // private handleGetFreeAdvice(): void {
   //   this.howToApplyDialog.close();
-  //   globalEventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
+  //   this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
   // }
 
   private async handleDirectToBroker(): Promise<void> {

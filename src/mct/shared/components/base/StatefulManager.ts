@@ -1,5 +1,5 @@
 import type { StageIDENUM } from '$mct/types';
-import { StatefulComponent, type StatefulComponentOptions } from './StatefulComponent';
+import { StatefulComponent, type StatefulComponentConfig } from './StatefulComponent';
 
 export interface StatefulManagerState {
   id: StageIDENUM;
@@ -7,39 +7,24 @@ export interface StatefulManagerState {
   isComplete: boolean;
 }
 
-export interface StatefulManagerOptions<T extends StatefulManagerState = StatefulManagerState>
-  extends Omit<StatefulComponentOptions<T>, 'initialState'> {
-  extendedInitialState?: Partial<T>; // Additional state properties for extending classes
-  initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
+export interface StatefulManagerConfig extends StatefulComponentConfig {
   id: StageIDENUM;
 }
 
 export abstract class StatefulManager<
   T extends StatefulManagerState = StatefulManagerState,
 > extends StatefulComponent<T> {
-  constructor(options: StatefulManagerOptions<T>) {
-    // Use provided initialState or generate from base + extended
-    const finalInitialState =
-      options.initialState ||
-      (() => {
-        // Create base initialState
-        const baseInitialState: StatefulManagerState = {
-          id: options.id,
-          isVisible: false,
-          isComplete: false,
-        };
+  constructor(config: StatefulManagerConfig, customState?: Partial<T>) {
+    const initialState: T = {
+      // Base state
+      id: config.id,
+      isVisible: false,
+      isComplete: false,
+      // Custom state extensions
+      ...customState,
+    } as T;
 
-        // Merge base state with extended state
-        return {
-          ...baseInitialState,
-          ...options.extendedInitialState,
-        } as T;
-      })();
-
-    super({
-      ...options,
-      initialState: finalInitialState,
-    });
+    super(config, initialState);
   }
 
   protected onInit(): void {

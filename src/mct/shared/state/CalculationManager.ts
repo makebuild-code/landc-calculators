@@ -109,7 +109,7 @@ export class CalculationManager {
   /**
    * @returns { LTV: number }
    * - If Purchase, LTV = (PropertyValue - DepositAmount) / PropertyValue
-   * - If Remortgage, LTV = RepaymentValue / PropertyValue
+   * - If Remortgage, LTV = BorrowAmount / PropertyValue
    */
   private calculateLoanToValue = (answers: Inputs): Partial<Calculations> => {
     const { PurchRemo, PropertyValue, DepositAmount, BorrowAmount } = answers;
@@ -132,9 +132,8 @@ export class CalculationManager {
    */
   private calculateIncludeRetention = (answers: Inputs): Partial<Calculations> => {
     const { PurchRemo, RemoChange } = answers;
-    if (PurchRemo !== getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage))
-      return { [CalculationKeysENUM.IncludeRetention]: false };
-    if (!RemoChange) return { [CalculationKeysENUM.IncludeRetention]: false };
+    if (PurchRemo !== getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage) || !RemoChange)
+      return { [CalculationKeysENUM.IncludeRetention]: undefined };
 
     const remoChangeValue = getEnumValue(RemoChangeENUM, RemoChange);
     const IncludeRetention = remoChangeValue === RemoChangeENUM.NoChange;
