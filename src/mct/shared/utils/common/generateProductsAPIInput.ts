@@ -134,19 +134,27 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   if (miscValues.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = miscValues.EarlyRepaymentCharge;
   if (NewBuild !== undefined) Features.NewBuild = NewBuild;
 
-  const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
-
-  console.log('[generateProductsAPIInput] filters', { filters });
-
   const ShowSharedOwnership = filters.ShowSharedOwnership ?? FILTERS_CONFIG.ShowSharedOwnership;
 
   const input: ProductsRequest = {
     ...endOfAnswersInput,
     SapValue: 100,
     Features,
-    IncludeRetention,
     ShowSharedOwnership,
   };
+
+  if (PurchRemo === PurchRemoENUM.Remortgage) {
+    const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
+    input.IncludeRetention = IncludeRetention;
+
+    // regex to get the master lender id, residential lender id, and btl lender id from the lender id given the format MasterLenderID:123|ResidentialLenderID:456|BTLLenderID:789
+    const regex = /MasterLenderID:(\d+)\|ResidentialLenderID:(\d+)\|BTLLenderID:(\d+)/;
+    const match = (answers as InputsByEndOfForm & RemoInputs)[InputKeysENUM.Lender].match(regex);
+    if (match) {
+      input.RetentionLenderId =
+        ResiBtl === getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential) ? Number(match[2]) : Number(match[3]);
+    }
+  }
 
   return input;
 };
