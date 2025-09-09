@@ -25,6 +25,6 @@ typings/
 .env
 
 # Production files
-# dist
+dist/
 
-.DS_store
+.DS_Store
