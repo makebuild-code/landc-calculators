@@ -2,15 +2,20 @@ const CASE_INSENSITIVE = true;
 
 // Must exist & be non-empty in the query string
 const REQUIRED_QUERY_PARAMS = [
-  'script',
+  'PropertyValue',
+  'PurchRemo',
+  'RepaymentType',
+  'BuyerType',
+  'MortgageLength'
 ] as const;
 
 // Must equal one of these values in the query string
 const EXACT_QUERY_VALUES: Readonly<Record<string, readonly string[]>> = {
-  Script: ['local'],
+  BuyerType: ['First Time Buyer'],
+  RepaymentType: ['Repayment']
 };
 
-/** Utility: read a param with a tiny case fallback */
+/** Utility: read a param. Makes sure that we're accountint for upper and lower case */
 function getQP(sp: URLSearchParams, key: string): string | null {
   return sp.get(key) ?? sp.get(key.toLowerCase()) ?? sp.get(key.toUpperCase());
 }

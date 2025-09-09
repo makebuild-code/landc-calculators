@@ -24973,10 +24973,15 @@
   init_live_reload();
   var CASE_INSENSITIVE = true;
   var REQUIRED_QUERY_PARAMS = [
-    "script"
+    "PropertyValue",
+    "PurchRemo",
+    "RepaymentType",
+    "BuyerType",
+    "MortgageLength"
   ];
   var EXACT_QUERY_VALUES = {
-    Script: ["local"]
+    BuyerType: ["First Time Buyer"],
+    RepaymentType: ["Repayment"]
   };
   function getQP(sp, key) {
     return sp.get(key) ?? sp.get(key.toLowerCase()) ?? sp.get(key.toUpperCase());
@@ -25031,6 +25036,11 @@
     }
   };
   var stateManager2 = new StateManager();
+  function getStatusFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const code = parseInt(params.get("statusCode") || "", 10);
+    return Number.isFinite(code) ? code : 200;
+  }
   var partnerBookingWidget = class {
     TEXT_FIELDS = [
       "FirstName",
@@ -25047,19 +25057,18 @@
       "IsSocialMessageMarketingPermitted"
     ];
     draft;
+    tryAgainDialog;
     constructor() {
       this.draft = {};
       this.initState();
       const { ok } = checkProceedableFromQuery();
       if (!ok) {
-        console.log("non proceedable");
         let noneProceedable = queryElement('[data-partner-element="none-proceed"]');
         if (!noneProceedable)
           return;
         noneProceedable.removeAttribute("data-mct-initial");
         return;
       }
-      console.log("proceedable");
       let date = queryElement('[data-partner-element="date"]');
       date.removeAttribute("data-mct-initial");
       this.initForm();
@@ -25068,6 +25077,8 @@
       this.getDates();
       this.setupNavButtons();
       this.notesEventListener();
+      this.tryAgainDialog = queryElement(`[data-partner-element="try-again"]`);
+      this.setupCloseDialogButton();
     }
     initState() {
       stateManager2.subscribe((event) => {
@@ -25081,14 +25092,14 @@
       stateManager2.enableAutoPersistence();
       this.stripUrl();
       this.updateAppointmentTag(stateManager2.getState().booking || void 0);
-      console.log(stateManager2.getState());
     }
     async initForm() {
       let form = queryElement('[data-partner-element="information"]');
       form?.addEventListener("submit", async (e) => {
-        console.log("submitted");
-        await this.handleFormSubmission();
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        await this.handleFormSubmission();
       });
     }
     stripUrl() {
@@ -25105,6 +25116,12 @@
         this.draft.enquiry ??= {};
         this.draft.enquiry[name] = value;
       }
+    }
+    closeDialog = () => {
+      this.tryAgainDialog?.close();
+    };
+    setupCloseDialogButton() {
+      queryElement('[data-partner-element="close-dialog"]')?.addEventListener("click", this.closeDialog);
     }
     readICIDFromQuery() {
       const sp = new URLSearchParams(window.location.search);
@@ -25155,8 +25172,6 @@
               () => stateManager2.getState().booking || void 0
             )
           );
-          console.log("booking (after date pick)", stateManager2.getState().booking);
-          console.log("draft (after date pick)", this.draft);
         });
       }
     }
@@ -25229,8 +25244,6 @@
             "booking",
             this.toBooking({ bookingDate: day.date }, () => stateManager2.getState().booking || void 0)
           );
-          console.log("booking (after date pick)", stateManager2.getState().booking);
-          console.log("draft (after date pick)", this.draft);
           debugLog("booking (after date pick)", stateManager2.getState().booking);
         });
         list.appendChild(btn);
@@ -25339,7 +25352,6 @@
       };
     }
     updateAppointmentTag(booking) {
-      console.log("appointment tag");
       const tag = queryElement('[data-mct-appointment="tag"]');
       if (!tag)
         return;
@@ -25390,8 +25402,6 @@
         bookingProfileId: 1
       };
       if (!booking.bookingDate || !booking.bookingStart || !booking.bookingEnd) {
-        console.log(booking);
-        console.log(this.draft.booking);
       }
       const lcid = this.getLCID();
       const icid = this.getICID();
@@ -25407,19 +25417,27 @@
         booking
       };
       try {
-        console.log(request);
+        const status = getStatusFromUrl();
+        const res = await fetch(`https://httpbin.org/status/${status}`);
+        if (!res.ok) {
+          console.log("failed");
+          const msg = `Request failed: ${res.status} ${res.statusText}`;
+          throw new APIError(msg, res.status, "https://httpbin.org/status/400");
+        }
         const form = queryElement('[data-partner-element="widget"]');
         const success = queryElement('[data-partner-element="success"]');
         if (!form || !success)
           return;
         form.style.display = "none";
-        success?.removeAttribute("data-mct-initial");
+        success.removeAttribute("data-mct-initial");
+        console.log("showed success state");
         return;
       } catch (error) {
         debugError("Error submitting booking:", error);
         if (error instanceof APIError) {
           if (error.status === 409) {
             debugError("Booking error: 409 - Slot already taken");
+            this.tryAgainDialog.showModal();
           } else if (error.status === 400) {
             debugError("Booking error: 400 - Bad request, try again");
           } else {

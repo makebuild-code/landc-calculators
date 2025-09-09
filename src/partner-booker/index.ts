@@ -9,6 +9,7 @@ import type { Booking, EnquiryForm } from "$mct/types"
 import { StateManager } from "$mct/state"
 import { formatDateForAPI, fmtTime, makeDateBtn } from "./utils/dates";
 import { checkProceedableFromQuery } from "./utils/queryParams";
+import { fetchData } from "$mct/utils";
 
 let DOM_CONFIG = {
   elements: {
@@ -34,6 +35,11 @@ type DraftRequest = Partial<Omit<CreateLeadAndBookingRequest, 'booking' | 'enqui
   enquiry?: Partial<EnquiryForm>;
 };
 
+function getStatusFromUrl(): number {
+  const params = new URLSearchParams(window.location.search);
+  const code = parseInt(params.get("statusCode") || "", 10);
+  return Number.isFinite(code) ? code : 200; // default to 200
+}
 
 export class partnerBookingWidget {
   TEXT_FIELDS = [
@@ -53,19 +59,18 @@ export class partnerBookingWidget {
   ] satisfies (keyof EnquiryForm)[];
 
   private draft: DraftRequest;
+  private tryAgainDialog: HTMLDialogElement | undefined;
 
   constructor() {
     this.draft = {};
     this.initState();
     const { ok } = checkProceedableFromQuery();
     if (!ok) {
-      console.log('non proceedable');
       let noneProceedable = queryElement('[data-partner-element="none-proceed"]')
       if (!noneProceedable) return
       noneProceedable.removeAttribute('data-mct-initial')
       return
     }
-    console.log('proceedable');
     let date = queryElement('[data-partner-element="date"]')
     date!.removeAttribute('data-mct-initial')
     this.initForm()
@@ -74,6 +79,8 @@ export class partnerBookingWidget {
     this.getDates()
     this.setupNavButtons()
     this.notesEventListener()
+    this.tryAgainDialog = queryElement(`[data-partner-element="try-again"]`) as HTMLDialogElement;
+    this.setupCloseDialogButton()
   }
 
 
@@ -90,15 +97,16 @@ export class partnerBookingWidget {
     stateManager.enableAutoPersistence();
     this.stripUrl()
     this.updateAppointmentTag(stateManager.getState().booking || undefined);
-    console.log(stateManager.getState());
   }
 
   async initForm() {
     let form = queryElement('[data-partner-element="information"]')
     form?.addEventListener('submit', async (e) => {
-      console.log('submitted');
-      await this.handleFormSubmission()
       e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      await this.handleFormSubmission()
     })
   }
 
@@ -117,7 +125,14 @@ export class partnerBookingWidget {
       this.draft.enquiry ??= {};
       (this.draft.enquiry as Partial<EnquiryData>)[name as keyof EnquiryData] = value as any;
     }
+  }
 
+  closeDialog = () => {
+    this.tryAgainDialog?.close()
+  }
+
+  setupCloseDialogButton() {
+    queryElement('[data-partner-element="close-dialog"]')?.addEventListener('click', this.closeDialog)
   }
 
   private readICIDFromQuery(): string | null {
@@ -174,8 +189,6 @@ export class partnerBookingWidget {
             () => stateManager.getState().booking || undefined
           )
         );
-        console.log('booking (after date pick)', stateManager.getState().booking);
-        console.log('draft (after date pick)', this.draft);
       })
     }
   }
@@ -231,8 +244,6 @@ export class partnerBookingWidget {
     return errors;
   }
 
-
-
   toBooking(
     partial: Partial<Booking>,
     getPrev: () => Booking | undefined
@@ -247,7 +258,6 @@ export class partnerBookingWidget {
       bookingProfileId: 1,
     };
   }
-
 
   async getDates() {
     const data = await this.getDateSlots()
@@ -273,8 +283,6 @@ export class partnerBookingWidget {
           'booking',
           this.toBooking({ bookingDate: day.date }, () => stateManager.getState().booking || undefined)
         );
-        console.log('booking (after date pick)', stateManager.getState().booking);
-        console.log('draft (after date pick)', this.draft);
         debugLog('booking (after date pick)', stateManager.getState().booking);
       })
       list.appendChild(btn)
@@ -393,7 +401,6 @@ export class partnerBookingWidget {
   }
 
   private updateAppointmentTag(booking?: Partial<Booking>) {
-    console.log('appointment tag');
     const tag = queryElement('[data-mct-appointment="tag"]') as HTMLElement | null;
     if (!tag) return;
 
@@ -443,8 +450,6 @@ export class partnerBookingWidget {
       bookingProfileId: 1,
     };
     if (!booking.bookingDate || !booking.bookingStart || !booking.bookingEnd) {
-      console.log(booking);
-      console.log(this.draft.booking);
     }
 
     const lcid = this.getLCID();
@@ -464,22 +469,33 @@ export class partnerBookingWidget {
     };
 
     try {
-      console.log(request)
-      // await createLeadAndBookingAPI.createLeadAndBooking(request);
+      const status = getStatusFromUrl();
+      const res = await fetch(`https://httpbin.org/status/${status}`);
+      if (!res.ok) {
+        console.log('failed');
+        // throw something your catch understands
+        const msg = `Request failed: ${res.status} ${res.statusText}`;
+        // If you use APIError elsewhere:
+        throw new APIError(msg, res.status, 'https://httpbin.org/status/400');
+        // or: throw Object.assign(new Error(msg), { status: res.status });
+      }
 
+      // success path
       const form = queryElement('[data-partner-element="widget"]');
       const success = queryElement('[data-partner-element="success"]');
       if (!form || !success) return;
 
-      form!.style.display = 'none';
-      success?.removeAttribute('data-mct-initial');
+      form.style.display = 'none';
+      success.removeAttribute('data-mct-initial');
+      console.log('showed success state');
       return;
+
     } catch (error: unknown) {
       debugError('Error submitting booking:', error);
-
       if (error instanceof APIError) {
         if (error.status === 409) {
           debugError('Booking error: 409 - Slot already taken');
+          this.tryAgainDialog!.showModal();
         } else if (error.status === 400) {
           debugError('Booking error: 400 - Bad request, try again');
         } else {
@@ -492,6 +508,4 @@ export class partnerBookingWidget {
       }
     }
   }
-
-
 }
