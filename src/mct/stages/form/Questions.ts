@@ -8,11 +8,10 @@ import {
   type SelectOption,
   type InputValue,
   ResiBtlENUM,
-  GroupNameENUM,
   type Profile,
   ProfileNameENUM,
 } from '$mct/types';
-import { getEnumKey, getEnumValue } from '$mct/utils';
+import { getEnumValue } from '$mct/utils';
 import { debugError } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
@@ -90,22 +89,23 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (this.getStateValue('initialName') !== 'Lender') return;
     const resiBtl = this.getResiBtl();
 
+    console.log('Lender select', { select: this.inputs, resiBtl });
+
     try {
-      const response = await lendersAPI.getAll();
-      const lenders = response
-        .filter((lender) => lender.LenderName !== '' && lender.LenderName !== null)
-        .sort((a, b) => a.LenderName.localeCompare(b.LenderName));
+      const response = await lendersAPI.getFilteredAndSorted();
+      const lenders = response.filter((lender) => {
+        if (resiBtl === ResiBtlENUM.Residential) {
+          return lender.ResidentialLenderId !== null;
+        } else if (resiBtl === ResiBtlENUM.Btl) {
+          return lender.BTLLenderId !== null;
+        } else {
+          return lender.MasterLenderId !== null;
+        }
+      });
 
       const lenderOptions: SelectOption[] = [
         { label: 'Select a lender...' },
         ...lenders.map((lender): SelectOption => {
-          // const value =
-          //   resiBtl === ResiBtlENUM.Residential
-          //     ? lender.ResidentialLenderId?.toString()
-          //     : resiBtl === ResiBtlENUM.Btl
-          //       ? lender.BTLLenderId?.toString()
-          //       : lender.MasterLenderId.toString();
-
           const value = `MasterLenderID:${lender.MasterLenderId}|ResidentialLenderID:${lender.ResidentialLenderId}|BTLLenderID:${lender.BTLLenderId}`;
 
           return {
