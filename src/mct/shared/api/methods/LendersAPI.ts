@@ -9,8 +9,9 @@ export class LendersAPI {
 
   async getAll(): Promise<LenderDetails[]> {
     const response = await this.client.request<LenderListResponse>(API_CONFIG.endpoints.lenders);
-    this.lenders = response.result.lenders;
-    return response.result.lenders;
+    const result = response.result.lenders;
+    this.lenders = result;
+    return result;
   }
 
   async getFilteredAndSorted(): Promise<LenderDetails[]> {

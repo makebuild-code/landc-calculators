@@ -89,8 +89,6 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (this.getStateValue('initialName') !== 'Lender') return;
     const resiBtl = this.getResiBtl();
 
-    console.log('Lender select', { select: this.inputs, resiBtl });
-
     try {
       const response = await lendersAPI.getFilteredAndSorted();
       const lenders = response.filter((lender) => {
