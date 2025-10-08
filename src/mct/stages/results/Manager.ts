@@ -248,7 +248,6 @@ export class ResultsManager {
 
   private handleUpdateAnswers(): void {
     this.updateAnswersButton.addEventListener('click', () => {
-      console.log('handleUpdateAnswers: ', this.sidebar);
       this.sidebar.show();
     });
   }

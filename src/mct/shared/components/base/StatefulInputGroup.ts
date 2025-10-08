@@ -187,8 +187,6 @@ export abstract class StatefulInputGroup<
 
     let isValid = false;
 
-    console.log('[StatefulInputGroup] isValid', { value, type, isValid, component: this });
-
     // Additional type-specific validation
     switch (type) {
       case 'radio':
