@@ -204,15 +204,7 @@ export abstract class StatefulInputGroup<
       case 'select-one':
         const select = this.inputs[0] as HTMLSelectElement;
         const selectedOption = select.options[select.selectedIndex];
-        console.log('[StatefulInputGroup] select-one', {
-          value,
-          type,
-          isValid,
-          select,
-          selectedOption,
-        });
-        // isValid = typeof value === 'string' && select?.selectedIndex > 0;
-        isValid = typeof value === 'string' && selectedOption.getAttribute('value') === value;
+        isValid = typeof value === 'string' && selectedOption?.getAttribute('value') === value;
         break;
     }
 
@@ -332,15 +324,22 @@ export abstract class StatefulInputGroup<
   }
 
   protected setSelectValue(value?: SelectValue): void {
-    const input = this.inputs[0];
+    const input = this.inputs[0] as HTMLSelectElement;
     if (!input) throw new Error('No select input found for select question');
-    input.value = value || '';
+
+    const options = [...input.options];
+    const selectedOption = options.find((option) => option.value === value);
+    const selectedValue = selectedOption ? selectedOption.value : options[0].value || '';
+    input.value = selectedValue;
   }
 
   protected resetSelectInput(): void {
-    const input = this.inputs[0];
+    const input = this.inputs[0] as HTMLSelectElement;
     if (!input) throw new Error('No select input found for select question');
-    input.value = '';
+
+    const options = [...input.options];
+    const selectedOption = options[0];
+    input.value = selectedOption.value;
   }
 
   protected setSelectOptions(options: SelectOption[]): void {
@@ -403,12 +402,7 @@ export abstract class StatefulInputGroup<
         break;
       case 'select-one':
         if (typeof value !== 'string') throw new Error('Value for select question must be a string');
-        // check to see if the options have a value that matches the value
-        // set that as the value if so, else default to the first option
-        const select = this.inputs[0] as HTMLSelectElement;
-        const selectedOption = [...select.options].find((option) => option.getAttribute('value') === value);
-        if (selectedOption) this.setSelectValue(value);
-        else this.setSelectValue();
+        this.setSelectValue(value);
         break;
       default:
         throw new Error(`Unsupported question type: ${this.getStateValue('type')}`);
