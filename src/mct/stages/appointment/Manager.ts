@@ -31,20 +31,13 @@ import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
 import { getOrdinalSuffix } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
-import type {
-  AppState,
-  BuyerTypeENUM,
-  Calculations,
-  CreateLeadAndBookingRequest,
-  EnquiryLead,
-  ProfileNameENUM,
-} from '$mct/types';
+import type { AppState, BuyerTypeENUM, Calculations, CreateLeadAndBookingRequest } from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
-import { debugError, debugLog, debugWarn } from '$utils/debug';
+import { debugError, debugWarn } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -143,10 +136,7 @@ export class AppointmentManager {
   }
 
   public init(options?: AppointmentStageOptions): void {
-    if (this.isInitialised) {
-      debugLog('🔄 [AppointmentManager] Already initialised');
-      return;
-    }
+    if (this.isInitialised) return;
     this.isInitialised = true;
     this.setLoadingState(true);
 

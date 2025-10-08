@@ -132,9 +132,6 @@ export class HandleMini {
 
     const body = JSON.stringify({ input: this.values });
 
-    console.log(headers);
-    console.log(body);
-
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers,

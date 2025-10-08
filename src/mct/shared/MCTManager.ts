@@ -64,10 +64,7 @@ const questionRegistry = QuestionRegistry.getInstance();
 export const MCTManager = {
   start() {
     const dom = this.initDOM();
-    if (!dom) {
-      debugLog('🔄 MCT component not found');
-      return;
-    }
+    if (!dom) return;
 
     this.initState();
     this.initICID();
@@ -80,13 +77,13 @@ export const MCTManager = {
     debugLog('🔄 Initializing MCTManager...');
     debugLog(VERSION);
 
-    // Subscribe to state changes for debugging
-    stateManager.subscribe((event) => {
-      debugLog('🔄 State changed via new manager:', {
-        changes: event.changes,
-        timestamp: new Date().toISOString(),
-      });
-    });
+    // // Subscribe to state changes for debugging
+    // stateManager.subscribe((event) => {
+    //   debugLog('🔄 State changed via new manager:', {
+    //     changes: event.changes,
+    //     timestamp: new Date().toISOString(),
+    //   });
+    // });
 
     stateManager.loadFromPersistence();
     stateManager.enableAutoPersistence();
@@ -221,7 +218,7 @@ export const MCTManager = {
     }
 
     eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
-      debugLog('🔄 Stage complete', event);
+      // debugLog('🔄 Stage complete', event);
 
       let nextStageId;
       switch (event.stageId) {
@@ -249,7 +246,7 @@ export const MCTManager = {
   },
 
   goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
-    debugLog('🔄 Going to stage', stageId);
+    // debugLog('🔄 Going to stage', stageId);
 
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
@@ -425,7 +422,7 @@ export const MCTManager = {
 
     try {
       const response = await logUserEventsAPI.logEvent(payload);
-      debugLog('LogUserEvent: ', response);
+      // debugLog('LogUserEvent: ', response);
     } catch (error) {
       debugError('error', error);
     }

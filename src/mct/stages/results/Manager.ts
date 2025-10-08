@@ -529,7 +529,6 @@ export class ResultsManager {
     if (!input) return null;
 
     try {
-      debugLog('🔄 [ResultsManager] fetchProducts', input);
       const response = await productsAPI.search(input);
       return response;
     } catch (error) {

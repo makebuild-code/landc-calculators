@@ -65,7 +65,6 @@ export class APIClient {
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     debugLog('🔄 Request URL: ', url);
-    debugLog('🔄 Request Options: ', options);
     const headers = { ...this.defaultHeaders, ...options.headers };
 
     const requestOptions: RequestInit = {
