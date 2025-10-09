@@ -28,6 +28,7 @@ import type {
   CalculationKeysENUM,
   Booking,
   EnquiryForm,
+  ProductsFilters,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
@@ -361,8 +362,8 @@ export const MCTManager = {
     stateManager.set('filters', filters);
   },
 
-  getFilters(): Record<string, any> {
-    return stateManager.get('filters');
+  getFilters(): ProductsFilters {
+    return stateManager.get('filters') as ProductsFilters;
   },
 
   setProduct(productId: number) {
