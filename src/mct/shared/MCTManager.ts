@@ -77,13 +77,13 @@ export const MCTManager = {
     debugLog('🔄 Initializing MCTManager...');
     debugLog(VERSION);
 
-    // // Subscribe to state changes for debugging
-    // stateManager.subscribe((event) => {
-    //   debugLog('🔄 State changed via new manager:', {
-    //     changes: event.changes,
-    //     timestamp: new Date().toISOString(),
-    //   });
-    // });
+    // Subscribe to state changes for debugging
+    stateManager.subscribe((event) => {
+      debugLog('🔄 State changed via new manager:', {
+        changes: event.changes,
+        timestamp: new Date().toISOString(),
+      });
+    });
 
     stateManager.loadFromPersistence();
     stateManager.enableAutoPersistence();
