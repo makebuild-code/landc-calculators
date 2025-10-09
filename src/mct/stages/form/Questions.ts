@@ -71,7 +71,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     if (this.getStateValue('initialName') === 'Lender') this.handleLenderSelect();
   }
 
-  private getProfile(): Profile | undefined {
+  public getProfile(): Profile | undefined {
     const groupName = this.getStateValue('groupName') as ProfileNameENUM;
     const profile = PROFILES_CONFIG.profiles.find((profile) => profile.name === groupName);
     return profile;
@@ -142,6 +142,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public require(): void {
+    if (this.isRequired()) return;
     this.setStateValue('isRequired', true);
     this.emit(FormEventNames.QUESTION_REQUIRED, {
       question: this,
@@ -151,14 +152,14 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public unrequire(): void {
+    this.showQuestion(false);
+    if (!this.isRequired()) return;
     this.setStateValue('isRequired', false);
     this.emit(FormEventNames.QUESTION_UNREQUIRED, {
       question: this,
       questionId: this.name,
       groupName: this.getStateValue('groupName'),
     });
-
-    this.showQuestion(false);
   }
 
   public showQuestion(show: boolean): void {
