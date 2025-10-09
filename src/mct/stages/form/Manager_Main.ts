@@ -3,7 +3,7 @@ import { MainGroup, OutputGroup, type GroupOptions } from './Groups';
 import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import type { LenderDetails, Profile } from '$mct/types';
+import type { Profile } from '$mct/types';
 import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
@@ -284,6 +284,7 @@ export class MainFormManager extends FormManager {
 
     // Show the profile group if it exists
     const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
+    profileGroup.updateGroupState();
     profileGroup.show();
 
     // Show output group if it exists and profile is complete
