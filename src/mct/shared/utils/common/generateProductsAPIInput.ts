@@ -8,6 +8,7 @@ import {
   PurchRemoENUM,
   RepaymentTypeENUM,
   ResiBtlENUM,
+  SapValueENUM,
   SchemePeriodsENUM,
   SchemePurposeENUM,
   SchemeTypesENUM,
@@ -21,6 +22,7 @@ import {
   type RemoInputs,
 } from '$mct/types';
 import { getEnumKey, getValueAsLandC } from '$mct/utils';
+import { debugLog } from '$utils/debug';
 
 export const generateProductsAPIInput = (options: ProductsOptions = {}): ProductsRequest | null => {
   MCTManager.recalculate();
@@ -112,41 +114,41 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   // If remortgage, NewBuild is undefined. If in answers, use it. If not, use options. If not, use filters config.
   const NewBuild =
     SchemePurpose === SchemePurposeENUM.Remortgage
-      ? undefined
-      : miscValues.NewBuild === 'true'
+      ? null
+      : miscValues.NewBuild === 'true' || miscValues.NewBuild === true
         ? true
-        : miscValues.NewBuild === 'false'
+        : miscValues.NewBuild === 'false' || miscValues.NewBuild === false
           ? false
-          : FILTERS_CONFIG.NewBuild === 'true'
+          : FILTERS_CONFIG.NewBuild === true
             ? true
             : false;
 
-  // // First try options, then filters config
-  // // @TODO: check that SapValue flag is being passed through options
-  // const SapValue =
-  //   options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
-  //     ? SapValueENUM.No
-  //     : SapValueENUM.Yes;
+  // First try options, then filters config
+  // @TODO: check that SapValue flag is being passed through options
+  const SapValue =
+    options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
+      ? SapValueENUM.No
+      : SapValueENUM.Yes;
 
   const Features: ProductsRequestFeatures = {};
   // if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
   if (miscValues.Offset) Features.Offset = miscValues.Offset;
   if (miscValues.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = miscValues.EarlyRepaymentCharge;
-  if (NewBuild !== undefined) Features.NewBuild = NewBuild;
+  if (NewBuild !== null) Features.NewBuild = NewBuild;
 
-  const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
-
-  console.log('[generateProductsAPIInput] filters', { filters });
+  debugLog('[generateProductsAPIInput] filters', { filters });
 
   const ShowSharedOwnership = filters.ShowSharedOwnership ?? FILTERS_CONFIG.ShowSharedOwnership;
 
   const input: ProductsRequest = {
     ...endOfAnswersInput,
-    SapValue: 100,
+    SapValue,
     Features,
-    IncludeRetention,
     ShowSharedOwnership,
   };
+
+  const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
+  if (IncludeRetention !== undefined) input.IncludeRetention = IncludeRetention;
 
   return input;
 };
