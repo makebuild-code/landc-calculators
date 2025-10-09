@@ -84,7 +84,7 @@ export enum SortColumnENUM {
 
 export enum SapValueENUM {
   Yes = 100,
-  No = 80,
+  No = 69,
 }
 
 export enum ProductsRequestENUM {
