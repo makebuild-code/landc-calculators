@@ -3,12 +3,17 @@ import type { BaseResponse, LenderNames } from './base';
 // Options for product requests
 export interface ProductsOptions {
   NumberOfResults?: number;
-  SortColumn?: SortColumnENUM;
-  HelpToBuy?: boolean;
+}
+
+export interface ProductsFilters {
+  SchemePeriods?: keyof typeof SchemePeriodsENUM;
+  SchemeTypes?: keyof typeof SchemeTypesENUM;
   Offset?: boolean;
   EarlyRepaymentCharge?: boolean;
-  NewBuild?: boolean | 'true' | 'false';
-  SapValue?: number;
+  ShowSharedOwnership?: boolean;
+  NewBuild?: boolean;
+  SapValue?: keyof typeof SapValueENUM;
+  SortColumn?: SortColumnENUM;
 }
 
 export enum ProductsRequestFeaturesENUM {
