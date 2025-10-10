@@ -12,7 +12,7 @@ import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { FormEventNames, GroupNameENUM, InputKeysENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
@@ -117,35 +117,33 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
   abstract handleEnter(index: number): void;
 
   protected bindEvents(): void {
-    // Listen to question changes
-    this.on(FormEventNames.QUESTION_CHANGED, (event) => {
-      if (this.questions.some((q) => q.getQuestionName && q.getQuestionName() === event.name)) {
-        this.updateGroupState();
-      }
-    });
-
-    // Listen to question validation
-    this.on(FormEventNames.QUESTION_VALIDATED, (event) => {
-      if (this.questions.some((q) => q.getQuestionName && q.getQuestionName() === event.name)) {
-        this.updateGroupState();
-      }
-    });
+    // // Listen to question changes
+    // this.on(FormEventNames.QUESTION_CHANGED, (event) => {
+    //   if (this.questions.some((q) => q.getQuestionName && q.getQuestionName() === event.name)) {
+    //     this.updateGroupState();
+    //   }
+    // });
+    // // Listen to question validation
+    // this.on(FormEventNames.QUESTION_VALIDATED, (event) => {
+    //   if (this.questions.some((q) => q.getQuestionName && q.getQuestionName() === event.name)) {
+    //     this.updateGroupState();
+    //   }
+    // });
   }
 
-  private updateGroupState(): void {
+  public updateGroupState(): void {
     const validQuestions = new Set<string>();
     let completedQuestions = 0;
     let isComplete = true;
 
     this.questions.forEach((q) => {
-      if (q.getQuestionName) {
-        const questionId = q.getQuestionName();
-        if (q.isValid()) {
-          validQuestions.add(questionId);
-          completedQuestions++;
-        } else if (q.isRequired()) {
-          isComplete = false;
-        }
+      if (!q.getQuestionName) return;
+      const questionId = q.getQuestionName();
+      if (q.isValid()) {
+        validQuestions.add(questionId);
+        completedQuestions += 1;
+      } else if (q.isRequired()) {
+        isComplete = false;
       }
     });
 
@@ -156,11 +154,11 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
       totalQuestions: this.questions.length,
     });
 
-    // Emit group state change
-    this.emit(FormEventNames.GROUP_COMPLETED, {
-      groupId: this.state.name || '',
-      answers: [], // TODO: Fix this - needs proper InputData[]
-    });
+    // // Emit group state change
+    // this.emit(FormEventNames.GROUP_COMPLETED, {
+    //   groupId: this.state.name || '',
+    //   answers: [], // TODO: Fix this - needs proper InputData[]
+    // });
   }
 
   public show(): void {
@@ -207,6 +205,17 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
       else if (shouldBeVisible) question.require();
       else question.unrequire();
     });
+
+    const lenderQuestion = this.questions.find((q) => q.getStateValue('initialName') === InputKeysENUM.Lender);
+    if (!lenderQuestion) return;
+
+    const lenderQuestionIndex = this.questions.indexOf(lenderQuestion);
+    const allBeforeLenderAreValid = this.questions
+      .slice(0, lenderQuestionIndex)
+      .filter((q) => q.shouldBeVisible(currentAnswers, this.isVisible))
+      .every((q) => q.isValid());
+
+    if (allBeforeLenderAreValid && lenderQuestion.isRequired()) lenderQuestion.activate();
   }
 
   public isComplete(): boolean {
@@ -261,6 +270,7 @@ export class MainGroup extends QuestionGroup {
    */
   public handleChange(index: number): void {
     if (!(this.formManager instanceof MainFormManager)) return;
+    this.updateGroupState();
 
     this.activeQuestionIndex = index;
     this.formManager.activeGroupIndex = this.state.index;
@@ -449,7 +459,7 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
   }
 
   public update(): void {
-    if (!this.state.activated) return;
+    if (!this.state.activated || !this.state.isVisible) return;
     this.handleProducts();
   }
 

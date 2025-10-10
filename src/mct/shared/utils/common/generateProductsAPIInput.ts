@@ -21,6 +21,7 @@ import {
   type RemoInputs,
 } from '$mct/types';
 import { getEnumKey, getValueAsLandC } from '$mct/utils';
+import { getLenderID } from './getLenderID';
 
 export const generateProductsAPIInput = (options: ProductsOptions = {}): ProductsRequest | null => {
   MCTManager.recalculate();
@@ -137,8 +138,18 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     ShowSharedOwnership,
   };
 
-  const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
-  if (IncludeRetention !== undefined) input.IncludeRetention = IncludeRetention;
+  if (PurchRemo === PurchRemoENUM.Remortgage) {
+    const IncludeRetention = MCTManager.getCalculation(CalculationKeysENUM.IncludeRetention) as boolean;
+    input.IncludeRetention = IncludeRetention;
+
+    const lenderString = (answers as InputsByEndOfForm & RemoInputs)[InputKeysENUM.Lender];
+    const retentionLenderId =
+      ResiBtl === getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential)
+        ? getLenderID(lenderString, 'residential')
+        : getLenderID(lenderString, 'btl');
+
+    if (retentionLenderId) input.RetentionLenderId = Number(retentionLenderId);
+  }
 
   return input;
 };

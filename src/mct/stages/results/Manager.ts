@@ -28,7 +28,7 @@ import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { EventBus } from '$mct/components';
 import { Sidebar } from './Sidebar';
-import { debugError, debugLog } from '$utils/debug';
+import { debugError } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
 const sidebarAttr = DOM_CONFIG.attributes.sidebar;
@@ -248,7 +248,6 @@ export class ResultsManager {
 
   private handleUpdateAnswers(): void {
     this.updateAnswersButton.addEventListener('click', () => {
-      console.log('handleUpdateAnswers: ', this.sidebar);
       this.sidebar.show();
     });
   }
@@ -529,7 +528,6 @@ export class ResultsManager {
     if (!input) return null;
 
     try {
-      debugLog('🔄 [ResultsManager] fetchProducts', input);
       const response = await productsAPI.search(input);
       return response;
     } catch (error) {

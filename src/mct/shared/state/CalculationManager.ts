@@ -105,7 +105,6 @@ export class CalculationManager {
   private borrowAmount = (answers: Inputs): Partial<Calculations> => {
     return { ...this.calculateLoanToValue(answers), ...this.calculateMortgageAmount(answers) };
   };
-
   /**
    * @returns { LTV: number }
    * - If Purchase, LTV = (PropertyValue - DepositAmount) / PropertyValue

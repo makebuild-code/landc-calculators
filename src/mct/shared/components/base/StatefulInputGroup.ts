@@ -204,7 +204,7 @@ export abstract class StatefulInputGroup<
       case 'select-one':
         const select = this.inputs[0] as HTMLSelectElement;
         const selectedOption = select.options[select.selectedIndex];
-        isValid = typeof value === 'string' && selectedOption.getAttribute('value') === value;
+        isValid = typeof value === 'string' && selectedOption?.getAttribute('value') === value;
         break;
     }
 
@@ -323,16 +323,23 @@ export abstract class StatefulInputGroup<
     return input.value;
   }
 
-  protected setSelectValue(value: SelectValue): void {
-    const input = this.inputs[0];
+  protected setSelectValue(value?: SelectValue): void {
+    const input = this.inputs[0] as HTMLSelectElement;
     if (!input) throw new Error('No select input found for select question');
-    input.value = value;
+
+    const options = [...input.options];
+    const selectedOption = options.find((option) => option.value === value);
+    const selectedValue = selectedOption ? selectedOption.value : options[0].value || '';
+    input.value = selectedValue;
   }
 
   protected resetSelectInput(): void {
-    const input = this.inputs[0];
+    const input = this.inputs[0] as HTMLSelectElement;
     if (!input) throw new Error('No select input found for select question');
-    input.value = '';
+
+    const options = [...input.options];
+    const selectedOption = options[0];
+    input.value = selectedOption.value;
   }
 
   protected setSelectOptions(options: SelectOption[]): void {
@@ -348,6 +355,11 @@ export abstract class StatefulInputGroup<
       const optionEl = document.createElement('option');
       if (option.value) optionEl.value = option.value;
       optionEl.text = option.label;
+      if (option.dataset) {
+        Object.entries(option.dataset).forEach(([key, value]) => {
+          optionEl.dataset[key] = value;
+        });
+      }
       input.appendChild(optionEl);
     });
   }
