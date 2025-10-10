@@ -28,12 +28,13 @@ import type {
   CalculationKeysENUM,
   Booking,
   EnquiryForm,
+  ProductsFilters,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog } from '$utils/debug';
 
-const VERSION = '🔄 MCT DIST v34';
+const VERSION = '🔄 MCT DIST v35';
 const attr = DOM_CONFIG.attributes;
 const eventBus = EventBus.getInstance();
 
@@ -358,8 +359,8 @@ export const MCTManager = {
     stateManager.set('filters', filters);
   },
 
-  getFilters(): Record<string, any> {
-    return stateManager.get('filters');
+  getFilters(): ProductsFilters {
+    return stateManager.get('filters') as ProductsFilters;
   },
 
   setProduct(productId: number) {

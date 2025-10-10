@@ -8,11 +8,11 @@ import {
   PurchRemoENUM,
   RepaymentTypeENUM,
   ResiBtlENUM,
+  SapValueENUM,
   SchemePeriodsENUM,
   SchemePurposeENUM,
   SchemeTypesENUM,
   SortColumnENUM,
-  StageIDENUM,
   type InputsByEndOfForm,
   type ProductsOptions,
   type ProductsRequest,
@@ -90,11 +90,9 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const SchemePeriods = JSON.parse(getValueAsLandC(InputKeysENUM.SchemePeriods) as SchemePeriodsENUM); // This returns an array as expected
   const SchemeTypes = JSON.parse(getValueAsLandC(InputKeysENUM.SchemeTypes) as SchemeTypesENUM); // This returns an array as expected
 
-  const currentStage = MCTManager.getCurrentStage();
   const filters = MCTManager.getFilters();
-  const miscValues = currentStage === StageIDENUM.Questions ? { ...filters, ...options } : { ...options, ...filters };
-  const SortColumn = miscValues.SortColumn ?? SortColumnENUM.Rate;
-  const NumberOfResults = miscValues.NumberOfResults ?? 1;
+  const SortColumn = filters.SortColumn ?? SortColumnENUM.Rate;
+  const NumberOfResults = options.NumberOfResults ?? 1;
 
   const endOfAnswersInput: ProductsRequest = {
     PropertyValue,
@@ -110,36 +108,32 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
     SortColumn,
   };
 
-  // If remortgage, NewBuild is undefined. If in answers, use it. If not, use options. If not, use filters config.
+  // If remortgage, NewBuild is null. Use filter value and fallback to filters config.
   const NewBuild =
     SchemePurpose === SchemePurposeENUM.Remortgage
-      ? undefined
-      : miscValues.NewBuild === 'true'
-        ? true
-        : miscValues.NewBuild === 'false'
-          ? false
-          : FILTERS_CONFIG.NewBuild === 'true'
-            ? true
-            : false;
+      ? null
+      : filters.NewBuild !== null
+        ? filters.NewBuild
+        : FILTERS_CONFIG.NewBuild;
 
-  // // First try options, then filters config
-  // // @TODO: check that SapValue flag is being passed through options
-  // const SapValue =
-  //   options.SapValue ?? FILTERS_CONFIG.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
-  //     ? SapValueENUM.No
-  //     : SapValueENUM.Yes;
+  // Use filter value and fallback to filters config
+  const SapValue =
+    filters.SapValue === getEnumKey(SapValueENUM, SapValueENUM.Yes)
+      ? SapValueENUM.Yes
+      : filters.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
+        ? SapValueENUM.No
+        : FILTERS_CONFIG.SapValue;
 
   const Features: ProductsRequestFeatures = {};
-  // if (options.HelpToBuy) Features.HelpToBuy = options.HelpToBuy;
-  if (miscValues.Offset) Features.Offset = miscValues.Offset;
-  if (miscValues.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = miscValues.EarlyRepaymentCharge;
-  if (NewBuild !== undefined) Features.NewBuild = NewBuild;
+  if (filters.Offset) Features.Offset = filters.Offset;
+  if (filters.EarlyRepaymentCharge) Features.EarlyRepaymentCharge = filters.EarlyRepaymentCharge;
+  if (NewBuild !== null) Features.NewBuild = NewBuild === 'true' ? true : false;
 
   const ShowSharedOwnership = filters.ShowSharedOwnership ?? FILTERS_CONFIG.ShowSharedOwnership;
 
   const input: ProductsRequest = {
     ...endOfAnswersInput,
-    SapValue: 100,
+    SapValue,
     Features,
     ShowSharedOwnership,
   };
