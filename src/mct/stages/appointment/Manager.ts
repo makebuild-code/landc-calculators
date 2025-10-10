@@ -39,6 +39,7 @@ import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { debugError, debugWarn } from '$utils/debug';
 import { getLenderID } from 'src/mct/shared/utils/common/getLenderID';
+import { getEnumKey } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -633,9 +634,10 @@ export class AppointmentManager {
   }
 
   private createRemortgageEnquiry(state: AppState, answers: Inputs, calculations: Calculations): EnquiryRemortgage {
-    const resiBtlValue = this.getStringAnswer(answers, InputKeysENUM.ResiBtl) as ResiBtlENUM;
-    const resiBtlKey = resiBtlValue === ResiBtlENUM.Residential ? 'residential' : 'btl';
-    const lenderId = getLenderID(this.getStringAnswer(answers, InputKeysENUM.LenderID), resiBtlKey) as string;
+    const resiBtlValue = this.getStringAnswer(answers, InputKeysENUM.ResiBtl);
+    const resiBtlKey = resiBtlValue === getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential) ? 'residential' : 'btl';
+    const lender = this.getStringAnswer(answers, InputKeysENUM.Lender);
+    const CurrentLender = getLenderID(lender, resiBtlKey) as string;
 
     return {
       ...this.createBaseEnquiry(state, answers, calculations, PurchRemoENUM.Remortgage),
@@ -643,8 +645,7 @@ export class AppointmentManager {
         DatePlanToRemoENUM,
         this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo)
       ) as DatePlanToRemoENUM,
-      CurrentLender: this.getStringAnswer(answers, InputKeysENUM.Lender),
-      LenderID: lenderId,
+      CurrentLender,
     };
   }
 
