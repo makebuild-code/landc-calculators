@@ -525,7 +525,6 @@ export class ResultsManager {
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput({
       NumberOfResults: 100,
-      SortColumn: this.getSortColumnValue(),
     });
     if (!input) return null;
 

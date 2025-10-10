@@ -370,13 +370,14 @@ export abstract class StatefulInputGroup<
   }
 
   public setValue(value: InputValue): void {
+    console.log('setValue: ', { value, element: this.element, typeOfValue: typeof value });
     switch (this.getStateValue('type')) {
       case 'radio':
         if (typeof value !== 'string') throw new Error('Value for radio question must be a string');
         this.setRadioValue(value);
         break;
       case 'checkbox':
-        if (typeof value !== 'boolean' || !Array.isArray(value))
+        if (typeof value !== 'boolean' && !Array.isArray(value))
           throw new Error('Value for checkbox question must be boolean or an array');
         this.setCheckboxValues(value);
         break;
