@@ -1,6 +1,6 @@
 import { QuestionComponent } from './Questions';
 import { QuestionRegistry } from './QuestionRegistry';
-import { FormEventNames, InputKeysENUM, type InputValue } from '$mct/types';
+import { FormEventNames, GroupNameENUM, ProfileNameENUM, type InputValue } from '$mct/types';
 
 export interface QuestionFactoryOptions {
   groupName: string;
@@ -105,7 +105,9 @@ export class QuestionFactory {
     // The onInit method will set the name from initialName
     const checkAndSetup = () => {
       const questionName = question.getQuestionName();
-      if (!questionName) {
+      const groupName = question.getGroupName();
+      const source = question.getSource();
+      if (!questionName || !groupName || !source) {
         // If not ready yet, try again after a short delay
         setTimeout(checkAndSetup, 10);
         return;
@@ -113,12 +115,18 @@ export class QuestionFactory {
 
       // Listen for changes on this question
       const unsubscribe = (question as any).on(FormEventNames.QUESTION_CHANGED, (event: any) => {
+        if (event.name !== questionName || event.groupName !== groupName || event.source !== source) return;
+
         // Get all questions with the same initialName
         const registry = QuestionRegistry.getInstance();
-        const allQuestionsWithSameName = registry.getAllByName(event.name);
+
+        const questionsToSync =
+          event.groupName === GroupNameENUM.CustomerIdentifier
+            ? registry.getAllByName(event.name)
+            : registry.getAllByNameAndPurchRemo(question);
 
         // Update all other questions with the same name
-        allQuestionsWithSameName.forEach((otherQuestion) => {
+        questionsToSync.forEach((otherQuestion) => {
           // Don't update the question that triggered the change
           if (otherQuestion !== question) {
             // Use the value from the event directly

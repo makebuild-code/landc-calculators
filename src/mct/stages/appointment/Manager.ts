@@ -31,20 +31,15 @@ import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
 import { getOrdinalSuffix } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
-import type {
-  AppState,
-  BuyerTypeENUM,
-  Calculations,
-  CreateLeadAndBookingRequest,
-  EnquiryLead,
-  ProfileNameENUM,
-} from '$mct/types';
+import type { AppState, BuyerTypeENUM, Calculations, CreateLeadAndBookingRequest } from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
-import { debugError, debugLog, debugWarn } from '$utils/debug';
+import { debugError, debugWarn } from '$utils/debug';
+import { getLenderID } from 'src/mct/shared/utils/common/getLenderID';
+import { getEnumKey } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -143,10 +138,7 @@ export class AppointmentManager {
   }
 
   public init(options?: AppointmentStageOptions): void {
-    if (this.isInitialised) {
-      debugLog('🔄 [AppointmentManager] Already initialised');
-      return;
-    }
+    if (this.isInitialised) return;
     this.isInitialised = true;
     this.setLoadingState(true);
 
@@ -642,13 +634,18 @@ export class AppointmentManager {
   }
 
   private createRemortgageEnquiry(state: AppState, answers: Inputs, calculations: Calculations): EnquiryRemortgage {
+    const resiBtlValue = this.getStringAnswer(answers, InputKeysENUM.ResiBtl);
+    const resiBtlKey = resiBtlValue === getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential) ? 'residential' : 'btl';
+    const lender = this.getStringAnswer(answers, InputKeysENUM.Lender);
+    const CurrentLender = getLenderID(lender, resiBtlKey) as string;
+
     return {
       ...this.createBaseEnquiry(state, answers, calculations, PurchRemoENUM.Remortgage),
       DatePlanToRemo: getEnumValue(
         DatePlanToRemoENUM,
         this.getStringAnswer(answers, InputKeysENUM.DatePlanToRemo)
       ) as DatePlanToRemoENUM,
-      CurrentLender: this.getStringAnswer(answers, InputKeysENUM.Lender),
+      CurrentLender,
     };
   }
 

@@ -28,6 +28,7 @@ import type {
   CalculationKeysENUM,
   Booking,
   EnquiryForm,
+  ProductsFilters,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
@@ -64,10 +65,7 @@ const questionRegistry = QuestionRegistry.getInstance();
 export const MCTManager = {
   start() {
     const dom = this.initDOM();
-    if (!dom) {
-      debugLog('🔄 MCT component not found');
-      return;
-    }
+    if (!dom) return;
 
     this.initState();
     this.initICID();
@@ -221,7 +219,7 @@ export const MCTManager = {
     }
 
     eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
-      debugLog('🔄 Stage complete', event);
+      // debugLog('🔄 Stage complete', event);
 
       let nextStageId;
       switch (event.stageId) {
@@ -249,7 +247,7 @@ export const MCTManager = {
   },
 
   goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
-    debugLog('🔄 Going to stage', stageId);
+    // debugLog('🔄 Going to stage', stageId);
 
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
@@ -361,8 +359,8 @@ export const MCTManager = {
     stateManager.set('filters', filters);
   },
 
-  getFilters(): Record<string, any> {
-    return stateManager.get('filters');
+  getFilters(): ProductsFilters {
+    return stateManager.get('filters') as ProductsFilters;
   },
 
   setProduct(productId: number) {
@@ -425,7 +423,7 @@ export const MCTManager = {
 
     try {
       const response = await logUserEventsAPI.logEvent(payload);
-      debugLog('LogUserEvent: ', response);
+      // debugLog('LogUserEvent: ', response);
     } catch (error) {
       debugError('error', error);
     }

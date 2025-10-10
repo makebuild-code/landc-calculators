@@ -28,7 +28,7 @@ import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { EventBus } from '$mct/components';
 import { Sidebar } from './Sidebar';
-import { debugError, debugLog } from '$utils/debug';
+import { debugError } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.results;
 const sidebarAttr = DOM_CONFIG.attributes.sidebar;
@@ -524,12 +524,10 @@ export class ResultsManager {
   private async fetchProducts(): Promise<ProductsResponse | null> {
     const input = generateProductsAPIInput({
       NumberOfResults: 100,
-      SortColumn: this.getSortColumnValue(),
     });
     if (!input) return null;
 
     try {
-      debugLog('🔄 [ResultsManager] fetchProducts', input);
       const response = await productsAPI.search(input);
       return response;
     } catch (error) {

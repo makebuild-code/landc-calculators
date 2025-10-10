@@ -11,6 +11,9 @@ export type InputType = 'radio' | 'checkbox' | 'text' | 'number' | 'select-one';
 export type SelectOption = {
   value?: string;
   label: string;
+  dataset?: {
+    [key: string]: string;
+  };
 };
 
 // Input value types at the point of retrieval

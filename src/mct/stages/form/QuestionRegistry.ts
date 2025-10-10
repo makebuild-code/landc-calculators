@@ -1,4 +1,15 @@
-import type { GroupNameENUM, InputData, InputKeysENUM, InputValue, Inputs } from '$mct/types';
+import { PROFILES_CONFIG } from '$mct/config';
+import { MCTManager } from '$mct/manager';
+import {
+  PurchRemoENUM,
+  type GroupNameENUM,
+  type InputData,
+  type InputKeysENUM,
+  type InputValue,
+  type Inputs,
+} from '$mct/types';
+import { getEnumKey } from '$mct/utils';
+import type { Question } from '@finsweet/ts-utils/dist/types/apis/Greenhouse';
 import type { QuestionComponent } from './Questions';
 
 /**
@@ -116,6 +127,24 @@ export class QuestionRegistry {
       });
     });
     return results;
+  }
+
+  /**
+   * Get all questions with the same name and PurchRemo value
+   */
+  public getAllByNameAndPurchRemo(question: QuestionComponent): QuestionComponent[] {
+    // Get all questions with the same name
+    const questions = this.questions.get(question.getQuestionName());
+    if (!questions) return [];
+
+    // Get the PurchRemo key so we can filter to find the profiles that match
+    const currentProfile = question.getProfile();
+    if (!currentProfile) return [];
+
+    // Get all questions with the same name and PurchRemo value
+    return Array.from(questions).filter(
+      (question) => question.getProfile()?.requirements.PurchRemo === currentProfile.requirements.PurchRemo
+    );
   }
 
   /**
