@@ -34,7 +34,7 @@ import { getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog } from '$utils/debug';
 
-const VERSION = '🔄 MCT DIST v35';
+const VERSION = '🔄 MCT DIST v2.0.0';
 const attr = DOM_CONFIG.attributes;
 const eventBus = EventBus.getInstance();
 
