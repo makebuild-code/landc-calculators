@@ -1,6 +1,6 @@
 import { DOM_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
-import { GroupNameENUM, FormEventNames, InputKeysENUM } from '$mct/types';
+import { GroupNameENUM, FormEventNames, InputKeysENUM, StageIDENUM } from '$mct/types';
 import { queryElement, queryElements } from '$utils/dom';
 import { MainGroup, type GroupOptions } from '../form/Groups';
 import { FormManager } from '../form/Manager_Base';
@@ -14,12 +14,16 @@ export class Sidebar extends FormManager {
   private closeButtons: HTMLButtonElement[];
   protected groups: SidebarGroup[] = [];
   protected source: 'sidebar' = 'sidebar';
+  private showSidebar: boolean = false;
 
   constructor(component: HTMLElement) {
     super(component);
     this.list = queryElement(`[${questionAttr.components}="list"]`, component) as HTMLElement;
     this.updateButton = queryElement(`[${sidebarAttr.components}="update"]`, component) as HTMLButtonElement;
     this.closeButtons = queryElements(`[${sidebarAttr.components}="close"]`, component) as HTMLButtonElement[];
+
+    const params = new URLSearchParams(window.location.search);
+    this.showSidebar = params.get('sidebar') === 'true';
   }
 
   public init(): void {
@@ -66,6 +70,10 @@ export class Sidebar extends FormManager {
   }
 
   public show(): void {
+    if (!this.showSidebar) {
+      MCTManager.goToStage(StageIDENUM.Questions);
+      return;
+    }
     this.syncQuestionsToFilters();
     this.groups.forEach((group) => group.updateActiveQuestions());
     this.updateGroupVisibility();
