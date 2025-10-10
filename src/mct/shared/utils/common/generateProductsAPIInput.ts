@@ -20,7 +20,7 @@ import {
   type PurchInputs,
   type RemoInputs,
 } from '$mct/types';
-import { getEnumKey, getValueAsLandC } from '$mct/utils';
+import { getEnumKey, getEnumValue, getValueAsLandC } from '$mct/utils';
 import { getLenderID } from './getLenderID';
 
 export const generateProductsAPIInput = (options: ProductsOptions = {}): ProductsRequest | null => {
@@ -122,7 +122,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
       ? SapValueENUM.Yes
       : filters.SapValue === getEnumKey(SapValueENUM, SapValueENUM.No)
         ? SapValueENUM.No
-        : FILTERS_CONFIG.SapValue;
+        : getEnumValue(SapValueENUM, FILTERS_CONFIG.SapValue);
 
   const Features: ProductsRequestFeatures = {};
   if (filters.Offset) Features.Offset = filters.Offset;

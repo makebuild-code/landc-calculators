@@ -1,7 +1,8 @@
 import { SapValueENUM, type CONFIG_FILTERS } from '$mct/types';
+import { getEnumKey } from '$mct/utils';
 
 export const FILTERS_CONFIG: CONFIG_FILTERS = {
   NewBuild: 'false',
-  SapValue: SapValueENUM.No,
+  SapValue: getEnumKey(SapValueENUM, SapValueENUM.No),
   ShowSharedOwnership: false,
 };

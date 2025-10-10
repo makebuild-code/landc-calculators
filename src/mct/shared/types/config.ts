@@ -52,7 +52,7 @@ export interface CONFIG_EVENTS {
 
 export interface CONFIG_FILTERS {
   NewBuild: 'true' | 'false';
-  SapValue: SapValueENUM;
+  SapValue: keyof typeof SapValueENUM;
   ShowSharedOwnership: boolean;
 }
 
