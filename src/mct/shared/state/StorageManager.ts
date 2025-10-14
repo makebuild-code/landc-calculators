@@ -74,6 +74,7 @@ export class StorageManager {
       }
 
       if (!data) return null;
+      if (Object.keys(data).length === 0) return {} as T;
 
       // Determine if we should deserialize the data
       const shouldDeserialize = config.serialize === true;

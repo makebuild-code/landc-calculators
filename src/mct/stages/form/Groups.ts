@@ -137,10 +137,8 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
     let isComplete = true;
 
     this.questions.forEach((q) => {
-      if (!q.getQuestionName) return;
-      const questionId = q.getQuestionName();
       if (q.isValid()) {
-        validQuestions.add(questionId);
+        validQuestions.add(q.getQuestionName());
         completedQuestions += 1;
       } else if (q.isRequired()) {
         isComplete = false;
@@ -153,12 +151,6 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
       isComplete,
       totalQuestions: this.questions.length,
     });
-
-    // // Emit group state change
-    // this.emit(FormEventNames.GROUP_COMPLETED, {
-    //   groupId: this.state.name || '',
-    //   answers: [], // TODO: Fix this - needs proper InputData[]
-    // });
   }
 
   public show(): void {
@@ -195,10 +187,10 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
 
     this.questions.forEach((question, index) => {
       const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
-      if (index === 0 && shouldBeVisible) question.activate();
-
       const isValid = question.isValid();
-      if (shouldBeVisible && context === 'sidebar') {
+
+      if (index === 0 && shouldBeVisible && context === 'main') question.activate();
+      else if (shouldBeVisible && context === 'sidebar') {
         question.updateVisualState(isValid);
         question.activate();
       } else if (shouldBeVisible && isValid) question.activate();
@@ -219,7 +211,7 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
   }
 
   public isComplete(): boolean {
-    return this.state.isComplete;
+    return this.getStateValue('isComplete');
   }
 
   public reset(): void {
