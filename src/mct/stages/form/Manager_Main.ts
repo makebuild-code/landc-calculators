@@ -272,6 +272,8 @@ export class MainFormManager extends FormManager {
   public updateGroupVisibility(): void {
     // Always show customer-identifier
     const identifierGroup = this.getGroupByName(GroupNameENUM.CustomerIdentifier) as MainGroup;
+    identifierGroup.updateActiveQuestions();
+    identifierGroup.updateGroupState();
     identifierGroup.show();
 
     // Get the profile and update the tag (update text or remove tag)
@@ -284,6 +286,7 @@ export class MainFormManager extends FormManager {
 
     // Show the profile group if it exists
     const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
+    profileGroup.updateActiveQuestions();
     profileGroup.updateGroupState();
     profileGroup.show();
 

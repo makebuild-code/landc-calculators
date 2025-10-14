@@ -37,7 +37,7 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     // Define the custom state extensions for QuestionComponent
     const customState: Partial<QuestionState> = {
       isVisible: false,
-      isRequired: false,
+      isRequired: true,
       dependsOn: null,
       dependsOnValue: null,
       context: config.source,
