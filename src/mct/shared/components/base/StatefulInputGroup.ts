@@ -179,13 +179,12 @@ export abstract class StatefulInputGroup<
 
   public isValid(): boolean {
     // Check if any of the inputs are invalid using the native validation API
+    let isValid = false;
     const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
-    if (hasInvalidInput) return false;
+    if (hasInvalidInput) return isValid;
 
     const value = this.getValue();
     const type = this.getStateValue('type');
-
-    let isValid = false;
 
     // Additional type-specific validation
     switch (type) {

@@ -79,6 +79,7 @@ export abstract class StatefulComponent<T = any> extends InteractiveComponent {
 
     this.previousState = { ...this.state };
     this.state = newState;
+    this.log('updated state', { updates, currentState: this.state, previousState: this.previousState });
 
     // Persist if enabled
     if (this.persistConfig?.persistState && this.persistConfig.persistKey) {

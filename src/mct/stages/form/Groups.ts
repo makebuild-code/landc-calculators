@@ -18,6 +18,7 @@ import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
 import { QuestionFactory } from './QuestionFactory';
 import type { Sidebar } from '../results/Sidebar';
+import { debugLog } from '$utils/debug';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
@@ -137,12 +138,12 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
     let isComplete = true;
 
     this.questions.forEach((q) => {
-      if (q.isValid()) {
+      const isValid = q.isValid();
+      const isRequired = q.isRequired();
+      if (isValid) {
         validQuestions.add(q.getQuestionName());
         completedQuestions += 1;
-      } else if (q.isRequired()) {
-        isComplete = false;
-      }
+      } else if (isRequired) isComplete = false;
     });
 
     this.setState({
@@ -180,22 +181,27 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
    * - go from the first index
    */
 
-  public updateActiveQuestions(): void {
+  public updateActiveQuestions(preVisible: boolean = false): void {
     const context = this.formManager instanceof MainFormManager ? 'main' : 'sidebar';
     if (this.formManager instanceof MainFormManager) this.formManager.saveAnswersToMCT();
     const currentAnswers = MCTManager.getAnswers(context);
 
     this.questions.forEach((question, index) => {
-      const shouldBeVisible = question.shouldBeVisible(currentAnswers, this.isVisible);
+      const shouldBeVisible = question.shouldBeVisible(currentAnswers, preVisible ? true : this.isVisible);
       const isValid = question.isValid();
 
-      if (index === 0 && shouldBeVisible && context === 'main') question.activate();
-      else if (shouldBeVisible && context === 'sidebar') {
+      if (index === 0 && shouldBeVisible && context === 'main') {
+        question.activate();
+      } else if (shouldBeVisible && context === 'sidebar') {
         question.updateVisualState(isValid);
         question.activate();
-      } else if (shouldBeVisible && isValid) question.activate();
-      else if (shouldBeVisible) question.require();
-      else question.unrequire();
+      } else if (shouldBeVisible && isValid) {
+        question.activate();
+      } else if (shouldBeVisible) {
+        question.require();
+      } else {
+        question.unrequire();
+      }
     });
 
     const lenderQuestion = this.questions.find((q) => q.getStateValue('initialName') === InputKeysENUM.Lender);
@@ -207,7 +213,11 @@ export abstract class QuestionGroup extends BaseGroup<QuestionGroupState> {
       .filter((q) => q.shouldBeVisible(currentAnswers, this.isVisible))
       .every((q) => q.isValid());
 
-    if (allBeforeLenderAreValid && lenderQuestion.isRequired()) lenderQuestion.activate();
+    if (allBeforeLenderAreValid && lenderQuestion.isRequired()) {
+      lenderQuestion.activate();
+    } else {
+      lenderQuestion.unrequire();
+    }
   }
 
   public isComplete(): boolean {

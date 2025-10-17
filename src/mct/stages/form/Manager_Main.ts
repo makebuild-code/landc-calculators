@@ -109,6 +109,9 @@ export class MainFormManager extends FormManager {
       if (event.groupId === GroupNameENUM.Output) {
         this.toggleButton(this.nextButton, false);
         this.toggleButton(this.getResultsButton, true);
+      } else {
+        this.toggleButton(this.nextButton, true);
+        this.toggleButton(this.getResultsButton, false);
       }
     });
 
@@ -286,13 +289,15 @@ export class MainFormManager extends FormManager {
 
     // Show the profile group if it exists
     const profileGroup = this.getGroupByName(profile.name as any) as MainGroup;
-    profileGroup.updateActiveQuestions();
+    profileGroup.updateActiveQuestions(true);
     profileGroup.updateGroupState();
     profileGroup.show();
 
     // Show output group if it exists and profile is complete
     const outputGroup = this.getGroupByName(GroupNameENUM.Output) as OutputGroup;
-    if (outputGroup) profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
+    if (outputGroup) {
+      profileGroup.isComplete() ? outputGroup.show() : outputGroup.hide();
+    }
 
     this.groups
       .filter((group) => group !== identifierGroup && group !== profileGroup && group !== outputGroup)
