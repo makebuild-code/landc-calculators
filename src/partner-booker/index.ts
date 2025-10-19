@@ -1,7 +1,6 @@
 import { queryElement, queryElements } from "$utils/dom"
-import { mortgageAppointmentSlotsAPI } from "$mct/api"
+import { createLeadAndBookingAPI, mortgageAppointmentSlotsAPI } from "$mct/api"
 import type { CreateLeadAndBookingRequest, EnquiryData } from "$mct/types"
-// import { createLeadAndBookingAPI } from "$mct/api"
 import { lcidAPI } from '$mct/api';
 import { debugError, debugLog } from "$utils/debug"
 import { APIError } from "$mct/api"
@@ -69,6 +68,7 @@ export class partnerBookingWidget {
     let date = queryElement('[data-partner-element="date"]', this.wrap)
     date!.removeAttribute('data-mct-initial')
     this.initForm()
+    this.checkLenderImg()
     this.initICID();
     this.initLCID();
     this.getDates()
@@ -104,6 +104,53 @@ export class partnerBookingWidget {
 
       await this.handleFormSubmission()
     })
+  }
+
+  // Function to get URL parameter by name
+  getUrlParameter = (name) => {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  }
+
+  // Function to inject parameter into image URL
+  injectParameterIntoImageURL = () => {
+    // Read the 'lender' parameter from URL
+    var lenderParam = this.getUrlParameter('lender');
+    console.log(lenderParam);
+    // Get the image element by its ID
+    var image = document.querySelector('.lender-logo-dynamic') as HTMLImageElement;
+    // Get the div that contains the lender block
+    var div = document.querySelector('.block_lender-information') as HTMLDivElement;
+
+
+    // Modify the src attribute of the image element to inject the parameter
+    if (lenderParam !== '') {
+      var currentSrc = image!.src;
+      var newSrc = currentSrc.replace('lender-name', encodeURIComponent(lenderParam));
+      image!.src = newSrc;
+      image.closest('.p-a_partnership_wrap')!.removeAttribute('data-mct-initial');
+    }
+    else {
+      // If parameter is missing, hide the image
+    }
+    // Listen for the onload event
+    image.onload = function () {
+      console.log('Image loaded successfully');
+    };
+
+    // Listen for the onerror event. If image fails hide section
+    image.onerror = function () {
+      console.error('Error loading image');
+      // Hide the image or handle the error as needed
+      div.style.display = 'none';
+    };
+  }
+
+  checkLenderImg() {
+    // Call the function after the HTML content has loaded
+    window.onload = this.injectParameterIntoImageURL;
   }
 
   stripUrl() {
@@ -457,7 +504,14 @@ export class partnerBookingWidget {
       ...formBits,
       ...(lcid ? { lcid } : {}),
       ...(icid ? { icid } : {}),
+      "RepaymentType": "Repayment",
+      "ResiBtl": "R",
+      "LoanAmount": 5,
+      "MortgageLength": 5,
+      "PropertyValue": 5
     };
+
+    delete enquiry.script;
 
     const request: CreateLeadAndBookingRequest = {
       enquiry: enquiry as any,
@@ -465,19 +519,8 @@ export class partnerBookingWidget {
     };
 
     try {
-      const status = getStatusFromUrl();
-      console.log(status);
-      const res = await fetch(`https://httpbin.org/status/${status}`);
+      const res = await createLeadAndBookingAPI.createLeadAndBooking(request);
       console.log(res);
-      if (!res.ok) {
-        console.log('failed');
-        // throw something your catch understands
-        const msg = `Request failed: ${res.status} ${res.statusText}`;
-        // If you use APIError elsewhere:
-        throw new APIError(msg, res.status, 'https://httpbin.org/status/400');
-        // or: throw Object.assign(new Error(msg), { status: res.status });
-      }
-
       // success path
       const form = queryElements('[data-partner-element="date"], [data-partner-element="time"], [data-partner-element="information"]');
       const success = queryElement('[data-partner-element="success"]');
