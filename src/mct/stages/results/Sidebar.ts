@@ -14,7 +14,6 @@ export class Sidebar extends FormManager {
   private closeButtons: HTMLButtonElement[];
   protected groups: SidebarGroup[] = [];
   protected source: 'sidebar' = 'sidebar';
-  private showSidebar: boolean = false;
 
   constructor(component: HTMLElement) {
     super(component);
@@ -23,7 +22,6 @@ export class Sidebar extends FormManager {
     this.closeButtons = queryElements(`[${sidebarAttr.components}="close"]`, component) as HTMLButtonElement[];
 
     const params = new URLSearchParams(window.location.search);
-    this.showSidebar = params.get('sidebar') === 'true';
   }
 
   public init(): void {
@@ -70,10 +68,6 @@ export class Sidebar extends FormManager {
   }
 
   public show(): void {
-    if (!this.showSidebar) {
-      MCTManager.goToStage(StageIDENUM.Questions);
-      return;
-    }
     this.syncQuestionsToFilters();
     this.groups.forEach((group) => group.updateActiveQuestions());
     this.updateGroupVisibility();
