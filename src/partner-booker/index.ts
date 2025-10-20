@@ -1,15 +1,15 @@
-import { queryElement, queryElements } from "$utils/dom"
-import { mortgageAppointmentSlotsAPI } from "$mct/api"
-import type { CreateLeadAndBookingRequest, EnquiryData } from "$mct/types"
-import { createLeadAndBookingAPI } from "$mct/api"
+import { queryElement, queryElements } from '$utils/dom';
+import { mortgageAppointmentSlotsAPI } from '$mct/api';
+import type { CreateLeadAndBookingRequest, EnquiryData } from '$mct/types';
+import { createLeadAndBookingAPI } from '$mct/api';
 import { lcidAPI } from '$mct/api';
-import { debugError, debugLog } from "$utils/debug"
-import { APIError } from "$mct/api"
-import type { Booking, EnquiryForm } from "$mct/types"
-import { StateManager } from "$mct/state"
-import { formatDateForAPI, fmtTime, makeDateBtn } from "./utils/dates";
-import { checkProceedableFromQuery } from "./utils/queryParams";
-import { fetchData } from "$mct/utils";
+import { debugError, debugLog } from '$utils/debug';
+import { APIError } from '$mct/api';
+import type { Booking, EnquiryForm } from '$mct/types';
+import { StateManager } from '$mct/state';
+import { formatDateForAPI, fmtTime, makeDateBtn } from './utils/dates';
+import { checkProceedableFromQuery } from './utils/queryParams';
+import { fetchData } from '$mct/utils';
 
 let DOM_CONFIG = {
   elements: {
@@ -24,11 +24,11 @@ let DOM_CONFIG = {
     form: 'form',
     next: 'next',
     prev: 'back',
-    submit: 'submit'
-  }
-}
+    submit: 'submit',
+  },
+};
 
-const stateManager = new StateManager()
+const stateManager = new StateManager();
 
 type DraftRequest = Partial<Omit<CreateLeadAndBookingRequest, 'booking' | 'enquiry'>> & {
   booking?: Partial<Booking>;
@@ -37,18 +37,12 @@ type DraftRequest = Partial<Omit<CreateLeadAndBookingRequest, 'booking' | 'enqui
 
 function getStatusFromUrl(): number {
   const params = new URLSearchParams(window.location.search);
-  const code = parseInt(params.get("statusCode") || "", 10);
+  const code = parseInt(params.get('statusCode') || '', 10);
   return Number.isFinite(code) ? code : 200; // default to 200
 }
 
 export class partnerBookingWidget {
-  TEXT_FIELDS = [
-    'FirstName',
-    'Surname',
-    'Email',
-    'Mobile',
-    'VulnerableMessage',
-  ] satisfies (keyof EnquiryForm)[];
+  TEXT_FIELDS = ['FirstName', 'Surname', 'Email', 'Mobile', 'VulnerableMessage'] satisfies (keyof EnquiryForm)[];
 
   MARKETING_FIELDS = [
     'IsEmailMarketingPermitted',
@@ -66,23 +60,22 @@ export class partnerBookingWidget {
     this.initState();
     const { ok } = checkProceedableFromQuery();
     if (!ok) {
-      let noneProceedable = queryElement('[data-partner-element="none-proceed"]')
-      if (!noneProceedable) return
-      noneProceedable.removeAttribute('data-mct-initial')
-      return
+      let noneProceedable = queryElement('[data-partner-element="none-proceed"]');
+      if (!noneProceedable) return;
+      noneProceedable.removeAttribute('data-mct-initial');
+      return;
     }
-    let date = queryElement('[data-partner-element="date"]')
-    date!.removeAttribute('data-mct-initial')
-    this.initForm()
+    let date = queryElement('[data-partner-element="date"]');
+    date!.removeAttribute('data-mct-initial');
+    this.initForm();
     this.initICID();
     this.initLCID();
-    this.getDates()
-    this.setupNavButtons()
-    this.notesEventListener()
+    this.getDates();
+    this.setupNavButtons();
+    this.notesEventListener();
     this.tryAgainDialog = queryElement(`[data-partner-element="try-again"]`) as HTMLDialogElement;
-    this.setupCloseDialogButton()
+    this.setupCloseDialogButton();
   }
-
 
   initState() {
     stateManager.subscribe((event) => {
@@ -95,30 +88,30 @@ export class partnerBookingWidget {
     });
     stateManager.loadFromPersistence();
     stateManager.enableAutoPersistence();
-    this.stripUrl()
+    this.stripUrl();
     this.updateAppointmentTag(stateManager.getState().booking || undefined);
   }
 
   async initForm() {
-    let form = queryElement('[data-partner-element="information"]')
+    let form = queryElement('[data-partner-element="information"]');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
 
-      await this.handleFormSubmission()
-    })
+      await this.handleFormSubmission();
+    });
   }
 
   stripUrl() {
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get(target, prop, receiver) {
-        if (typeof prop !== "string" || prop in target) {
+        if (typeof prop !== 'string' || prop in target) {
           const v = Reflect.get(target, prop, receiver);
-          return typeof v === "function" ? v.bind(target) : v;
+          return typeof v === 'function' ? v.bind(target) : v;
         }
         return target.get(prop);
-      }
+      },
     });
 
     for (const [name, value] of params) {
@@ -128,11 +121,11 @@ export class partnerBookingWidget {
   }
 
   closeDialog = () => {
-    this.tryAgainDialog?.close()
-  }
+    this.tryAgainDialog?.close();
+  };
 
   setupCloseDialogButton() {
-    queryElement('[data-partner-element="close-dialog"]')?.addEventListener('click', this.closeDialog)
+    queryElement('[data-partner-element="close-dialog"]')?.addEventListener('click', this.closeDialog);
   }
 
   private readICIDFromQuery(): string | null {
@@ -148,34 +141,33 @@ export class partnerBookingWidget {
   }
 
   async getDateSlots() {
-    const now = new Date()
-    const from = new Date(now)
-    from.setDate(from.getDate() + 1)
-    const to = new Date(from)
-    to.setDate(to.getDate() + 14)
-    const fromDate = formatDateForAPI(from)
-    const toDate = formatDateForAPI(to)
+    const now = new Date();
+    const from = new Date(now);
+    from.setDate(from.getDate() + 1);
+    const to = new Date(from);
+    to.setDate(to.getDate() + 14);
+    const fromDate = formatDateForAPI(from);
+    const toDate = formatDateForAPI(to);
     const response = await mortgageAppointmentSlotsAPI.getSlots(fromDate, toDate);
-    return response
+    return response;
   }
 
   setTimeSlots(day: { slots: { startTime: string; endTime: string; enabled: boolean; capacity?: number }[] }) {
-    const list = queryElement(`[data-partner-element="${DOM_CONFIG.elements.timeList}"]`)
-    if (!list) return
-    const tpl = list.querySelector('.mct_pill_field') as HTMLElement
-    const base = tpl.cloneNode(true) as HTMLElement
-    list.innerHTML = ''
+    const list = queryElement(`[data-partner-element="${DOM_CONFIG.elements.timeList}"]`);
+    if (!list) return;
+    const tpl = list.querySelector('.mct_pill_field') as HTMLElement;
+    const base = tpl.cloneNode(true) as HTMLElement;
+    list.innerHTML = '';
     for (const s of day.slots ?? []) {
-      const el = base.cloneNode(true) as HTMLElement
-      const input = el.querySelector('.mct_pill_input') as HTMLInputElement
-      const label = el.querySelector('.mct_pill_label') as HTMLLabelElement
-      const txt = `${fmtTime(s.startTime)} - ${fmtTime(s.endTime)}`
-      label.textContent = txt
-      input.value = txt
-      input.disabled = !s.enabled || (typeof s.capacity === 'number' && s.capacity <= 0)
-      list.appendChild(el)
+      const el = base.cloneNode(true) as HTMLElement;
+      const input = el.querySelector('.mct_pill_input') as HTMLInputElement;
+      const label = el.querySelector('.mct_pill_label') as HTMLLabelElement;
+      const txt = `${fmtTime(s.startTime)} - ${fmtTime(s.endTime)}`;
+      label.textContent = txt;
+      input.value = txt;
+      input.disabled = !s.enabled || (typeof s.capacity === 'number' && s.capacity <= 0);
+      list.appendChild(el);
       el.addEventListener('click', () => {
-
         this.draft.booking = {
           ...(this.draft.booking ?? {}),
           bookingStart: s.startTime,
@@ -189,7 +181,7 @@ export class partnerBookingWidget {
             () => stateManager.getState().booking || undefined
           )
         );
-      })
+      });
     }
   }
 
@@ -244,10 +236,7 @@ export class partnerBookingWidget {
     return errors;
   }
 
-  toBooking(
-    partial: Partial<Booking>,
-    getPrev: () => Booking | undefined
-  ): Booking {
+  toBooking(partial: Partial<Booking>, getPrev: () => Booking | undefined): Booking {
     const prev = getPrev();
     return {
       bookingDate: partial.bookingDate ?? prev?.bookingDate ?? '',
@@ -260,13 +249,13 @@ export class partnerBookingWidget {
   }
 
   async getDates() {
-    const data = await this.getDateSlots()
-    const list = queryElement(`[data-partner-element="${DOM_CONFIG.elements.dateList}"]`)
-    const tpl = queryElement('.mct_pill_field.is-date') as HTMLElement
-    if (!list) return
-    list.innerHTML = ''
+    const data = await this.getDateSlots();
+    const list = queryElement(`[data-partner-element="${DOM_CONFIG.elements.dateList}"]`);
+    const tpl = queryElement('.mct_pill_field.is-date') as HTMLElement;
+    if (!list) return;
+    list.innerHTML = '';
     for (const day of data.result ?? []) {
-      const btn = makeDateBtn(day, tpl)
+      const btn = makeDateBtn(day, tpl);
       btn.addEventListener('click', () => {
         const input = btn.querySelector('.mct_pill_input') as HTMLInputElement;
         input.checked = true;
@@ -284,43 +273,45 @@ export class partnerBookingWidget {
           this.toBooking({ bookingDate: day.date }, () => stateManager.getState().booking || undefined)
         );
         debugLog('booking (after date pick)', stateManager.getState().booking);
-      })
-      list.appendChild(btn)
+      });
+      list.appendChild(btn);
     }
   }
 
   setupNavButtons() {
-    let nextButtons = queryElements(`[data-partner-element="${DOM_CONFIG.elements.next}"]`)
-    let prevButtons = queryElements(`[data-partner-element="${DOM_CONFIG.elements.prev}"]`)
+    let nextButtons = queryElements(`[data-partner-element="${DOM_CONFIG.elements.next}"]`);
+    let prevButtons = queryElements(`[data-partner-element="${DOM_CONFIG.elements.prev}"]`);
 
     nextButtons.forEach((e) => {
       e.addEventListener('click', () => {
-        this.navigateNext(e)
-      })
-    })
+        this.navigateNext(e);
+      });
+    });
 
     prevButtons.forEach((e) => {
       e.addEventListener('click', () => {
-        this.navigatePrev(e)
-      })
-    })
+        this.navigatePrev(e);
+      });
+    });
   }
 
   navigateNext(el: HTMLElement | SVGElement) {
-    let parent = el.closest('.p-a_block_wrap')
-    if (!parent) return
+    let parent = el.closest('.p-a_block_wrap');
+    if (!parent) return;
 
     if (queryElement(':checked', parent)) {
-      parent.setAttribute('data-mct-initial', 'none')
-      parent.nextElementSibling?.removeAttribute('data-mct-initial')
-    } else { alert("Please pick a date & time"); }
+      parent.setAttribute('data-mct-initial', 'none');
+      parent.nextElementSibling?.removeAttribute('data-mct-initial');
+    } else {
+      alert('Please pick a date & time');
+    }
   }
 
   navigatePrev(el: HTMLElement | SVGElement) {
-    let parent = el.closest('.p-a_block_wrap')
-    if (!parent) return
-    parent.setAttribute('data-mct-initial', 'none')
-    parent.previousElementSibling?.removeAttribute('data-mct-initial')
+    let parent = el.closest('.p-a_block_wrap');
+    if (!parent) return;
+    parent.setAttribute('data-mct-initial', 'none');
+    parent.previousElementSibling?.removeAttribute('data-mct-initial');
   }
 
   notesEventListener() {
@@ -328,11 +319,18 @@ export class partnerBookingWidget {
     const noButton = queryElement('.mct_pill_field:has([name="Vulnerable"]):has([value="No"])');
     const block = queryElement('[data-partner-element="Vulnerable"]');
 
-    if (!block) { console.error('no notes block'); return; }
+    if (!block) {
+      console.error('no notes block');
+      return;
+    }
     block.style.display = 'none';
 
-    yesButton?.addEventListener('click', () => { block.style.display = 'block'; });
-    noButton?.addEventListener('click', () => { block.style.display = 'none'; });
+    yesButton?.addEventListener('click', () => {
+      block.style.display = 'block';
+    });
+    noButton?.addEventListener('click', () => {
+      block.style.display = 'none';
+    });
   }
 
   initICID() {
@@ -348,7 +346,7 @@ export class partnerBookingWidget {
       return;
     }
 
-    this.setICID('pb');    // default when neither is present
+    this.setICID('pb'); // default when neither is present
   }
 
   async initLCID() {
@@ -436,9 +434,7 @@ export class partnerBookingWidget {
     if (endEl) endEl.textContent = fmtTime(booking!.bookingEnd!);
   }
 
-
   async handleFormSubmission(): Promise<void> {
-
     const formBits = this.readEnquiryFormFromDOM();
     const prev = stateManager.getState().booking;
     const booking: Booking = {
@@ -489,7 +485,6 @@ export class partnerBookingWidget {
       success.removeAttribute('data-mct-initial');
       console.log('showed success state');
       return;
-
     } catch (error: unknown) {
       debugError('Error submitting booking:', error);
       if (error instanceof APIError) {

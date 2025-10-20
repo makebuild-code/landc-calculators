@@ -12,5 +12,5 @@ window.Webflow.push(() => {
   calculators();
   costOfDoingNothing();
   mct();
-  new partnerBookingWidget()
+  new partnerBookingWidget();
 });
