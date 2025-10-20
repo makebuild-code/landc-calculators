@@ -1,6 +1,6 @@
 import { API_CONFIG } from '$mct/config';
 import { debugError, debugLog } from '$utils/debug';
-import { globalEventBus } from '../../components/events/globalEventBus';
+import { EventBus } from '$mct/components';
 import { APIEventNames } from '../../types/events';
 
 export interface RequestOptions extends RequestInit {
@@ -43,6 +43,7 @@ export class APIError extends Error {
 }
 
 export class APIClient {
+  private eventBus: EventBus;
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
   private timeout: number;
@@ -50,6 +51,7 @@ export class APIClient {
   private retryDelay: number;
 
   constructor(config: APIClientConfig = {}) {
+    this.eventBus = EventBus.getInstance();
     this.baseURL = config.baseURL || API_CONFIG.baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
@@ -63,7 +65,6 @@ export class APIClient {
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     debugLog('🔄 Request URL: ', url);
-    debugLog('🔄 Request Options: ', options);
     const headers = { ...this.defaultHeaders, ...options.headers };
 
     const requestOptions: RequestInit = {
@@ -76,7 +77,7 @@ export class APIClient {
     let lastError: Error | null = null;
 
     // Emit API request start event
-    globalEventBus.emit(APIEventNames.REQUEST_START, {
+    this.eventBus.emit(APIEventNames.REQUEST_START, {
       endpoint: url,
       method: requestOptions.method || 'GET',
     });
@@ -86,7 +87,7 @@ export class APIClient {
         const response = await this.makeRequest<T>(url, requestOptions);
 
         // Emit API request success event
-        globalEventBus.emit(APIEventNames.REQUEST_SUCCESS, {
+        this.eventBus.emit(APIEventNames.REQUEST_SUCCESS, {
           endpoint: url,
           method: requestOptions.method || 'GET',
           response,
@@ -97,7 +98,7 @@ export class APIClient {
         lastError = error as Error;
 
         // Emit API request error event
-        globalEventBus.emit(APIEventNames.REQUEST_ERROR, {
+        this.eventBus.emit(APIEventNames.REQUEST_ERROR, {
           endpoint: url,
           method: requestOptions.method || 'GET',
           error: lastError,

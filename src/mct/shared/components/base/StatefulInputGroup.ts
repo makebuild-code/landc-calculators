@@ -1,4 +1,4 @@
-import { StatefulComponent, type StatefulComponentOptions } from './StatefulComponent';
+import { StatefulComponent, type StatefulComponentConfig } from './StatefulComponent';
 import {
   type CheckboxValues,
   type Input,
@@ -16,18 +16,17 @@ export interface StatefulInputGroupState {
   isValid: boolean;
   isInitialised: boolean;
   type: InputType;
+  context: string | undefined;
   groupName: string;
   indexInGroup: number;
   initialName: string;
   finalName: string;
 }
 
-export interface StatefulInputGroupOptions<T extends StatefulInputGroupState = StatefulInputGroupState>
-  extends Omit<StatefulComponentOptions<T>, 'initialState'> {
-  extendedInitialState?: Partial<T>; // Additional state properties for extending classes
-  initialState?: T; // Optional - will be auto-generated if extendedInitialState is provided
+export interface StatefulInputGroupConfig extends StatefulComponentConfig {
   onChange: () => void;
   onEnter: () => void;
+  context?: string;
   groupName: string;
   indexInGroup: number;
 }
@@ -39,37 +38,26 @@ export abstract class StatefulInputGroup<
   protected onEnter: () => void; // The function to call when the user presses enter
   protected inputs: Input[] = []; // The inputs in the input group
 
-  constructor(options: StatefulInputGroupOptions<T>) {
-    // Use provided initialState or generate from base + extended
-    const finalInitialState =
-      options.initialState ||
-      (() => {
-        // Create base initialState
-        const baseInitialState: StatefulInputGroupState = {
-          value: null,
-          isValid: false,
-          isInitialised: false,
-          type: 'text', // Will be set in init()
-          groupName: options.groupName,
-          indexInGroup: options.indexInGroup,
-          initialName: '', // Will be set in init()
-          finalName: '', // Will be set in init()
-        };
+  constructor(config: StatefulInputGroupConfig, customState?: Partial<T>) {
+    const initialState: T = {
+      // Base state
+      value: null,
+      isValid: false,
+      isInitialised: false,
+      type: 'text',
+      context: config.context,
+      groupName: config.groupName,
+      indexInGroup: config.indexInGroup,
+      initialName: '',
+      finalName: '',
+      // Custom state extensions
+      ...customState,
+    } as T;
 
-        // Merge base state with extended state
-        return {
-          ...baseInitialState,
-          ...options.extendedInitialState,
-        } as T;
-      })();
+    super(config, initialState);
 
-    super({
-      ...options,
-      initialState: finalInitialState,
-    });
-
-    this.onChange = options.onChange;
-    this.onEnter = options.onEnter;
+    this.onChange = config.onChange;
+    this.onEnter = config.onEnter;
   }
 
   protected init(): void {
@@ -104,9 +92,10 @@ export abstract class StatefulInputGroup<
   protected abstract onInit(): void;
 
   protected formatInputNamesAndIDs(): void {
+    const context = this.getStateValue('context');
     const groupName = this.getStateValue('groupName');
     const initialName = this.getStateValue('initialName');
-    const finalName = `${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
+    const finalName = `${context ? `${context}-` : ''}${groupName}-${initialName}-${this.getStateValue('indexInGroup')}`;
     this.setStateValue('finalName', finalName);
 
     if (this.getStateValue('type') === 'radio' || this.getStateValue('type') === 'checkbox') {
@@ -190,13 +179,12 @@ export abstract class StatefulInputGroup<
 
   public isValid(): boolean {
     // Check if any of the inputs are invalid using the native validation API
+    let isValid = false;
     const hasInvalidInput = this.inputs.some((input) => !input.checkValidity());
-    if (hasInvalidInput) return false;
+    if (hasInvalidInput) return isValid;
 
     const value = this.getValue();
     const type = this.getStateValue('type');
-
-    let isValid = false;
 
     // Additional type-specific validation
     switch (type) {
@@ -215,7 +203,7 @@ export abstract class StatefulInputGroup<
       case 'select-one':
         const select = this.inputs[0] as HTMLSelectElement;
         const selectedOption = select.options[select.selectedIndex];
-        isValid = typeof value === 'string' && selectedOption.getAttribute('value') === value;
+        isValid = typeof value === 'string' && selectedOption?.getAttribute('value') === value;
         break;
     }
 
@@ -334,16 +322,23 @@ export abstract class StatefulInputGroup<
     return input.value;
   }
 
-  protected setSelectValue(value: SelectValue): void {
-    const input = this.inputs[0];
+  protected setSelectValue(value?: SelectValue): void {
+    const input = this.inputs[0] as HTMLSelectElement;
     if (!input) throw new Error('No select input found for select question');
-    input.value = value;
+
+    const options = [...input.options];
+    const selectedOption = options.find((option) => option.value === value);
+    const selectedValue = selectedOption ? selectedOption.value : options[0].value || '';
+    input.value = selectedValue;
   }
 
   protected resetSelectInput(): void {
-    const input = this.inputs[0];
+    const input = this.inputs[0] as HTMLSelectElement;
     if (!input) throw new Error('No select input found for select question');
-    input.value = '';
+
+    const options = [...input.options];
+    const selectedOption = options[0];
+    input.value = selectedOption.value;
   }
 
   protected setSelectOptions(options: SelectOption[]): void {
@@ -359,6 +354,11 @@ export abstract class StatefulInputGroup<
       const optionEl = document.createElement('option');
       if (option.value) optionEl.value = option.value;
       optionEl.text = option.label;
+      if (option.dataset) {
+        Object.entries(option.dataset).forEach(([key, value]) => {
+          optionEl.dataset[key] = value;
+        });
+      }
       input.appendChild(optionEl);
     });
   }
@@ -381,13 +381,14 @@ export abstract class StatefulInputGroup<
   }
 
   public setValue(value: InputValue): void {
+    console.log('setValue: ', { value, element: this.element, typeOfValue: typeof value });
     switch (this.getStateValue('type')) {
       case 'radio':
         if (typeof value !== 'string') throw new Error('Value for radio question must be a string');
         this.setRadioValue(value);
         break;
       case 'checkbox':
-        if (typeof value !== 'boolean' || !Array.isArray(value))
+        if (typeof value !== 'boolean' && !Array.isArray(value))
           throw new Error('Value for checkbox question must be boolean or an array');
         this.setCheckboxValues(value);
         break;

@@ -1,67 +1,116 @@
 import { lendersAPI } from '$mct/api';
-import { StatefulInputGroup, type StatefulInputGroupOptions, type StatefulInputGroupState } from '$mct/components';
-import { DOM_CONFIG } from '$mct/config';
-import { InputKeysENUM, type Inputs, type SelectOption } from '$mct/types';
+import { StatefulInputGroup, type StatefulInputGroupConfig, type StatefulInputGroupState } from '$mct/components';
+import { DOM_CONFIG, PROFILES_CONFIG } from '$mct/config';
+import {
+  FormEventNames,
+  InputKeysENUM,
+  type Inputs,
+  type SelectOption,
+  type InputValue,
+  ResiBtlENUM,
+  type Profile,
+  ProfileNameENUM,
+} from '$mct/types';
+import { getEnumValue } from '$mct/utils';
 import { debugError } from '$utils/debug';
-import type { FormManager } from './Manager_Base';
 
 const attr = DOM_CONFIG.attributes.form;
 const classes = DOM_CONFIG.classes;
 
-interface QuestionOptions extends StatefulInputGroupOptions<QuestionState> {
-  formManager: FormManager;
+interface QuestionConfig extends StatefulInputGroupConfig {
+  source?: 'main' | 'sidebar';
 }
 
 interface QuestionState extends StatefulInputGroupState {
   isVisible: boolean;
   isRequired: boolean;
-  dependsOn: string | null;
+  dependsOn: InputKeysENUM | null;
   dependsOnValue: string | null;
 }
 
 export class QuestionComponent extends StatefulInputGroup<QuestionState> {
-  private formManager: FormManager;
   private parent: HTMLElement;
+  private name: string = '';
+  private source: 'main' | 'sidebar' = 'main';
 
-  constructor(options: QuestionOptions) {
-    super(options);
+  constructor(config: QuestionConfig) {
+    // Define the custom state extensions for QuestionComponent
+    const customState: Partial<QuestionState> = {
+      isVisible: false,
+      isRequired: true,
+      dependsOn: null,
+      dependsOnValue: null,
+      context: config.source,
+    };
 
-    this.formManager = options.formManager;
+    super(config, customState);
+
     this.parent = this.element.parentElement as HTMLElement;
-    this.onEnter = options.onEnter;
+    this.source = config.source || 'main';
     this.debug = true;
   }
 
   protected onInit(): void {
-    this.setStateValue('isVisible', false);
-    this.setStateValue('isRequired', false);
+    // Generate unique ID for cross-context identification
+    this.name = this.getStateValue('initialName');
 
-    const dependsOn = this.getAttribute(attr.dependsOn) || null;
+    // Set dependency attributes from DOM
+    const dependsOn = this.getAttribute(attr.dependsOn) as InputKeysENUM | null;
     const dependsOnValue = this.getAttribute(attr.dependsOnValue) || null;
     this.setStateValue('dependsOn', dependsOn);
     this.setStateValue('dependsOnValue', dependsOnValue);
+
+    // Listen for sync requests
+    this.on(FormEventNames.QUESTIONS_SYNC_REQUESTED, (event) => {
+      if (event.targetQuestionId === this.name && event.source !== this.source) {
+        this.syncValue(event.value);
+      }
+    });
 
     // Call the lender select handler
     if (this.getStateValue('initialName') === 'Lender') this.handleLenderSelect();
   }
 
+  public getProfile(): Profile | undefined {
+    const groupName = this.getStateValue('groupName') as ProfileNameENUM;
+    const profile = PROFILES_CONFIG.profiles.find((profile) => profile.name === groupName);
+    return profile;
+  }
+
+  private getResiBtl(): ResiBtlENUM | undefined {
+    const profile = this.getProfile();
+    const requirements = profile?.requirements;
+    const resiBtl = requirements?.ResiBtl;
+    if (!resiBtl) return undefined;
+    return getEnumValue(ResiBtlENUM, resiBtl);
+  }
+
   private async handleLenderSelect(): Promise<void> {
     if (this.getStateValue('initialName') !== 'Lender') return;
+    const resiBtl = this.getResiBtl();
 
     try {
-      const response = await lendersAPI.getAll();
-      const lenders = response
-        .filter((lender) => lender.LenderName !== '' && lender.LenderName !== null)
-        .sort((a, b) => a.LenderName.localeCompare(b.LenderName));
+      const response = await lendersAPI.getFilteredAndSorted();
+      const lenders = response.filter((lender) => {
+        if (resiBtl === ResiBtlENUM.Residential) {
+          return lender.ResidentialLenderId !== null;
+        } else if (resiBtl === ResiBtlENUM.Btl) {
+          return lender.BTLLenderId !== null;
+        } else {
+          return lender.MasterLenderId !== null;
+        }
+      });
 
       const lenderOptions: SelectOption[] = [
         { label: 'Select a lender...' },
-        ...lenders.map(
-          (lender): SelectOption => ({
-            value: lender.MasterLenderId.toString(),
+        ...lenders.map((lender): SelectOption => {
+          const value = `MasterLenderID:${lender.MasterLenderId}|ResidentialLenderID:${lender.ResidentialLenderId}|BTLLenderID:${lender.BTLLenderId}`;
+
+          return {
+            value,
             label: lender.LenderName,
-          })
-        ),
+          };
+        }),
       ];
 
       this.setSelectOptions(lenderOptions);
@@ -93,14 +142,24 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
   }
 
   public require(): void {
+    if (this.isRequired()) return;
     this.setStateValue('isRequired', true);
-    this.formManager.saveQuestion(this);
+    this.emit(FormEventNames.QUESTION_REQUIRED, {
+      question: this,
+      questionId: this.name,
+      groupName: this.getStateValue('groupName'),
+    });
   }
 
   public unrequire(): void {
-    this.setStateValue('isRequired', false);
-    this.formManager.removeQuestion(this);
     this.showQuestion(false);
+    if (!this.isRequired()) return;
+    this.setStateValue('isRequired', false);
+    this.emit(FormEventNames.QUESTION_UNREQUIRED, {
+      question: this,
+      questionId: this.name,
+      groupName: this.getStateValue('groupName'),
+    });
   }
 
   public showQuestion(show: boolean): void {
@@ -128,7 +187,67 @@ export class QuestionComponent extends StatefulInputGroup<QuestionState> {
     const dependsOnValue = this.getStateValue('dependsOnValue');
 
     if (!dependsOn) return true; // question depends on nothing
-    if (!dependsOnValue) return answers[dependsOn as InputKeysENUM] !== null; // question depends on a prior question being answered, no specific value
-    return answers[dependsOn as InputKeysENUM] === dependsOnValue; // question depends on a prior question being answered, with a specific value
+    if (!dependsOnValue) return answers[dependsOn] !== null; // question depends on a prior question being answered, no specific value
+    return answers[dependsOn] === dependsOnValue; // question depends on a prior question being answered, with a specific value
+  }
+
+  // Override handleChange to emit events
+  protected handleChange(): void {
+    this.saveValueAndValidity();
+
+    this.updateVisualState(this.isValid());
+
+    // Emit enhanced QUESTION_CHANGED event
+    const currentValue = this.getValue();
+    if (currentValue !== null) {
+      this.emit(FormEventNames.QUESTION_CHANGED, {
+        question: this,
+        name: this.name,
+        groupName: this.getStateValue('groupName'),
+        value: currentValue,
+        source: this.source,
+      });
+    }
+
+    // Still call onChange if provided (for backward compatibility)
+    if (this.onChange) {
+      this.onChange();
+    }
+  }
+
+  // Method to sync value from another context
+  private syncValue(value: InputValue | null): void {
+    if (value !== null) {
+      this.setValue(value);
+    }
+  }
+
+  // Getters for event-driven communication
+  public getQuestionName(): string {
+    return this.name;
+  }
+
+  public getSource(): 'main' | 'sidebar' {
+    return this.source;
+  }
+
+  public getGroupName(): string {
+    return this.getStateValue('groupName');
+  }
+
+  public getInitialName(): string {
+    return this.getStateValue('initialName');
+  }
+
+  public getFinalName(): string {
+    return this.getStateValue('finalName');
+  }
+
+  public isRequired(): boolean {
+    return this.getStateValue('isRequired');
+  }
+
+  public getStateValue<K extends keyof QuestionState>(key: K): QuestionState[K] {
+    return this.state[key];
   }
 }

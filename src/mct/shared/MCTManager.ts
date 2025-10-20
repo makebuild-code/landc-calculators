@@ -1,6 +1,6 @@
 import { queryElement, queryElements } from '$utils/dom';
 
-import { initForm } from '../stages/form';
+import { initForm, QuestionRegistry } from '../stages/form';
 import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
 import type { ResultsManager } from '../stages/results/Manager';
@@ -8,7 +8,7 @@ import { initAppointment } from '../stages/appointment';
 import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
-import { globalEventBus } from '$mct/components';
+import { EventBus } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { MCTEventNames, StageIDENUM } from '$mct/types';
@@ -28,13 +28,15 @@ import type {
   CalculationKeysENUM,
   Booking,
   EnquiryForm,
+  ProductsFilters,
 } from '$mct/types';
 import { getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog } from '$utils/debug';
 
-const VERSION = '🔄 MCT DIST v32';
+const VERSION = '🔄 MCT DIST v2.0.0';
 const attr = DOM_CONFIG.attributes;
+const eventBus = EventBus.getInstance();
 
 let numberOfStagesShown: number = 0;
 interface Stage {
@@ -58,14 +60,12 @@ const dom: DOM = {
 const stateManager = new StateManager();
 const calculationManager = new CalculationManager(stateManager);
 const visibilityManager = new VisibilityManager(stateManager);
+const questionRegistry = QuestionRegistry.getInstance();
 
 export const MCTManager = {
   start() {
     const dom = this.initDOM();
-    if (!dom) {
-      debugLog('🔄 MCT component not found');
-      return;
-    }
+    if (!dom) return;
 
     this.initState();
     this.initICID();
@@ -218,8 +218,8 @@ export const MCTManager = {
       this.goToStage(StageIDENUM.Questions);
     }
 
-    globalEventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
-      debugLog('🔄 Stage complete', event);
+    eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
+      // debugLog('🔄 Stage complete', event);
 
       let nextStageId;
       switch (event.stageId) {
@@ -247,14 +247,15 @@ export const MCTManager = {
   },
 
   goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
-    debugLog('🔄 Going to stage', stageId);
+    // debugLog('🔄 Going to stage', stageId);
 
     // get the stage and cancel if not found
     const nextStage = stageManagers[stageId] ?? null;
     if (!nextStage) return false;
 
     // hide the current stage
-    const currentStage = stageManagers[stateManager.getCurrentStage() as StageIDENUM] ?? null;
+    const currentStageId = stateManager.getCurrentStage();
+    const currentStage = stageManagers[currentStageId as StageIDENUM] ?? null;
     if (currentStage) currentStage.hide();
 
     // update the state, init and show the next stage
@@ -310,8 +311,12 @@ export const MCTManager = {
     stateManager.setAnswers(answerDataArray);
   },
 
-  getAnswers(): Inputs {
-    return stateManager.getAnswers();
+  overrideAnswers(answerDataArray: InputData[]): void {
+    stateManager.overrideAnswers(answerDataArray);
+  },
+
+  getAnswers(context: 'main' | 'sidebar' = 'main'): Inputs {
+    return context === 'main' ? stateManager.getAnswers() : questionRegistry.getValuesByPreset('sidebarSave');
   },
 
   getAnswersAsLandC(): Inputs {
@@ -354,8 +359,8 @@ export const MCTManager = {
     stateManager.set('filters', filters);
   },
 
-  getFilters(): Record<string, any> {
-    return stateManager.get('filters');
+  getFilters(): ProductsFilters {
+    return stateManager.get('filters') as ProductsFilters;
   },
 
   setProduct(productId: number) {
@@ -418,7 +423,7 @@ export const MCTManager = {
 
     try {
       const response = await logUserEventsAPI.logEvent(payload);
-      debugLog('LogUserEvent: ', response);
+      // debugLog('LogUserEvent: ', response);
     } catch (error) {
       debugError('error', error);
     }

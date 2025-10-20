@@ -3,6 +3,7 @@ import { calculators } from './calculators';
 import { components } from './components';
 import { costOfDoingNothing } from './costofdoingnothing';
 import { mct } from './mct';
+import { partnerBookingWidget } from './partner-booker';
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
@@ -11,4 +12,5 @@ window.Webflow.push(() => {
   calculators();
   costOfDoingNothing();
   mct();
+  new partnerBookingWidget();
 });
