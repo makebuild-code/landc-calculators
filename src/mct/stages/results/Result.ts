@@ -81,7 +81,17 @@ export class Result {
       if (output instanceof HTMLImageElement) {
         output.src = outputValue.toString();
       } else if (outputType === 'boolean') {
-        output.style.display = outputShow ? 'block' : 'none';
+        outputShow ? output.style.removeProperty('display') : (output.style.display = 'none');
+      } else if (outputType === 'rich-text') {
+        const rte = queryElement('.w-richtext', output) as HTMLElement;
+        if (rte) {
+          rte.innerHTML = '';
+          const paragraph = document.createElement('p');
+          paragraph.textContent = outputValue.toString();
+          rte.appendChild(paragraph);
+        } else {
+          output.textContent = outputValue.toString();
+        }
       } else {
         output.textContent = outputValue.toString();
       }
