@@ -2,6 +2,7 @@ import { FILTERS_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import {
   CalculationKeysENUM,
+  FirstTimeBuyerENUM,
   InputKeysENUM,
   MortgageTypeENUM,
   PropertyTypeENUM,
@@ -35,7 +36,10 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
 
   if (!answers) return null;
 
-  const { PropertyValue, ResiBtl, MortgageLength, RepaymentType } = answers;
+  const { PropertyValue, ResiBtl, MortgageLength, RepaymentType, FTB } = answers;
+
+  // Get ShowFTB value
+  const ShowFTB = FTB === getEnumKey(FirstTimeBuyerENUM, FirstTimeBuyerENUM.Yes) ? true : false;
 
   /**
    * Calc InterestOnlyValue and RepaymentValue
@@ -95,6 +99,7 @@ export const generateProductsAPIInput = (options: ProductsOptions = {}): Product
   const NumberOfResults = options.NumberOfResults ?? 1;
 
   const endOfAnswersInput: ProductsRequest = {
+    ShowFTB,
     PropertyValue,
     RepaymentValue,
     InterestOnlyValue,

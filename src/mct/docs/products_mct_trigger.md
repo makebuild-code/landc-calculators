@@ -82,7 +82,8 @@ e.g. `/productdata/bestbuysMCT`
         "SapValue": INT,
         "Lenders" : STRING, // Csv string of master lender ids to filter by Else empty OR null to bring back all lenders
         "IncludeRetention": BOOLEAN,
-        "RetentionLenderId": INT
+        "RetentionLenderId": INT,
+        "ShowFTB": BOOLEAN,
     }
 }
 ```
@@ -112,7 +113,8 @@ e.g. `/productdata/bestbuysMCT`
     "SapValue": 50,
     "Lenders": "",
     "IncludeRetention": false,
-    "RetentionLenderId": ""
+    "RetentionLenderId": "",
+    "ShowFTB": true
   }
 }
 ```

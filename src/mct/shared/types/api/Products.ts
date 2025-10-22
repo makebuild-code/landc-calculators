@@ -111,6 +111,7 @@ export enum ProductsRequestENUM {
   IncludeRetention = 'IncludeRetention',
   RetentionLenderId = 'RetentionLenderId',
   ShowSharedOwnership = 'ShowSharedOwnership',
+  ShowFTB = 'ShowFTB',
 }
 
 // Product request structure
@@ -133,6 +134,7 @@ export interface ProductsRequest {
   [ProductsRequestENUM.IncludeRetention]?: boolean;
   [ProductsRequestENUM.RetentionLenderId]?: number;
   [ProductsRequestENUM.ShowSharedOwnership]?: boolean;
+  [ProductsRequestENUM.ShowFTB]?: boolean;
 }
 
 // Summary information
