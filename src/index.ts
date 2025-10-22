@@ -13,6 +13,6 @@ window.Webflow.push(() => {
   costOfDoingNothing();
   mct();
   document.querySelectorAll('[data-partner-element="wrap"]').forEach((e) => {
-    new partnerBookingWidget(e)
-  })
+    new partnerBookingWidget(e);
+  });
 });

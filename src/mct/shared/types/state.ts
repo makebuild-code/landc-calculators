@@ -89,6 +89,7 @@ export type RemoInputs = {
 
 export type InputsByEndOfForm = {
   [InputKeysENUM.PurchRemo]: keyof typeof PurchRemoENUM;
+  [InputKeysENUM.FTB]: keyof typeof FirstTimeBuyerENUM;
   [InputKeysENUM.ResiBtl]: keyof typeof ResiBtlENUM;
   [InputKeysENUM.CreditImpaired]: keyof typeof CreditImpairedENUM;
   [InputKeysENUM.PropertyValue]: number;
