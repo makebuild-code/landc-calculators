@@ -506,9 +506,9 @@ export class partnerBookingWidget {
       ...(icid ? { icid } : {}),
       "RepaymentType": "Repayment",
       "ResiBtl": "R",
-      "LoanAmount": 5,
-      "MortgageLength": 5,
-      "PropertyValue": 5
+      "LoanAmount": 1,
+      "MortgageLength": 1,
+      "PropertyValue": 1
     };
 
     delete enquiry.script;
