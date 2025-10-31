@@ -8207,6 +8207,28 @@
     }
   });
 
+  // src/mct/shared/config/formDefaults.ts
+  var getFormDefaults;
+  var init_formDefaults = __esm({
+    "src/mct/shared/config/formDefaults.ts"() {
+      "use strict";
+      init_live_reload();
+      init_MCTManager();
+      init_types();
+      getFormDefaults = () => {
+        return {
+          lcid: MCTManager.getLCID(),
+          icid: MCTManager.getICID(),
+          ResiBtl: "R" /* Residential */,
+          PropertyValue: 1,
+          RepaymentType: "Repayment" /* Repayment */,
+          MortgageLength: 1,
+          LoanAmount: 1
+        };
+      };
+    }
+  });
+
   // src/mct/stages/appointment/Manager.ts
   var attr14, PANEL_ENUM, AppointmentManager;
   var init_Manager2 = __esm({
@@ -8228,6 +8250,7 @@
       init_visibility2();
       init_debug();
       init_common2();
+      init_formDefaults();
       attr14 = DOM_CONFIG.attributes.appointment;
       PANEL_ENUM = {
         CALENDAR: "calendar",
@@ -8635,6 +8658,10 @@
          * Get state data from the MCT manager
          */
         getStateData() {
+          const stages = MCTManager.getAvailableStages();
+          if (!stages.includes("questions" /* Questions */)) {
+            return getFormDefaults();
+          }
           const state = MCTManager.getState();
           const answers = MCTManager.getAnswers();
           const calculations = MCTManager.getCalculations();
@@ -9759,6 +9786,7 @@
       init_common2();
       init_dataLayer();
       init_debug();
+      init_formDefaults();
       VERSION = "\u{1F504} MCT DIST v2.0.0";
       attr15 = DOM_CONFIG.attributes;
       eventBus = EventBus.getInstance();
