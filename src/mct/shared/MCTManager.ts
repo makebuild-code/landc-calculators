@@ -30,22 +30,24 @@ import type {
   EnquiryForm,
   ProductsFilters,
 } from '$mct/types';
-import { getValueAsLandC } from '$mct/utils';
+import { getEnumKey, getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
-import { debugError, debugLog } from '$utils/debug';
+import { debugError, debugLog, debugWarn } from '$utils/debug';
 
 const VERSION = '🔄 MCT DIST v2.0.0';
 const attr = DOM_CONFIG.attributes;
 const eventBus = EventBus.getInstance();
 
-let numberOfStagesShown: number = 0;
+let isFirstStage: boolean = true;
 interface Stage {
+  id: StageIDENUM;
   start: (options?: any) => void;
   show: (scrollTo?: boolean) => void;
   hide: () => void;
 }
 
 const stageManagers: Record<string, Stage> = {};
+const newStageManagers: Stage[] = [];
 
 interface DOM {
   component: HTMLElement | null;
@@ -125,49 +127,28 @@ export const MCTManager = {
   },
 
   initStages() {
-    // const form = this.getStageDOM(StageIDENUM.Questions);
-    // const results = this.getStageDOM(StageIDENUM.Results);
-    // const appointment = this.getStageDOM(StageIDENUM.Appointment);
-
-    // if (form) {
-    //   const formManager = initForm({
-    //     element: form,
-    //     id: StageIDENUM.Questions,
-    //     prefillFrom: 'none',
-    //   });
-    // }
-
-    // if (results) {
-    //   const resultsManager = initResults(results);
-    //   stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
-    // }
-
-    // if (appointment) {
-    //   const appointmentManager = initAppointment(appointment);
-    //   stageManagers[StageIDENUM.Appointment] = appointmentManager as AppointmentManager;
-    // }
-
     const mainForm = this.getStageDOM(StageIDENUM.Questions);
+    const results = this.getStageDOM(StageIDENUM.Results);
+    const appointment = this.getStageDOM(StageIDENUM.Appointment);
+
     if (mainForm) {
-      const mainFormManager = initForm(mainForm, {
-        mode: 'main',
-        prefill: false,
-      });
-      mainFormManager?.hide();
+      const mainFormManager = initForm(mainForm);
+      mainFormManager.hide();
+      newStageManagers.push(mainFormManager);
       stageManagers[StageIDENUM.Questions] = mainFormManager as MainFormManager;
     }
 
-    const results = this.getStageDOM(StageIDENUM.Results);
     if (results) {
       const resultsManager = initResults(results);
-      resultsManager?.hide();
+      resultsManager.hide();
+      newStageManagers.push(resultsManager);
       stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
     }
 
-    const appointment = this.getStageDOM(StageIDENUM.Appointment);
     if (appointment) {
       const appointmentManager = initAppointment(appointment);
-      appointmentManager?.hide();
+      appointmentManager.hide();
+      newStageManagers.push(appointmentManager);
       stageManagers[StageIDENUM.Appointment] = appointmentManager as AppointmentManager;
     }
   },
@@ -192,86 +173,89 @@ export const MCTManager = {
      * - once questions are done, init the results
      */
 
-    // const params = new URLSearchParams(window.location.search);
-    // const profile = params.get(parameters.profile) as ProfileName | undefined;
-
-    // if (profile) this.goToStage('questions', { questions: { profile } });
-
-    // if (profile === 'residential-purchase') {
-    //   this.goToStage('results');
-    // } else {
-    //   this.goToStage('questions');
-    // }
-
-    const numberOfStages = Object.keys(stageManagers).length;
-    if (numberOfStages === 0) {
-      debugError('🔄 No stage managers initialised');
-      return;
-    } else if (numberOfStages === 1) {
-      const onlyStage = Object.values(stageManagers)[0];
-      if (onlyStage) {
-        onlyStage.start();
-        onlyStage.show(numberOfStagesShown !== 0);
-        numberOfStagesShown += 1;
-      }
-    } else {
-      this.goToStage(StageIDENUM.Questions);
+    if (newStageManagers.length === 0) {
+      return debugError('🔄 No stage managers present');
     }
 
+    debugLog('🔄 Available stages:', this.getAvailableStages());
+    this.goToNextStage();
+
     eventBus.on(MCTEventNames.STAGE_COMPLETE, (event) => {
-      // debugLog('🔄 Stage complete', event);
-
-      let nextStageId;
-      switch (event.stageId) {
-        case StageIDENUM.Questions:
-          dataLayer('form_interaction', {
-            event_category: 'MCTForm',
-            event_label: `MCT_Show_Results`,
-          });
-
-          nextStageId = StageIDENUM.Results;
-          break;
-        case StageIDENUM.Results:
-          dataLayer('form_interaction', {
-            event_category: 'MCTForm',
-            event_label: `MCT_Show_Appointment`,
-          });
-          nextStageId = StageIDENUM.Appointment;
-          break;
-        default:
-          nextStageId = null;
-      }
-
-      if (nextStageId) this.goToStage(nextStageId);
+      debugLog('🔄 Stage complete', event);
+      this.goToNextStage();
     });
   },
 
-  goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
-    // debugLog('🔄 Going to stage', stageId);
+  getAvailableStages(): StageIDENUM[] {
+    return newStageManagers.map((stage) => stage.id);
+  },
+
+  goToNextStage(options: GoToStageOptions = {}): boolean {
+    const currentIndex = stateManager.getCurrentStageIndex();
 
     // get the stage and cancel if not found
-    const nextStage = stageManagers[stageId] ?? null;
-    if (!nextStage) return false;
-
-    // hide the current stage
-    const currentStageId = stateManager.getCurrentStage();
-    const currentStage = stageManagers[currentStageId as StageIDENUM] ?? null;
-    if (currentStage) currentStage.hide();
-
-    // update the state, init and show the next stage
-    stateManager.setCurrentStage(stageId);
-    nextStage.show(numberOfStagesShown !== 0);
-    numberOfStagesShown += 1;
-
-    // Pass stage-specific options to the init method
-    const stageOptions = options[stageId];
-    if (stageOptions) {
-      nextStage.start(stageOptions);
-    } else {
-      nextStage.start();
+    const nextStage = newStageManagers[currentIndex + 1];
+    if (!nextStage) {
+      debugWarn('🔄 No next stage');
+      return false;
     }
 
+    this.hideCurrentStage();
+    this.startStage(nextStage, options);
+
     return true;
+  },
+
+  goToPrevStage(options: GoToStageOptions = {}): boolean {
+    if (isFirstStage) return false;
+
+    // get the stage and cancel if not found
+    const prevStage = newStageManagers[stateManager.getCurrentStageIndex() - 1];
+    if (!prevStage) {
+      debugWarn('🔄 No previous stage');
+      return false;
+    }
+
+    this.hideCurrentStage();
+    this.startStage(prevStage, options);
+
+    return true;
+  },
+
+  goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
+    // get the stage and cancel if not found
+    const nextStage = newStageManagers.find((stage) => stage.id === stageId);
+    if (!nextStage) {
+      debugWarn(`🔄 No stage found with id: ${stageId}`);
+      return false;
+    }
+
+    this.hideCurrentStage();
+    this.startStage(nextStage, options);
+    return true;
+  },
+
+  hideCurrentStage(): void {
+    const currentIndex = stateManager.getCurrentStageIndex();
+    const currentStage = newStageManagers[currentIndex];
+    if (currentStage) currentStage.hide();
+  },
+
+  // Pass stage-specific options to the start method
+  startStage(stage: Stage, options: GoToStageOptions = {}): void {
+    stage.show(isFirstStage);
+    isFirstStage = false;
+    stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
+
+    const stageOptions = options[stage.id];
+    if (stageOptions) stage.start(stageOptions);
+    else stage.start();
+
+    // fire analytics event
+    dataLayer('form_interaction', {
+      event_category: 'MCTForm',
+      event_label: `MCT_Show_${getEnumKey(StageIDENUM, stage.id)}`,
+    });
   },
 
   setICID(icid: string) {
