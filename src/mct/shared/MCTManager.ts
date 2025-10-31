@@ -12,25 +12,25 @@ import { EventBus } from '$mct/components';
 import { DOM_CONFIG } from '$mct/config';
 import { StateManager, CalculationManager, VisibilityManager } from '$mct/state';
 import { MCTEventNames, StageIDENUM } from '$mct/types';
-import type {
-  InputData,
-  InputKey,
-  Inputs,
-  InputValue,
-  AppState,
-  Calculations,
-  CalculationValue,
-  GoToStageOptions,
-  ICID,
-  LCID,
-  LogUserEventCustom,
-  LogUserEventRequest,
+import {
+  type InputData,
+  type InputKey,
+  type Inputs,
+  type InputValue,
+  type AppState,
+  type Calculations,
+  type CalculationValue,
+  type GoToStageOptions,
+  type ICID,
+  type LCID,
+  type LogUserEventCustom,
+  type LogUserEventRequest,
   CalculationKeysENUM,
-  Booking,
-  EnquiryForm,
-  ProductsFilters,
+  type Booking,
+  type EnquiryForm,
+  type ProductsFilters,
 } from '$mct/types';
-import { getEnumKey, getValueAsLandC } from '$mct/utils';
+import { directToBroker, getEnumKey, getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog, debugWarn } from '$utils/debug';
 
@@ -190,7 +190,23 @@ export const MCTManager = {
     return newStageManagers.map((stage) => stage.id);
   },
 
+  /**
+   * @plan
+   *
+   * Scenarios:
+   * 1. All stages are available
+   * - show the next stage as usual
+   *
+   * 2. Questions and Appointment only
+   * - Questions --> Appointment:
+   *    - If proceedable, show `Appointment` stage
+   *    - If not proceedable, direct user to broker (OEF)
+   * 3. Appointment only
+   * - no other stage will be found, do nothing
+   */
   goToNextStage(options: GoToStageOptions = {}): boolean {
+    // get current stage data
+    const currentStageId = this.getCurrentStageId();
     const currentIndex = stateManager.getCurrentStageIndex();
 
     // get the stage and cancel if not found
@@ -198,6 +214,22 @@ export const MCTManager = {
     if (!nextStage) {
       debugWarn('🔄 No next stage');
       return false;
+    }
+
+    debugLog('Stage change:', {
+      from: currentStageId,
+      to: nextStage.id,
+      isProceedable: this.getCalculation(CalculationKeysENUM.IsProceedable),
+    });
+
+    if (
+      currentStageId === StageIDENUM.Questions &&
+      nextStage.id === StageIDENUM.Appointment &&
+      !this.getCalculation(CalculationKeysENUM.IsProceedable)
+    ) {
+      debugLog('🔄 Questions --> Appointment: Not proceedable');
+      directToBroker();
+      return true;
     }
 
     this.hideCurrentStage();
@@ -246,6 +278,7 @@ export const MCTManager = {
     stage.show(!isFirstStage);
     isFirstStage = false;
     stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
+    stateManager.setCurrentStageId(stage.id);
 
     const stageOptions = options[stage.id];
     if (stageOptions) stage.start(stageOptions);
@@ -274,8 +307,13 @@ export const MCTManager = {
     return stateManager.getLCID();
   },
 
-  getCurrentStage(): StageIDENUM {
-    return stateManager.getCurrentStage();
+  getCurrentStageId(): StageIDENUM {
+    return stateManager.getCurrentStageId();
+  },
+
+  getCurrentStage(): Stage | undefined {
+    const currentStageId = this.getCurrentStageId();
+    return newStageManagers.find((stage) => stage.id === currentStageId);
   },
 
   setAnswer(answerData: InputData) {
