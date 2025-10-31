@@ -899,6 +899,31 @@
     }
   });
 
+  // src/utils/debug/index.ts
+  var debugLog, debugWarn, debugError;
+  var init_debug = __esm({
+    "src/utils/debug/index.ts"() {
+      "use strict";
+      init_live_reload();
+      init_getEnvironment();
+      debugLog = (...args) => {
+        if (getEnvironment().name === "prod")
+          return;
+        console.log("[DEBUG]", ...args);
+      };
+      debugWarn = (...args) => {
+        if (getEnvironment().name === "prod")
+          return;
+        console.warn("[WARN]", ...args);
+      };
+      debugError = (...args) => {
+        if (getEnvironment().name === "prod")
+          return;
+        console.error("[ERROR]", ...args);
+      };
+    }
+  });
+
   // src/mct/shared/utils/common/directToBroker.ts
   var directToBroker;
   var init_directToBroker = __esm({
@@ -908,7 +933,9 @@
       init_config2();
       init_MCTManager();
       init_types();
+      init_debug();
       directToBroker = () => {
+        debugLog("\u{1F504} Directing to broker");
         MCTManager.logUserEvent({
           EventName: EVENTS_CONFIG.directToBroker,
           EventValue: "OEF"
@@ -1391,31 +1418,6 @@
         filters: FILTERS_CONFIG,
         profiles: PROFILES_CONFIG
         // storage: STORAGE_CONFIG,
-      };
-    }
-  });
-
-  // src/utils/debug/index.ts
-  var debugLog, debugWarn, debugError;
-  var init_debug = __esm({
-    "src/utils/debug/index.ts"() {
-      "use strict";
-      init_live_reload();
-      init_getEnvironment();
-      debugLog = (...args) => {
-        if (getEnvironment().name === "prod")
-          return;
-        console.log("[DEBUG]", ...args);
-      };
-      debugWarn = (...args) => {
-        if (getEnvironment().name === "prod")
-          return;
-        console.warn("[WARN]", ...args);
-      };
-      debugError = (...args) => {
-        if (getEnvironment().name === "prod")
-          return;
-        console.error("[ERROR]", ...args);
       };
     }
   });
@@ -9917,7 +9919,7 @@
         },
         // Pass stage-specific options to the start method
         startStage(stage, options = {}) {
-          stage.show(isFirstStage);
+          stage.show(!isFirstStage);
           isFirstStage = false;
           stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
           const stageOptions = options[stage.id];
