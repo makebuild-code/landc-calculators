@@ -1,8 +1,11 @@
 import { EVENTS_CONFIG } from '$mct/config';
 import { MCTManager } from '$mct/manager';
 import { RepaymentTypeENUM } from '$mct/types';
+import { debugLog } from '$utils/debug';
 
 export const directToBroker = (): void => {
+  debugLog('🔄 Directing to broker');
+
   MCTManager.logUserEvent({
     EventName: EVENTS_CONFIG.directToBroker,
     EventValue: 'OEF',
