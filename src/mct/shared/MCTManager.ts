@@ -243,7 +243,7 @@ export const MCTManager = {
 
   // Pass stage-specific options to the start method
   startStage(stage: Stage, options: GoToStageOptions = {}): void {
-    stage.show(isFirstStage);
+    stage.show(!isFirstStage);
     isFirstStage = false;
     stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
 
