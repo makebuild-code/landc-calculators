@@ -3773,7 +3773,7 @@
           this.addEventListener({
             element: this.button,
             event: "click",
-            handler: () => this.navigateToResults()
+            handler: () => this.navigateToNextStage()
           });
         }
         update() {
@@ -3868,7 +3868,7 @@
             output.innerHTML = summaryLines[key];
           });
         }
-        navigateToResults() {
+        navigateToNextStage() {
           this.emit("mct:stage:complete" /* STAGE_COMPLETE */, { stageId: "questions" /* Questions */ });
         }
       };
@@ -26431,13 +26431,7 @@
   var stateManager2 = new StateManager();
   var partnerBookingWidget = class {
     constructor(element) {
-      this.TEXT_FIELDS = [
-        "FirstName",
-        "Surname",
-        "Email",
-        "Mobile",
-        "VulnerableMessage"
-      ];
+      this.TEXT_FIELDS = ["FirstName", "Surname", "Email", "Mobile", "VulnerableMessage"];
       this.MARKETING_FIELDS = [
         "IsEmailMarketingPermitted",
         "IsPhoneMarketingPermitted",
@@ -26823,11 +26817,11 @@
         ...formBits,
         ...lcid ? { lcid } : {},
         ...icid ? { icid } : {},
-        "RepaymentType": "Repayment",
-        "ResiBtl": "R",
-        "LoanAmount": 1,
-        "MortgageLength": 1,
-        "PropertyValue": 1
+        RepaymentType: "Repayment",
+        ResiBtl: "R",
+        LoanAmount: 1,
+        MortgageLength: 1,
+        PropertyValue: 1
       };
       delete enquiry.script;
       const request = {
@@ -26837,7 +26831,9 @@
       try {
         const res = await createLeadAndBookingAPI.createLeadAndBooking(request);
         console.log(res);
-        const form = queryElements('[data-partner-element="date"], [data-partner-element="time"], [data-partner-element="information"]');
+        const form = queryElements(
+          '[data-partner-element="date"], [data-partner-element="time"], [data-partner-element="information"]'
+        );
         const success = queryElement('[data-partner-element="success"]');
         if (!form || !success)
           return;
