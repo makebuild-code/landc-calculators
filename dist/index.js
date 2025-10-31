@@ -899,39 +899,64 @@
     }
   });
 
+  // src/mct/shared/utils/common/directToBroker.ts
+  var directToBroker;
+  var init_directToBroker = __esm({
+    "src/mct/shared/utils/common/directToBroker.ts"() {
+      "use strict";
+      init_live_reload();
+      init_config2();
+      init_MCTManager();
+      init_types();
+      directToBroker = () => {
+        MCTManager.logUserEvent({
+          EventName: EVENTS_CONFIG.directToBroker,
+          EventValue: "OEF"
+        });
+        const { origin } = window.location;
+        const baseUrl = `${origin}/online/populate`;
+        const icid = MCTManager.getICID();
+        const lcid = MCTManager.getLCID();
+        const answers = MCTManager.getAnswersAsLandC();
+        const calculations = MCTManager.getCalculations();
+        const { PurchRemo, ResiBtl, CreditImpaired, PropertyValue, RepaymentType, MortgageLength, ReadinessToBuy } = answers;
+        const { offerAccepted, MortgageAmount } = calculations;
+        const params = {};
+        if (icid)
+          params.Icid = icid;
+        if (lcid)
+          params.LcId = lcid;
+        if (PurchRemo)
+          params.PurchaseOrRemortgage = PurchRemo;
+        if (ResiBtl)
+          params.ResidentialOrBuyToLet = ResiBtl;
+        if (CreditImpaired)
+          params.CreditIssues = CreditImpaired;
+        if (PropertyValue)
+          params.PropertyValue = PropertyValue.toString();
+        if (MortgageAmount)
+          params.LoanAmount = MortgageAmount.toString();
+        if (MortgageLength)
+          params.Term = MortgageLength.toString();
+        if (RepaymentType)
+          params.MortgageRepaymentType = RepaymentType === "Repayment" /* Repayment */ ? "R" : RepaymentType === "Both" /* Both */ ? "P" : "I";
+        if (offerAccepted)
+          params.OfferAccepted = offerAccepted.toString();
+        if (ReadinessToBuy)
+          params.StageOfJourney = ReadinessToBuy;
+        const oefParams = new URLSearchParams(params);
+        const url = `${baseUrl}?${oefParams.toString()}`;
+        window.open(url, "_blank");
+      };
+    }
+  });
+
   // src/mct/shared/utils/common/fetchData.ts
   var init_fetchData = __esm({
     "src/mct/shared/utils/common/fetchData.ts"() {
       "use strict";
       init_live_reload();
       init_getBaseURLForAPI();
-    }
-  });
-
-  // src/mct/shared/utils/common/getLenderID.ts
-  var getLenderID;
-  var init_getLenderID = __esm({
-    "src/mct/shared/utils/common/getLenderID.ts"() {
-      "use strict";
-      init_live_reload();
-      getLenderID = (lenderString, type) => {
-        if (!lenderString)
-          return void 0;
-        const regex = /MasterLenderID:(\d+)\|ResidentialLenderID:(\d+)\|BTLLenderID:(\d+)/;
-        const match = lenderString.match(regex);
-        if (!match)
-          return void 0;
-        switch (type) {
-          case "master":
-            return match[1];
-          case "residential":
-            return match[2];
-          case "btl":
-            return match[3];
-          default:
-            return match[1];
-        }
-      };
     }
   });
 
@@ -945,7 +970,6 @@
       init_MCTManager();
       init_types();
       init_common2();
-      init_getLenderID();
       generateProductsAPIInput = (options = {}) => {
         MCTManager.recalculate();
         const PurchRemo = getValueAsLandC("PurchRemo" /* PurchRemo */);
@@ -1100,6 +1124,33 @@
     }
   });
 
+  // src/mct/shared/utils/common/getLenderID.ts
+  var getLenderID;
+  var init_getLenderID = __esm({
+    "src/mct/shared/utils/common/getLenderID.ts"() {
+      "use strict";
+      init_live_reload();
+      getLenderID = (lenderString, type) => {
+        if (!lenderString)
+          return void 0;
+        const regex = /MasterLenderID:(\d+)\|ResidentialLenderID:(\d+)\|BTLLenderID:(\d+)/;
+        const match = lenderString.match(regex);
+        if (!match)
+          return void 0;
+        switch (type) {
+          case "master":
+            return match[1];
+          case "residential":
+            return match[2];
+          case "btl":
+            return match[3];
+          default:
+            return match[1];
+        }
+      };
+    }
+  });
+
   // src/mct/shared/utils/common/getValueAsLandC.ts
   var getValueAsLandC;
   var init_getValueAsLandC = __esm({
@@ -1166,11 +1217,13 @@
     "src/mct/shared/utils/common/index.ts"() {
       "use strict";
       init_live_reload();
+      init_directToBroker();
       init_fetchData();
       init_generateProductsAPIInput();
       init_generateSummaryLines();
       init_getEnumKey();
       init_getEnumValue();
+      init_getLenderID();
       init_getValueAsLandC();
       init_logError();
     }
@@ -4624,8 +4677,8 @@
     "src/mct/shared/utils/dom/visibility/index.ts"() {
       "use strict";
       init_live_reload();
-      init_visibility();
       init_removeInitialStyles();
+      init_visibility();
     }
   });
 
@@ -5195,42 +5248,8 @@
         //   this.howToApplyDialog.close();
         //   this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
         // }
-        async handleDirectToBroker() {
-          await this.handleLogUserEvents(EVENTS_CONFIG.directToBroker, "OEF");
-          const { origin } = window.location;
-          const baseUrl = `${origin}/online/populate`;
-          const icid = MCTManager.getICID();
-          const lcid = MCTManager.getLCID();
-          const answers = MCTManager.getAnswersAsLandC();
-          const calculations = MCTManager.getCalculations();
-          const { PurchRemo, ResiBtl, CreditImpaired, PropertyValue, RepaymentType, MortgageLength, ReadinessToBuy } = answers;
-          const { offerAccepted, MortgageAmount } = calculations;
-          const params = {};
-          if (icid)
-            params.Icid = icid;
-          if (lcid)
-            params.LcId = lcid;
-          if (PurchRemo)
-            params.PurchaseOrRemortgage = PurchRemo;
-          if (ResiBtl)
-            params.ResidentialOrBuyToLet = ResiBtl;
-          if (CreditImpaired)
-            params.CreditIssues = CreditImpaired;
-          if (PropertyValue)
-            params.PropertyValue = PropertyValue.toString();
-          if (MortgageAmount)
-            params.LoanAmount = MortgageAmount.toString();
-          if (MortgageLength)
-            params.Term = MortgageLength.toString();
-          if (RepaymentType)
-            params.MortgageRepaymentType = RepaymentType === "Repayment" /* Repayment */ ? "R" : RepaymentType === "Both" /* Both */ ? "P" : "I";
-          if (offerAccepted)
-            params.OfferAccepted = offerAccepted.toString();
-          if (ReadinessToBuy)
-            params.StageOfJourney = ReadinessToBuy;
-          const oefParams = new URLSearchParams(params);
-          const url = `${baseUrl}?${oefParams.toString()}`;
-          window.open(url, "_blank");
+        handleDirectToBroker() {
+          directToBroker();
         }
         async handleDirectToLender() {
           if (!this.applyDirect || !this.applyDirectDialog)
@@ -8216,7 +8235,6 @@
       init_formatToHHMM();
       init_visibility2();
       init_debug();
-      init_getLenderID();
       init_common2();
       attr14 = DOM_CONFIG.attributes.appointment;
       PANEL_ENUM = {

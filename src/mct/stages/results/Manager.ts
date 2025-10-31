@@ -4,7 +4,6 @@ import {
   CalculationKeysENUM,
   FormEventNames,
   MCTEventNames,
-  RepaymentTypeENUM,
   SortColumnENUM,
   type InputData,
   type InputKey,
@@ -22,7 +21,7 @@ import { formatNumber } from '$utils/formatting';
 import { Result } from './Result';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
-import { generateSummaryLines, generateProductsAPIInput } from '$mct/utils';
+import { generateSummaryLines, generateProductsAPIInput, directToBroker } from '$mct/utils';
 import { FilterComponent } from './FilterGroup';
 import { productsAPI } from '$mct/api';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
@@ -591,46 +590,8 @@ export class ResultsManager {
   //   this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Results });
   // }
 
-  private async handleDirectToBroker(): Promise<void> {
-    await this.handleLogUserEvents(EVENTS_CONFIG.directToBroker, 'OEF');
-
-    /**
-     * @todo
-     * - populate the redirect URL with parameters
-     */
-    const { origin } = window.location;
-    const baseUrl = `${origin}/online/populate`;
-
-    const icid = MCTManager.getICID();
-    const lcid = MCTManager.getLCID();
-    const answers = MCTManager.getAnswersAsLandC();
-    const calculations = MCTManager.getCalculations();
-
-    const { PurchRemo, ResiBtl, CreditImpaired, PropertyValue, RepaymentType, MortgageLength, ReadinessToBuy } =
-      answers;
-
-    const { offerAccepted, MortgageAmount } = calculations;
-
-    const params: Record<string, string> = {};
-
-    if (icid) params.Icid = icid;
-    if (lcid) params.LcId = lcid;
-    if (PurchRemo) params.PurchaseOrRemortgage = PurchRemo;
-    if (ResiBtl) params.ResidentialOrBuyToLet = ResiBtl;
-    if (CreditImpaired) params.CreditIssues = CreditImpaired;
-    if (PropertyValue) params.PropertyValue = PropertyValue.toString();
-    if (MortgageAmount) params.LoanAmount = MortgageAmount.toString();
-    if (MortgageLength) params.Term = MortgageLength.toString();
-    if (RepaymentType)
-      params.MortgageRepaymentType =
-        RepaymentType === RepaymentTypeENUM.Repayment ? 'R' : RepaymentType === RepaymentTypeENUM.Both ? 'P' : 'I';
-    if (offerAccepted) params.OfferAccepted = offerAccepted.toString();
-    if (ReadinessToBuy) params.StageOfJourney = ReadinessToBuy;
-
-    const oefParams = new URLSearchParams(params);
-    const url = `${baseUrl}?${oefParams.toString()}`;
-
-    window.open(url, '_blank');
+  private handleDirectToBroker(): void {
+    directToBroker();
   }
 
   private async handleDirectToLender(): Promise<void> {

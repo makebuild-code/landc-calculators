@@ -38,8 +38,7 @@ import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { debugError, debugWarn } from '$utils/debug';
-import { getLenderID } from 'src/mct/shared/utils/common/getLenderID';
-import { getEnumKey } from '$mct/utils';
+import { getEnumKey, getLenderID } from '$mct/utils';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
