@@ -146,12 +146,12 @@ export class StateManager {
     return this.get('icid');
   }
 
-  setCurrentStage(stageId: string | null): void {
-    this.set('currentStageId', stageId);
+  getCurrentStageId(): StageIDENUM {
+    return this.get('currentStageId') as StageIDENUM;
   }
 
-  getCurrentStage(): StageIDENUM {
-    return this.get('currentStageId') as StageIDENUM;
+  setCurrentStageId(stageId: StageIDENUM): void {
+    this.set('currentStageId', stageId);
   }
 
   getCurrentStageIndex(): number {
