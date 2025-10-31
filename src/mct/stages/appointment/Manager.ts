@@ -250,7 +250,7 @@ export class AppointmentManager {
   private navigatePrevious(): void {
     switch (this.currentPanel) {
       case PANEL_ENUM.CALENDAR:
-        this.navigateToResults();
+        MCTManager.goToPrevStage();
         break;
       case PANEL_ENUM.FORM:
         this.showCalendarPanel();
@@ -303,10 +303,6 @@ export class AppointmentManager {
     this.formPanel.style.display = 'none';
     this.currentPanel = PANEL_ENUM.CALENDAR;
     this.show();
-  }
-
-  private navigateToResults(): void {
-    MCTManager.goToStage(StageIDENUM.Results);
   }
 
   private async handleDays(isInit: boolean, startDate?: Date): Promise<void> {
