@@ -1270,9 +1270,7 @@
             name: "residential-purchase" /* ResidentialPurchase */,
             display: "Residential purchase" /* ResidentialPurchase */,
             requirements: {
-              // PurchRemo: 'Purchase',
-              // FTB: 'No',
-              // ResiBtl: 'Residential',
+              // PurchRemo: 'Purchase', FTB: 'No', ResiBtl: 'Residential',
               PurchRemo: getEnumKey(PurchRemoENUM, "P" /* Purchase */),
               FTB: getEnumKey(FirstTimeBuyerENUM, "N" /* No */),
               ResiBtl: getEnumKey(ResiBtlENUM, "R" /* Residential */)
@@ -1282,9 +1280,7 @@
             name: "btl-purchase" /* BtlPurchase */,
             display: "Buy-to-let purchase" /* BtlPurchase */,
             requirements: {
-              // PurchRemo: 'Purchase',
-              // FTB: 'No',
-              // ResiBtl: 'Btl',
+              // PurchRemo: 'Purchase', FTB: 'No', ResiBtl: 'Btl',
               PurchRemo: getEnumKey(PurchRemoENUM, "P" /* Purchase */),
               FTB: getEnumKey(FirstTimeBuyerENUM, "N" /* No */),
               ResiBtl: getEnumKey(ResiBtlENUM, "B" /* Btl */)
@@ -1294,9 +1290,7 @@
             name: "ftb-residential-purchase" /* FtbResidentialPurchase */,
             display: "First Time Buyer" /* FtbResidentialPurchase */,
             requirements: {
-              // PurchRemo: 'Purchase',
-              // FTB: 'Yes',
-              // ResiBtl: 'Residential',
+              // PurchRemo: 'Purchase', FTB: 'Yes', ResiBtl: 'Residential',
               PurchRemo: getEnumKey(PurchRemoENUM, "P" /* Purchase */),
               FTB: getEnumKey(FirstTimeBuyerENUM, "Y" /* Yes */),
               ResiBtl: getEnumKey(ResiBtlENUM, "R" /* Residential */)
@@ -1306,9 +1300,7 @@
             name: "ftb-btl-purchase" /* FtbBtlPurchase */,
             display: "Buy-to-left FTB" /* FtbBtlPurchase */,
             requirements: {
-              // PurchRemo: 'Purchase',
-              // FTB: 'Yes',
-              // ResiBtl: 'Btl',
+              // PurchRemo: 'Purchase', FTB: 'Yes', ResiBtl: 'Btl',
               PurchRemo: getEnumKey(PurchRemoENUM, "P" /* Purchase */),
               FTB: getEnumKey(FirstTimeBuyerENUM, "Y" /* Yes */),
               ResiBtl: getEnumKey(ResiBtlENUM, "B" /* Btl */)
@@ -1318,8 +1310,7 @@
             name: "residential-remortgage" /* ResidentialRemortgage */,
             display: "Residential remortgage" /* ResidentialRemortgage */,
             requirements: {
-              // PurchRemo: 'Remortgage',
-              // ResiBtl: 'Residential',
+              // PurchRemo: 'Remortgage', ResiBtl: 'Residential',
               PurchRemo: getEnumKey(PurchRemoENUM, "R" /* Remortgage */),
               ResiBtl: getEnumKey(ResiBtlENUM, "R" /* Residential */)
             }
@@ -1328,8 +1319,7 @@
             name: "btl-remortgage" /* BtlRemortgage */,
             display: "Buy-to-let remortgage" /* BtlRemortgage */,
             requirements: {
-              // PurchRemo: 'Remortgage',
-              // ResiBtl: 'Btl',
+              // PurchRemo: 'Remortgage', ResiBtl: 'Btl',
               PurchRemo: getEnumKey(PurchRemoENUM, "R" /* Remortgage */),
               ResiBtl: getEnumKey(ResiBtlENUM, "B" /* Btl */)
             }

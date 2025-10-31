@@ -2,6 +2,7 @@ import type { StorageConfig } from '$mct/state';
 import type { AppState } from './state';
 import type { Profile, ResponsiveConfig } from './common';
 import type { SapValueENUM } from './api/Products';
+import type { RepaymentTypeENUM, ResiBtlENUM } from './api';
 
 export interface CONFIG_API {
   baseURL: string;
@@ -54,6 +55,14 @@ export interface CONFIG_FILTERS {
   NewBuild: 'true' | 'false';
   SapValue: keyof typeof SapValueENUM;
   ShowSharedOwnership: boolean;
+}
+
+export interface CONFIG_FORM {
+  RepaymentType: RepaymentTypeENUM;
+  ResiBtl: ResiBtlENUM;
+  LoanAmount: number;
+  MortgageLength: number;
+  PropertyValue: number;
 }
 
 export interface CONFIG_PROFILES {
