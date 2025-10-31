@@ -456,7 +456,7 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
     this.addEventListener({
       element: this.button,
       event: 'click',
-      handler: () => this.navigateToResults(),
+      handler: () => this.navigateToNextStage(),
     });
   }
 
@@ -568,7 +568,7 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
     });
   }
 
-  public navigateToResults(): void {
+  public navigateToNextStage(): void {
     this.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
   }
 }
