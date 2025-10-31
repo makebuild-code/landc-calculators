@@ -57,14 +57,6 @@ export interface CONFIG_FILTERS {
   ShowSharedOwnership: boolean;
 }
 
-export interface CONFIG_FORM {
-  RepaymentType: RepaymentTypeENUM;
-  ResiBtl: ResiBtlENUM;
-  LoanAmount: number;
-  MortgageLength: number;
-  PropertyValue: number;
-}
-
 export interface CONFIG_PROFILES {
   profiles: Profile[];
 }

@@ -1,9 +1,14 @@
-import { RepaymentTypeENUM, ResiBtlENUM, type CONFIG_FORM } from '$mct/types';
+import { MCTManager } from '$mct/manager';
+import { RepaymentTypeENUM, ResiBtlENUM, type EnquiryMinimum, type ICID, type LCID } from '$mct/types';
 
-export const FORM_DEFAULT_CONFIG: CONFIG_FORM = {
-  RepaymentType: RepaymentTypeENUM.Repayment,
-  ResiBtl: ResiBtlENUM.Residential,
-  LoanAmount: 1,
-  MortgageLength: 1,
-  PropertyValue: 1,
+export const getFormDefaults = (): EnquiryMinimum => {
+  return {
+    lcid: MCTManager.getLCID() as LCID,
+    icid: MCTManager.getICID() as ICID,
+    ResiBtl: ResiBtlENUM.Residential,
+    PropertyValue: 1,
+    RepaymentType: RepaymentTypeENUM.Repayment,
+    MortgageLength: 1,
+    LoanAmount: 1,
+  };
 };
