@@ -254,19 +254,6 @@ export const MCTManager = {
     return true;
   },
 
-  goToStage(stageId: StageIDENUM, options: GoToStageOptions = {}): boolean {
-    // get the stage and cancel if not found
-    const nextStage = newStageManagers.find((stage) => stage.id === stageId);
-    if (!nextStage) {
-      debugWarn(`🔄 No stage found with id: ${stageId}`);
-      return false;
-    }
-
-    this.hideCurrentStage();
-    this.startStage(nextStage, options);
-    return true;
-  },
-
   hideCurrentStage(): void {
     const currentIndex = stateManager.getCurrentStageIndex();
     const currentStage = newStageManagers[currentIndex];

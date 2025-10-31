@@ -9927,16 +9927,6 @@
           this.startStage(prevStage, options);
           return true;
         },
-        goToStage(stageId, options = {}) {
-          const nextStage = newStageManagers.find((stage) => stage.id === stageId);
-          if (!nextStage) {
-            debugWarn(`\u{1F504} No stage found with id: ${stageId}`);
-            return false;
-          }
-          this.hideCurrentStage();
-          this.startStage(nextStage, options);
-          return true;
-        },
         hideCurrentStage() {
           const currentIndex = stateManager.getCurrentStageIndex();
           const currentStage = newStageManagers[currentIndex];
