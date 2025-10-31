@@ -264,8 +264,7 @@ export const MCTManager = {
   startStage(stage: Stage, options: GoToStageOptions = {}): void {
     stage.show(!isFirstStage);
     isFirstStage = false;
-    stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
-    stateManager.setCurrentStageId(stage.id);
+    this.setCurrentStage(stage);
 
     const stageOptions = options[stage.id];
     if (stageOptions) stage.start(stageOptions);
@@ -301,6 +300,11 @@ export const MCTManager = {
   getCurrentStage(): Stage | undefined {
     const currentStageId = this.getCurrentStageId();
     return newStageManagers.find((stage) => stage.id === currentStageId);
+  },
+
+  setCurrentStage(stage: Stage): void {
+    stateManager.setCurrentStageId(stage.id);
+    stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
   },
 
   setAnswer(answerData: InputData) {

@@ -9937,8 +9937,7 @@
         startStage(stage, options = {}) {
           stage.show(!isFirstStage);
           isFirstStage = false;
-          stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
-          stateManager.setCurrentStageId(stage.id);
+          this.setCurrentStage(stage);
           const stageOptions = options[stage.id];
           if (stageOptions)
             stage.start(stageOptions);
@@ -9967,6 +9966,10 @@
         getCurrentStage() {
           const currentStageId = this.getCurrentStageId();
           return newStageManagers.find((stage) => stage.id === currentStageId);
+        },
+        setCurrentStage(stage) {
+          stateManager.setCurrentStageId(stage.id);
+          stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
         },
         setAnswer(answerData) {
           stateManager.setAnswer(answerData);
