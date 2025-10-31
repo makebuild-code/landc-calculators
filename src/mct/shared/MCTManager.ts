@@ -33,6 +33,7 @@ import {
 import { directToBroker, getEnumKey, getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog, debugWarn } from '$utils/debug';
+import { getFormDefaults } from './config/formDefaults';
 
 const VERSION = '🔄 MCT DIST v2.0.0';
 const attr = DOM_CONFIG.attributes;
