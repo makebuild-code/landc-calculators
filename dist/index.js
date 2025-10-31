@@ -1190,7 +1190,7 @@
       getValueAsLandC = (key) => {
         const answers = MCTManager.getAnswers();
         const filters = MCTManager.getFilters();
-        const currentStage = MCTManager.getCurrentStage();
+        const currentStage = MCTManager.getCurrentStageId();
         let values;
         if (currentStage === "questions" /* Questions */) {
           values = { ...filters, ...answers };
@@ -9372,11 +9372,11 @@
         getICID() {
           return this.get("icid");
         }
-        setCurrentStage(stageId) {
-          this.set("currentStageId", stageId);
-        }
-        getCurrentStage() {
+        getCurrentStageId() {
           return this.get("currentStageId");
+        }
+        setCurrentStageId(stageId) {
+          this.set("currentStageId", stageId);
         }
         getCurrentStageIndex() {
           return this.get("currentStageIndex");
@@ -9765,6 +9765,7 @@
       init_config2();
       init_state2();
       init_types();
+      init_types();
       init_common2();
       init_dataLayer();
       init_debug();
@@ -9878,12 +9879,37 @@
         getAvailableStages() {
           return newStageManagers.map((stage) => stage.id);
         },
+        /**
+         * @plan
+         *
+         * Scenarios:
+         * 1. All stages are available
+         * - show the next stage as usual
+         *
+         * 2. Questions and Appointment only
+         * - Questions --> Appointment:
+         *    - If proceedable, show `Appointment` stage
+         *    - If not proceedable, direct user to broker (OEF)
+         * 3. Appointment only
+         * - no other stage will be found, do nothing
+         */
         goToNextStage(options = {}) {
+          const currentStageId = this.getCurrentStageId();
           const currentIndex = stateManager.getCurrentStageIndex();
           const nextStage = newStageManagers[currentIndex + 1];
           if (!nextStage) {
             debugWarn("\u{1F504} No next stage");
             return false;
+          }
+          debugLog("Stage change:", {
+            from: currentStageId,
+            to: nextStage.id,
+            isProceedable: this.getCalculation("isProceedable" /* IsProceedable */)
+          });
+          if (currentStageId === "questions" /* Questions */ && nextStage.id === "appointment" /* Appointment */ && !this.getCalculation("isProceedable" /* IsProceedable */)) {
+            debugLog("\u{1F504} Questions --> Appointment: Not proceedable");
+            directToBroker();
+            return true;
           }
           this.hideCurrentStage();
           this.startStage(nextStage, options);
@@ -9922,6 +9948,7 @@
           stage.show(!isFirstStage);
           isFirstStage = false;
           stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
+          stateManager.setCurrentStageId(stage.id);
           const stageOptions = options[stage.id];
           if (stageOptions)
             stage.start(stageOptions);
@@ -9944,8 +9971,12 @@
         getLCID() {
           return stateManager.getLCID();
         },
+        getCurrentStageId() {
+          return stateManager.getCurrentStageId();
+        },
         getCurrentStage() {
-          return stateManager.getCurrentStage();
+          const currentStageId = this.getCurrentStageId();
+          return newStageManagers.find((stage) => stage.id === currentStageId);
         },
         setAnswer(answerData) {
           stateManager.setAnswer(answerData);
