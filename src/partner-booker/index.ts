@@ -193,7 +193,7 @@ export class partnerBookingWidget {
   async getDateSlots() {
     const now = new Date()
     const from = new Date(now)
-    from.setDate(from.getDate() + 1)
+    // from.setDate(from.getDate())
     const to = new Date(from)
     to.setDate(to.getDate() + 14)
     const fromDate = formatDateForAPI(from)
