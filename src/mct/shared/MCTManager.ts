@@ -31,7 +31,7 @@ import { directToBroker, getEnumKey, getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog, debugWarn } from '$utils/debug';
 
-const VERSION = '🔄 MCT DIST v2.0.0';
+const VERSION = '🔄 MCT DIST v2.1.0';
 const attr = DOM_CONFIG.attributes;
 const eventBus = EventBus.getInstance();
 
