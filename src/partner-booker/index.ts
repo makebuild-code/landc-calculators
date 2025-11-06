@@ -176,7 +176,7 @@ export class partnerBookingWidget {
 
   private readICIDFromBody(): string | null {
     // prefer data-icid, fall back to a plain icid attribute
-    const v = document.body.dataset.icid ?? document.body.getAttribute('icid');
+    const v = document.body.dataset.partnerIcid ?? document.body.dataset.icid ?? document.body.getAttribute('icid');
     return v?.trim() ? v.trim() : null;
   }
 
@@ -492,16 +492,16 @@ export class partnerBookingWidget {
     const icid = this.getICID();
 
     const enquiry = {
+      "RepaymentType": "Repayment",
+      "ResiBtl": "R",
+      "LoanAmount": 1,
+      "MortgageLength": 1,
+      "PropertyValue": 1,
       ...(stateManager.getState().form as EnquiryForm),
       ...(this.draft.enquiry ?? {}),
       ...formBits,
       ...(lcid ? { lcid } : {}),
       ...(icid ? { icid } : {}),
-      RepaymentType: 'Repayment',
-      ResiBtl: 'R',
-      LoanAmount: 1,
-      MortgageLength: 1,
-      PropertyValue: 1,
     };
 
     delete enquiry.script;

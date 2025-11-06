@@ -160,7 +160,7 @@ export class AppointmentManager {
         groupName: 'appointment',
         indexInGroup: index,
         onChange: () => this.handleInputChange(inputGroup),
-        onEnter: () => {},
+        onEnter: () => { },
       });
 
       inputGroup.initialise();
@@ -174,9 +174,12 @@ export class AppointmentManager {
     });
 
     // Load initial dates
-    const tomorrow = new Date(this.today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    this.handleDays(true, tomorrow);
+    const today = new Date(this.today);
+
+    // previously was set to tomorrow.
+    // tomorrow.setDate(tomorrow.getDate() + 1);
+
+    this.handleDays(true, today);
 
     this.dates.initialise();
     this.times.initialise();
