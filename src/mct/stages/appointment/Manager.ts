@@ -160,7 +160,7 @@ export class AppointmentManager {
         groupName: 'appointment',
         indexInGroup: index,
         onChange: () => this.handleInputChange(inputGroup),
-        onEnter: () => { },
+        onEnter: () => {},
       });
 
       inputGroup.initialise();

@@ -492,11 +492,11 @@ export class partnerBookingWidget {
     const icid = this.getICID();
 
     const enquiry = {
-      "RepaymentType": "Repayment",
-      "ResiBtl": "R",
-      "LoanAmount": 1,
-      "MortgageLength": 1,
-      "PropertyValue": 1,
+      RepaymentType: 'Repayment',
+      ResiBtl: 'R',
+      LoanAmount: 1,
+      MortgageLength: 1,
+      PropertyValue: 1,
       ...(stateManager.getState().form as EnquiryForm),
       ...(this.draft.enquiry ?? {}),
       ...formBits,
