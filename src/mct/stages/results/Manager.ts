@@ -246,6 +246,12 @@ export class ResultsManager {
   }
 
   private handleUpdateAnswers(): void {
+    const availableStages = MCTManager.getAvailableStages();
+    if (!availableStages.includes(StageIDENUM.Questions)) {
+      this.updateAnswersButton.style.display = 'none';
+      return;
+    }
+
     this.updateAnswersButton.addEventListener('click', () => {
       this.sidebar.show();
     });
