@@ -12,7 +12,14 @@ import { dataLayer } from '$utils/analytics/dataLayer';
 import { generateSummaryLines, generateProductsAPIInput, logError } from '$mct/utils';
 import { productsAPI } from '$mct/api';
 import type { ProductsResponse, SummaryInfo, SummaryLines } from '$mct/types';
-import { FormEventNames, GroupNameENUM, InputKeysENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import {
+  CalculationKeysENUM,
+  FormEventNames,
+  GroupNameENUM,
+  InputKeysENUM,
+  MCTEventNames,
+  StageIDENUM,
+} from '$mct/types';
 import { MainFormManager } from './Manager_Main';
 import { MCTManager } from '$mct/manager';
 import { StatefulComponent } from '$mct/components';
@@ -452,6 +459,15 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
     super.onInit();
   }
 
+  protected handleNextStageButton(): void {
+    const availableStages = MCTManager.getAvailableStages();
+    if (availableStages.includes(StageIDENUM.Results)) return;
+
+    const isProceedable = MCTManager.getCalculation(CalculationKeysENUM.IsProceedable);
+    const text = isProceedable ? 'Book an appointment' : 'Get a Decision in Principle';
+    this.button.textContent = text;
+  }
+
   protected bindEvents(): void {
     this.addEventListener({
       element: this.button,
@@ -462,6 +478,7 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
 
   public update(): void {
     if (!this.state.activated || !this.state.isVisible) return;
+    this.handleNextStageButton();
     this.handleProducts();
   }
 
@@ -524,7 +541,10 @@ export class OutputGroup extends BaseGroup<OutputGroupState> {
       summaryInfo: response.result.SummaryInfo,
     });
 
-    this.formManager.toggleButton(this.formManager.getResultsButton, response.result.SummaryInfo.NumberOfProducts > 0);
+    this.formManager.toggleButton(
+      this.formManager.goToNextStageButton,
+      response.result.SummaryInfo.NumberOfProducts > 0
+    );
 
     this.updateOutputs();
     this.showLoader(false);
