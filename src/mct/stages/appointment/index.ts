@@ -1,7 +1,5 @@
 import { AppointmentManager } from './Manager';
 
-export const initAppointment = (component: HTMLElement): AppointmentManager | null => {
-  const manager = new AppointmentManager(component);
-  if (!manager) return null;
-  return manager;
+export const initAppointment = (component: HTMLElement): AppointmentManager => {
+  return new AppointmentManager(component);
 };

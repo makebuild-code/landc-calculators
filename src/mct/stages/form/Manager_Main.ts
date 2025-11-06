@@ -4,10 +4,11 @@ import { logError } from '$mct/utils';
 import { queryElement } from '$utils/dom/queryElement';
 import { queryElements } from '$utils/dom/queryelements';
 import type { Profile } from '$mct/types';
-import { FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
+import { CalculationKeysENUM, FormEventNames, GroupNameENUM, MCTEventNames, StageIDENUM } from '$mct/types';
 import { FormManager } from './Manager_Base';
 import { QuestionComponent } from './Questions';
 import { panelToWindow } from 'src/mct/shared/utils/ui';
+import { MCTManager } from '$mct/manager';
 
 const attr = DOM_CONFIG.attributes.form;
 
@@ -22,7 +23,7 @@ export class MainFormManager extends FormManager {
   private buttonContainer: HTMLElement;
   private prevButton: HTMLButtonElement;
   private nextButton: HTMLButtonElement;
-  public getResultsButton: HTMLButtonElement;
+  public goToNextStageButton: HTMLButtonElement;
   private hideOnGroup: HTMLElement[];
   private showOnGroup: HTMLElement[];
   private loader: HTMLElement;
@@ -40,7 +41,7 @@ export class MainFormManager extends FormManager {
     this.buttonContainer = queryElement(`[${attr.components}="button-container"]`, this.component) as HTMLElement;
     this.prevButton = queryElement(`[${attr.components}="previous"]`, this.buttonContainer) as HTMLButtonElement;
     this.nextButton = queryElement(`[${attr.components}="next"]`, this.buttonContainer) as HTMLButtonElement;
-    this.getResultsButton = queryElement(
+    this.goToNextStageButton = queryElement(
       `[${attr.components}="get-results"]`,
       this.buttonContainer
     ) as HTMLButtonElement;
@@ -100,25 +101,26 @@ export class MainFormManager extends FormManager {
       }
     });
 
-    this.toggleButton(this.getResultsButton, false);
-    this.getResultsButton.addEventListener('click', () => {
+    this.toggleButton(this.goToNextStageButton, false);
+    this.goToNextStageButton.addEventListener('click', () => {
       this.eventBus.emit(MCTEventNames.STAGE_COMPLETE, { stageId: StageIDENUM.Questions });
     });
 
     this.eventBus.on(FormEventNames.GROUP_SHOWN, (event) => {
       if (event.groupId === GroupNameENUM.Output) {
         this.toggleButton(this.nextButton, false);
-        this.toggleButton(this.getResultsButton, true);
+        this.handleNextStageButton();
+        this.toggleButton(this.goToNextStageButton, true);
       } else {
         this.toggleButton(this.nextButton, true);
-        this.toggleButton(this.getResultsButton, false);
+        this.toggleButton(this.goToNextStageButton, false);
       }
     });
 
     this.eventBus.on(FormEventNames.GROUP_HIDDEN, (event) => {
       if (event.groupId === GroupNameENUM.Output) {
         this.toggleButton(this.nextButton, true);
-        this.toggleButton(this.getResultsButton, false);
+        this.toggleButton(this.goToNextStageButton, false);
       }
     });
 
@@ -441,6 +443,15 @@ export class MainFormManager extends FormManager {
       this.identifier.textContent = profile.display;
       this.identifier.style.removeProperty('display');
     }
+  }
+
+  private handleNextStageButton(): void {
+    const availableStages = MCTManager.getAvailableStages();
+    if (availableStages.includes(StageIDENUM.Results)) return;
+
+    const isProceedable = MCTManager.getCalculation(CalculationKeysENUM.IsProceedable);
+    const text = isProceedable ? 'Book an appointment' : 'Get a Decision in Principle';
+    this.goToNextStageButton.textContent = text;
   }
 
   public showHeader(type: 'static' | 'sticky') {

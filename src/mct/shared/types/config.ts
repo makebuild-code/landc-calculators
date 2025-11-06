@@ -2,6 +2,7 @@ import type { StorageConfig } from '$mct/state';
 import type { AppState } from './state';
 import type { Profile, ResponsiveConfig } from './common';
 import type { SapValueENUM } from './api/Products';
+import type { RepaymentTypeENUM, ResiBtlENUM } from './api';
 
 export interface CONFIG_API {
   baseURL: string;

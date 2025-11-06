@@ -3,11 +3,11 @@ export interface Endpoints {
   test: string;
 }
 
-export type EnvironmentName = 'prod' | 'test' | 'dev';
+export type EnvironmentName = 'prod' | 'test' | 'dev' | 'branch';
 
 export interface Environment {
   name: EnvironmentName;
-  host?: string;
+  host: string;
   api: string;
 }
 

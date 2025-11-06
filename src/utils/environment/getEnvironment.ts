@@ -14,8 +14,9 @@ export const getEnvironment = (): Environment => {
     { name: 'prod', host: 'www.landc.co.uk', api: ENDPOINTS.prod },
     { name: 'test', host: 'test.landc.co.uk', api: ENDPOINTS.test },
     { name: 'dev', host: 'dev.landc.co.uk', api: ENDPOINTS.test },
+    { name: 'branch', host: 'branch--component-london-and-country', api: ENDPOINTS.test },
   ];
 
   const { hostname } = window.location;
-  return ENVIRONMENTS.find((env) => env.host === hostname) || ENVIRONMENTS[0];
+  return ENVIRONMENTS.find((env) => hostname.includes(env.host)) || ENVIRONMENTS[0];
 };

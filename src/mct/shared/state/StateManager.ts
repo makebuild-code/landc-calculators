@@ -24,6 +24,7 @@ const defaultState: AppState = {
   lcid: null,
   icid: null,
   currentStageId: null,
+  currentStageIndex: -1,
   inputs: {},
   inputPrefill: {},
   calculations: {} as Calculations,
@@ -145,12 +146,20 @@ export class StateManager {
     return this.get('icid');
   }
 
-  setCurrentStage(stageId: string | null): void {
+  getCurrentStageId(): StageIDENUM {
+    return this.get('currentStageId') as StageIDENUM;
+  }
+
+  setCurrentStageId(stageId: StageIDENUM): void {
     this.set('currentStageId', stageId);
   }
 
-  getCurrentStage(): StageIDENUM {
-    return this.get('currentStageId') as StageIDENUM;
+  getCurrentStageIndex(): number {
+    return this.get('currentStageIndex');
+  }
+
+  setCurrentStageIndex(index: number): void {
+    this.set('currentStageIndex', index);
   }
 
   setAnswer(answerData: InputData): void {

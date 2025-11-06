@@ -67,20 +67,23 @@ export interface EnquiryForm {
   IsSocialMessageMarketingPermitted: boolean;
 }
 
-export interface EnquiryBase {
+export interface EnquiryMinimum {
   lcid: LCID;
   icid: ICID;
-  BuyerType: BuyerTypeENUM;
-  PurchRemo: PurchRemoENUM;
   ResiBtl: ResiBtlENUM;
   PropertyValue: number;
   RepaymentType: RepaymentTypeENUM;
   MortgageLength: number;
+  LoanAmount: number;
+  Notes?: string;
+}
+
+export interface EnquiryBase extends EnquiryMinimum {
+  BuyerType: BuyerTypeENUM;
+  PurchRemo: PurchRemoENUM;
   LTV: number;
   CreditImpaired: CreditImpairedENUM;
-  LoanAmount: number;
   InterestOnlyAmount: number;
-  Notes?: string;
   ChosenMCTProduct?: string;
   // PartnerId?: PartnerId;
   // Source?: Source;
@@ -137,7 +140,7 @@ export interface Booking {
 }
 
 export interface CreateLeadAndBookingRequest {
-  enquiry: EnquiryLead;
+  enquiry: EnquiryMinimum | EnquiryLead;
   booking: Booking;
 }
 
