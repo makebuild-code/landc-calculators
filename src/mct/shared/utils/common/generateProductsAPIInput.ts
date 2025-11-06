@@ -21,8 +21,7 @@ import {
   type PurchInputs,
   type RemoInputs,
 } from '$mct/types';
-import { getEnumKey, getEnumValue, getValueAsLandC } from '$mct/utils';
-import { getLenderID } from './getLenderID';
+import { getEnumKey, getEnumValue, getValueAsLandC, getLenderID } from '$mct/utils';
 
 export const generateProductsAPIInput = (options: ProductsOptions = {}): ProductsRequest | null => {
   MCTManager.recalculate();

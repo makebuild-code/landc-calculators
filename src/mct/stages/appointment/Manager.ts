@@ -31,15 +31,15 @@ import { DatesComponent } from './Dates';
 import { TimesComponent } from './Times';
 import { getOrdinalSuffix } from '$utils/formatting';
 import { MCTManager } from '$mct/manager';
-import type { AppState, BuyerTypeENUM, Calculations, CreateLeadAndBookingRequest } from '$mct/types';
+import type { AppState, BuyerTypeENUM, Calculations, CreateLeadAndBookingRequest, EnquiryMinimum } from '$mct/types';
 import { InputGroup } from './Form';
 import { getEnumValue } from 'src/mct/shared/utils/common/getEnumValue';
 import { formatToHHMM } from '$utils/formatting/formatToHHMM';
 import type { StateManager, VisibilityManager } from '$mct/state';
 import { removeInitialStyles } from 'src/mct/shared/utils/dom/visibility';
 import { debugError, debugWarn } from '$utils/debug';
-import { getLenderID } from 'src/mct/shared/utils/common/getLenderID';
-import { getEnumKey } from '$mct/utils';
+import { getEnumKey, getLenderID } from '$mct/utils';
+import { getFormDefaults } from 'src/mct/shared/config/formDefaults';
 
 const attr = DOM_CONFIG.attributes.appointment;
 
@@ -160,7 +160,7 @@ export class AppointmentManager {
         groupName: 'appointment',
         indexInGroup: index,
         onChange: () => this.handleInputChange(inputGroup),
-        onEnter: () => { },
+        onEnter: () => {},
       });
 
       inputGroup.initialise();
@@ -253,7 +253,7 @@ export class AppointmentManager {
   private navigatePrevious(): void {
     switch (this.currentPanel) {
       case PANEL_ENUM.CALENDAR:
-        this.navigateToResults();
+        MCTManager.goToPrevStage();
         break;
       case PANEL_ENUM.FORM:
         this.showCalendarPanel();
@@ -306,10 +306,6 @@ export class AppointmentManager {
     this.formPanel.style.display = 'none';
     this.currentPanel = PANEL_ENUM.CALENDAR;
     this.show();
-  }
-
-  private navigateToResults(): void {
-    MCTManager.goToStage(StageIDENUM.Results);
   }
 
   private async handleDays(isInit: boolean, startDate?: Date): Promise<void> {
@@ -571,7 +567,12 @@ export class AppointmentManager {
   /**
    * Get state data from the MCT manager
    */
-  private getStateData(): EnquiryData {
+  private getStateData(): EnquiryMinimum | EnquiryData {
+    const stages = MCTManager.getAvailableStages();
+    if (!stages.includes(StageIDENUM.Questions)) {
+      return getFormDefaults();
+    }
+
     const state = MCTManager.getState();
     const answers = MCTManager.getAnswers();
     const calculations = MCTManager.getCalculations();

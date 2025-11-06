@@ -137,6 +137,7 @@ export interface AppState {
   lcid: string | null;
   icid: string | null;
   currentStageId: string | null;
+  currentStageIndex: number;
   inputs: Inputs;
   inputPrefill: InputPrefill;
   calculations: Calculations;

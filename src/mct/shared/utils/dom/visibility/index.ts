@@ -1,6 +1,2 @@
-/**
- * Visibility utilities index
- */
-
-export * from './visibility';
 export * from './removeInitialStyles';
+export * from './visibility';

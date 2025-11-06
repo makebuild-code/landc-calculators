@@ -47,7 +47,7 @@ type GetValueAsLandCReturnType<T extends AllKeys> = T extends keyof EnumMap
 export const getValueAsLandC = <T extends AllKeys>(key: T): GetValueAsLandCReturnType<T> | undefined => {
   const answers = MCTManager.getAnswers();
   const filters = MCTManager.getFilters();
-  const currentStage = MCTManager.getCurrentStage();
+  const currentStage = MCTManager.getCurrentStageId();
 
   let values: Inputs;
   if (currentStage === StageIDENUM.Questions) {

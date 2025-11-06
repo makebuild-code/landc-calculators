@@ -8,9 +8,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
       name: ProfileNameENUM.ResidentialPurchase,
       display: BuyerTypeENUM.ResidentialPurchase,
       requirements: {
-        // PurchRemo: 'Purchase',
-        // FTB: 'No',
-        // ResiBtl: 'Residential',
+        // PurchRemo: 'Purchase', FTB: 'No', ResiBtl: 'Residential',
         PurchRemo: getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase),
         FTB: getEnumKey(FirstTimeBuyerENUM, FirstTimeBuyerENUM.No),
         ResiBtl: getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential),
@@ -20,9 +18,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
       name: ProfileNameENUM.BtlPurchase,
       display: BuyerTypeENUM.BtlPurchase,
       requirements: {
-        // PurchRemo: 'Purchase',
-        // FTB: 'No',
-        // ResiBtl: 'Btl',
+        // PurchRemo: 'Purchase', FTB: 'No', ResiBtl: 'Btl',
         PurchRemo: getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase),
         FTB: getEnumKey(FirstTimeBuyerENUM, FirstTimeBuyerENUM.No),
         ResiBtl: getEnumKey(ResiBtlENUM, ResiBtlENUM.Btl),
@@ -32,9 +28,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
       name: ProfileNameENUM.FtbResidentialPurchase,
       display: BuyerTypeENUM.FtbResidentialPurchase,
       requirements: {
-        // PurchRemo: 'Purchase',
-        // FTB: 'Yes',
-        // ResiBtl: 'Residential',
+        // PurchRemo: 'Purchase', FTB: 'Yes', ResiBtl: 'Residential',
         PurchRemo: getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase),
         FTB: getEnumKey(FirstTimeBuyerENUM, FirstTimeBuyerENUM.Yes),
         ResiBtl: getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential),
@@ -44,9 +38,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
       name: ProfileNameENUM.FtbBtlPurchase,
       display: BuyerTypeENUM.FtbBtlPurchase,
       requirements: {
-        // PurchRemo: 'Purchase',
-        // FTB: 'Yes',
-        // ResiBtl: 'Btl',
+        // PurchRemo: 'Purchase', FTB: 'Yes', ResiBtl: 'Btl',
         PurchRemo: getEnumKey(PurchRemoENUM, PurchRemoENUM.Purchase),
         FTB: getEnumKey(FirstTimeBuyerENUM, FirstTimeBuyerENUM.Yes),
         ResiBtl: getEnumKey(ResiBtlENUM, ResiBtlENUM.Btl),
@@ -56,8 +48,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
       name: ProfileNameENUM.ResidentialRemortgage,
       display: BuyerTypeENUM.ResidentialRemortgage,
       requirements: {
-        // PurchRemo: 'Remortgage',
-        // ResiBtl: 'Residential',
+        // PurchRemo: 'Remortgage', ResiBtl: 'Residential',
         PurchRemo: getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage),
         ResiBtl: getEnumKey(ResiBtlENUM, ResiBtlENUM.Residential),
       },
@@ -66,8 +57,7 @@ export const PROFILES_CONFIG: CONFIG_PROFILES = {
       name: ProfileNameENUM.BtlRemortgage,
       display: BuyerTypeENUM.BtlRemortgage,
       requirements: {
-        // PurchRemo: 'Remortgage',
-        // ResiBtl: 'Btl',
+        // PurchRemo: 'Remortgage', ResiBtl: 'Btl',
         PurchRemo: getEnumKey(PurchRemoENUM, PurchRemoENUM.Remortgage),
         ResiBtl: getEnumKey(ResiBtlENUM, ResiBtlENUM.Btl),
       },
