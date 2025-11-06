@@ -1,11 +1,8 @@
 import { queryElement, queryElements } from '$utils/dom';
 
 import { initForm, QuestionRegistry } from '../stages/form';
-import type { MainFormManager } from '../stages/form/Manager_Main';
 import { initResults } from '../stages/results';
-import type { ResultsManager } from '../stages/results/Manager';
 import { initAppointment } from '../stages/appointment';
-import type { AppointmentManager } from '../stages/appointment/Manager';
 
 import { lcidAPI, logUserEventsAPI } from '$mct/api';
 import { EventBus } from '$mct/components';
@@ -33,7 +30,6 @@ import {
 import { directToBroker, getEnumKey, getValueAsLandC } from '$mct/utils';
 import { dataLayer } from '$utils/analytics/dataLayer';
 import { debugError, debugLog, debugWarn } from '$utils/debug';
-import { getFormDefaults } from './config/formDefaults';
 
 const VERSION = '🔄 MCT DIST v2.0.0';
 const attr = DOM_CONFIG.attributes;
@@ -47,8 +43,7 @@ interface Stage {
   hide: () => void;
 }
 
-const stageManagers: Record<string, Stage> = {};
-const newStageManagers: Stage[] = [];
+const stageManagers: Stage[] = [];
 
 interface DOM {
   component: HTMLElement | null;
@@ -135,22 +130,19 @@ export const MCTManager = {
     if (mainForm) {
       const mainFormManager = initForm(mainForm);
       mainFormManager.hide();
-      newStageManagers.push(mainFormManager);
-      stageManagers[StageIDENUM.Questions] = mainFormManager as MainFormManager;
+      stageManagers.push(mainFormManager);
     }
 
     if (results) {
       const resultsManager = initResults(results);
       resultsManager.hide();
-      newStageManagers.push(resultsManager);
-      stageManagers[StageIDENUM.Results] = resultsManager as ResultsManager;
+      stageManagers.push(resultsManager);
     }
 
     if (appointment) {
       const appointmentManager = initAppointment(appointment);
       appointmentManager.hide();
-      newStageManagers.push(appointmentManager);
-      stageManagers[StageIDENUM.Appointment] = appointmentManager as AppointmentManager;
+      stageManagers.push(appointmentManager);
     }
   },
 
@@ -174,7 +166,7 @@ export const MCTManager = {
      * - once questions are done, init the results
      */
 
-    if (newStageManagers.length === 0) {
+    if (stageManagers.length === 0) {
       return debugError('🔄 No stage managers present');
     }
 
@@ -188,7 +180,7 @@ export const MCTManager = {
   },
 
   getAvailableStages(): StageIDENUM[] {
-    return newStageManagers.map((stage) => stage.id);
+    return stageManagers.map((stage) => stage.id);
   },
 
   /**
@@ -211,7 +203,7 @@ export const MCTManager = {
     const currentIndex = stateManager.getCurrentStageIndex();
 
     // get the stage and cancel if not found
-    const nextStage = newStageManagers[currentIndex + 1];
+    const nextStage = stageManagers[currentIndex + 1];
     if (!nextStage) {
       debugWarn('🔄 No next stage');
       return false;
@@ -243,7 +235,7 @@ export const MCTManager = {
     if (isFirstStage) return false;
 
     // get the stage and cancel if not found
-    const prevStage = newStageManagers[stateManager.getCurrentStageIndex() - 1];
+    const prevStage = stageManagers[stateManager.getCurrentStageIndex() - 1];
     if (!prevStage) {
       debugWarn('🔄 No previous stage');
       return false;
@@ -257,7 +249,7 @@ export const MCTManager = {
 
   hideCurrentStage(): void {
     const currentIndex = stateManager.getCurrentStageIndex();
-    const currentStage = newStageManagers[currentIndex];
+    const currentStage = stageManagers[currentIndex];
     if (currentStage) currentStage.hide();
   },
 
@@ -300,12 +292,12 @@ export const MCTManager = {
 
   getCurrentStage(): Stage | undefined {
     const currentStageId = this.getCurrentStageId();
-    return newStageManagers.find((stage) => stage.id === currentStageId);
+    return stageManagers.find((stage) => stage.id === currentStageId);
   },
 
   setCurrentStage(stage: Stage): void {
     stateManager.setCurrentStageId(stage.id);
-    stateManager.setCurrentStageIndex(newStageManagers.indexOf(stage));
+    stateManager.setCurrentStageIndex(stageManagers.indexOf(stage));
   },
 
   setAnswer(answerData: InputData) {
